@@ -1,0 +1,195 @@
+// Modelo de datos de Conecta BU segun el diccionario de datos de F-03 (seccion 2.3).
+// Sprint 1 solo usa Usuario y Rol; el resto de tablas se deja listo para los siguientes sprints.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tabla semilla (no enum fijo): permite agregar roles en el futuro sin migracion de esquema.
+model Rol {
+  id       String    @id @default(uuid())
+  nombre   String    @unique @db.VarChar(50)
+  usuarios Usuario[]
+
+  @@map("roles")
+}
+
+model Usuario {
+  id                 String    @id @default(uuid())
+  emailInstitucional String    @unique @db.VarChar(120)
+  nombre             String    @db.VarChar(200)
+  rolId              String
+  rol                Rol       @relation(fields: [rolId], references: [id])
+  habilitado         Boolean   @default(true)
+  fechaCreacion      DateTime  @default(now())
+  fechaActualizacion DateTime  @updatedAt
+
+  citas                        Cita[]
+  inscripciones                Inscripcion[]
+  asistenciasCitaRegistradas   AsistenciaCita[]   @relation("registradoPorCita")
+  asistenciasEventoRegistradas AsistenciaEvento[] @relation("registradoPorEvento")
+  alertas                      AlertaInApp[]
+  historial                    HistorialEstado[]
+
+  @@map("usuarios")
+}
+
+model Servicio {
+  id            String    @id @default(uuid())
+  nombre        String    @db.VarChar(150)
+  descripcion   String?   @db.Text
+  activo        Boolean   @default(true)
+  fechaCreacion DateTime  @default(now())
+  horarios      Horario[]
+
+  @@map("servicios")
+}
+
+model Horario {
+  id            String   @id @default(uuid())
+  servicioId    String
+  servicio      Servicio @relation(fields: [servicioId], references: [id])
+  fecha         DateTime @db.Date
+  horaInicio    DateTime @db.Time()
+  horaFin       DateTime @db.Time()
+  cupo          Int      @default(1)
+  ocupado       Boolean  @default(false)
+  fechaCreacion DateTime @default(now())
+  citas         Cita[]
+
+  @@map("horarios")
+}
+
+enum EstadoCita {
+  Agendada
+  Cancelada
+  Atendida
+  NoAsistio
+}
+
+model Cita {
+  id                 String     @id @default(uuid())
+  usuarioId          String
+  usuario            Usuario    @relation(fields: [usuarioId], references: [id])
+  horarioId          String
+  horario            Horario    @relation(fields: [horarioId], references: [id])
+  estado             EstadoCita @default(Agendada)
+  fechaAgendamiento  DateTime   @default(now())
+  observaciones      String?    @db.Text
+  fechaActualizacion DateTime   @updatedAt
+
+  asistencia AsistenciaCita?
+  historial  HistorialEstado[]
+
+  @@map("citas")
+}
+
+enum EstadoEvento {
+  Borrador
+  Publicado
+  Cerrado
+  Cancelado
+}
+
+model Evento {
+  id                     String       @id @default(uuid())
+  nombre                 String       @db.VarChar(200)
+  descripcion            String?      @db.Text
+  fecha                  DateTime     @db.Date
+  horaInicio             DateTime     @db.Time()
+  horaFin                DateTime     @db.Time()
+  lugar                  String?      @db.VarChar(200)
+  cupos                  Int
+  fechaLimiteInscripcion DateTime     @db.Date
+  estado                 EstadoEvento @default(Borrador)
+  fechaCreacion          DateTime     @default(now())
+
+  inscripciones Inscripcion[]
+  historial     HistorialEstado[]
+
+  @@map("eventos")
+}
+
+enum EstadoInscripcion {
+  Confirmada
+  Cancelada
+}
+
+model Inscripcion {
+  id               String            @id @default(uuid())
+  usuarioId        String
+  usuario          Usuario           @relation(fields: [usuarioId], references: [id])
+  eventoId         String
+  evento           Evento            @relation(fields: [eventoId], references: [id])
+  estado           EstadoInscripcion @default(Confirmada)
+  fechaInscripcion DateTime          @default(now())
+
+  asistencia AsistenciaEvento?
+
+  @@unique([usuarioId, eventoId])
+  @@map("inscripciones")
+}
+
+model AsistenciaCita {
+  id              String   @id @default(uuid())
+  citaId          String   @unique
+  cita            Cita     @relation(fields: [citaId], references: [id])
+  asistio         Boolean
+  registradoPorId String
+  registradoPor   Usuario  @relation("registradoPorCita", fields: [registradoPorId], references: [id])
+  fechaRegistro   DateTime @default(now())
+
+  @@map("asistencias_cita")
+}
+
+model AsistenciaEvento {
+  id              String      @id @default(uuid())
+  inscripcionId   String      @unique
+  inscripcion     Inscripcion @relation(fields: [inscripcionId], references: [id])
+  asistio         Boolean
+  registradoPorId String
+  registradoPor   Usuario     @relation("registradoPorEvento", fields: [registradoPorId], references: [id])
+  fechaRegistro   DateTime    @default(now())
+
+  @@map("asistencias_evento")
+}
+
+enum TipoAlerta {
+  CitaAgendada
+  CitaCancelada
+  EventoPublicado
+  EventoProximo
+  General
+}
+
+model AlertaInApp {
+  id            String     @id @default(uuid())
+  usuarioId     String
+  usuario       Usuario    @relation(fields: [usuarioId], references: [id])
+  mensaje       String     @db.Text
+  tipo          TipoAlerta
+  leida         Boolean    @default(false)
+  fechaCreacion DateTime   @default(now())
+
+  @@map("alertas_in_app")
+}
+
+model HistorialEstado {
+  id             String   @id @default(uuid())
+  citaId         String?
+  cita           Cita?    @relation(fields: [citaId], references: [id])
+  eventoId       String?
+  evento         Evento?  @relation(fields: [eventoId], references: [id])
+  estadoAnterior String   @db.VarChar(50)
+  estadoNuevo    String   @db.VarChar(50)
+  usuarioId      String
+  usuario        Usuario  @relation(fields: [usuarioId], references: [id])
+  fecha          DateTime @default(now())
+
+  @@map("historial_estados")
+}

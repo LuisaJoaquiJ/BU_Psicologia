@@ -1,0 +1,19 @@
+# Levanta una base de datos PostgreSQL 16 local para desarrollo, sin depender
+# de Supabase. Uso: docker compose up -d
+# Luego, en backend/.env: DATABASE_URL="postgresql://postgres:postgres@localhost:5432/conecta_bu?schema=public"
+version: "3.8"
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: conecta_bu
+    ports:
+      - "5432:5432"
+    volumes:
+      - conecta_bu_pgdata:/var/lib/postgresql/data
+
+volumes:
+  conecta_bu_pgdata:
