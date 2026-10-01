@@ -68,11 +68,25 @@ cp .env.example .env
 
 npm install
 npm run prisma:generate
-npm run prisma:migrate      # crea las tablas (todo el modelo de F-03, aunque hoy solo se usan Usuario y Rol)
+npm run prisma:deploy       # aplica las migraciones de prisma/migrations (todo el modelo de F-03)
 npm run prisma:seed         # crea los roles Estudiante y Administrador
 
 npm run dev                 # http://localhost:4000
 ```
+
+### Cambios en el modelo de datos
+
+Las migraciones viven en `backend/prisma/migrations/` y **se suben al
+repositorio**, para que todo el equipo tenga exactamente la misma base de
+datos. Cuando alguien cambie `schema.prisma`:
+
+```bash
+npx prisma migrate dev --name descripcion-del-cambio   # ej: agrega-campo-telefono
+```
+
+Eso genera una nueva carpeta en `prisma/migrations/`: hay que hacer commit de
+ella junto con el cambio en `schema.prisma`. Los demás solo corren
+`npm run prisma:deploy` después de hacer pull.
 
 Para probar sin configurar nada de lo anterior (sin Google real, sin
 Postgres real), corre las pruebas automáticas:
@@ -81,8 +95,9 @@ Postgres real), corre las pruebas automáticas:
 npm test
 ```
 
-Deben pasar 9 pruebas que cubren HU-01 a HU-05 (login válido, cuenta externa
-rechazada, /me, logout, y /admin/ping con 401/403/200 según el rol).
+Deben pasar 11 pruebas que cubren HU-01 a HU-05 (login válido, cuenta externa
+o con correo no verificado rechazada, dominio sin distinguir mayúsculas, /me,
+logout, y /admin/ping con 401/403/200 según el rol).
 
 Para convertir tu propio usuario en administrador una vez que ya iniciaste
 sesión al menos una vez: define `ADMIN_EMAIL=tu-correo@uniautonoma.edu.co`

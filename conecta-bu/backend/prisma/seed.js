@@ -20,7 +20,7 @@ async function main() {
 
   console.log("Roles listos:", { estudiante: estudiante.id, administrador: administrador.id });
 
-  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   if (adminEmail) {
     const admin = await prisma.usuario.upsert({
       where: { emailInstitucional: adminEmail },

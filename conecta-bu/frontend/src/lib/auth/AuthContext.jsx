@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { http } from "../api/http";
+import { http, EVENTO_SESION_EXPIRADA } from "../api/http";
 
 const AuthContext = createContext(null);
 
@@ -22,6 +22,12 @@ export function AuthProvider({ children }) {
       .then((res) => setUsuario(res.data.usuario))
       .catch(() => localStorage.removeItem(TOKEN_KEY))
       .finally(() => setCargando(false));
+  }, []);
+
+  useEffect(() => {
+    const alExpirar = () => setUsuario(null);
+    window.addEventListener(EVENTO_SESION_EXPIRADA, alExpirar);
+    return () => window.removeEventListener(EVENTO_SESION_EXPIRADA, alExpirar);
   }, []);
 
   const iniciarSesion = useCallback((token, usuarioAutenticado) => {

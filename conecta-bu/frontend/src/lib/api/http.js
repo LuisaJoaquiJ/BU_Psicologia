@@ -15,12 +15,16 @@ http.interceptors.request.use((config) => {
   return config;
 });
 
-// Si el backend responde 401 (sesion invalida o expirada), limpiamos la sesion local.
+export const EVENTO_SESION_EXPIRADA = "conectabu:sesion-expirada";
+
+// Si el backend responde 401 (sesion invalida o expirada), limpiamos la sesion local
+// y avisamos a AuthContext para que la interfaz vuelva al login sin recargar.
 http.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && localStorage.getItem("conectabu_token")) {
       localStorage.removeItem("conectabu_token");
+      window.dispatchEvent(new Event(EVENTO_SESION_EXPIRADA));
     }
     return Promise.reject(error);
   }

@@ -23,11 +23,11 @@ async function verifyGoogleIdToken(idToken) {
 
 // RN-001 / HU-02: solo cuentas del dominio institucional autorizado pueden entrar.
 function verificarDominioInstitucional(payload) {
-  const email = payload.email || "";
+  const email = (payload.email || "").toLowerCase();
   const dominio = email.split("@")[1];
-  const emailVerificado = payload.email_verified !== false;
+  const emailVerificado = payload.email_verified === true;
 
-  if (!emailVerificado || dominio !== config.allowedGoogleDomain) {
+  if (!emailVerificado || dominio !== config.allowedGoogleDomain.toLowerCase()) {
     throw new AppError(
       403,
       `Solo se permite el ingreso con cuentas institucionales @${config.allowedGoogleDomain}.`
@@ -38,8 +38,9 @@ function verificarDominioInstitucional(payload) {
 // RF-001, flujo principal, pasos 5-6: busca el registro interno o lo crea con
 // el rol Estudiante por defecto.
 async function buscarOCrearUsuario(payload) {
+  const email = payload.email.toLowerCase();
   const existente = await prisma.usuario.findUnique({
-    where: { emailInstitucional: payload.email },
+    where: { emailInstitucional: email },
     include: { rol: true },
   });
 
@@ -57,8 +58,8 @@ async function buscarOCrearUsuario(payload) {
 
   return prisma.usuario.create({
     data: {
-      emailInstitucional: payload.email,
-      nombre: payload.name || payload.email,
+      emailInstitucional: email,
+      nombre: payload.name || email,
       rolId: rolEstudiante.id,
     },
     include: { rol: true },

@@ -18,6 +18,15 @@ jest.mock("google-auth-library", () => {
       name: "Persona Externa",
       email_verified: true,
     },
+    "token-email-no-verificado": {
+      email: "sin.verificar@uniautonoma.edu.co",
+      name: "Cuenta Sin Verificar",
+    },
+    "token-email-mayusculas": {
+      email: "Estudiante.Mayus@UniAutonoma.edu.co",
+      name: "Estudiante Mayusculas",
+      email_verified: true,
+    },
   };
 
   return {
@@ -77,6 +86,23 @@ describe("RN-001 / HU-02: rechazo de cuentas no institucionales", () => {
 
     expect(res.status).toBe(403);
     expect(res.body.message).toMatch(/institucional/i);
+  });
+
+  test("si Google no confirma el correo como verificado, responde 403", async () => {
+    const res = await request(app)
+      .post("/api/v1/auth/google")
+      .send({ idToken: "token-email-no-verificado" });
+
+    expect(res.status).toBe(403);
+  });
+
+  test("acepta el dominio sin importar mayusculas y guarda el correo en minusculas", async () => {
+    const res = await request(app)
+      .post("/api/v1/auth/google")
+      .send({ idToken: "token-email-mayusculas" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.usuario.email).toBe("estudiante.mayus@uniautonoma.edu.co");
   });
 });
 

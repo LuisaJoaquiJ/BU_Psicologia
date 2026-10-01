@@ -7,14 +7,25 @@ import { http } from "../../lib/api/http";
 // backend, que las rutas administrativas quedan protegidas por rol (HU-05).
 export function AdminPanel() {
   const { usuario } = useAuth();
-  const [estadoPing, setEstadoPing] = useState("Verificando permisos administrativos...");
+  const [estadoPing, setEstadoPing] = useState({
+    tipo: "cargando",
+    mensaje: "Verificando permisos administrativos...",
+  });
 
   useEffect(() => {
     http
       .get("/admin/ping")
-      .then((res) => setEstadoPing(res.data.message))
-      .catch(() => setEstadoPing("No fue posible confirmar el acceso administrativo."));
+      .then((res) => setEstadoPing({ tipo: "ok", mensaje: res.data.message }))
+      .catch(() =>
+        setEstadoPing({ tipo: "error", mensaje: "No fue posible confirmar el acceso administrativo." })
+      );
   }, []);
+
+  const estilosPing = {
+    cargando: "text-gray-600 bg-gray-100",
+    ok: "text-green-700 bg-green-50",
+    error: "text-red-700 bg-red-50",
+  };
 
   return (
     <div>
@@ -23,8 +34,8 @@ export function AdminPanel() {
         <h1 className="text-xl font-semibold text-primary mb-1">
           Panel administrativo — {usuario?.nombre}
         </h1>
-        <p className="text-sm text-green-700 bg-green-50 inline-block rounded-md px-3 py-1 mb-6">
-          {estadoPing}
+        <p className={`text-sm inline-block rounded-md px-3 py-1 mb-6 ${estilosPing[estadoPing.tipo]}`}>
+          {estadoPing.mensaje}
         </p>
 
         <div className="grid sm:grid-cols-2 gap-4">
