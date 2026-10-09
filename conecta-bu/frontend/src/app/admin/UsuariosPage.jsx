@@ -65,7 +65,7 @@ export function UsuariosPage() {
 
   return (
     <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-3xl font-semibold text-primary mb-1">Usuarios</h1>
+      <h1 className="text-3xl font-extrabold text-primary mb-1">Usuarios</h1>
       <p className="text-gray-500 mb-6">
         Consulta los usuarios de Conecta BU, habilítalos o deshabilítalos y define quién es superadministrador. El personal de cada
         módulo se asigna por correo en <a href="/super/accesos" className="font-semibold text-primary-soft">Accesos por módulo</a>.

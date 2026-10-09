@@ -383,7 +383,7 @@ export function GrupoDetallePage() {
           <p className="m-0 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">
             {grupo.disciplina?.nombre} · {grupo.periodo}
           </p>
-          <h1 className="m-0 mt-1 text-[30px] font-semibold">{grupo.nombre}</h1>
+          <h1 className="m-0 mt-1 text-[30px] font-extrabold">{grupo.nombre}</h1>
           <p className="m-0 mt-1 text-ink-500">
             {grupo.horarioTexto}
             {grupo.lugar ? ` · ${grupo.lugar}` : ""}

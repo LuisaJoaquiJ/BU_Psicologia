@@ -51,7 +51,7 @@ export function EncabezadoReporte({ reporte, catalogo }) {
             </Insignia>
           )}
         </div>
-        <h1 className="m-0 mt-1.5 text-2xl sm:text-[30px] font-semibold leading-tight">
+        <h1 className="m-0 mt-1.5 text-2xl sm:text-[30px] font-extrabold leading-tight">
           {reporte.tipo === "CondicionInsegura" ? reporte.lugarEvento : reporte.evento || reporte.motivo}
         </h1>
         <p className="m-0 mt-1 text-ink-500">

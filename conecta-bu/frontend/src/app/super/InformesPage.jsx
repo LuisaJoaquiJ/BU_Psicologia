@@ -54,7 +54,7 @@ function TarjetaInforme({ informe, alCambiar }) {
             <Insignia tono={TONO[informe.estado]}>{TEXTO[informe.estado]}</Insignia>
             <span className="text-xs font-bold text-ink-500">INFBI-002 · versión {informe.version}</span>
           </div>
-          <h2 className="m-0 mt-1.5 text-xl font-semibold">
+          <h2 className="m-0 mt-1.5 text-xl font-extrabold">
             Informe de gestión {informe.periodo} · {modulo?.nombre || informe.modulo}
           </h2>
           <p className="m-0 mt-1 text-sm text-ink-500">

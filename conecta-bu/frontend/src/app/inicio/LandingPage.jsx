@@ -92,7 +92,7 @@ function Carrusel() {
             <span className="w-7 h-0.5 bg-gold" />
             {s.kicker}
           </span>
-          <h1 className="m-0 text-white text-[42px] sm:text-[60px] leading-[1.04] font-semibold">
+          <h1 className="m-0 text-white text-[42px] sm:text-[60px] leading-[1.04] font-extrabold">
             {s.tituloA}{" "}
             <span className="inline-block bg-gold-soft text-primary px-3.5 pb-1 rounded-2xl -rotate-2">{s.tituloB}</span>
           </h1>
@@ -245,7 +245,7 @@ function Encabezado({ kicker, titulo, enlace }) {
     <div className="flex justify-between items-end gap-6 flex-wrap mb-8">
       <div className="max-w-[580px]">
         <p className="m-0 mb-2.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">{kicker}</p>
-        <h2 className="m-0 text-[34px] sm:text-[40px] leading-tight font-semibold">{titulo}</h2>
+        <h2 className="m-0 text-[34px] sm:text-[40px] leading-tight font-extrabold">{titulo}</h2>
       </div>
       {enlace}
     </div>
@@ -346,7 +346,7 @@ export function LandingPage() {
         <section id="como" className="pt-24">
           <div className="bg-white border border-gray-200 rounded-[28px] p-8 sm:p-14">
             <p className="m-0 mb-2.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Cómo funciona</p>
-            <h2 className="m-0 mb-10 text-[34px] sm:text-[40px] leading-tight font-semibold">Tu cita en tres pasos</h2>
+            <h2 className="m-0 mb-10 text-[34px] sm:text-[40px] leading-tight font-extrabold">Tu cita en tres pasos</h2>
             <ol className="list-none m-0 p-0 grid gap-8 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
               {[
                 ["Ingresa con tu cuenta", "Usa tu correo @uniautonoma.edu.co; no necesitas crear otra contraseña."],
@@ -366,7 +366,7 @@ export function LandingPage() {
         <section className="py-24">
           <div className="bg-primary rounded-[28px] p-8 sm:p-14 flex justify-between items-center gap-8 flex-wrap">
             <div className="max-w-[620px]">
-              <h2 className="m-0 mb-3 text-[34px] sm:text-[40px] leading-tight font-semibold text-white">
+              <h2 className="m-0 mb-3 text-[34px] sm:text-[40px] leading-tight font-extrabold text-white">
                 Tu bienestar también es parte de tu carrera
               </h2>
               <p className="m-0 text-[17px] leading-relaxed text-[#D6DDEC]">

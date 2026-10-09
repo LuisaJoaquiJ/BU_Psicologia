@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { http } from "../../lib/api/http";
-import { formatearFecha, formatearHora, fechaInputUTC, horaInputUTC, fechaLarga } from "../../lib/format";
+import { Icono } from "../../components/Iconos";
+import { formatearHora, fechaInputUTC, horaInputUTC, fechaLarga } from "../../lib/format";
+import { Aviso, Vacio, botonPrimario, botonSecundario, claseCampo } from "../../components/ui";
+import { PublicarSemana } from "./PublicarSemana";
 
 const FORM_VACIO = { servicioId: "", fecha: "", horaInicio: "", horaFin: "", cupo: 1 };
 
@@ -17,6 +20,7 @@ export function GestionHorariosPage({ api = "/admin", modulo = "desarrollo-human
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [accionando, setAccionando] = useState(null);
+  const [verAnteriores, setVerAnteriores] = useState(false);
 
   function cargarHorarios() {
     return http
@@ -104,170 +108,143 @@ export function GestionHorariosPage({ api = "/admin", modulo = "desarrollo-human
     }
   }
 
+  const hoy = new Date();
+  const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
+  const visibles = (horarios || []).filter((h) => verAnteriores || h.fecha.slice(0, 10) >= hoyStr);
+  const campoChico = claseCampo;
+
   return (
-    <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-3xl font-semibold text-primary mb-1">Gestión de horarios</h1>
-      <p className="text-gray-500 mb-8">Publica nuevos horarios de atención y administra los existentes.</p>
+    <main className="max-w-[1280px] mx-auto px-4 sm:px-6 py-8">
+      <h1 className="m-0 text-[30px] sm:text-[38px] leading-tight font-extrabold">Mis horarios de atención</h1>
+      <p className="mt-1 mb-6 text-ink-500 max-w-[44em]">
+        Toca en la semana las horas en que atiendes y elige si se repiten. Los estudiantes solo ven las horas que publiques.
+      </p>
 
-      {error && <p className="text-sm text-red-600 bg-red-50 rounded-md p-3 mb-6 whitespace-pre-line">{error}</p>}
+      {error && (
+        <div className="mb-5 whitespace-pre-line">
+          <Aviso>{error}</Aviso>
+        </div>
+      )}
 
-      <form
-        onSubmit={crearHorario}
-        className="bg-white rounded-2xl border border-gray-200 p-6 mb-8 grid sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end"
-      >
-        <label className="flex flex-col gap-1 text-sm text-gray-600 lg:col-span-2">
-          Servicio
-          <select
-            required
-            value={form.servicioId}
-            onChange={(e) => setForm({ ...form, servicioId: e.target.value })}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-ink-900"
-          >
-            {servicios.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.nombre}
-              </option>
+      {servicios.length > 0 && <PublicarSemana api={api} servicios={servicios} horarios={horarios} alPublicar={cargarHorarios} />}
+
+      <section aria-labelledby="publicados" className="mt-10">
+        <div className="flex justify-between items-end gap-4 flex-wrap mb-4">
+          <h2 id="publicados" className="m-0 text-2xl font-extrabold">Horarios publicados</h2>
+          <label className="flex items-center gap-2 min-h-[44px] text-sm font-bold text-ink-600 cursor-pointer">
+            <input type="checkbox" checked={verAnteriores} onChange={(e) => setVerAnteriores(e.target.checked)} className="w-5 h-5 accent-[#19407B]" />
+            Mostrar también los de días pasados
+          </label>
+        </div>
+
+        <details className="mb-4 bg-white rounded-[18px] group">
+          <summary className="cursor-pointer list-none flex items-center justify-between gap-3 min-h-[56px] px-5 font-extrabold text-primary">
+            Agregar una sola hora (fecha y hora exactas)
+            <Icono nombre="derecha" size={18} strokeWidth={2.2} className="transition-transform group-open:rotate-90" />
+          </summary>
+          <form onSubmit={crearHorario} className="px-5 pb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-6 items-end">
+            <label className="flex flex-col gap-1.5 text-sm font-bold text-ink-600 lg:col-span-2">
+              Servicio
+              <select required value={form.servicioId} onChange={(e) => setForm({ ...form, servicioId: e.target.value })} className={campoChico}>
+                {servicios.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.nombre}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm font-bold text-ink-600">
+              Fecha
+              <input required type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} className={campoChico} />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm font-bold text-ink-600">
+              Empieza
+              <input required type="time" value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} className={campoChico} />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm font-bold text-ink-600">
+              Termina
+              <input required type="time" value={form.horaFin} onChange={(e) => setForm({ ...form, horaFin: e.target.value })} className={campoChico} />
+            </label>
+            <button type="submit" disabled={enviando} className={botonPrimario}>
+              {enviando ? "Creando…" : "Agregar"}
+            </button>
+          </form>
+        </details>
+
+        {!horarios && <p className="text-ink-500">Cargando horarios…</p>}
+        {horarios && visibles.length === 0 && <Vacio>No hay horarios publicados desde hoy en adelante. Publícalos arriba, tocando la semana.</Vacio>}
+
+        {visibles.length > 0 && (
+          <details className="group/lista" open={visibles.length <= 12 || undefined}>
+          <summary className="list-none cursor-pointer inline-flex items-center gap-2 min-h-[44px] mb-2 font-extrabold text-primary">
+            <Icono nombre="derecha" size={18} strokeWidth={2.2} className="transition-transform group-open/lista:rotate-90" />
+            Ver la lista ({visibles.length} {visibles.length === 1 ? "horario" : "horarios"}) para editar o cerrar uno
+          </summary>
+          <ul className="list-none m-0 p-0 bg-white rounded-[18px] divide-y divide-[#EEF2F7]">
+            {visibles.map((horario) => (
+              <li key={horario.id} className="px-5 py-4">
+                {editandoId === horario.id ? (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 items-end">
+                    <label className="flex flex-col gap-1.5 text-sm font-bold text-ink-600 lg:col-span-2">
+                      Servicio
+                      <select value={formEdicion.servicioId} onChange={(e) => setFormEdicion({ ...formEdicion, servicioId: e.target.value })} className={campoChico}>
+                        {servicios.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="flex flex-col gap-1.5 text-sm font-bold text-ink-600">
+                      Fecha
+                      <input type="date" value={formEdicion.fecha} onChange={(e) => setFormEdicion({ ...formEdicion, fecha: e.target.value })} className={campoChico} />
+                    </label>
+                    <label className="flex flex-col gap-1.5 text-sm font-bold text-ink-600">
+                      Empieza
+                      <input type="time" value={formEdicion.horaInicio} onChange={(e) => setFormEdicion({ ...formEdicion, horaInicio: e.target.value })} className={campoChico} />
+                    </label>
+                    <label className="flex flex-col gap-1.5 text-sm font-bold text-ink-600">
+                      Termina
+                      <input type="time" value={formEdicion.horaFin} onChange={(e) => setFormEdicion({ ...formEdicion, horaFin: e.target.value })} className={campoChico} />
+                    </label>
+                    <div className="flex gap-2 lg:col-span-5">
+                      <button onClick={() => guardarEdicion(horario.id)} disabled={accionando === horario.id} className={botonPrimario}>
+                        Guardar cambios
+                      </button>
+                      <button onClick={() => setEditandoId(null)} className={botonSecundario}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between flex-wrap gap-x-6 gap-y-3">
+                    <div className="min-w-0 tabular-nums">
+                      <p className="m-0 font-bold text-ink-900">
+                        {fechaLarga(horario.fecha)} · {formatearHora(horario.horaInicio)} a {formatearHora(horario.horaFin)}
+                      </p>
+                      <p className="m-0 text-sm text-ink-500">{horario.servicio?.nombre}</p>
+                    </div>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <span
+                        className={`text-xs font-bold rounded-full px-2.5 py-1 ${horario.ocupado ? "bg-gray-100 text-ink-600" : "bg-[#E3F4F1] text-[#0B6B61]"}`}
+                      >
+                        {horario.ocupado ? "Ocupado" : "Libre"}
+                      </span>
+                      <button onClick={() => empezarEdicion(horario)} className={botonSecundario}>
+                        Editar
+                      </button>
+                      <button onClick={() => alternarDisponibilidad(horario)} disabled={accionando === horario.id} className={botonSecundario}>
+                        {horario.ocupado ? "Volver a abrir" : "Cerrar este horario"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </li>
             ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm text-gray-600">
-          Fecha
-          <input
-            required
-            type="date"
-            value={form.fecha}
-            onChange={(e) => setForm({ ...form, fecha: e.target.value })}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-ink-900"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm text-gray-600">
-          Hora inicio
-          <input
-            required
-            type="time"
-            value={form.horaInicio}
-            onChange={(e) => setForm({ ...form, horaInicio: e.target.value })}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-ink-900"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm text-gray-600">
-          Hora fin
-          <input
-            required
-            type="time"
-            value={form.horaFin}
-            onChange={(e) => setForm({ ...form, horaFin: e.target.value })}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-ink-900"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm text-gray-600">
-          Cupo
-          <input
-            type="number"
-            min="1"
-            value={form.cupo}
-            onChange={(e) => setForm({ ...form, cupo: e.target.value })}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-ink-900"
-          />
-        </label>
-        <button
-          type="submit"
-          disabled={enviando}
-          className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors disabled:opacity-60 lg:col-span-5 sm:col-span-2 sm:justify-self-start"
-        >
-          {enviando ? "Creando..." : "Crear horario"}
-        </button>
-      </form>
-
-      {!horarios && <p className="text-gray-500">Cargando horarios...</p>}
-      {horarios && horarios.length === 0 && <p className="text-gray-500">Todavía no hay horarios publicados.</p>}
-
-      <div className="flex flex-col gap-3">
-        {horarios?.map((horario) => (
-          <div key={horario.id} className="bg-white rounded-2xl border border-gray-200 p-5">
-            {editandoId === horario.id ? (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
-                <select
-                  value={formEdicion.servicioId}
-                  onChange={(e) => setFormEdicion({ ...formEdicion, servicioId: e.target.value })}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-ink-900 lg:col-span-2"
-                >
-                  {servicios.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.nombre}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="date"
-                  value={formEdicion.fecha}
-                  onChange={(e) => setFormEdicion({ ...formEdicion, fecha: e.target.value })}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-ink-900"
-                />
-                <input
-                  type="time"
-                  value={formEdicion.horaInicio}
-                  onChange={(e) => setFormEdicion({ ...formEdicion, horaInicio: e.target.value })}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-ink-900"
-                />
-                <input
-                  type="time"
-                  value={formEdicion.horaFin}
-                  onChange={(e) => setFormEdicion({ ...formEdicion, horaFin: e.target.value })}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-ink-900"
-                />
-                <div className="flex gap-2 lg:col-span-5">
-                  <button
-                    onClick={() => guardarEdicion(horario.id)}
-                    disabled={accionando === horario.id}
-                    className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-1.5 hover:bg-primary-dark transition-colors disabled:opacity-60"
-                  >
-                    Guardar
-                  </button>
-                  <button
-                    onClick={() => setEditandoId(null)}
-                    className="text-sm border border-gray-200 rounded-full px-4 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div>
-                  <p className="m-0 font-semibold text-ink-900">{fechaLarga(horario.fecha)}</p>
-                  <p className="m-0 text-sm font-semibold text-accent">{horario.servicio?.nombre}</p>
-                  <p className="text-sm text-gray-500">
-                    {formatearHora(horario.horaInicio)} – {formatearHora(horario.horaFin)} · Cupo {horario.cupo}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`text-xs font-medium rounded-full px-3 py-1 ${
-                      horario.ocupado ? "bg-gray-100 text-gray-500" : "bg-emerald-50 text-emerald-700"
-                    }`}
-                  >
-                    {horario.ocupado ? "No disponible" : "Disponible"}
-                  </span>
-                  <button
-                    onClick={() => empezarEdicion(horario)}
-                    className="text-sm border border-gray-200 rounded-full px-4 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => alternarDisponibilidad(horario)}
-                    disabled={accionando === horario.id}
-                    className="text-sm border border-gray-200 rounded-full px-4 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-60"
-                  >
-                    {horario.ocupado ? "Habilitar" : "Deshabilitar"}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+          </ul>
+          </details>
+        )}
+      </section>
     </main>
   );
 }

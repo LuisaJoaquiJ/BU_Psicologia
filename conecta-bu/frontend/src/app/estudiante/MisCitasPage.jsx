@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { fechaLarga, formatearHora } from "../../lib/format";
 import { Aviso, Estado, Vacio, botonPrimario, botonSecundario } from "../../components/ui";
@@ -28,6 +28,8 @@ export function MisCitasPage({ modulo = "desarrollo-humano" }) {
   const [citas, setCitas] = useState(null);
   const [error, setError] = useState("");
   const [cancelando, setCancelando] = useState(null);
+  const [params] = useSearchParams();
+  const recienAgendada = params.get("agendada") === "1";
 
   function cargarCitas() {
     return http
@@ -95,16 +97,21 @@ export function MisCitasPage({ modulo = "desarrollo-humano" }) {
     <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 lg:py-10">
       <div className="flex items-end justify-between gap-4 flex-wrap mb-7">
         <div>
-          <h1 className="m-0 text-3xl sm:text-[34px] font-semibold">Mis citas</h1>
+          <h1 className="m-0 text-3xl sm:text-[34px] font-extrabold">Mis citas</h1>
           <p className="mt-1.5 mb-0 text-ink-500">
             {modulo === "salud" ? "Tus citas de salud." : "Tus citas de orientación."} Puedes cancelar hasta 24 horas antes.
           </p>
         </div>
         <Link to={agendar} className={botonPrimario}>
-          Agendar una cita
+          Pedir una cita
         </Link>
       </div>
 
+      {recienAgendada && !error && (
+        <div className="mb-6" role="status">
+          <Aviso tono="verde">Listo: tu cita quedó agendada. Te esperamos; si no puedes ir, cancélala hasta 24 horas antes.</Aviso>
+        </div>
+      )}
       {error && (
         <div className="mb-6">
           <Aviso>{error}</Aviso>

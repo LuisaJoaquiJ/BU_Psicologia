@@ -18,7 +18,7 @@ export function ServiciosPage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 lg:py-10">
-      <h1 className="m-0 text-3xl sm:text-[34px] font-semibold">Servicios de Desarrollo Humano</h1>
+      <h1 className="m-0 text-3xl sm:text-[34px] font-extrabold">Servicios de Desarrollo Humano</h1>
       <p className="mt-1.5 mb-7 text-ink-500 max-w-[620px]">
         Consulta la oferta de orientación disponible para la comunidad institucional.
       </p>

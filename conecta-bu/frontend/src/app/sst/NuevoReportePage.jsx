@@ -158,7 +158,7 @@ function Confirmacion({ reporte, onOtro }) {
         <Icono nombre="check" size={32} strokeWidth={2.6} />
       </span>
       <p className="m-0 mt-5 font-mono font-bold text-ink-500">{reporte.codigo}</p>
-      <h1 className="m-0 mt-1 text-[30px] font-semibold">¡Reporte enviado!</h1>
+      <h1 className="m-0 mt-1 text-[30px] font-extrabold">¡Reporte enviado!</h1>
       <p className="mt-3 mb-0 text-ink-600 max-w-[460px] mx-auto">
         La Unidad de Salud integral revisará la información
         {reporte.gestion ? ` y gestionará el reporte ante ${reporte.gestion === "ARL" ? "la ARL" : "ASIST CARD"}` : ""}. Puedes seguir el estado en
@@ -277,7 +277,7 @@ export function NuevoReportePage({ catalogo }) {
   return (
     <main className="max-w-[1100px] mx-auto px-5 sm:px-8 pt-9 pb-16" ref={arriba}>
       <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Salud integral · Prioriza tu salud y seguridad</p>
-      <h1 className="m-0 text-3xl sm:text-[36px] font-semibold">{def ? def.nombre : "¿Qué vas a reportar?"}</h1>
+      <h1 className="m-0 text-3xl sm:text-[36px] font-extrabold">{def ? def.nombre : "¿Qué vas a reportar?"}</h1>
       {!def && (
         <p className="mt-2 mb-8 text-ink-500 max-w-[680px]">
           Reporta las salidas con estudiantes, las salidas en representación de la Institución, los traslados de docentes de posgrados y las

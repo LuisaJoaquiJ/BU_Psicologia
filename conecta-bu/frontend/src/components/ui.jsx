@@ -18,7 +18,7 @@ export function Encabezado({ kicker, titulo, descripcion, acciones }) {
     <div className="flex justify-between items-end gap-4 flex-wrap mb-7">
       <div className="min-w-0">
         {kicker && <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">{kicker}</p>}
-        <h1 className="m-0 text-3xl sm:text-[34px] font-semibold">{titulo}</h1>
+        <h1 className="m-0 text-3xl sm:text-[34px] font-extrabold">{titulo}</h1>
         {descripcion && <p className="mt-1.5 mb-0 text-ink-500 max-w-[680px]">{descripcion}</p>}
       </div>
       {acciones && <div className="flex gap-2.5 flex-wrap">{acciones}</div>}

@@ -79,21 +79,21 @@ export function InicioEstudiante() {
     <main className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-10 pb-20 flex flex-col gap-8">
       {/* Saludo + próxima cita */}
       <div className="flex gap-5 flex-wrap">
-        <section className="relative overflow-hidden flex-[999_1_520px] bg-primary text-white rounded-[28px] p-8 sm:p-10 flex flex-col gap-3.5">
+        <section className="relative overflow-hidden flex-[999_1_520px] bg-primary-dark text-white rounded-[28px] p-8 sm:p-10 flex flex-col gap-3.5">
           <svg viewBox="0 0 300 300" width="300" height="300" aria-hidden="true" className="absolute -right-20 -top-20">
-            <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(232,178,58,0.4)" strokeWidth="1.5" />
+            <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(127,232,255,0.35)" strokeWidth="1.5" />
             <circle cx="150" cy="150" r="90" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
           </svg>
-          <h1 className="relative m-0 text-[40px] sm:text-[44px] leading-[1.08] font-semibold text-white">
-            Hola, <span className="inline-block bg-gold-soft text-primary px-3 pb-0.5 rounded-2xl -rotate-2">{primerNombre}.</span>
+          <h1 className="relative m-0 text-[40px] sm:text-[44px] leading-[1.08] font-extrabold text-white">
+            Hola, <span className="text-cyan">{primerNombre}.</span>
           </h1>
-          <p className="relative m-0 text-[15px] font-semibold text-gold">{hoyLargo()}</p>
+          <p className="relative m-0 text-[15px] font-semibold text-[#B9C7DE]">{hoyLargo()}</p>
           <p className="relative m-0 text-[17px] leading-relaxed text-[#D6DDEC] max-w-[460px]">
             ¿Cómo te podemos acompañar hoy? Agenda una cita, revisa tus eventos o pregúntale al asistente.
           </p>
           <div className="relative flex gap-3 flex-wrap mt-2">
-            <Link to="/estudiante/agendar" className="bg-gold text-primary font-bold text-[15px] px-5 min-h-[46px] rounded-full inline-flex items-center">
-              Agendar una cita
+            <Link to="/estudiante/agendar" className="bg-cyan text-primary-dark font-extrabold text-[15px] px-5 min-h-[48px] rounded-full inline-flex items-center hover:brightness-95">
+              Pedir una cita
             </Link>
             <Link to="/estudiante/asistente" className="border-[1.5px] border-white/45 text-white font-semibold text-[15px] px-5 min-h-[46px] rounded-full inline-flex items-center hover:bg-white/10">
               Preguntar al asistente
@@ -138,7 +138,7 @@ export function InicioEstudiante() {
       {/* Carrusel de eventos */}
       <section aria-label="Eventos para ti">
         <div className="flex justify-between items-end gap-4 flex-wrap mb-5">
-          <h2 className="m-0 text-[32px] font-semibold">Eventos para ti</h2>
+          <h2 className="m-0 text-[32px] font-extrabold">Eventos para ti</h2>
           {total > POR_VISTA && (
             <div className="flex gap-2.5 items-center">
               <span className="text-sm text-ink-500">

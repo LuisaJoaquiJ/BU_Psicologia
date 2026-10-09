@@ -64,7 +64,7 @@ export function AsistentePage() {
 
   return (
     <main className="max-w-3xl mx-auto p-6 lg:p-10 flex flex-col" style={{ minHeight: "calc(100vh - 72px)" }}>
-      <h1 className="m-0 text-3xl sm:text-[34px] font-semibold">Asistente de orientación</h1>
+      <h1 className="m-0 text-3xl sm:text-[34px] font-extrabold">Asistente de orientación</h1>
       <p className="mt-1.5 mb-4 text-ink-500">
         Información general sobre Bienestar y el uso de Conecta BU. No reemplaza la atención de un profesional ni
         realiza diagnósticos.

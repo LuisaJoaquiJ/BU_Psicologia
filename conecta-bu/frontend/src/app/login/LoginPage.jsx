@@ -49,7 +49,7 @@ export function LoginPage() {
           <Logo invertido />
         </div>
         <div className="relative max-w-[460px]">
-          <h1 className="m-0 mb-4 text-[40px] sm:text-[48px] leading-[1.08] font-semibold text-white">
+          <h1 className="m-0 mb-4 text-[40px] sm:text-[48px] leading-[1.08] font-extrabold text-white">
             Un espacio para cuidarte mientras estudias.
           </h1>
           <p className="m-0 text-[17px] leading-relaxed text-[#D6DDEC]">
@@ -77,8 +77,7 @@ export function LoginPage() {
       <section className="flex-[1_1_480px] flex items-center justify-center px-6 py-14">
         <div className="w-full max-w-[420px] bg-white border border-gray-200 rounded-[28px] px-8 sm:px-10 py-11 flex flex-col gap-6 shadow-[0_20px_50px_rgba(11,42,91,0.06)]">
           <div>
-            <p className="m-0 mb-2 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Bienvenida/o</p>
-            <h2 className="m-0 text-[32px] font-semibold">Inicia sesión</h2>
+            <h2 className="m-0 text-[32px] font-extrabold">Inicia sesión</h2>
             <p className="mt-2.5 mb-0 text-[15px] leading-relaxed text-ink-500">
               Usa tu cuenta institucional de Google. Si es tu primera vez, tu perfil se crea automáticamente.
             </p>

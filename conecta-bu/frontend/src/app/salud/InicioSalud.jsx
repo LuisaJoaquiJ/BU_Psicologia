@@ -77,7 +77,7 @@ export function InicioSalud() {
         <p className="relative m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-gold">
           Salud integral · {resumen?.periodo || "…"}
         </p>
-        <h1 className="relative m-0 text-white text-[32px] sm:text-[40px] font-semibold">
+        <h1 className="relative m-0 text-white text-[32px] sm:text-[40px] font-extrabold">
           {saludo()}, {usuario?.nombre?.split(" ")[0]}
         </h1>
         <p className="relative mt-2 mb-6 text-[#D6DDEC] max-w-[560px]">

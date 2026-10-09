@@ -7,20 +7,21 @@ import { Icono } from "./Iconos";
 // claro en cual se esta; "Módulos" vuelve al portal.
 const MODULOS_ESTUDIANTE = {
   "desarrollo-humano": {
-    nombre: "Desarrollo humano y orientación",
+    nombre: "Desarrollo Humano",
     icono: "persona",
     color: "bg-gold text-primary",
     inicio: "/estudiante",
     menu: [
       { to: "/estudiante", label: "Inicio", end: true },
-      { to: "/estudiante/servicios", label: "Servicios" },
+      { to: "/estudiante/agendar", label: "Pedir una cita" },
       { to: "/estudiante/mis-citas", label: "Mis citas" },
-      { to: "/estudiante/eventos", label: "Eventos" },
+      { to: "/estudiante/eventos", label: "Talleres y eventos" },
+      { to: "/estudiante/servicios", label: "Servicios" },
       { to: "/estudiante/asistente", label: "Asistente" },
     ],
   },
   salud: {
-    nombre: "Salud integral",
+    nombre: "Salud Integral",
     icono: "pulso",
     color: "bg-[#0d9488] text-white",
     inicio: "/mi-salud",
@@ -32,7 +33,7 @@ const MODULOS_ESTUDIANTE = {
     ],
   },
   deporte: {
-    nombre: "Deporte",
+    nombre: "Deporte y Recreación",
     icono: "balon",
     color: "bg-[#F97316] text-white",
     inicio: "/mi-deporte",
@@ -44,7 +45,7 @@ const MODULOS_ESTUDIANTE = {
   },
   // Salidas institucionales y reportes SST (cualquier persona de la Institucion).
   sst: {
-    nombre: "Salud integral · Salidas y reportes",
+    nombre: "Salud Integral · Salidas institucionales",
     icono: "pulso",
     color: "bg-[#0d9488] text-white",
     inicio: "/reportes-sst",
@@ -68,7 +69,7 @@ export function iniciales(nombre = "") {
 
 const clasePildora = ({ isActive }) =>
   `whitespace-nowrap rounded-full px-4 py-2.5 transition-colors ${
-    isActive ? "bg-primary text-white" : "text-ink-600 hover:bg-primary-light hover:text-primary"
+    isActive ? "bg-primary-dark text-white" : "text-ink-600 hover:bg-primary-light hover:text-primary"
   }`;
 
 export function Navbar({ modulo = "desarrollo-humano" }) {
@@ -77,20 +78,18 @@ export function Navbar({ modulo = "desarrollo-humano" }) {
 
   return (
     <header className="bg-white border-b border-gray-200">
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-5">
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0 xl:shrink-0">
           <Link to={datos.inicio} className="flex items-center gap-3 min-w-0 no-underline">
-            <span className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${datos.color}`}>
-              <Icono nombre={datos.icono} size={22} strokeWidth={2} />
-            </span>
+            <img src="/img/logo-uniautonoma-marca.png" alt="Uniautónoma del Cauca" className="h-11 sm:h-[52px] w-auto shrink-0" />
             <span className="flex flex-col leading-tight min-w-0">
-              <span className="font-bold text-primary text-sm sm:text-base leading-tight line-clamp-2">{datos.nombre}</span>
-              <span className="text-xs text-ink-500">Conecta BU</span>
+              <span className="font-extrabold tracking-tight text-primary-dark text-[15px] sm:text-[19px] leading-tight line-clamp-2">{datos.nombre}</span>
+              <span className="text-xs sm:text-[13px] text-ink-500">Conecta BU</span>
             </span>
           </Link>
         </div>
 
-        <nav aria-label={datos.nombre} className="hidden lg:flex gap-1.5 text-sm font-semibold">
+        <nav aria-label={datos.nombre} className="hidden xl:flex gap-1 text-[15px] font-bold">
           {datos.menu.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={clasePildora}>
               {item.label}
@@ -101,18 +100,19 @@ export function Navbar({ modulo = "desarrollo-humano" }) {
         <div className="flex items-center gap-3 shrink-0">
           <Link
             to="/"
-            title="Cambiar de módulo"
-            className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-ink-600 border border-gray-200 rounded-full px-3.5 min-h-[40px] hover:bg-gray-50"
+            aria-label="Cambiar de dimensión"
+            title="Cambiar de dimensión"
+            className="hidden sm:inline-flex items-center justify-center gap-1.5 text-sm font-bold text-primary border-[1.5px] border-gray-200 rounded-full min-w-[44px] px-3 min-h-[44px] hover:bg-primary-light"
           >
             <Icono nombre="cuadricula" size={16} strokeWidth={2} />
-            Módulos
+            <span className="xl:hidden 2xl:inline">Cambiar de dimensión</span>
           </Link>
-          <span className="w-10 h-10 rounded-full bg-gold-light text-accent font-bold text-sm flex items-center justify-center shrink-0" title={usuario?.nombre}>
+          <span className="w-10 h-10 rounded-full bg-primary text-white font-extrabold text-sm flex items-center justify-center shrink-0" title={usuario?.nombre}>
             {iniciales(usuario?.nombre)}
           </span>
           <button
             onClick={cerrarSesion}
-            className="text-sm font-semibold border border-gray-200 rounded-full px-4 min-h-[40px] text-ink-600 hover:bg-gray-50"
+            className="text-sm font-bold rounded-full px-3 min-h-[44px] text-primary hover:bg-primary-light"
           >
             Salir
           </button>
@@ -120,14 +120,14 @@ export function Navbar({ modulo = "desarrollo-humano" }) {
       </div>
 
       {/* RNF-005: en pantallas pequeñas el menú pasa a una fila desplazable. */}
-      <nav aria-label={`${datos.nombre} (móvil)`} className="lg:hidden border-t border-gray-100 px-3 py-2 flex gap-1 overflow-x-auto text-sm font-semibold">
+      <nav aria-label={`${datos.nombre} (móvil)`} className="xl:hidden border-t border-gray-100 px-3 py-2 flex gap-1 overflow-x-auto text-sm font-bold [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_88%,transparent)]">
         {datos.menu.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end} className={clasePildora}>
             {item.label}
           </NavLink>
         ))}
         <NavLink to="/" end className={clasePildora}>
-          Módulos
+          Otras dimensiones
         </NavLink>
       </nav>
     </header>

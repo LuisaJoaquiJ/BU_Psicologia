@@ -52,7 +52,7 @@ export function SaludEstudiantePage() {
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[linear-gradient(100deg,rgba(7,29,64,0.96)_0%,rgba(11,42,91,0.85)_55%,rgba(11,42,91,0.5)_100%)]" />
         <div className="px-7 py-10 sm:px-12 sm:py-12 max-w-[640px]">
           <p className="m-0 mb-2 text-[13px] font-bold tracking-[0.14em] uppercase text-gold">Salud integral</p>
-          <h1 className="m-0 text-white text-[34px] sm:text-[44px] leading-tight font-semibold">Tu salud también es parte de tu carrera</h1>
+          <h1 className="m-0 text-white text-[34px] sm:text-[44px] leading-tight font-extrabold">Tu salud también es parte de tu carrera</h1>
           <p className="mt-3 mb-0 text-[#D6DDEC] text-lg">
             Agenda una consulta de enfermería o médica en la Unidad de Salud Integral. En una emergencia llama a la línea 123.
           </p>
@@ -63,7 +63,7 @@ export function SaludEstudiantePage() {
         <div className="flex justify-between items-end gap-4 flex-wrap mb-5">
           <div>
             <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Agenda tu cita</p>
-            <h2 className="m-0 text-[28px] font-semibold">Horarios disponibles</h2>
+            <h2 className="m-0 text-[28px] font-extrabold">Horarios disponibles</h2>
           </div>
           <Link to="/mi-salud/mis-citas" className="text-sm font-bold text-primary-soft">
             Mis citas →
@@ -146,7 +146,7 @@ export function SaludParticipacionesPage() {
   return (
     <main className="max-w-[900px] mx-auto px-5 sm:px-8 pt-8 pb-16">
       <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Salud integral</p>
-      <h1 className="m-0 text-3xl font-semibold">Mis participaciones</h1>
+      <h1 className="m-0 text-3xl font-extrabold">Mis participaciones</h1>
       <p className="mt-1.5 mb-6 text-ink-500">Jornadas, campañas y atenciones registradas con tu correo institucional.</p>
       {!datos && <div className="h-32 bg-white/60 border border-gray-200 rounded-[22px] animate-pulse" />}
       {datos && !datos.vinculado && (

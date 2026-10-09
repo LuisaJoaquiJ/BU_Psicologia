@@ -46,7 +46,7 @@ function InicioPersonal() {
           <circle cx="200" cy="200" r="120" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" />
         </svg>
         <p className="relative m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-gold">Deporte · {r?.periodo || "…"}</p>
-        <h1 className="relative m-0 text-white text-[32px] sm:text-[40px] font-semibold">
+        <h1 className="relative m-0 text-white text-[32px] sm:text-[40px] font-extrabold">
           {saludo()}, {usuario?.nombre?.split(" ")[0]}
         </h1>
         <p className="relative mt-2 mb-6 text-[#D6DDEC] max-w-[560px]">
@@ -228,7 +228,7 @@ function EstudianteDetallePage() {
       </Link>
       <div className="flex justify-between items-end gap-4 flex-wrap">
         <div>
-          <h1 className="m-0 text-[30px] font-semibold">{d.estudiante.nombre}</h1>
+          <h1 className="m-0 text-[30px] font-extrabold">{d.estudiante.nombre}</h1>
           <p className="m-0 mt-1 text-ink-500">{d.estudiante.email}</p>
         </div>
         <button type="button" onClick={() => descargar(`/deporte/admin/estudiantes/${id}/constancia`, {}, "constancia-horas-deporte.pdf")} className={botonPrimario}>

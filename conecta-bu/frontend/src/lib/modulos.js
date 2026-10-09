@@ -1,6 +1,7 @@
 import { IMAGENES } from "./imagenes";
 
-// Los cinco modulos de Conecta BU (Bienestar Universitario). Cada equipo
+// Las cinco dimensiones del Bienestar Institucional de la Uniautónoma, con
+// sus nombres oficiales (documento de Bienestar de la Institucion). Cada equipo
 // habilita su modulo cambiando "estado" a "disponible" y definiendo sus rutas:
 //   - publica: pagina informativa sin iniciar sesion.
 //   - panel.Estudiante: area del estudiante en ese modulo.
@@ -9,20 +10,20 @@ import { IMAGENES } from "./imagenes";
 export const MODULOS = [
   {
     id: "desarrollo-humano",
-    nombre: "Desarrollo humano y orientación",
-    corto: "Desarrollo humano",
+    nombre: "Desarrollo Humano",
+    corto: "Desarrollo Humano",
     descripcion:
-      "Orientación psicológica, acompañamiento vocacional y talleres de crecimiento personal, con agenda en línea y asistente de orientación.",
+      "Acompañamiento psicológico individual y grupal, orientación vocacional y talleres para el manejo emocional, las relaciones y la prevención.",
     icono: "persona",
     imagen: IMAGENES.permanencia,
     estado: "disponible",
     publica: "/desarrollo-humano",
     panel: { Estudiante: "/estudiante", personal: "/admin" },
-    servicios: ["Citas de orientación", "Talleres y eventos", "Asistente IA"],
+    servicios: ["Citas en línea con el equipo de psicología", "Talleres y eventos con inscripción", "Asistente que responde dudas sobre Bienestar"],
   },
   {
     id: "deporte",
-    nombre: "Deporte",
+    nombre: "Deporte y Recreación",
     corto: "Deporte",
     descripcion:
       "Natación, running, voleibol, fútbol, ajedrez y más: inscríbete a un grupo, asiste a tus clases y completa tus horas de deporte.",
@@ -30,11 +31,11 @@ export const MODULOS = [
     imagen: IMAGENES.deportes,
     estado: "disponible",
     panel: { Estudiante: "/mi-deporte", personal: "/deporte" },
-    servicios: ["Disciplinas e inscripción", "Control de horas", "Constancia"],
+    servicios: ["Inscripción a grupos por disciplina", "Control de tus horas de deporte", "Constancia de horas"],
   },
   {
     id: "permanencia",
-    nombre: "Permanencia estudiantil",
+    nombre: "Permanencia Estudiantil",
     corto: "Permanencia",
     descripcion: "Seguimiento, acompañamiento y estrategias para que avances y culmines tu vida universitaria.",
     icono: "birrete",
@@ -44,7 +45,7 @@ export const MODULOS = [
   },
   {
     id: "salud",
-    nombre: "Salud integral",
+    nombre: "Salud Integral",
     corto: "Salud",
     descripcion:
       "Consultas de enfermería y médicas, jornadas de promoción y prevención, campañas y el registro de atenciones de la Unidad de Salud.",
@@ -52,14 +53,14 @@ export const MODULOS = [
     imagen: IMAGENES.salud,
     estado: "disponible",
     panel: { Estudiante: "/mi-salud", personal: "/salud" },
-    servicios: ["Citas de enfermería y médicas", "Jornadas y campañas", "Salidas institucionales", "Registro con la cédula"],
+    servicios: ["Citas de enfermería y medicina general", "Jornadas de promoción y prevención", "Reporte de salidas institucionales"],
     // Abierto a toda la Institucion (docentes, administrativos, estudiantes).
     extra: { to: "/reportes-sst", label: "Reportar salida institucional" },
   },
   {
     id: "cultura",
-    nombre: "Cultura",
-    corto: "Cultura",
+    nombre: "Arte y Cultura",
+    corto: "Arte y Cultura",
     descripcion: "Expresión artística, cultura institucional y espacios de participación para la comunidad.",
     icono: "musica",
     imagen: IMAGENES.auditorio,

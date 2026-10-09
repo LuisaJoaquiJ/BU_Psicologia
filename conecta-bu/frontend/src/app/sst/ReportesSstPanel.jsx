@@ -64,7 +64,7 @@ function MisReportesPage({ catalogo }) {
           <circle cx="200" cy="200" r="120" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" />
         </svg>
         <p className="relative m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-gold">Salud integral · ¡Cuidarnos es responsabilidad de todos!</p>
-        <h1 className="relative m-0 text-white text-[30px] sm:text-[38px] font-semibold max-w-[640px] leading-tight">Salidas institucionales y reportes de seguridad</h1>
+        <h1 className="relative m-0 text-white text-[30px] sm:text-[38px] font-extrabold max-w-[640px] leading-tight">Salidas institucionales y reportes de seguridad</h1>
         <p className="relative mt-2 mb-6 text-[#D6DDEC] max-w-[600px]">
           Reporta tus salidas con estudiantes o en representación de la Institución, los traslados de posgrados y las condiciones inseguras.
         </p>

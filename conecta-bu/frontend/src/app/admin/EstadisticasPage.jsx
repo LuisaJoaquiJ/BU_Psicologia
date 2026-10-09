@@ -160,7 +160,7 @@ export function EstadisticasPage() {
     <main className="max-w-[1180px] mx-auto px-5 sm:px-8 pt-9 pb-16">
       <div className="flex justify-between items-end gap-4 flex-wrap mb-6">
         <div>
-          <h1 className="m-0 text-3xl font-semibold">Estadísticas</h1>
+          <h1 className="m-0 text-3xl font-extrabold">Estadísticas</h1>
           <p className="mt-1.5 mb-0 text-ink-500">Participación, asistencia y demanda de Bienestar Universitario.</p>
         </div>
         <div className="flex flex-col items-start sm:items-end gap-1.5">

@@ -68,7 +68,7 @@ export function InicioAdmin() {
     <main className="max-w-[1100px] mx-auto px-5 sm:px-10 pt-9 pb-16 flex flex-col gap-7">
       <div className="flex justify-between items-end gap-4 flex-wrap">
         <div>
-          <h1 className="m-0 text-[36px] sm:text-[38px] font-semibold">
+          <h1 className="m-0 text-[36px] sm:text-[38px] font-extrabold">
             {saludo()}, {usuario?.nombre?.split(" ")[0]}
           </h1>
         </div>
@@ -76,7 +76,7 @@ export function InicioAdmin() {
           <Link to="/admin/horarios" className="border-[1.5px] border-gray-200 bg-white font-bold text-sm text-primary px-4 min-h-[44px] rounded-full inline-flex items-center">
             Publicar horario
           </Link>
-          <Link to="/admin/eventos" className="bg-gold text-primary font-bold text-sm px-4 min-h-[44px] rounded-full inline-flex items-center">
+          <Link to="/admin/eventos?nuevo=1" className="bg-primary text-white font-extrabold text-sm px-5 min-h-[44px] rounded-full inline-flex items-center hover:bg-primary-dark">
             Nuevo evento
           </Link>
         </div>

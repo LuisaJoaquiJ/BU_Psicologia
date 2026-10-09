@@ -77,7 +77,7 @@ function InicioDeporte() {
         {datos ? <AnilloHoras total={datos.total} requeridas={datos.requeridas} /> : <div className="w-[168px] h-[168px] rounded-full bg-white/10 animate-pulse" />}
         <div className="relative flex-1 min-w-[240px]">
           <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-gold">Deporte · {datos?.periodo || "…"}</p>
-          <h1 className="m-0 text-white text-[30px] sm:text-[38px] font-semibold leading-tight">
+          <h1 className="m-0 text-white text-[30px] sm:text-[38px] font-extrabold leading-tight">
             {datos?.cumplido ? `¡Completaste tus horas, ${usuario?.nombre?.split(" ")[0]}!` : `Hola, ${usuario?.nombre?.split(" ")[0] || ""}`}
           </h1>
           <p className="mt-2 mb-6 text-[#D6DDEC] max-w-[520px]">
@@ -251,7 +251,7 @@ function OfertaPage() {
       <div className="flex justify-between items-end gap-4 flex-wrap mb-6">
         <div>
           <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Deporte · periodo {oferta?.periodo || "…"}</p>
-          <h1 className="m-0 text-3xl sm:text-[36px] font-semibold">Disciplinas e inscripciones</h1>
+          <h1 className="m-0 text-3xl sm:text-[36px] font-extrabold">Disciplinas e inscripciones</h1>
           <p className="mt-1.5 mb-0 text-ink-500 max-w-[640px]">
             Elige el grupo que mejor se ajuste a tu horario. Puedes inscribirte hasta en {oferta?.maxGruposPorPeriodo || 2} grupo(s) por periodo
             {oferta ? ` (llevas ${oferta.inscritoEn})` : ""}.
@@ -327,7 +327,7 @@ function MisHorasPage() {
       <div className="flex justify-between items-end gap-4 flex-wrap">
         <div>
           <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Deporte</p>
-          <h1 className="m-0 text-3xl sm:text-[36px] font-semibold">Mis horas</h1>
+          <h1 className="m-0 text-3xl sm:text-[36px] font-extrabold">Mis horas</h1>
         </div>
         <button type="button" onClick={descargarConstancia} className={botonPrimario}>
           <Icono nombre="descarga" size={17} /> Descargar constancia

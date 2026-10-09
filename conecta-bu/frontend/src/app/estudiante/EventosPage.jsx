@@ -68,7 +68,7 @@ export function EventosPage() {
 
   return (
     <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-3xl font-semibold text-primary mb-1">Eventos</h1>
+      <h1 className="text-3xl font-extrabold text-primary mb-1">Eventos</h1>
       <p className="text-gray-500 mb-8">
         Talleres y actividades de Desarrollo Humano. Inscríbete mientras haya cupos disponibles.
       </p>
@@ -89,7 +89,7 @@ export function EventosPage() {
             </div>
             <div className="p-6 flex flex-col gap-3 flex-1">
             <div className="flex items-start justify-between gap-3">
-              <h2 className="font-semibold text-ink-900">{evento.nombre}</h2>
+              <h2 className="font-extrabold text-ink-900">{evento.nombre}</h2>
               {inscritoEn(evento) && (
                 <span className="text-xs font-medium rounded-full px-3 py-1 bg-emerald-50 text-emerald-700 shrink-0">
                   Inscrito/a
@@ -150,7 +150,7 @@ export function EventosPage() {
         ))}
       </div>
 
-      <h2 className="text-lg font-semibold text-ink-900 mb-3">Mis inscripciones</h2>
+      <h2 className="text-lg font-extrabold text-ink-900 mb-3">Mis inscripciones</h2>
       {inscripciones.length === 0 ? (
         <p className="text-gray-500 text-sm">Aún no te has inscrito a ningún evento.</p>
       ) : (

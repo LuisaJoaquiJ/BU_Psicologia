@@ -248,7 +248,7 @@ export function ActividadDetallePage() {
             <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">
               {catalogos?.categorias?.[actividad.categoria]} · Cód. SNIES {actividad.codigo} · {actividad.periodo}
             </p>
-            <h1 className="m-0 text-3xl sm:text-[34px] font-semibold">{actividad.nombre}</h1>
+            <h1 className="m-0 text-3xl sm:text-[34px] font-extrabold">{actividad.nombre}</h1>
             <div className="flex gap-1.5 flex-wrap mt-2">
               {actividad.permanente ? <Insignia tono="gris">Servicio permanente</Insignia> : <Insignia>Jornada</Insignia>}
               {actividad.clinica && <Insignia tono="verde">Atención de enfermería</Insignia>}

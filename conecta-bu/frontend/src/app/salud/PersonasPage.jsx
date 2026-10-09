@@ -201,7 +201,7 @@ export function PersonaDetallePage() {
               {persona.apellidos[0]}
             </span>
             <div className="min-w-0">
-              <h1 className="m-0 text-3xl font-semibold">{nombreCompleto(persona)}</h1>
+              <h1 className="m-0 text-3xl font-extrabold">{nombreCompleto(persona)}</h1>
               <p className="m-0 mt-1 text-ink-500">
                 {persona.tipoDocumento} {persona.numeroDocumento} · {POBLACION_TEXTO[persona.poblacion]}
                 {persona.programa ? ` · ${persona.programa}` : ""}

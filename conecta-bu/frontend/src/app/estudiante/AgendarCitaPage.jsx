@@ -2,185 +2,388 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { fechaLarga, formatearHora } from "../../lib/format";
-import { Aviso, Vacio, botonPrimario, botonSecundario } from "../../components/ui";
+import { Aviso, Vacio } from "../../components/ui";
 import { Icono } from "../../components/Iconos";
 
-// RF-004 / RF-005 · HU-07, HU-08, HU-09, HU-10: consulta de horarios
-// disponibles y confirmacion de una cita.
-// Los horarios se agrupan por dia y por servicio, y se pueden filtrar por
-// servicio (?servicio=<id> llega desde la pagina de Servicios). Elegir una
-// hora abre la confirmacion; la cita se crea solo al confirmar.
+// RF-004 / RF-005 · HU-07 a HU-10: pedir una cita en tres pasos
+// (servicio → día y hora → confirmar). Solo se crea la cita al confirmar.
+// ?servicio=<id> (desde la página de Servicios) salta directo al paso 2.
+
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const DIAS_CORTOS = ["lu", "ma", "mi", "ju", "vi", "sá", "do"];
+
+function hoyISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function minutos(horaIso) {
+  const d = new Date(horaIso);
+  return d.getUTCHours() * 60 + d.getUTCMinutes();
+}
+
+// Celdas del mes (lunes primero): null para los huecos antes del día 1.
+function celdasDelMes(anio, mes) {
+  const primero = new Date(Date.UTC(anio, mes, 1)).getUTCDay();
+  const dias = new Date(Date.UTC(anio, mes + 1, 0)).getUTCDate();
+  const celdas = Array((primero + 6) % 7).fill(null);
+  for (let d = 1; d <= dias; d++) celdas.push(`${anio}-${String(mes + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`);
+  return celdas;
+}
+
+const PASOS = ["Servicio", "Día y hora", "Confirmar"];
+
+function Pasos({ paso }) {
+  return (
+    <ol aria-label="Pasos" className="list-none m-0 p-0 flex lg:flex-col gap-1 overflow-x-auto">
+      {PASOS.map((nombre, i) => {
+        const n = i + 1;
+        const hecho = n < paso;
+        const actual = n === paso;
+        return (
+          <li
+            key={nombre}
+            aria-current={actual ? "step" : undefined}
+            className={`flex-1 lg:flex-none flex gap-3 items-center p-3 rounded-xl min-w-[150px] ${actual ? "bg-white shadow-[0_4px_14px_rgba(11,35,71,0.08)]" : ""}`}
+          >
+            <span
+              className={`w-[30px] h-[30px] rounded-full shrink-0 flex items-center justify-center font-extrabold text-sm ${
+                hecho ? "bg-[#1D7A55] text-white" : actual ? "bg-primary text-white" : "border-[1.5px] border-[#B8C2D3] text-ink-500"
+              }`}
+            >
+              {hecho ? <Icono nombre="check" size={15} strokeWidth={3} /> : n}
+            </span>
+            <span className="leading-tight">
+              <strong className={actual || hecho ? "text-ink-900" : "text-ink-500"}>{nombre}</strong>
+              <br />
+              <span className="text-[13px] text-ink-500">{hecho ? "Hecho" : actual ? "Ahora" : "Después"}</span>
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 export function AgendarCitaPage() {
   const navigate = useNavigate();
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
+  const [servicios, setServicios] = useState(null);
   const [horarios, setHorarios] = useState(null);
   const [error, setError] = useState("");
-  const [seleccion, setSeleccion] = useState(null);
+  const [servicioId, setServicioId] = useState(params.get("servicio") || "");
+  const [paso, setPaso] = useState(params.get("servicio") ? 2 : 1);
+  const [mes, setMes] = useState(null); // { anio, mes }
+  const [dia, setDia] = useState("");
+  const [horario, setHorario] = useState(null);
   const [enviando, setEnviando] = useState(false);
-  const filtro = params.get("servicio") || "";
 
   function cargarHorarios() {
     return http
       .get("/citas/horarios-disponibles")
       .then((res) => setHorarios(res.data.horarios))
-      .catch(() => setError("No fue posible cargar los horarios disponibles."));
+      .catch(() => setError("No pudimos cargar los horarios. Revisa tu conexión e intenta de nuevo."));
   }
 
   useEffect(() => {
+    http
+      .get("/servicios")
+      .then((res) => setServicios(res.data.servicios))
+      .catch(() => setError("No pudimos cargar los servicios. Revisa tu conexión e intenta de nuevo."));
     cargarHorarios();
   }, []);
 
-  const servicios = useMemo(() => {
-    const vistos = new Map();
-    for (const h of horarios || []) if (h.servicio) vistos.set(h.servicio.id, h.servicio.nombre);
-    return [...vistos].map(([id, nombre]) => ({ id, nombre }));
-  }, [horarios]);
+  const servicio = servicios?.find((s) => s.id === servicioId);
+  const delServicio = useMemo(
+    () => (horarios || []).filter((h) => (h.servicio?.id || h.servicioId) === servicioId),
+    [horarios, servicioId]
+  );
+  const porDia = useMemo(() => {
+    const mapa = {};
+    for (const h of delServicio) (mapa[h.fecha.slice(0, 10)] ||= []).push(h);
+    for (const lista of Object.values(mapa)) lista.sort((a, b) => minutos(a.horaInicio) - minutos(b.horaInicio));
+    return mapa;
+  }, [delServicio]);
 
-  // dia -> servicio -> horarios, en orden cronologico
-  const dias = useMemo(() => {
-    const visibles = (horarios || []).filter((h) => !filtro || h.servicio?.id === filtro);
-    const porDia = new Map();
-    for (const h of visibles) {
-      const dia = h.fecha.slice(0, 10);
-      if (!porDia.has(dia)) porDia.set(dia, new Map());
-      const porServicio = porDia.get(dia);
-      const clave = h.servicio?.nombre || "Orientación";
-      if (!porServicio.has(clave)) porServicio.set(clave, []);
-      porServicio.get(clave).push(h);
-    }
-    return [...porDia].sort(([a], [b]) => a.localeCompare(b));
-  }, [horarios, filtro]);
+  // Al entrar al paso 2, abrir el mes del primer día con horarios.
+  useEffect(() => {
+    if (paso !== 2 || mes || !horarios) return;
+    const primero = Object.keys(porDia).sort()[0] || hoyISO();
+    setMes({ anio: Number(primero.slice(0, 4)), mes: Number(primero.slice(5, 7)) - 1 });
+  }, [paso, porDia, mes, horarios]);
 
-  function filtrar(id) {
-    setSeleccion(null);
-    setParams(id ? { servicio: id } : {}, { replace: true });
+  function libresDe(id) {
+    return (horarios || []).filter((h) => (h.servicio?.id || h.servicioId) === id).length;
+  }
+
+  function elegirServicio(id) {
+    setServicioId(id);
+    setDia("");
+    setHorario(null);
+    setMes(null);
+  }
+
+  function moverMes(delta) {
+    setMes((m) => {
+      const total = m.anio * 12 + m.mes + delta;
+      return { anio: Math.floor(total / 12), mes: total % 12 };
+    });
   }
 
   async function confirmar() {
     setError("");
     setEnviando(true);
     try {
-      await http.post("/citas", { horarioId: seleccion.id });
-      navigate("/estudiante/mis-citas");
+      await http.post("/citas", { horarioId: horario.id });
+      navigate("/estudiante/mis-citas?agendada=1");
     } catch (err) {
-      // HU-09/HU-10: el backend puede rechazar porque alguien mas tomo el
-      // horario, o porque ya tienes una cita activa. Mostramos el motivo y
-      // refrescamos la lista para que no queden horarios "fantasma".
-      setError(err.response?.data?.message || "No fue posible agendar la cita. Intenta de nuevo.");
-      setSeleccion(null);
+      // HU-09/HU-10: alguien tomó el horario o ya hay una cita activa.
+      setError(err.response?.data?.message || "No pudimos agendar la cita. Intenta de nuevo.");
+      setHorario(null);
+      setPaso(2);
       await cargarHorarios();
     } finally {
       setEnviando(false);
     }
   }
 
+  const hoy = hoyISO();
+
   return (
-    <main className={`max-w-5xl mx-auto px-4 sm:px-6 py-8 lg:py-10 ${seleccion ? "pb-44 sm:pb-36" : ""}`}>
-      <h1 className="m-0 text-3xl sm:text-[34px] font-semibold">Agendar una cita</h1>
-      <p className="mt-1.5 mb-7 text-ink-500 max-w-[620px]">
-        Elige el servicio y la hora que te sirvan. La cita queda agendada cuando la confirmas.
-      </p>
+    <main className="max-w-[1240px] mx-auto px-4 sm:px-6 py-8 lg:py-10 flex gap-8 flex-wrap items-start">
+      <aside className="flex-[1_1_240px] min-w-0">
+        <h1 className="m-0 text-[30px] sm:text-[34px] leading-tight font-extrabold">Pedir una cita</h1>
+        <p className="mt-1.5 mb-6 text-ink-500">Orientación con el equipo de Desarrollo Humano. La cita queda agendada cuando la confirmas.</p>
+        <Pasos paso={paso} />
+        <p className="mt-6 mb-0 p-3.5 rounded-xl bg-[#FFF6E0] text-[#5C4206] text-sm">
+          ¿Es una urgencia? No esperes la cita: llama a la{" "}
+          <a href="tel:123" className="font-extrabold text-[#5C4206] underline underline-offset-4">
+            línea 123
+          </a>
+          .
+        </p>
+      </aside>
 
-      {error && (
-        <div className="mb-6">
-          <Aviso>{error}</Aviso>
-        </div>
-      )}
+      <div className="flex-[999_1_640px] min-w-0 flex flex-col gap-4">
+        {error && <Aviso>{error}</Aviso>}
 
-      {servicios.length > 1 && (
-        <div role="group" aria-label="Filtrar por servicio" className="flex gap-2 flex-wrap mb-8">
-          {[{ id: "", nombre: "Todos los servicios" }, ...servicios].map((s) => {
-            const activo = filtro === s.id;
-            return (
+        {/* Paso 1 */}
+        {paso === 1 ? (
+          <section aria-labelledby="paso1" className="bg-white rounded-[18px] p-5 sm:p-7 shadow-[0_10px_30px_rgba(11,35,71,0.08)]">
+            <h2 id="paso1" className="m-0 mb-1 text-2xl font-extrabold">1 · ¿Qué servicio necesitas?</h2>
+            <p className="m-0 mb-5 text-ink-500">Si no estás seguro, elige orientación psicológica: el profesional te orienta.</p>
+            {!servicios && !error && <p className="text-ink-500">Cargando servicios…</p>}
+            <fieldset className="m-0 p-0 border-0 flex flex-col gap-2.5">
+              <legend className="sr-only">Servicio</legend>
+              {servicios?.map((s) => {
+                const libres = libresDe(s.id);
+                const activo = s.id === servicioId;
+                return (
+                  <label
+                    key={s.id}
+                    className={`flex gap-4 items-start p-4 rounded-[14px] border-[1.5px] cursor-pointer transition-colors ${
+                      activo ? "border-primary bg-primary-light" : "border-gray-200 hover:border-primary/40"
+                    }`}
+                  >
+                    <input type="radio" name="servicio" checked={activo} onChange={() => elegirServicio(s.id)} className="mt-1 w-5 h-5 accent-[#19407B]" />
+                    <span className="flex-1 min-w-0">
+                      <strong className="block text-[17px] text-primary-dark">{s.nombre}</strong>
+                      {s.descripcion && <span className="block text-ink-600 text-[15px] mt-0.5">{s.descripcion}</span>}
+                      <span className={`block text-sm font-bold mt-1.5 ${libres ? "text-primary" : "text-ink-500"}`}>
+                        {libres ? `${libres} ${libres === 1 ? "hora libre" : "horas libres"} en las próximas semanas` : "Sin horas libres por ahora"}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </fieldset>
+            <div className="mt-5 flex justify-end">
               <button
-                key={s.id || "todos"}
                 type="button"
-                aria-pressed={activo}
-                onClick={() => filtrar(s.id)}
-                className={`min-h-[44px] px-4 rounded-full text-sm font-semibold border-[1.5px] transition-colors ${
-                  activo ? "bg-primary border-primary text-white" : "bg-white border-gray-200 text-primary hover:bg-gray-50"
-                }`}
+                disabled={!servicioId}
+                onClick={() => setPaso(2)}
+                className="inline-flex items-center gap-2 min-h-[52px] px-7 rounded-full bg-primary text-white font-extrabold hover:bg-primary-dark disabled:bg-gray-200 disabled:text-ink-500"
               >
-                {s.nombre}
+                Continuar
+                <Icono nombre="flecha" size={18} strokeWidth={2.2} />
               </button>
-            );
-          })}
-        </div>
-      )}
-
-      {!horarios && !error && <p className="text-ink-500">Cargando horarios…</p>}
-
-      {horarios && dias.length === 0 && (
-        <Vacio>
-          {filtro
-            ? "Este servicio no tiene horarios libres por ahora. Prueba con otro servicio o vuelve a consultar más tarde."
-            : "No hay horarios disponibles por ahora. Vuelve a consultar más tarde."}
-        </Vacio>
-      )}
-
-      <div className="flex flex-col gap-9">
-        {dias.map(([dia, porServicio]) => (
-          <section key={dia} aria-labelledby={`dia-${dia}`}>
-            <h2 id={`dia-${dia}`} className="m-0 mb-3 font-sans text-lg font-bold text-primary">
-              {fechaLarga(dia)}
-            </h2>
-            <div className="bg-white border border-gray-200 rounded-[22px] divide-y divide-gray-200">
-              {[...porServicio].map(([servicio, lista]) => (
-                <div key={servicio} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6">
-                  <p className="m-0 text-sm font-semibold text-ink-600 sm:w-56 sm:shrink-0 sm:pt-2.5">{servicio}</p>
-                  <ul className="list-none m-0 p-0 flex flex-wrap gap-2">
-                    {lista.map((h) => {
-                      const elegido = seleccion?.id === h.id;
-                      return (
-                        <li key={h.id}>
-                          <button
-                            type="button"
-                            aria-pressed={elegido}
-                            onClick={() => setSeleccion(elegido ? null : h)}
-                            className={`min-h-[44px] min-w-[92px] px-3.5 rounded-xl text-[15px] font-bold tabular-nums border-[1.5px] transition-colors ${
-                              elegido
-                                ? "bg-primary border-primary text-white"
-                                : "bg-white border-gray-200 text-primary hover:border-primary-soft hover:bg-primary-light"
-                            }`}
-                          >
-                            {formatearHora(h.horaInicio)}
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
             </div>
           </section>
-        ))}
-      </div>
+        ) : (
+          <section className="bg-white rounded-[18px] px-5 sm:px-6 py-4 flex justify-between items-center gap-4 flex-wrap">
+            <div>
+              <span className="text-sm text-ink-500">1 · Servicio</span>
+              <br />
+              <strong className="text-[17px]">{servicio?.nombre || "Servicio"}</strong>
+            </div>
+            <button type="button" onClick={() => setPaso(1)} className="min-h-[44px] px-4 rounded-full border-[1.5px] border-gray-200 font-bold text-primary hover:bg-primary-light">
+              Cambiar servicio
+            </button>
+          </section>
+        )}
 
-      {seleccion && (
-        <div
-          role="region"
-          aria-label="Confirmar cita"
-          className="fixed inset-x-0 bottom-0 z-30 bg-white border-t border-gray-200 shadow-[0_-12px_32px_rgba(11,42,91,0.12)]"
-        >
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-            <div className="flex-1 min-w-0">
-              <p className="m-0 font-bold text-ink-900">{seleccion.servicio?.nombre}</p>
-              <p className="m-0 text-sm text-ink-500 tabular-nums">
-                {fechaLarga(seleccion.fecha)} · {formatearHora(seleccion.horaInicio)} – {formatearHora(seleccion.horaFin)}
-              </p>
+        {/* Paso 2 */}
+        {paso === 2 && mes && (
+          <section aria-labelledby="paso2" className="bg-white rounded-[18px] p-5 sm:p-7 shadow-[0_10px_30px_rgba(11,35,71,0.08)]">
+            <h2 id="paso2" className="m-0 mb-1 text-2xl font-extrabold">2 · Elige el día y la hora</h2>
+            <p className="m-0 mb-5 text-ink-500">Los días en azul tienen horas libres.</p>
+            {horarios && delServicio.length === 0 ? (
+              <Vacio>
+                Este servicio no tiene horas libres por ahora. Prueba con otro servicio, vuelve en unos días o escribe al asistente.
+              </Vacio>
+            ) : (
+              <div className="flex gap-8 flex-wrap">
+                <div className="flex-[1_1_340px] min-w-0">
+                  <div className="flex justify-between items-center mb-3">
+                    <button type="button" aria-label="Mes anterior" onClick={() => moverMes(-1)} className="w-11 h-11 rounded-full bg-cream text-primary flex items-center justify-center hover:bg-primary-light">
+                      <Icono nombre="izquierda" size={18} strokeWidth={2.2} />
+                    </button>
+                    <strong className="text-lg" aria-live="polite">
+                      {MESES[mes.mes].charAt(0).toUpperCase() + MESES[mes.mes].slice(1)} de {mes.anio}
+                    </strong>
+                    <button type="button" aria-label="Mes siguiente" onClick={() => moverMes(1)} className="w-11 h-11 rounded-full bg-cream text-primary flex items-center justify-center hover:bg-primary-light">
+                      <Icono nombre="derecha" size={18} strokeWidth={2.2} />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1.5 text-center tabular-nums">
+                    {DIAS_CORTOS.map((d) => (
+                      <span key={d} className="text-[13px] font-bold text-ink-500 pb-1">
+                        {d}
+                      </span>
+                    ))}
+                    {celdasDelMes(mes.anio, mes.mes).map((f, i) => {
+                      if (!f) return <span key={`v${i}`} />;
+                      const n = Number(f.slice(8));
+                      const libres = porDia[f]?.length || 0;
+                      const elegido = f === dia;
+                      if (!libres)
+                        return (
+                          <span
+                            key={f}
+                            className={`h-12 flex items-center justify-center rounded-xl text-[#7A8396] ${f === hoy ? "border-[1.5px] border-primary" : ""}`}
+                          >
+                            {n}
+                          </span>
+                        );
+                      return (
+                        <button
+                          key={f}
+                          type="button"
+                          aria-pressed={elegido}
+                          aria-label={`${fechaLarga(f)}, ${libres} ${libres === 1 ? "hora libre" : "horas libres"}`}
+                          onClick={() => {
+                            setDia(f);
+                            setHorario(null);
+                          }}
+                          className={`h-12 rounded-xl font-extrabold transition-colors ${elegido ? "bg-primary text-white" : "bg-primary-light text-primary-dark hover:bg-[#D3E0F5]"}`}
+                        >
+                          {n}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="flex-[1_1_260px] min-w-0">
+                  {!dia ? (
+                    <p className="m-0 p-4 rounded-[14px] bg-cream text-ink-500">Toca un día en azul para ver las horas.</p>
+                  ) : (
+                    <>
+                      <h3 className="m-0 mb-3 text-lg font-extrabold">{fechaLarga(dia)}</h3>
+                      <div className="grid grid-cols-2 gap-2 tabular-nums">
+                        {porDia[dia].map((h) => {
+                          const elegido = horario?.id === h.id;
+                          return (
+                            <button
+                              key={h.id}
+                              type="button"
+                              aria-pressed={elegido}
+                              onClick={() => setHorario(h)}
+                              className={`min-h-[52px] rounded-xl border-[1.5px] font-bold transition-colors ${
+                                elegido ? "border-primary bg-primary text-white" : "border-[#D3DBE8] bg-white text-primary-dark hover:border-primary"
+                              }`}
+                            >
+                              {formatearHora(h.horaInicio)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                  {horario && (
+                    <div className="mt-5 p-[18px] rounded-[14px] bg-cream">
+                      <p className="m-0 mb-3 tabular-nums">
+                        <strong>
+                          {fechaLarga(horario.fecha)}, {formatearHora(horario.horaInicio)}
+                        </strong>
+                        <br />
+                        <span className="text-ink-500">Hasta las {formatearHora(horario.horaFin)}</span>
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setPaso(3)}
+                        className="w-full min-h-[52px] rounded-full bg-primary text-white font-extrabold hover:bg-primary-dark"
+                      >
+                        Continuar a confirmar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+        {paso === 3 && horario && (
+          <section className="bg-white rounded-[18px] px-5 sm:px-6 py-4 flex justify-between items-center gap-4 flex-wrap">
+            <div className="tabular-nums">
+              <span className="text-sm text-ink-500">2 · Día y hora</span>
+              <br />
+              <strong className="text-[17px]">
+                {fechaLarga(horario.fecha)}, {formatearHora(horario.horaInicio)}
+              </strong>
             </div>
-            <div className="flex gap-2.5">
-              <button type="button" onClick={() => setSeleccion(null)} className={`${botonSecundario} flex-1 sm:flex-none whitespace-nowrap`}>
-                Cambiar hora
-              </button>
-              <button type="button" onClick={confirmar} disabled={enviando} className={`${botonPrimario} flex-[1.4] sm:flex-none whitespace-nowrap`}>
-                <Icono nombre="check" size={18} strokeWidth={2.2} />
-                {enviando ? "Agendando…" : "Confirmar cita"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            <button type="button" onClick={() => setPaso(2)} className="min-h-[44px] px-4 rounded-full border-[1.5px] border-gray-200 font-bold text-primary hover:bg-primary-light">
+              Cambiar hora
+            </button>
+          </section>
+        )}
+
+        {/* Paso 3 */}
+        {paso === 3 && horario ? (
+          <section aria-labelledby="paso3" className="bg-white rounded-[18px] p-5 sm:p-7 shadow-[0_10px_30px_rgba(11,35,71,0.08)]">
+            <h2 id="paso3" className="m-0 mb-4 text-2xl font-extrabold">3 · Revisa y confirma</h2>
+            <dl className="m-0 mb-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2.5 text-[15px] tabular-nums">
+              <dt className="text-ink-500">Servicio</dt>
+              <dd className="m-0 font-bold">{servicio?.nombre || horario.servicio?.nombre}</dd>
+              <dt className="text-ink-500">Fecha</dt>
+              <dd className="m-0 font-bold">{fechaLarga(horario.fecha)}</dd>
+              <dt className="text-ink-500">Hora</dt>
+              <dd className="m-0 font-bold">
+                {formatearHora(horario.horaInicio)} a {formatearHora(horario.horaFin)}
+              </dd>
+              <dt className="text-ink-500">Lugar</dt>
+              <dd className="m-0">Oficina de Bienestar Institucional</dd>
+            </dl>
+            <p className="m-0 mb-5 text-sm text-ink-500">Puedes cancelarla desde «Mis citas» hasta 24 horas antes.</p>
+            <button
+              type="button"
+              onClick={confirmar}
+              disabled={enviando}
+              className="inline-flex items-center gap-2 min-h-[52px] px-7 rounded-full bg-primary text-white font-extrabold hover:bg-primary-dark disabled:opacity-70"
+            >
+              <Icono nombre="check" size={18} strokeWidth={2.4} />
+              {enviando ? "Agendando…" : "Confirmar cita"}
+            </button>
+          </section>
+        ) : (
+          paso < 3 && (
+            <section className="bg-white rounded-[18px] px-5 sm:px-6 py-4 text-ink-500">
+              <span className="text-sm">3 · Confirmar</span>
+              <br />
+              <strong>Revisas los datos y confirmas.</strong>
+            </section>
+          )
+        )}
+      </div>
     </main>
   );
 }

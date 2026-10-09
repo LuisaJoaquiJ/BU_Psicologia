@@ -1,107 +1,90 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../lib/auth/AuthContext";
-import { Logo } from "./Logo";
 import { Icono } from "./Iconos";
 import { iniciales } from "./Navbar";
 
-// Layout del rol Administrador (rediseño): menú lateral azul y contenido a
-// la derecha. En pantallas pequeñas queda una barra compacta arriba: una
-// fila con el módulo y la persona, y el menú desplazable (RNF-005).
+// Panel del personal de Desarrollo Humano.
 const MENU_ADMIN = [
   { to: "/admin", label: "Inicio", icono: "tablero", end: true },
+  { to: "/admin/citas", label: "Agenda", icono: "calendario" },
   { to: "/admin/horarios", label: "Horarios", icono: "reloj" },
-  { to: "/admin/citas", label: "Agenda de citas", icono: "calendario" },
-  { to: "/admin/eventos", label: "Eventos", icono: "estrella" },
+  { to: "/admin/eventos", label: "Talleres y eventos", icono: "estrella" },
   { to: "/admin/estadisticas", label: "Estadísticas", icono: "grafica" },
 ];
 
-const claseEnlace = ({ isActive }) =>
-  `flex items-center gap-3 rounded-xl px-3.5 py-3 whitespace-nowrap transition-colors ${
-    isActive ? "bg-gold/15 text-[#F3CF7A]" : "text-[#D6DDEC] hover:bg-white/5 hover:text-white"
-  }`;
-
 // Identidad de cada panel: asi siempre se sabe en que modulo se esta.
 const PANELES = {
-  "desarrollo-humano": { nombre: "Desarrollo humano y orientación", icono: "persona", color: "bg-gold text-primary" },
-  salud: { nombre: "Salud integral", icono: "pulso", color: "bg-[#14B8A6] text-primary" },
-  deporte: { nombre: "Deporte", icono: "balon", color: "bg-[#F97316] text-white" },
+  "desarrollo-humano": { nombre: "Desarrollo Humano", icono: "persona", color: "bg-gold text-primary" },
+  salud: { nombre: "Salud Integral", icono: "pulso", color: "bg-[#14B8A6] text-primary" },
+  deporte: { nombre: "Deporte y Recreación", icono: "balon", color: "bg-[#F97316] text-white" },
   super: { nombre: "Superadministrador", icono: "escudo", color: "bg-white text-primary" },
 };
 
 const ROL_TEXTO = { Administrador: "Personal del módulo", SuperAdministrador: "Superadministrador", Estudiante: "Estudiante" };
 
-// Layout con menu lateral, compartido por los paneles del personal de cada
-// modulo y por el del superadministrador.
+// Barra superior azul noche (propuesta B), compartida por los paneles del
+// personal de cada dimensión y por el del superadministrador: arriba la
+// identidad (logo, dimensión, persona) y debajo el menú en pastillas, que en
+// el celular se desplaza de lado.
+const clasePildora = ({ isActive }) =>
+  `inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 min-h-[44px] transition-colors ${
+    isActive ? "bg-cyan text-primary-dark" : "text-[#D9E2F2] hover:bg-white/10 hover:text-white"
+  }`;
+
 export function PanelLayout({ menu, panel, children }) {
   const { usuario, cerrarSesion } = useAuth();
   const datos = PANELES[panel];
 
   return (
-    <div className="min-h-screen bg-cream lg:flex overflow-x-hidden">
-      <aside className="bg-primary text-white lg:w-[260px] lg:shrink-0 lg:min-h-screen px-4 py-3 lg:py-7 flex flex-col gap-2 lg:gap-7">
-        {/* Celular: una sola fila con el modulo, la persona y Salir */}
-        <div className="lg:hidden flex items-center gap-3 min-h-[48px]">
-          <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${datos.color}`}>
-            <Icono nombre={datos.icono} size={18} strokeWidth={2.2} />
-          </span>
-          <span className="flex-1 min-w-0 text-sm font-bold leading-tight line-clamp-2">{datos.nombre}</span>
-          <span
-            title={usuario?.nombre}
-            className="w-9 h-9 rounded-full bg-gold text-primary text-sm font-bold flex items-center justify-center shrink-0"
-          >
-            {iniciales(usuario?.nombre)}
-          </span>
-          <button onClick={cerrarSesion} className="text-[13px] font-semibold text-[#D6DDEC] hover:text-white px-2 min-h-[44px]">
-            Salir
-          </button>
-        </div>
-        <div className="hidden px-2 lg:flex flex-col gap-4">
-          <Logo to="/" subtitulo="Bienestar Universitario" invertido />
-          <div className="flex items-center gap-3 rounded-2xl bg-white/[0.07] border border-white/10 p-3">
-            <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${datos.color}`}>
-              <Icono nombre={datos.icono} size={18} strokeWidth={2.2} />
+    <div className="min-h-screen bg-cream overflow-x-hidden">
+      <header className="bg-primary-dark text-white">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-4">
+          <Link to="/" className="flex items-center gap-3 min-w-0 no-underline">
+            <span className="shrink-0 flex bg-white rounded-[10px] px-1.5 py-1">
+              <img src="/img/logo-uniautonoma-marca.png" alt="Uniautónoma del Cauca" className="h-9 sm:h-11 w-auto" />
             </span>
-            <span className="leading-tight min-w-0">
-              <span className="block text-sm font-bold text-white">{datos.nombre}</span>
-              <span className="block text-xs text-[#C9D3E6]">{panel === "super" ? "Panel" : "Módulo"}</span>
+            <span className="flex flex-col leading-tight min-w-0">
+              <span className="font-extrabold tracking-tight text-[15px] sm:text-lg line-clamp-2">{datos.nombre}</span>
+              <span className="text-xs sm:text-[13px] text-[#B9C7DE]">{panel === "super" ? "Conecta BU" : "Panel del personal"}</span>
             </span>
+          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            {usuario?.rol === "SuperAdministrador" && panel !== "super" && (
+              <Link to="/super" className="hidden xl:inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-full text-sm font-bold text-[#D9E2F2] hover:bg-white/10">
+                <Icono nombre="escudo" size={16} strokeWidth={2} />
+                Superadministrador
+              </Link>
+            )}
+            <Link to="/" className="hidden sm:inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-full text-sm font-bold text-[#D9E2F2] hover:bg-white/10">
+              <Icono nombre="cuadricula" size={16} strokeWidth={2} />
+              Cambiar de dimensión
+            </Link>
+            <span
+              title={`${usuario?.nombre || ""} · ${ROL_TEXTO[usuario?.rol] || usuario?.rol || ""}`}
+              className="w-10 h-10 rounded-full bg-cyan text-primary-dark font-extrabold text-sm flex items-center justify-center shrink-0"
+            >
+              {iniciales(usuario?.nombre)}
+            </span>
+            <button onClick={cerrarSesion} className="text-sm font-bold text-[#D9E2F2] hover:text-white px-2 min-h-[44px]">
+              Salir
+            </button>
           </div>
         </div>
         <nav
-          aria-label="Administración"
-          className="min-w-0 -mx-4 px-4 lg:mx-0 lg:px-0 flex lg:flex-col gap-1 text-[15px] font-semibold overflow-x-auto [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_88%,transparent)] lg:[mask-image:none]"
+          aria-label="Menú del panel"
+          className="max-w-[1280px] mx-auto px-3 sm:px-5 pb-2.5 flex gap-1 overflow-x-auto text-sm sm:text-[15px] font-bold [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_90%,transparent)] lg:[mask-image:none] lg:flex-wrap"
         >
           {menu.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end} className={claseEnlace}>
-              <Icono nombre={item.icono} size={18} strokeWidth={2} />
+            <NavLink key={item.to} to={item.to} end={item.end} className={clasePildora}>
               {item.label}
             </NavLink>
           ))}
-          <NavLink to="/" end className={({ isActive }) => `${claseEnlace({ isActive })} lg:mt-3 lg:border-t lg:border-white/10 lg:rounded-none lg:pt-4`}>
-            <Icono nombre="cuadricula" size={18} strokeWidth={2} />
-            Cambiar de módulo
+          <NavLink to="/" end className={(e) => `${clasePildora(e)} sm:hidden`}>
+            Otras dimensiones
           </NavLink>
-          {usuario?.rol === "SuperAdministrador" && panel !== "super" && (
-            <NavLink to="/super" className={claseEnlace}>
-              <Icono nombre="escudo" size={18} strokeWidth={2} />
-              Superadministrador
-            </NavLink>
-          )}
         </nav>
-        <div className="hidden lg:mt-auto lg:flex items-center gap-3 p-3.5 rounded-2xl bg-white/5">
-          <span className="w-10 h-10 rounded-full bg-gold text-primary font-bold flex items-center justify-center shrink-0">
-            {iniciales(usuario?.nombre)}
-          </span>
-          <span className="flex-1 min-w-0 leading-tight text-sm">
-            <strong className="block truncate">{usuario?.nombre}</strong>
-            <span className="text-xs text-white/70">{ROL_TEXTO[usuario?.rol] || usuario?.rol}</span>
-          </span>
-          <button onClick={cerrarSesion} className="text-[13px] font-semibold text-[#D6DDEC] hover:text-white px-2 min-h-[40px]">
-            Salir
-          </button>
-        </div>
-      </aside>
-      <div className="flex-1 min-w-0">{children}</div>
+      </header>
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }
