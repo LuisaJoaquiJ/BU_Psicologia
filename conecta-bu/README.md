@@ -1,4 +1,18 @@
-# Conecta BU — Sprint 1 (código base)
+# Conecta BU
+
+> **Avance por sprint** (rama `Luisa`)
+>
+> | Sprint | Qué incluye | Requisitos |
+> |---|---|---|
+> | 1 | Login institucional, roles y rutas protegidas | RF-001, RF-002 |
+> | 2 | Servicios, agendamiento, mis citas y cancelación | RF-003 a RF-006 |
+> | 3 | Gestión de horarios, agenda administrativa y asistencia a citas | RF-007, RF-008 |
+> | 4 | Eventos: gestión, inscripción y asistencia | RF-009, RF-010, RF-011 |
+>
+> El detalle de los sprints 4 en adelante está al final de este archivo
+> ([Sprint 4](#sprint-4--eventos-inscripciones-y-asistencia)).
+
+## Sprint 1 (código base)
 
 Código base del proyecto **Conecta BU** para el Sprint 1: inicio de sesión
 institucional, roles y protección de rutas administrativas (historias HU-01
@@ -139,3 +153,46 @@ historia futura tenga un lugar obvio donde ir:
 backend/src/modules/   → un folder por dominio (auth, usuarios, citas, ...)
 frontend/src/app/      → separado por rol (estudiante/, admin/) y luego por funcionalidad
 ```
+
+---
+
+## Sprint 4 — Eventos, inscripciones y asistencia
+
+Requisitos de F-02: **RF-009** (gestión de eventos), **RF-010** (consulta e
+inscripción) y **RF-011** (control de asistencia), con las reglas **RN-006**
+(sin inscripciones duplicadas), **RN-007** (no superar cupos), **RN-008**
+(solo el administrador gestiona) y **RN-010** (asistencia solo sobre
+inscritos). No requiere migración: las tablas `eventos`, `inscripciones`,
+`asistencias_evento` e `historial_estados` ya estaban en el esquema.
+
+| Método | Endpoint | Protección | RF / RN |
+|---|---|---|---|
+| GET | `/api/v1/eventos` | JWT | RF-010 (publicados y futuros, con cupos disponibles) |
+| GET | `/api/v1/eventos/mis-inscripciones` | JWT | RF-010 |
+| GET | `/api/v1/eventos/:id` | JWT | RF-010 |
+| POST | `/api/v1/eventos/:id/inscripciones` | JWT | RF-010 / RN-006 / RN-007 |
+| PATCH | `/api/v1/eventos/:id/inscripciones/cancelar` | JWT | RF-010 |
+| GET / POST | `/api/v1/admin/eventos` | JWT + Administrador | RF-009 |
+| GET / PATCH / DELETE | `/api/v1/admin/eventos/:id` | JWT + Administrador | RF-009 (DELETE pide `?confirmar=true` si hay inscritos) |
+| PATCH | `/api/v1/admin/eventos/:id/estado` | JWT + Administrador | RF-009 (Borrador, Publicado, Cerrado, Cancelado) |
+| GET | `/api/v1/admin/eventos/:id/inscripciones` | JWT + Administrador | RF-011 |
+| PATCH | `/api/v1/admin/eventos/:id/inscripciones/:inscripcionId/asistencia` | JWT + Administrador | RF-011 / RN-010 |
+
+Notas de diseño:
+
+- Un evento nuevo queda en **Borrador** (o Publicado si se marca "Publicar de
+  inmediato"). Los estudiantes solo ven eventos **Publicados** con fecha de
+  hoy en adelante, y solo pueden inscribirse hasta la fecha límite.
+- La inscripción corre en una transacción `Serializable`, así dos personas que
+  toman el último cupo al mismo tiempo no superan el límite (RN-007).
+- Si el estudiante cancela y luego se vuelve a inscribir, se reactiva su misma
+  inscripción (hay un índice único `usuarioId + eventoId`).
+- Cada cambio de estado del evento queda en `historial_estados`.
+- `npm run prisma:seed` crea 3 eventos de ejemplo (2 publicados, 1 borrador).
+
+Pruebas: `npm test` incluye `test/eventos.test.js`.
+
+**Verificación manual:** como administrador, crea un evento en *Eventos*,
+publícalo y ábrelo en *Inscritos y asistencia*; como estudiante, entra a
+*Eventos*, inscríbete y comprueba que el cupo baja; vuelve como administrador
+y marca la asistencia.

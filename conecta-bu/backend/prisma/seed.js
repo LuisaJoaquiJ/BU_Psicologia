@@ -37,6 +37,7 @@ async function main() {
   }
 
   await seedServiciosYHorarios();
+  await seedEventos();
 }
 
 // Sprint 2 (RF-003 / RF-004): un par de servicios y horarios de ejemplo para
@@ -106,6 +107,61 @@ async function seedServiciosYHorarios() {
   }
 
   console.log(`Servicios y horarios de ejemplo creados (${dias.length * bloques.length} horarios).`);
+}
+
+// Sprint 4 (RF-009 / RF-010): eventos de ejemplo para probar "Eventos" e
+// inscripciones. Solo se crean si todavia no hay eventos.
+async function seedEventos() {
+  const existentes = await prisma.evento.count();
+  if (existentes > 0) {
+    console.log("Ya existen eventos cargados: se omite el seed de eventos.");
+    return;
+  }
+
+  const diaUTC = (diasDesdeHoy) => {
+    const hoy = new Date();
+    return new Date(Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + diasDesdeHoy));
+  };
+  const horaUTC = (hora, minuto = 0) => new Date(Date.UTC(1970, 0, 1, hora, minuto, 0));
+
+  await prisma.evento.createMany({
+    data: [
+      {
+        nombre: "Taller de mindfulness y respiración",
+        descripcion: "Técnicas sencillas de atención plena para reducir la ansiedad en época de parciales.",
+        lugar: "Auditorio principal",
+        fecha: diaUTC(7),
+        horaInicio: horaUTC(14),
+        horaFin: horaUTC(16),
+        cupos: 30,
+        fechaLimiteInscripcion: diaUTC(5),
+        estado: "Publicado",
+      },
+      {
+        nombre: "Charla: hábitos de estudio saludables",
+        descripcion: "Organización del tiempo, descanso y hábitos que ayudan al rendimiento académico.",
+        lugar: "Sala de conferencias B",
+        fecha: diaUTC(12),
+        horaInicio: horaUTC(10),
+        horaFin: horaUTC(11, 30),
+        cupos: 40,
+        fechaLimiteInscripcion: diaUTC(10),
+        estado: "Publicado",
+      },
+      {
+        nombre: "Jornada de integración de primer semestre",
+        descripcion: "Actividad en preparación (borrador): aún no visible para los estudiantes.",
+        lugar: "Plazoleta central",
+        fecha: diaUTC(20),
+        horaInicio: horaUTC(9),
+        horaFin: horaUTC(12),
+        cupos: 80,
+        fechaLimiteInscripcion: diaUTC(18),
+        estado: "Borrador",
+      },
+    ],
+  });
+  console.log("Eventos de ejemplo creados (3).");
 }
 
 main()

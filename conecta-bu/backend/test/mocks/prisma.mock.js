@@ -1,7 +1,8 @@
 // Base de datos "en memoria" que imita el subconjunto de la API de Prisma que
 // usa la aplicacion (Sprint 1: roles/usuarios; Sprint 2: servicios/horarios/
-// citas; Sprint 3: gestion de horarios y asistencia). Permite correr las
-// pruebas sin necesitar PostgreSQL instalado.
+// citas; Sprint 3: gestion de horarios y asistencia; Sprint 4: eventos,
+// inscripciones y asistencia a eventos). Permite correr las pruebas sin
+// necesitar PostgreSQL instalado.
 
 let roles = [];
 let usuarios = [];
@@ -9,6 +10,10 @@ let servicios = [];
 let horarios = [];
 let citas = [];
 let asistencias = [];
+let eventos = [];
+let inscripciones = [];
+let asistenciasEvento = [];
+let historial = [];
 let contador = 0;
 
 function seedRoles() {
@@ -36,6 +41,10 @@ function reset() {
   horarios = [];
   citas = [];
   asistencias = [];
+  eventos = [];
+  inscripciones = [];
+  asistenciasEvento = [];
+  historial = [];
   contador = 0;
 }
 reset();
@@ -63,6 +72,52 @@ function attachRelacionesCita(cita) {
     horario: horario ? attachServicio(horario) : null,
     usuario: usuario ? clone(usuario) : null,
   };
+}
+
+function attachRelacionesInscripcion(inscripcion, include) {
+  if (!inscripcion) return inscripcion;
+  const resultado = { ...inscripcion };
+  if (include?.usuario) resultado.usuario = clone(usuarios.find((u) => u.id === inscripcion.usuarioId)) || null;
+  if (include?.evento) resultado.evento = clone(eventos.find((e) => e.id === inscripcion.eventoId)) || null;
+  if (include?.asistencia) {
+    resultado.asistencia = clone(asistenciasEvento.find((a) => a.inscripcionId === inscripcion.id)) || null;
+  }
+  return resultado;
+}
+
+function cumpleWhereInscripcion(i, where = {}) {
+  if (where.id && i.id !== where.id) return false;
+  if (where.usuarioId && i.usuarioId !== where.usuarioId) return false;
+  if (where.eventoId && i.eventoId !== where.eventoId) return false;
+  if (where.estado && i.estado !== where.estado) return false;
+  return true;
+}
+
+function cumpleWhereEvento(e, where = {}) {
+  if (where.id && e.id !== where.id) return false;
+  if (where.estado && typeof where.estado === "string" && e.estado !== where.estado) return false;
+  if (where.estado?.in && !where.estado.in.includes(e.estado)) return false;
+  if (where.fecha?.gte && !(e.fecha >= where.fecha.gte)) return false;
+  return true;
+}
+
+function contarInscripcionesConfirmadas(eventoId) {
+  return inscripciones.filter((i) => i.eventoId === eventoId && i.estado === "Confirmada").length;
+}
+
+function attachRelacionesEvento(evento, include) {
+  if (!evento) return evento;
+  const resultado = { ...evento };
+  if (include?._count) {
+    resultado._count = { inscripciones: contarInscripcionesConfirmadas(evento.id) };
+  }
+  if (include?.inscripciones) {
+    const opciones = include.inscripciones === true ? {} : include.inscripciones;
+    resultado.inscripciones = inscripciones
+      .filter((i) => i.eventoId === evento.id && cumpleWhereInscripcion(i, opciones.where))
+      .map((i) => attachRelacionesInscripcion(i, opciones.include));
+  }
+  return resultado;
 }
 
 const prisma = {
@@ -195,9 +250,126 @@ const prisma = {
       return clone(asistencia);
     },
   },
+  evento: {
+    findMany: async ({ where, include } = {}) =>
+      eventos.filter((e) => cumpleWhereEvento(e, where)).map((e) => attachRelacionesEvento(e, include)),
+    findUnique: async ({ where, include }) =>
+      attachRelacionesEvento(eventos.find((e) => e.id === where.id), include) || null,
+    create: async ({ data, include }) => {
+      contador += 1;
+      const evento = { id: `evento-${contador}`, estado: "Borrador", fechaCreacion: new Date(), ...data };
+      eventos.push(evento);
+      return attachRelacionesEvento(evento, include);
+    },
+    update: async ({ where, data, include }) => {
+      let actualizado = null;
+      eventos = eventos.map((e) => {
+        if (e.id === where.id) {
+          actualizado = { ...e, ...data };
+          return actualizado;
+        }
+        return e;
+      });
+      return attachRelacionesEvento(actualizado, include);
+    },
+    delete: async ({ where }) => {
+      const evento = eventos.find((e) => e.id === where.id);
+      eventos = eventos.filter((e) => e.id !== where.id);
+      return clone(evento);
+    },
+  },
+  inscripcion: {
+    findUnique: async ({ where, include }) => {
+      const clave = where.usuarioId_eventoId;
+      const encontrada = clave
+        ? inscripciones.find((i) => i.usuarioId === clave.usuarioId && i.eventoId === clave.eventoId)
+        : inscripciones.find((i) => i.id === where.id);
+      return attachRelacionesInscripcion(encontrada, include) || null;
+    },
+    findMany: async ({ where, include } = {}) =>
+      inscripciones.filter((i) => cumpleWhereInscripcion(i, where)).map((i) => attachRelacionesInscripcion(i, include)),
+    count: async ({ where } = {}) => inscripciones.filter((i) => cumpleWhereInscripcion(i, where)).length,
+    create: async ({ data, include }) => {
+      contador += 1;
+      const inscripcion = { id: `inscripcion-${contador}`, estado: "Confirmada", fechaInscripcion: new Date(), ...data };
+      inscripciones.push(inscripcion);
+      return attachRelacionesInscripcion(inscripcion, include);
+    },
+    update: async ({ where, data, include }) => {
+      let actualizada = null;
+      inscripciones = inscripciones.map((i) => {
+        if (i.id === where.id) {
+          actualizada = { ...i, ...data };
+          return actualizada;
+        }
+        return i;
+      });
+      return attachRelacionesInscripcion(actualizada, include);
+    },
+    deleteMany: async ({ where }) => {
+      const antes = inscripciones.length;
+      inscripciones = inscripciones.filter((i) => !cumpleWhereInscripcion(i, where));
+      return { count: antes - inscripciones.length };
+    },
+  },
+  asistenciaEvento: {
+    findUnique: async ({ where }) =>
+      clone(asistenciasEvento.find((a) => a.inscripcionId === where.inscripcionId)) || null,
+    upsert: async ({ where, create, update }) => {
+      const existente = asistenciasEvento.find((a) => a.inscripcionId === where.inscripcionId);
+      if (existente) {
+        Object.assign(existente, update);
+        return clone(existente);
+      }
+      contador += 1;
+      const asistencia = { id: `asistencia-evento-${contador}`, fechaRegistro: new Date(), ...create };
+      asistenciasEvento.push(asistencia);
+      return clone(asistencia);
+    },
+    deleteMany: async ({ where }) => {
+      const ids = where?.inscripcion?.eventoId
+        ? inscripciones.filter((i) => i.eventoId === where.inscripcion.eventoId).map((i) => i.id)
+        : null;
+      const antes = asistenciasEvento.length;
+      asistenciasEvento = asistenciasEvento.filter((a) => !(ids ? ids.includes(a.inscripcionId) : true));
+      return { count: antes - asistenciasEvento.length };
+    },
+  },
+  historialEstado: {
+    create: async ({ data }) => {
+      contador += 1;
+      const registro = { id: `historial-${contador}`, fecha: new Date(), ...data };
+      historial.push(registro);
+      return clone(registro);
+    },
+    findMany: async ({ where } = {}) =>
+      historial.filter((h) => !where?.eventoId || h.eventoId === where.eventoId).map(clone),
+    deleteMany: async ({ where } = {}) => {
+      const antes = historial.length;
+      historial = historial.filter((h) => where?.eventoId && h.eventoId !== where.eventoId);
+      return { count: antes - historial.length };
+    },
+  },
   // El mock no necesita aislamiento transaccional real para las pruebas:
   // basta con ejecutar el callback pasandole el propio objeto prisma.
   $transaction: async (fn) => fn(prisma),
+  __seedEvento: (data) => {
+    contador += 1;
+    const evento = {
+      id: `evento-${contador}`,
+      nombre: "Evento de prueba",
+      descripcion: null,
+      lugar: "Auditorio",
+      cupos: 10,
+      estado: "Publicado",
+      fechaCreacion: new Date(),
+      horaInicio: new Date(Date.UTC(1970, 0, 1, 14, 0, 0)),
+      horaFin: new Date(Date.UTC(1970, 0, 1, 16, 0, 0)),
+      ...data,
+    };
+    eventos.push(evento);
+    return evento;
+  },
   __reset: reset,
   __seedUsuario: (data) => {
     contador += 1;

@@ -10,6 +10,8 @@ const serviciosRoutes = require("./modules/servicios/servicios.routes");
 const citasRoutes = require("./modules/citas/citas.routes");
 const horariosAdminRoutes = require("./modules/horarios/horarios.routes");
 const citasAdminRoutes = require("./modules/citas/citas.admin.routes");
+const eventosRoutes = require("./modules/eventos/eventos.routes");
+const eventosAdminRoutes = require("./modules/eventos/eventos.admin.routes");
 const { notFoundHandler, errorHandler } = require("./common/middlewares/error.middleware");
 
 const app = express();
@@ -29,6 +31,8 @@ app.use("/api/v1/servicios", serviciosRoutes);
 app.use("/api/v1/citas", citasRoutes);
 app.use("/api/v1/admin/horarios", horariosAdminRoutes);
 app.use("/api/v1/admin/citas", citasAdminRoutes);
+app.use("/api/v1/eventos", eventosRoutes);
+app.use("/api/v1/admin/eventos", eventosAdminRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

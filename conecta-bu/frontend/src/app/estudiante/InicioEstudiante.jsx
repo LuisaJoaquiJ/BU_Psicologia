@@ -23,16 +23,22 @@ const ITEMS = [
     icon: "🗂️",
     tint: "bg-emerald-50",
   },
+  {
+    titulo: "Eventos e inscripciones",
+    desc: "Consulta los talleres y actividades, e inscríbete.",
+    to: "/estudiante/eventos",
+    icon: "🎉",
+    tint: "bg-violet-50",
+  },
 ];
 
 const PROXIMAMENTE = [
-  { titulo: "Eventos e inscripciones", nota: "RF-009 / RF-010 · Sprint 4", icon: "🎉", tint: "bg-violet-50" },
   { titulo: "Asistente con IA", nota: "RF-014 · Sprint 5", icon: "✨", tint: "bg-rose-50" },
 ];
 
-// Inicio del panel Estudiante. Las tres primeras tarjetas ya llevan a
-// funcionalidades reales del Sprint 2; las dos siguientes quedan marcadas
-// como "Próximamente" hasta sus sprints correspondientes.
+// Inicio del panel Estudiante. Servicios, citas (Sprint 2) y eventos
+// (Sprint 4) ya llevan a funcionalidades reales; el asistente queda marcado
+// como "Próximamente" hasta el Sprint 5.
 export function InicioEstudiante() {
   const { usuario } = useAuth();
   const primerNombre = usuario?.nombre?.split(" ")[0];

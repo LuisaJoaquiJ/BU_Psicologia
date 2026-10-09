@@ -16,15 +16,21 @@ const ITEMS = [
     icon: "🗒️",
     tint: "bg-sky-50",
   },
+  {
+    titulo: "Gestión de eventos",
+    desc: "Crea y publica eventos, y registra la asistencia de los inscritos.",
+    to: "/admin/eventos",
+    icon: "🎉",
+    tint: "bg-emerald-50",
+  },
 ];
 
 const PROXIMAMENTE = [
-  { titulo: "Gestión de eventos", nota: "RF-009 · Sprint 4", icon: "🎉", tint: "bg-emerald-50" },
   { titulo: "Usuarios y dashboard", nota: "RF-012 / RF-015 · Sprint 5", icon: "👤", tint: "bg-violet-50" },
 ];
 
-// Inicio del panel Administrador. Horarios y Agenda/asistencia ya llevan a
-// funcionalidades reales del Sprint 3 (HU-13 a HU-16); el resto queda
+// Inicio del panel Administrador. Horarios y Agenda/asistencia (Sprint 3) y
+// Eventos (Sprint 4) ya llevan a funcionalidades reales; el resto queda
 // marcado como "Próximamente" hasta sus sprints correspondientes.
 export function InicioAdmin() {
   const { usuario } = useAuth();
@@ -36,7 +42,7 @@ export function InicioAdmin() {
         Hola, {usuario?.nombre} — gestiona horarios, citas, eventos y usuarios del área.
       </p>
 
-      <div className="grid sm:grid-cols-2 gap-5 mb-5">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-5">
         {ITEMS.map(({ titulo, desc, to, icon, tint }) => (
           <Link
             key={titulo}
