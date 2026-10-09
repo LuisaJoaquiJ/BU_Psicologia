@@ -73,6 +73,23 @@ describe("Superadministrador: accesos por modulo", () => {
     expect(resultado.modulos).toEqual(["salud"]);
   });
 
+  test("el correo de SUPERADMIN_EMAIL entra como superadministrador aunque ya fuera personal", async () => {
+    process.env.SUPERADMIN_EMAIL = " Alejandro.Martinez.S@uniautonoma.edu.co ";
+    try {
+      const { aplicarAccesos, serializarUsuario } = require("../src/modules/auth/auth.service");
+      const persona = crearUsuario("Administrador", "alejandro.martinez.s@uniautonoma.edu.co");
+      const conRol = await prisma.usuario.findUnique({ where: { id: persona.usuario.id }, include: { rol: true } });
+      const resultado = await aplicarAccesos(conRol);
+      expect(resultado.rol.nombre).toBe("SuperAdministrador");
+      expect(serializarUsuario(resultado).modulos).toEqual(["desarrollo-humano", "salud"]);
+      const otro = crearUsuario("Administrador", "otra@uniautonoma.edu.co");
+      const otroConRol = await prisma.usuario.findUnique({ where: { id: otro.usuario.id }, include: { rol: true } });
+      expect((await aplicarAccesos(otroConRol)).rol.nombre).toBe("Administrador");
+    } finally {
+      delete process.env.SUPERADMIN_EMAIL;
+    }
+  });
+
   test("un administrador sin modulos asignados no entra a ningun panel", async () => {
     const sinNada = crearUsuario("Estudiante", "x@uniautonoma.edu.co");
     await prisma.usuario.update({ where: { id: sinNada.usuario.id }, data: { rolId: "rol-administrador" } });

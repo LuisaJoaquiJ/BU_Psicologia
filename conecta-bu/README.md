@@ -331,7 +331,7 @@ npm run prisma:seed         # rol Salud, servicios y catálogo de actividades
 Variables opcionales en `backend/.env`:
 
 ```
-SUPERADMIN_EMAIL=tu-correo@uniautonoma.edu.co  # superadministrador (seed)
+SUPERADMIN_EMAIL=tu-correo@uniautonoma.edu.co  # superadministrador (al iniciar sesión y en el seed)
 SALUD_EMAIL=enfermeria@uniautonoma.edu.co   # personal de Salud de prueba (seed)
 SALUD_NOMBRE=Personal de Salud
 SALUD_UPLOADS_DIR=                          # carpeta de evidencias (por defecto backend/uploads)
@@ -398,5 +398,7 @@ la persona vuelve a ser estudiante. El backend lo valida en cada petición
 **Al actualizar:** `npx prisma migrate dev` aplica la migración
 `accesos_modulo`, que crea el rol SuperAdministrador y conserva el acceso a
 Desarrollo humano de los administradores que ya existían. Para crear el
-primer superadministrador, define `SUPERADMIN_EMAIL` en `backend/.env` y
-ejecuta `npm run prisma:seed`.
+primer superadministrador, define `SUPERADMIN_EMAIL` en `backend/.env`,
+reinicia el backend y vuelve a iniciar sesión con ese correo: al entrar queda
+como superadministrador (aunque antes fuera estudiante o personal). También
+puedes ejecutar `npm run prisma:seed`, que ahora sí lee el `.env`.

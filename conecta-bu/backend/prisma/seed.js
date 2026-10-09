@@ -6,6 +6,9 @@
 //   ADMIN_EMAIL / ADMIN_NOMBRE           -> personal de Desarrollo humano y orientacion
 //   SALUD_EMAIL / SALUD_NOMBRE           -> personal de Salud integral
 
+// "npm run prisma:seed" corre con node directamente: hay que cargar el .env
+// para leer SUPERADMIN_EMAIL, ADMIN_EMAIL y SALUD_EMAIL.
+require("dotenv").config();
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
@@ -14,6 +17,7 @@ async function rol(nombre) {
 }
 
 async function usuarioDePrueba(email, nombre, rolId) {
+  email = email.trim().toLowerCase();
   return prisma.usuario.upsert({
     where: { emailInstitucional: email },
     update: { rolId, habilitado: true },
