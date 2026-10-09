@@ -5,7 +5,7 @@ import { MODULOS, MODULOS_DISPONIBLES, modulosDe, rutaModulo } from "../../lib/m
 import { Logo } from "../../components/Logo";
 import { Icono } from "../../components/Iconos";
 import { iniciales } from "../../components/Navbar";
-import { Cinta, ProximosEventos } from "../inicio/LandingPage";
+import { ProximosEventos } from "../inicio/LandingPage";
 
 // Portal de Conecta BU ("/"): punto de entrada a los cinco modulos de
 // Bienestar Universitario. Los modulos disponibles se configuran en
@@ -329,8 +329,6 @@ export function PortalPage() {
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-8">
         <Hero />
       </div>
-
-      <Cinta items={MODULOS.map((m) => m.nombre)} />
 
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         <Modulos />

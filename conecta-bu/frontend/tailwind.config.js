@@ -40,14 +40,12 @@ export default {
         display: ["Fraunces", "Georgia", "serif"],
       },
       keyframes: {
-        cinta: { from: { transform: "translateX(0)" }, to: { transform: "translateX(-50%)" } },
         flota: {
           "0%, 100%": { transform: "translateY(0) rotate(-6deg)" },
           "50%": { transform: "translateY(-8px) rotate(-6deg)" },
         },
       },
       animation: {
-        cinta: "cinta 28s linear infinite",
         flota: "flota 4s ease-in-out infinite",
       },
     },

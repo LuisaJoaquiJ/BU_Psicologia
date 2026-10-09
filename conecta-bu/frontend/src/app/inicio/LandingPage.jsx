@@ -7,7 +7,7 @@ import { Logo } from "../../components/Logo";
 import { Icono } from "../../components/Iconos";
 
 // Pagina publica del modulo Desarrollo humano y orientacion (/desarrollo-humano):
-// presenta el modulo antes de iniciar sesion. Carrusel de destacados, cinta de servicios, servicios, proximos
+// presenta el modulo antes de iniciar sesion. Carrusel de destacados, servicios, proximos
 // eventos (GET /eventos/publicos) y pasos para agendar.
 
 const DESTACADOS = [
@@ -56,15 +56,6 @@ const DESTACADOS = [
     selloA: "Nuevo",
     selloB: "asistente IA",
   },
-];
-
-const CINTA = [
-  "Orientación psicológica",
-  "Mindfulness",
-  "Talleres grupales",
-  "Hábitos de estudio",
-  "Feria de bienestar",
-  "Asistente de orientación",
 ];
 
 const MESES = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
@@ -179,23 +170,6 @@ function Carrusel() {
   );
 }
 
-export function Cinta({ items: lista = CINTA }) {
-  const items = [...lista, ...lista];
-  return (
-    <div className="mt-10 bg-primary -rotate-[1.5deg] overflow-hidden py-4 shadow-[0_10px_30px_rgba(11,42,91,0.18)]">
-      <p className="sr-only">{lista.join(", ")}.</p>
-      <div aria-hidden="true" className="animate-cinta flex gap-10 w-max items-center whitespace-nowrap font-display text-[28px] font-semibold text-white">
-        {items.map((texto, i) => (
-          <span key={i} className="flex items-center gap-10">
-            {texto}
-            <span className="text-gold-soft">✺</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export function ProximosEventos() {
   const [eventos, setEventos] = useState(null);
 
@@ -292,8 +266,6 @@ export function LandingPage() {
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-8">
         <Carrusel />
       </div>
-
-      <Cinta />
 
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         <div className="grid gap-4 mt-12 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
