@@ -41,8 +41,8 @@ export function SuperInicio() {
         texto="Cada módulo de Conecta BU es independiente. Desde aquí decides qué correos del personal entran a cada uno; los estudiantes entran con su cuenta institucional."
         acciones={
           <>
-            <Link to="/super/accesos" className={botonBandaPrincipal}>Accesos por módulo</Link>
-            <Link to="/super/usuarios" className={botonBandaSecundario}>Usuarios y roles</Link>
+            <Link to="/super/estadisticas" className={botonBandaPrincipal}>Ver estadísticas</Link>
+            <Link to="/super/accesos" className={botonBandaSecundario}>Accesos por módulo</Link>
           </>
         }
         aside={

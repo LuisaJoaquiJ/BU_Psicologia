@@ -149,3 +149,46 @@ describe("Mis citas separadas por modulo", () => {
     expect(sal.body.citas.map((c) => c.horarioId)).toEqual([hSalud.id]);
   });
 });
+
+describe("Superadministrador: tablero de estadisticas de todos los modulos", () => {
+  test("solo el superadministrador lo ve", async () => {
+    const dh = crearUsuario("Administrador", "dh2@uniautonoma.edu.co");
+    expect((await api("get", "/estadisticas", dh.token)).status).toBe(403);
+  });
+
+  test("sin datos responde con ceros y los meses del rango", async () => {
+    const res = await api("get", "/estadisticas?meses=3");
+    expect(res.status).toBe(200);
+    expect(res.body.meses).toBe(3);
+    expect(res.body.tendencia).toHaveLength(3);
+    expect(res.body.totales).toMatchObject({ citas: 0, atenciones: 0, reportesSst: 0 });
+    expect(res.body.citas["desarrollo-humano"].tasaAsistencia).toBeNull();
+  });
+
+  test("cuenta citas por modulo y estado, y eventos con su ocupacion", async () => {
+    const est = crearUsuario("Estudiante", "est@uniautonoma.edu.co");
+    const hoy = diasDesdeHoy(0);
+    const servicioDH = prisma.__seedServicio({ nombre: "Orientación", modulo: "desarrollo-humano" });
+    const servicioSalud = prisma.__seedServicio({ nombre: "Enfermería", modulo: "salud" });
+    for (const [servicio, estado] of [
+      [servicioDH, "Atendida"],
+      [servicioDH, "NoAsistio"],
+      [servicioDH, "Atendida"],
+      [servicioSalud, "Agendada"],
+    ]) {
+      const horario = prisma.__seedHorario({ servicioId: servicio.id, fecha: hoy, ocupado: true });
+      await prisma.cita.create({ data: { usuarioId: est.usuario.id, horarioId: horario.id, estado } });
+    }
+    const evento = prisma.__seedEvento({ fecha: hoy, fechaLimiteInscripcion: hoy, cupos: 4 });
+    await prisma.inscripcion.create({ data: { usuarioId: est.usuario.id, eventoId: evento.id } });
+
+    const res = await api("get", "/estadisticas");
+    expect(res.status).toBe(200);
+    expect(res.body.citas["desarrollo-humano"]).toMatchObject({ Atendida: 2, NoAsistio: 1, total: 3, tasaAsistencia: 66.7 });
+    expect(res.body.citas.salud).toMatchObject({ Agendada: 1, total: 1 });
+    expect(res.body.eventos).toMatchObject({ total: 1, inscritos: 1, cupos: 4, ocupacion: 25 });
+    const mesActual = res.body.tendencia.at(-1);
+    expect(mesActual["desarrollo-humano"]).toBe(4);
+    expect(mesActual.salud).toBe(1);
+  });
+});

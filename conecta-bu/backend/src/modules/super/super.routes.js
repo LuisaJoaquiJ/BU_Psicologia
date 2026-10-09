@@ -4,6 +4,7 @@ const { requireRole } = require("../../common/middlewares/roles.middleware");
 const { requireFields } = require("../../common/validators/validate");
 const servicio = require("./super.service");
 const informes = require("../salud/informe.service");
+const { estadisticas } = require("./super.estadisticas");
 
 // Panel del superadministrador (/api/v1/super).
 const router = Router();
@@ -18,6 +19,8 @@ const manejar = (fn) => async (req, res, next) => {
 };
 
 router.get("/resumen", manejar(async (req, res) => res.json(await servicio.resumen())));
+// Tablero con las cifras de todos los modulos (?meses=3|6|12).
+router.get("/estadisticas", manejar(async (req, res) => res.json(await estadisticas(req.query))));
 router.get("/accesos", manejar(async (req, res) => res.json(await servicio.listarAccesos())));
 router.post(
   "/accesos",

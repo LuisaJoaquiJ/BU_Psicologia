@@ -37,7 +37,7 @@ export function Leyenda({ series }) {
 }
 
 // Tooltip flotante dentro del contenedor relativo de cada grafica.
-function useTooltip() {
+export function useTooltip() {
   const [tip, setTip] = useState(null);
   const mostrar = (evento, contenido) => {
     const caja = evento.currentTarget.closest("[data-grafica]").getBoundingClientRect();
@@ -57,7 +57,7 @@ function useTooltip() {
   return { mostrar, ocultar, nodo };
 }
 
-function Tip({ valor, etiqueta, detalle }) {
+export function Tip({ valor, etiqueta, detalle }) {
   return (
     <span className="flex flex-col">
       <strong className="text-sm">{valor}</strong>

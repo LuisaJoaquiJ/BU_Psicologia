@@ -4,11 +4,13 @@ import { UsuariosPage } from "../admin/UsuariosPage";
 import { SuperInicio } from "./SuperInicio";
 import { AccesosPage } from "./AccesosPage";
 import { InformesPage } from "./InformesPage";
+import { EstadisticasSuperPage } from "./EstadisticasSuperPage";
 
 // Panel del superadministrador (/super): ve todos los modulos de Conecta BU,
 // asigna por correo el personal de cada uno y administra usuarios y roles.
 const MENU_SUPER = [
   { to: "/super", label: "Inicio", icono: "tablero", end: true },
+  { to: "/super/estadisticas", label: "Estadísticas", icono: "grafica" },
   { to: "/super/informes", label: "Informes de gestión", icono: "archivo" },
   { to: "/super/accesos", label: "Accesos por módulo", icono: "escudo" },
   { to: "/super/usuarios", label: "Usuarios y roles", icono: "usuarios" },
@@ -19,6 +21,7 @@ export function SuperPanel() {
     <PanelLayout menu={MENU_SUPER} panel="super">
       <Routes>
         <Route index element={<SuperInicio />} />
+        <Route path="estadisticas" element={<EstadisticasSuperPage />} />
         <Route path="informes" element={<InformesPage />} />
         <Route path="accesos" element={<AccesosPage />} />
         <Route path="usuarios" element={<UsuariosPage />} />
