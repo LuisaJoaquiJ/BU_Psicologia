@@ -41,7 +41,7 @@ export function AgendarCitaPage() {
 
   return (
     <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-2xl font-bold text-ink-900 mb-1">Agendar una cita</h1>
+      <h1 className="text-3xl font-semibold text-primary mb-1">Agendar una cita</h1>
       <p className="text-gray-500 mb-8">Elige un horario disponible y confirma tu cita de orientación.</p>
 
       {error && <p className="text-sm text-red-600 bg-red-50 rounded-md p-3 mb-6">{error}</p>}

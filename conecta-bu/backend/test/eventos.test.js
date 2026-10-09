@@ -337,3 +337,21 @@ describe("RF-011 / RN-010: control de asistencia a eventos", () => {
     expect(res.status).toBe(403);
   });
 });
+
+describe("Inicio publico: proximos eventos sin sesion", () => {
+  test("lista solo eventos publicados y futuros, sin datos de inscritos", async () => {
+    const evento = sembrarEventoPublicado({ cupos: 3, nombre: "Feria de bienestar" });
+    sembrarEventoPublicado({ estado: "Borrador" });
+    const { token } = crearEstudiante();
+    await request(app).post(`/api/v1/eventos/${evento.id}/inscripciones`).set(auth(token));
+
+    const res = await request(app).get("/api/v1/eventos/publicos");
+
+    expect(res.status).toBe(200);
+    expect(res.body.eventos).toEqual([
+      expect.objectContaining({ id: evento.id, nombre: "Feria de bienestar", cuposDisponibles: 2 }),
+    ]);
+    expect(res.body.eventos[0]).not.toHaveProperty("inscripciones");
+    expect(res.body.eventos[0]).not.toHaveProperty("_count");
+  });
+});

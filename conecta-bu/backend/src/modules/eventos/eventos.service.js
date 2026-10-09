@@ -245,6 +245,28 @@ async function listarEventosPublicados(usuarioId) {
   );
 }
 
+// Pagina de inicio publica (rediseño): proximos eventos publicados, sin
+// sesion. Solo datos de difusion (nombre, fecha, lugar, cupos libres); nunca
+// quien esta inscrito.
+async function listarProximosEventosPublicos(limite = 6) {
+  const eventos = await prisma.evento.findMany({
+    where: { estado: "Publicado", fecha: { gte: hoyUTC() } },
+    include: CONTEO_INSCRITOS,
+    orderBy: [{ fecha: "asc" }, { horaInicio: "asc" }],
+  });
+  return eventos.slice(0, limite).map((evento) => ({
+    id: evento.id,
+    nombre: evento.nombre,
+    descripcion: evento.descripcion,
+    lugar: evento.lugar,
+    fecha: evento.fecha,
+    horaInicio: evento.horaInicio,
+    horaFin: evento.horaFin,
+    cupos: evento.cupos,
+    cuposDisponibles: Math.max(evento.cupos - inscritosConfirmados(evento), 0),
+  }));
+}
+
 // RF-010, pasos 3-4: detalle de un evento publicado.
 async function obtenerEventoPublicado(id, usuarioId) {
   const evento = await prisma.evento.findUnique({ where: { id }, include: CONTEO_INSCRITOS });
@@ -351,6 +373,7 @@ module.exports = {
   listarInscritosEvento,
   registrarAsistenciaEvento,
   listarEventosPublicados,
+  listarProximosEventosPublicos,
   obtenerEventoPublicado,
   inscribirseEnEvento,
   cancelarInscripcion,

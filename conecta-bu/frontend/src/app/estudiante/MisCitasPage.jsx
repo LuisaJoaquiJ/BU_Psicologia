@@ -44,10 +44,10 @@ export function MisCitasPage() {
   return (
     <main className="max-w-6xl mx-auto p-6 lg:p-10">
       <div className="flex items-center justify-between mb-1 flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-ink-900">Mis citas</h1>
+        <h1 className="text-3xl font-semibold text-primary">Mis citas</h1>
         <Link
           to="/estudiante/agendar"
-          className="text-sm font-medium bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors"
+          className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors"
         >
           Agendar nueva cita
         </Link>

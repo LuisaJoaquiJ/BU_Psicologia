@@ -1,9 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-gray-50 text-ink-900 font-sans;
+@layer base {
+  body {
+    @apply bg-cream text-ink-900 font-sans antialiased;
+  }
+  /* Titulares con la serif del rediseño en todas las pantallas. */
+  h1,
+  h2 {
+    @apply font-display tracking-tight text-primary;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-cinta,
+  .animate-flota {
+    animation: none;
+  }
 }

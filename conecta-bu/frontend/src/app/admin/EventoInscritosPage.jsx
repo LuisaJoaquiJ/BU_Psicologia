@@ -54,7 +54,7 @@ export function EventoInscritosPage() {
 
       {evento && (
         <>
-          <h1 className="text-2xl font-bold text-ink-900 mt-4 mb-1">{evento.nombre}</h1>
+          <h1 className="text-3xl font-semibold text-primary mt-4 mb-1">{evento.nombre}</h1>
           <p className="text-gray-500 capitalize mb-6">
             {formatearFecha(evento.fecha)} · {formatearHora(evento.horaInicio)} – {formatearHora(evento.horaFin)}
             {evento.lugar ? ` · ${evento.lugar}` : ""} · {evento.estado}

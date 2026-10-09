@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { http } from "../../lib/api/http";
 import { formatearFecha, formatearHora } from "../../lib/format";
+import { imagenParaEvento } from "../../lib/imagenes";
 
 const ESTADO_INSCRIPCION = {
   Confirmada: "bg-emerald-50 text-emerald-700",
@@ -67,7 +68,7 @@ export function EventosPage() {
 
   return (
     <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-2xl font-bold text-ink-900 mb-1">Eventos</h1>
+      <h1 className="text-3xl font-semibold text-primary mb-1">Eventos</h1>
       <p className="text-gray-500 mb-8">
         Talleres y actividades de Desarrollo Humano. Inscríbete mientras haya cupos disponibles.
       </p>
@@ -82,7 +83,11 @@ export function EventosPage() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
         {eventos?.map((evento) => (
-          <article key={evento.id} className="bg-white rounded-2xl border border-gray-200 p-6 flex flex-col gap-3">
+          <article key={evento.id} className="bg-white rounded-3xl border border-gray-200 overflow-hidden flex flex-col">
+            <div className="relative h-[170px] bg-primary-soft">
+              <img src={imagenParaEvento(evento.id).src} alt={imagenParaEvento(evento.id).alt} className="absolute inset-0 w-full h-full object-cover" />
+            </div>
+            <div className="p-6 flex flex-col gap-3 flex-1">
             <div className="flex items-start justify-between gap-3">
               <h2 className="font-semibold text-ink-900">{evento.nombre}</h2>
               {inscritoEn(evento) && (
@@ -128,7 +133,7 @@ export function EventosPage() {
                 <button
                   onClick={() => inscribirse(evento)}
                   disabled={procesando === evento.id || !evento.inscripcionAbierta || evento.cuposDisponibles === 0}
-                  className="text-sm font-medium bg-primary text-white rounded-full px-4 py-1.5 hover:bg-primary-dark transition-colors disabled:opacity-50"
+                  className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-1.5 hover:bg-primary-dark transition-colors disabled:opacity-50"
                 >
                   {!evento.inscripcionAbierta
                     ? "Inscripciones cerradas"
@@ -139,6 +144,7 @@ export function EventosPage() {
                     : "Inscribirme"}
                 </button>
               )}
+            </div>
             </div>
           </article>
         ))}

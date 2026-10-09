@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import { Navbar } from "../../components/Navbar";
+import { AdminLayout } from "../../components/AdminLayout";
 import { InicioAdmin } from "./InicioAdmin";
 import { GestionHorariosPage } from "./GestionHorariosPage";
 import { AgendaAdminPage } from "./AgendaAdminPage";
@@ -14,8 +14,7 @@ import { EstadisticasPage } from "./EstadisticasPage";
 // agrega Usuarios (RF-012) y Estadísticas (RF-015), siguiendo F-03 (6.2).
 export function AdminPanel() {
   return (
-    <div>
-      <Navbar />
+    <AdminLayout>
       <Routes>
         <Route index element={<InicioAdmin />} />
         <Route path="horarios" element={<GestionHorariosPage />} />
@@ -25,6 +24,6 @@ export function AdminPanel() {
         <Route path="usuarios" element={<UsuariosPage />} />
         <Route path="estadisticas" element={<EstadisticasPage />} />
       </Routes>
-    </div>
+    </AdminLayout>
   );
 }

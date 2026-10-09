@@ -104,7 +104,7 @@ export function EstadisticasPage() {
 
   return (
     <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-2xl font-bold text-ink-900 mb-1">Estadísticas</h1>
+      <h1 className="text-3xl font-semibold text-primary mb-1">Estadísticas</h1>
       <p className="text-gray-500 mb-6">Participación y asistencia de los estudiantes a citas y eventos.</p>
 
       <form
@@ -122,7 +122,7 @@ export function EstadisticasPage() {
           Hasta
           <input type="date" value={filtro.hasta} onChange={(e) => setFiltro({ ...filtro, hasta: e.target.value })} className={campo} />
         </label>
-        <button type="submit" className="text-sm font-medium bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors">
+        <button type="submit" className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors">
           Aplicar
         </button>
         <button

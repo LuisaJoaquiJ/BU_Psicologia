@@ -55,7 +55,7 @@ export function AgendaAdminPage() {
 
   return (
     <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-2xl font-bold text-ink-900 mb-1">Agenda de citas</h1>
+      <h1 className="text-3xl font-semibold text-primary mb-1">Agenda de citas</h1>
       <p className="text-gray-500 mb-6">Consulta las citas agendadas y registra la asistencia de cada estudiante.</p>
 
       <form onSubmit={buscar} className="flex items-end gap-3 mb-8 flex-wrap">
@@ -70,7 +70,7 @@ export function AgendaAdminPage() {
         </label>
         <button
           type="submit"
-          className="text-sm font-medium bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors"
+          className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors"
         >
           Buscar
         </button>

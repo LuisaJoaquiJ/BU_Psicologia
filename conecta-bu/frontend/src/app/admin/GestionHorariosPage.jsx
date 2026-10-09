@@ -104,7 +104,7 @@ export function GestionHorariosPage() {
 
   return (
     <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-2xl font-bold text-ink-900 mb-1">Gestión de horarios</h1>
+      <h1 className="text-3xl font-semibold text-primary mb-1">Gestión de horarios</h1>
       <p className="text-gray-500 mb-8">Publica nuevos horarios de atención y administra los existentes.</p>
 
       {error && <p className="text-sm text-red-600 bg-red-50 rounded-md p-3 mb-6 whitespace-pre-line">{error}</p>}
@@ -171,7 +171,7 @@ export function GestionHorariosPage() {
         <button
           type="submit"
           disabled={enviando}
-          className="text-sm font-medium bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors disabled:opacity-60 lg:col-span-5 sm:col-span-2 sm:justify-self-start"
+          className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors disabled:opacity-60 lg:col-span-5 sm:col-span-2 sm:justify-self-start"
         >
           {enviando ? "Creando..." : "Crear horario"}
         </button>
@@ -218,7 +218,7 @@ export function GestionHorariosPage() {
                   <button
                     onClick={() => guardarEdicion(horario.id)}
                     disabled={accionando === horario.id}
-                    className="text-sm font-medium bg-primary text-white rounded-full px-4 py-1.5 hover:bg-primary-dark transition-colors disabled:opacity-60"
+                    className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-1.5 hover:bg-primary-dark transition-colors disabled:opacity-60"
                   >
                     Guardar
                   </button>

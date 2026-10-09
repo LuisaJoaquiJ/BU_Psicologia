@@ -7,6 +7,7 @@ const {
   listarInscritosEvento,
   registrarAsistenciaEvento,
   listarEventosPublicados,
+  listarProximosEventosPublicos,
   obtenerEventoPublicado,
   inscribirseEnEvento,
   cancelarInscripcion,
@@ -92,6 +93,12 @@ const listarPublicados = manejar(async (req, res) => {
   res.status(200).json({ eventos });
 });
 
+// Inicio publico (sin sesion)
+const proximosPublicos = manejar(async (req, res) => {
+  const eventos = await listarProximosEventosPublicos();
+  res.status(200).json({ eventos });
+});
+
 // RF-010
 const detalle = manejar(async (req, res) => {
   const evento = await obtenerEventoPublicado(req.params.id, req.usuario.id);
@@ -128,6 +135,7 @@ module.exports = {
   inscritos,
   asistencia,
   listarPublicados,
+  proximosPublicos,
   detalle,
   inscribirse,
   cancelar,

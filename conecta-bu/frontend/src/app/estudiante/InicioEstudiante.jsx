@@ -1,72 +1,269 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { http } from "../../lib/api/http";
 import { useAuth } from "../../lib/auth/AuthContext";
+import { formatearFecha, formatearHora } from "../../lib/format";
+import { imagenParaEvento } from "../../lib/imagenes";
+import { Icono } from "../../components/Iconos";
 
-const ITEMS = [
-  {
-    titulo: "Servicios de Desarrollo Humano",
-    desc: "Consulta los servicios de orientación disponibles.",
-    to: "/estudiante/servicios",
-    icon: "🩺",
-    tint: "bg-sky-50",
-  },
-  {
-    titulo: "Agendar una cita",
-    desc: "Elige un horario disponible y confirma tu cita.",
-    to: "/estudiante/agendar",
-    icon: "📅",
-    tint: "bg-amber-50",
-  },
-  {
-    titulo: "Mis citas",
-    desc: "Consulta o cancela tus citas programadas.",
-    to: "/estudiante/mis-citas",
-    icon: "🗂️",
-    tint: "bg-emerald-50",
-  },
-  {
-    titulo: "Eventos e inscripciones",
-    desc: "Consulta los talleres y actividades, e inscríbete.",
-    to: "/estudiante/eventos",
-    icon: "🎉",
-    tint: "bg-violet-50",
-  },
-  {
-    titulo: "Asistente de orientación",
-    desc: "Resuelve dudas sobre servicios, citas y eventos.",
-    to: "/estudiante/asistente",
-    icon: "✨",
-    tint: "bg-rose-50",
-  },
-];
+const MESES = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+const POR_VISTA = 3;
 
-// Inicio del panel Estudiante: servicios y citas (Sprint 2), eventos
-// (Sprint 4) y asistente de orientación (Sprint 5).
+function diaMes(fechaIso) {
+  const fecha = new Date(fechaIso);
+  return { dia: String(fecha.getUTCDate()).padStart(2, "0"), mes: MESES[fecha.getUTCMonth()] };
+}
+
+function hoyLargo() {
+  return new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
+}
+
+// Inicio del panel Estudiante (rediseño): saludo, proxima cita, carrusel de
+// eventos con inscripcion directa (RF-010), accesos rapidos y asistente.
 export function InicioEstudiante() {
   const { usuario } = useAuth();
   const primerNombre = usuario?.nombre?.split(" ")[0];
+  const [proximaCita, setProximaCita] = useState(undefined);
+  const [eventos, setEventos] = useState(null);
+  const [inicio, setInicio] = useState(0);
+  const [procesando, setProcesando] = useState(null);
+  const [aviso, setAviso] = useState("");
+
+  function cargarEventos() {
+    return http
+      .get("/eventos")
+      .then((res) => setEventos(res.data.eventos))
+      .catch(() => setEventos([]));
+  }
+
+  useEffect(() => {
+    http
+      .get("/citas/mias")
+      .then((res) => {
+        const agendadas = res.data.citas
+          .filter((c) => c.estado === "Agendada")
+          .sort((a, b) => new Date(a.horario?.fecha) - new Date(b.horario?.fecha));
+        setProximaCita(agendadas[0] || null);
+      })
+      .catch(() => setProximaCita(null));
+    cargarEventos();
+  }, []);
+
+  async function alternarInscripcion(evento) {
+    setAviso("");
+    setProcesando(evento.id);
+    const inscrito = evento.miInscripcion?.estado === "Confirmada";
+    try {
+      if (inscrito) {
+        await http.patch(`/eventos/${evento.id}/inscripciones/cancelar`);
+        setAviso(`Cancelaste tu inscripción a "${evento.nombre}".`);
+      } else {
+        await http.post(`/eventos/${evento.id}/inscripciones`);
+        setAviso(`¡Listo! Quedaste inscrito/a en "${evento.nombre}".`);
+      }
+    } catch (err) {
+      setAviso(err.response?.data?.message || "No fue posible completar la acción.");
+    } finally {
+      await cargarEventos();
+      setProcesando(null);
+    }
+  }
+
+  const total = eventos?.length || 0;
+  const maxInicio = Math.max(0, total - POR_VISTA);
+  const desde = Math.min(inicio, maxInicio);
+  const visibles = (eventos || []).slice(desde, desde + POR_VISTA);
+  const inscritas = (eventos || []).filter((e) => e.miInscripcion?.estado === "Confirmada").length;
 
   return (
-    <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-2xl font-bold text-ink-900 mb-1">Hola, {primerNombre} 👋</h1>
-      <p className="text-gray-500 mb-8">
-        Bienvenida/o a tu espacio de Bienestar. Iniciaste sesión como{" "}
-        <strong className="text-ink-900">{usuario?.rol}</strong> con tu cuenta institucional.
-      </p>
+    <main className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-10 pb-20 flex flex-col gap-8">
+      {/* Saludo + próxima cita */}
+      <div className="flex gap-5 flex-wrap">
+        <section className="relative overflow-hidden flex-[999_1_520px] bg-primary text-white rounded-[28px] p-8 sm:p-10 flex flex-col gap-3.5">
+          <svg viewBox="0 0 300 300" width="300" height="300" aria-hidden="true" className="absolute -right-20 -top-20">
+            <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(232,178,58,0.4)" strokeWidth="1.5" />
+            <circle cx="150" cy="150" r="90" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
+          </svg>
+          <p className="relative m-0 text-[13px] font-bold tracking-[0.14em] uppercase text-gold">{hoyLargo()}</p>
+          <h1 className="relative m-0 text-[40px] sm:text-[44px] leading-[1.08] font-semibold text-white">
+            Hola, <span className="inline-block bg-gold-soft text-primary px-3 pb-0.5 rounded-2xl -rotate-2">{primerNombre}.</span>
+          </h1>
+          <p className="relative m-0 text-[17px] leading-relaxed text-[#D6DDEC] max-w-[460px]">
+            ¿Cómo te podemos acompañar hoy? Agenda una cita, revisa tus eventos o pregúntale al asistente.
+          </p>
+          <div className="relative flex gap-3 flex-wrap mt-2">
+            <Link to="/estudiante/agendar" className="bg-gold text-primary font-bold text-[15px] px-5 min-h-[46px] rounded-full inline-flex items-center">
+              Agendar una cita
+            </Link>
+            <Link to="/estudiante/asistente" className="border-[1.5px] border-white/45 text-white font-semibold text-[15px] px-5 min-h-[46px] rounded-full inline-flex items-center hover:bg-white/10">
+              Preguntar al asistente
+            </Link>
+          </div>
+        </section>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {ITEMS.map(({ titulo, desc, to, icon, tint }) => (
-          <Link
-            key={titulo}
-            to={to}
-            className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md hover:border-primary/30 transition-all"
-          >
-            <div className={`w-11 h-11 rounded-xl ${tint} flex items-center justify-center text-xl mb-4`}>
-              {icon}
+        <section aria-label="Próxima cita" className="flex-[1_1_300px] min-w-0 bg-white border border-gray-200 rounded-[28px] p-8 flex flex-col gap-3.5">
+          <span className="text-[13px] font-bold tracking-[0.12em] uppercase text-ink-500">Tu próxima cita</span>
+          {proximaCita === undefined && <p className="m-0 text-ink-500">Cargando...</p>}
+          {proximaCita === null && (
+            <>
+              <p className="m-0 text-ink-600">No tienes citas agendadas.</p>
+              <Link to="/estudiante/agendar" className="mt-auto self-start font-bold text-sm px-4 py-2.5 rounded-full bg-primary-light text-primary">
+                Agendar ahora
+              </Link>
+            </>
+          )}
+          {proximaCita && (
+            <>
+              <div className="flex gap-4 items-center">
+                <div className="shrink-0 w-[68px] h-[76px] rounded-2xl bg-primary-light text-primary flex flex-col items-center justify-center">
+                  <span className="font-display text-[28px] font-semibold leading-none">{diaMes(proximaCita.horario?.fecha).dia}</span>
+                  <span className="text-xs font-bold tracking-widest text-accent">{diaMes(proximaCita.horario?.fecha).mes}</span>
+                </div>
+                <div>
+                  <strong className="block text-[17px] text-primary">{proximaCita.horario?.servicio?.nombre}</strong>
+                  <span className="text-sm text-ink-500 capitalize">
+                    {formatearFecha(proximaCita.horario?.fecha).split(",")[0]} · {formatearHora(proximaCita.horario?.horaInicio)} –{" "}
+                    {formatearHora(proximaCita.horario?.horaFin)}
+                  </span>
+                </div>
+              </div>
+              <Link to="/estudiante/mis-citas" className="mt-auto self-start font-bold text-sm px-4 py-2.5 rounded-full bg-primary-light text-primary">
+                Ver mis citas
+              </Link>
+            </>
+          )}
+        </section>
+      </div>
+
+      {/* Carrusel de eventos */}
+      <section aria-label="Eventos para ti">
+        <div className="flex justify-between items-end gap-4 flex-wrap mb-5">
+          <div>
+            <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Agenda del campus</p>
+            <h2 className="m-0 text-[32px] font-semibold">Eventos para ti</h2>
+          </div>
+          {total > POR_VISTA && (
+            <div className="flex gap-2.5 items-center">
+              <span className="text-sm text-ink-500">
+                {desde + 1}–{Math.min(desde + POR_VISTA, total)} de {total}
+              </span>
+              <button
+                type="button"
+                onClick={() => setInicio(Math.max(0, desde - 1))}
+                disabled={desde === 0}
+                aria-label="Eventos anteriores"
+                className="w-11 h-11 rounded-full border-[1.5px] border-gray-200 bg-white text-primary flex items-center justify-center disabled:opacity-40"
+              >
+                <Icono nombre="izquierda" size={18} strokeWidth={2} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setInicio(Math.min(maxInicio, desde + 1))}
+                disabled={desde >= maxInicio}
+                aria-label="Más eventos"
+                className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center disabled:opacity-40"
+              >
+                <Icono nombre="derecha" size={18} strokeWidth={2} />
+              </button>
             </div>
-            <h2 className="font-semibold text-ink-900">{titulo}</h2>
-            <p className="text-sm text-gray-500 mt-1">{desc}</p>
-          </Link>
-        ))}
+          )}
+        </div>
+
+        {aviso && <p className="text-sm text-primary bg-primary-light rounded-xl p-3 mb-5">{aviso}</p>}
+        {!eventos && <p className="text-ink-500">Cargando eventos...</p>}
+        {eventos && eventos.length === 0 && (
+          <p className="text-ink-500 bg-white border border-gray-200 rounded-2xl p-6">Por ahora no hay eventos publicados.</p>
+        )}
+
+        <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+          {visibles.map((evento) => {
+            const { dia, mes } = diaMes(evento.fecha);
+            const imagen = imagenParaEvento(evento.id);
+            const inscrito = evento.miInscripcion?.estado === "Confirmada";
+            const ocupacion = Math.round((evento.inscritos / evento.cupos) * 100);
+            const bloqueado = !inscrito && (!evento.inscripcionAbierta || evento.cuposDisponibles === 0);
+            return (
+              <article key={evento.id} className="bg-white border border-gray-200 rounded-3xl overflow-hidden flex flex-col">
+                <div className="relative h-[190px] p-4 flex justify-between items-start bg-primary-soft">
+                  <img src={imagen.src} alt={imagen.alt} className="absolute inset-0 w-full h-full object-cover" />
+                  <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,42,91,0)_40%,rgba(11,42,91,0.55)_100%)]" />
+                  <span className="relative bg-white text-primary rounded-[14px] px-3 py-2 text-center leading-none">
+                    <strong className="block font-display text-[22px]">{dia}</strong>
+                    <span className="text-[11px] font-bold tracking-widest">{mes}</span>
+                  </span>
+                  {inscrito && (
+                    <span className="relative bg-white text-[#1D6B4A] text-xs font-bold rounded-full px-3 py-1.5">Inscrito/a</span>
+                  )}
+                </div>
+                <div className="p-5 flex flex-col gap-2.5 flex-1">
+                  <h3 className="m-0 text-lg font-bold text-primary">{evento.nombre}</h3>
+                  <p className="m-0 text-sm text-ink-500">
+                    {formatearHora(evento.horaInicio)}
+                    {evento.lugar ? ` · ${evento.lugar}` : ""}
+                  </p>
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex-1 h-1.5 rounded-full bg-primary-light overflow-hidden">
+                      <div className="h-full bg-primary-soft" style={{ width: `${ocupacion}%` }} />
+                    </div>
+                    <span className="text-[13px] font-bold text-primary">{evento.cuposDisponibles} cupos</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => alternarInscripcion(evento)}
+                    disabled={procesando === evento.id || bloqueado}
+                    className={`mt-auto min-h-[44px] rounded-full font-bold text-sm transition-colors disabled:opacity-50 ${
+                      inscrito
+                        ? "border-[1.5px] border-[#1D6B4A] bg-[#E7F4EE] text-[#1D6B4A]"
+                        : "bg-primary text-white hover:bg-primary-dark"
+                    }`}
+                  >
+                    {inscrito
+                      ? "Cancelar inscripción"
+                      : !evento.inscripcionAbierta
+                      ? "Inscripciones cerradas"
+                      : evento.cuposDisponibles === 0
+                      ? "Sin cupos"
+                      : "Inscribirme"}
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Accesos rápidos + asistente */}
+      <div className="flex gap-5 flex-wrap">
+        <section aria-label="Accesos rápidos" className="flex-[999_1_520px] grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+          {[
+            { to: "/estudiante/servicios", icono: "corazon", titulo: "Servicios", texto: "Conoce la oferta de Desarrollo Humano", tono: "bg-primary-light text-primary-soft" },
+            { to: "/estudiante/mis-citas", icono: "calendario", titulo: "Mis citas", texto: proximaCita ? "Tienes una cita agendada" : "Consulta tu historial", tono: "bg-gold-light text-accent" },
+            { to: "/estudiante/eventos", icono: "estrella", titulo: "Mis inscripciones", texto: inscritas === 1 ? "1 evento confirmado" : `${inscritas} eventos confirmados`, tono: "bg-primary-light text-primary-soft" },
+          ].map((a) => (
+            <Link key={a.to} to={a.to} className="bg-white border border-gray-200 rounded-[22px] p-6 flex flex-col gap-2.5 hover:shadow-md hover:border-primary/30 transition-all">
+              <span className={`w-11 h-11 rounded-xl flex items-center justify-center ${a.tono}`}>
+                <Icono nombre={a.icono} />
+              </span>
+              <strong className="text-base text-primary">{a.titulo}</strong>
+              <span className="text-sm text-ink-500 leading-normal">{a.texto}</span>
+            </Link>
+          ))}
+        </section>
+        <Link
+          to="/estudiante/asistente"
+          className="flex-[1_1_300px] min-w-0 bg-white border border-gray-200 rounded-[22px] p-6 flex flex-col gap-3 hover:shadow-md hover:border-primary/30 transition-all"
+        >
+          <span className="flex gap-2.5 items-center">
+            <span className="w-9 h-9 rounded-full bg-primary text-gold flex items-center justify-center">
+              <Icono nombre="chat" size={18} strokeWidth={2} />
+            </span>
+            <strong className="text-base text-primary">Asistente de orientación</strong>
+          </span>
+          <span className="bg-cream rounded-[16px_16px_16px_4px] px-3.5 py-3 text-sm leading-normal text-ink-900">
+            Hola, {primerNombre}. Puedo contarte qué servicios hay, cómo agendar o qué eventos se vienen.
+          </span>
+          <span className="mt-auto font-bold text-sm text-primary-soft">Abrir el asistente →</span>
+        </Link>
       </div>
     </main>
   );

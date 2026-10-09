@@ -63,7 +63,7 @@ export function AsistentePage() {
 
   return (
     <main className="max-w-3xl mx-auto p-6 lg:p-10 flex flex-col" style={{ minHeight: "calc(100vh - 72px)" }}>
-      <h1 className="text-2xl font-bold text-ink-900 mb-1">Asistente de orientación</h1>
+      <h1 className="text-3xl font-semibold text-primary mb-1">Asistente de orientación</h1>
       <p className="text-sm text-gray-500 mb-6">
         Información general sobre Bienestar y el uso de Conecta BU. No reemplaza la atención de un profesional ni
         realiza diagnósticos. Si estás en peligro, llama a la línea de emergencias 123.
@@ -140,7 +140,7 @@ export function AsistentePage() {
         <button
           type="submit"
           disabled={enviando || !pregunta.trim()}
-          className="text-sm font-medium bg-primary text-white rounded-full px-5 py-2.5 hover:bg-primary-dark transition-colors disabled:opacity-50"
+          className="text-sm font-semibold bg-primary text-white rounded-full px-5 py-2.5 hover:bg-primary-dark transition-colors disabled:opacity-50"
         >
           Enviar
         </button>

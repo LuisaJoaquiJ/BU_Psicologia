@@ -191,7 +191,7 @@ export function GestionEventosPage() {
 
   return (
     <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-2xl font-bold text-ink-900 mb-1">Gestión de eventos</h1>
+      <h1 className="text-3xl font-semibold text-primary mb-1">Gestión de eventos</h1>
       <p className="text-gray-500 mb-8">Crea eventos, publícalos para los estudiantes y controla sus inscripciones.</p>
 
       {error && <p className="text-sm text-red-600 bg-red-50 rounded-md p-3 mb-6 whitespace-pre-line">{error}</p>}
@@ -208,7 +208,7 @@ export function GestionEventosPage() {
         <button
           type="submit"
           disabled={enviando}
-          className="text-sm font-medium bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors disabled:opacity-60 sm:col-span-4 sm:justify-self-start"
+          className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors disabled:opacity-60 sm:col-span-4 sm:justify-self-start"
         >
           {enviando ? "Creando..." : "Crear evento"}
         </button>
@@ -227,7 +227,7 @@ export function GestionEventosPage() {
                   <button
                     type="submit"
                     disabled={accionando === evento.id}
-                    className="text-sm font-medium bg-primary text-white rounded-full px-4 py-1.5 hover:bg-primary-dark transition-colors disabled:opacity-60"
+                    className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-1.5 hover:bg-primary-dark transition-colors disabled:opacity-60"
                   >
                     Guardar
                   </button>

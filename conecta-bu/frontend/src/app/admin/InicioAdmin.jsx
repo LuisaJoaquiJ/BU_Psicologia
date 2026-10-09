@@ -1,70 +1,179 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { http } from "../../lib/api/http";
 import { useAuth } from "../../lib/auth/AuthContext";
+import { formatearHora } from "../../lib/format";
 
-const ITEMS = [
-  {
-    titulo: "Gestión de horarios",
-    desc: "Publica, modifica y deshabilita horarios de atención.",
-    to: "/admin/horarios",
-    icon: "⏰",
-    tint: "bg-amber-50",
-  },
-  {
-    titulo: "Agenda y asistencia a citas",
-    desc: "Consulta la agenda del día y registra la asistencia.",
-    to: "/admin/citas",
-    icon: "🗒️",
-    tint: "bg-sky-50",
-  },
-  {
-    titulo: "Gestión de eventos",
-    desc: "Crea y publica eventos, y registra la asistencia de los inscritos.",
-    to: "/admin/eventos",
-    icon: "🎉",
-    tint: "bg-emerald-50",
-  },
-  {
-    titulo: "Usuarios",
-    desc: "Consulta usuarios, cambia su rol y habilita o deshabilita su acceso.",
-    to: "/admin/usuarios",
-    icon: "👤",
-    tint: "bg-violet-50",
-  },
-  {
-    titulo: "Estadísticas",
-    desc: "Participación e asistencia a citas y eventos, y estado de n8n.",
-    to: "/admin/estadisticas",
-    icon: "📊",
-    tint: "bg-rose-50",
-  },
-];
+const ESTADO_ESTILOS = {
+  Agendada: "bg-primary-light text-primary-soft",
+  Atendida: "bg-[#E7F4EE] text-[#1D6B4A]",
+  NoAsistio: "bg-gold-light text-[#7A5405]",
+  Cancelada: "bg-gray-100 text-ink-500",
+};
+const ESTADO_TEXTO = { Agendada: "Agendada", Atendida: "Atendida", NoAsistio: "No asistió", Cancelada: "Cancelada" };
 
-// Inicio del panel Administrador: horarios y agenda (Sprint 3), eventos
-// (Sprint 4), usuarios y estadísticas (Sprint 5).
+// Colores de asistencia validados para daltonismo (mismos que Estadísticas).
+const COLORES = { asistieron: "#0d9488", noAsistieron: "#d97706", sinRegistrar: "#e5e7eb" };
+
+function hoyISO() {
+  const hoy = new Date();
+  const mes = String(hoy.getMonth() + 1).padStart(2, "0");
+  const dia = String(hoy.getDate()).padStart(2, "0");
+  return `${hoy.getFullYear()}-${mes}-${dia}`;
+}
+
+function saludo() {
+  const hora = new Date().getHours();
+  if (hora < 12) return "Buenos días";
+  if (hora < 19) return "Buenas tardes";
+  return "Buenas noches";
+}
+
+function formatoTasa(valor) {
+  return valor === null || valor === undefined ? "—" : `${valor.toLocaleString("es-CO")} %`;
+}
+
+function Indicador({ titulo, valor, detalle, destacado = false }) {
+  return (
+    <div className={`rounded-[20px] p-5 ${destacado ? "bg-primary text-white" : "bg-white border border-gray-200"}`}>
+      <p className={`m-0 text-[13px] ${destacado ? "text-white/75" : "text-ink-500"}`}>{titulo}</p>
+      <p className={`mt-1.5 mb-0 font-display text-[38px] font-semibold tabular-nums ${destacado ? "text-gold" : "text-primary"}`}>
+        {valor}
+      </p>
+      {detalle && <p className={`mt-1 mb-0 text-[13px] ${destacado ? "text-white/75" : "text-ink-500"}`}>{detalle}</p>}
+    </div>
+  );
+}
+
+// Inicio del panel Administrador (rediseño): indicadores de RF-015, agenda
+// del día (RF-008) y asistencia por evento (RF-011), con accesos rápidos.
 export function InicioAdmin() {
   const { usuario } = useAuth();
+  const [stats, setStats] = useState(null);
+  const [agenda, setAgenda] = useState(null);
+
+  useEffect(() => {
+    http.get("/admin/estadisticas").then((res) => setStats(res.data)).catch(() => setStats(false));
+    http
+      .get("/admin/citas", { params: { fecha: hoyISO() } })
+      .then((res) => setAgenda(res.data.citas))
+      .catch(() => setAgenda([]));
+  }, []);
+
+  const porRegistrar = (agenda || []).filter((c) => c.estado === "Agendada").length;
+  const eventos = stats ? stats.eventosDetalle.slice(-3) : [];
 
   return (
-    <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-2xl font-bold text-ink-900 mb-1">Panel administrativo</h1>
-      <p className="text-gray-500 mb-8">
-        Hola, {usuario?.nombre} — gestiona horarios, citas, eventos y usuarios del área.
-      </p>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {ITEMS.map(({ titulo, desc, to, icon, tint }) => (
-          <Link
-            key={titulo}
-            to={to}
-            className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md hover:border-primary/30 transition-all"
-          >
-            <div className={`w-11 h-11 rounded-xl ${tint} flex items-center justify-center text-xl mb-4`}>
-              {icon}
-            </div>
-            <h2 className="font-semibold text-ink-900">{titulo}</h2>
-            <p className="text-sm text-gray-500 mt-1">{desc}</p>
+    <main className="max-w-[1100px] mx-auto px-5 sm:px-10 pt-9 pb-16 flex flex-col gap-7">
+      <div className="flex justify-between items-end gap-4 flex-wrap">
+        <div>
+          <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">
+            {new Date().toLocaleDateString("es-CO", { month: "long", year: "numeric" })}
+          </p>
+          <h1 className="m-0 text-[36px] sm:text-[38px] font-semibold">
+            {saludo()}, {usuario?.nombre?.split(" ")[0]}
+          </h1>
+        </div>
+        <div className="flex gap-2.5 flex-wrap">
+          <Link to="/admin/horarios" className="border-[1.5px] border-gray-200 bg-white font-bold text-sm text-primary px-4 min-h-[44px] rounded-full inline-flex items-center">
+            Publicar horario
           </Link>
-        ))}
+          <Link to="/admin/eventos" className="bg-gold text-primary font-bold text-sm px-4 min-h-[44px] rounded-full inline-flex items-center">
+            + Nuevo evento
+          </Link>
+        </div>
+      </div>
+
+      {stats === false && <p className="text-sm text-red-700 bg-red-50 rounded-xl p-3">No fue posible cargar los indicadores.</p>}
+
+      <section aria-label="Indicadores" className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
+        <Indicador
+          titulo="Citas de hoy"
+          valor={agenda ? agenda.length : "…"}
+          detalle={agenda ? `${porRegistrar} por registrar asistencia` : null}
+        />
+        <Indicador
+          titulo="Asistencia a citas"
+          valor={stats ? formatoTasa(stats.citas.tasaAsistencia) : "…"}
+          detalle={stats ? `${stats.citas.atendidas} atendidas de ${stats.citas.atendidas + stats.citas.noAsistieron}` : null}
+        />
+        <Indicador
+          titulo="Inscritos a eventos"
+          valor={stats ? stats.eventos.inscritos : "…"}
+          detalle={stats ? `en ${stats.eventos.eventos} eventos publicados o cerrados` : null}
+        />
+        <Indicador destacado titulo="Estudiantes registrados" valor={stats ? stats.estudiantesRegistrados : "…"} />
+      </section>
+
+      <div className="flex gap-5 flex-wrap">
+        <section aria-label="Agenda de hoy" className="flex-[1_1_300px] min-w-0 bg-white border border-gray-200 rounded-[22px] p-6">
+          <div className="flex justify-between items-center mb-3.5">
+            <h2 className="m-0 text-lg font-sans font-bold">Agenda de hoy</h2>
+            <Link to="/admin/citas" className="text-sm font-bold text-primary-soft">Ver agenda →</Link>
+          </div>
+          {!agenda && <p className="m-0 text-sm text-ink-500">Cargando...</p>}
+          {agenda && agenda.length === 0 && <p className="m-0 text-sm text-ink-500">No hay citas para hoy.</p>}
+          <ul className="list-none m-0 p-0 flex flex-col">
+            {(agenda || []).slice(0, 6).map((cita) => (
+              <li key={cita.id} className="flex items-center gap-3.5 py-3 border-t border-gray-100">
+                <span className="shrink-0 w-16 font-bold text-sm text-primary">{formatearHora(cita.horario?.horaInicio)}</span>
+                <span className="flex-1 min-w-0 text-sm">
+                  <strong className="block truncate">{cita.usuario?.nombre}</strong>
+                  <span className="text-ink-500">{cita.horario?.servicio?.nombre}</span>
+                </span>
+                <span className={`text-xs font-bold rounded-full px-2.5 py-1 ${ESTADO_ESTILOS[cita.estado] || ""}`}>
+                  {ESTADO_TEXTO[cita.estado] || cita.estado}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section aria-label="Asistencia por evento" className="flex-[1_1_300px] min-w-0 bg-white border border-gray-200 rounded-[22px] p-6">
+          <div className="flex justify-between items-center mb-1.5">
+            <h2 className="m-0 text-lg font-sans font-bold">Asistencia por evento</h2>
+            <Link to="/admin/estadisticas" className="text-sm font-bold text-primary-soft">Estadísticas →</Link>
+          </div>
+          <div className="flex gap-4 text-xs text-ink-600 mb-3.5 flex-wrap">
+            {[
+              ["asistieron", "Asistieron"],
+              ["noAsistieron", "No asistieron"],
+              ["sinRegistrar", "Sin registrar"],
+            ].map(([clave, texto]) => (
+              <span key={clave} className="flex gap-1.5 items-center">
+                <span className="w-2.5 h-2.5 rounded-sm" style={{ background: COLORES[clave] }} />
+                {texto}
+              </span>
+            ))}
+          </div>
+          {stats && eventos.length === 0 && <p className="m-0 text-sm text-ink-500">Todavía no hay eventos publicados.</p>}
+          <div className="flex flex-col gap-4">
+            {eventos.map((e) => (
+              <div key={e.id}>
+                <div className="flex justify-between text-sm mb-1.5 gap-3">
+                  <strong className="truncate">{e.nombre}</strong>
+                  <span className="text-ink-500 shrink-0">{e.inscritos} inscritos</span>
+                </div>
+                <div className="flex gap-0.5 h-3">
+                  {["asistieron", "noAsistieron", "sinRegistrar"].map((clave) =>
+                    e[clave] > 0 ? (
+                      <span
+                        key={clave}
+                        title={`${clave === "asistieron" ? "Asistieron" : clave === "noAsistieron" ? "No asistieron" : "Sin registrar"}: ${e[clave]}`}
+                        className="first:rounded-l last:rounded-r"
+                        style={{ flexGrow: e[clave], background: COLORES[clave] }}
+                      />
+                    ) : null
+                  )}
+                  {e.inscritos === 0 && <span className="flex-1 rounded bg-gray-100" />}
+                </div>
+                <p className="mt-1.5 mb-0 text-xs text-ink-500 tabular-nums">
+                  {e.asistieron} asistieron · {e.noAsistieron} no asistieron · {e.sinRegistrar} sin registrar
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </main>
   );
