@@ -85,6 +85,17 @@ describe("Tiempo no disponible", () => {
     expect((await prisma.cita.findUnique({ where: { id: cita.id } })).estado).toBe("Cancelada");
   });
 
+  test("acepta un motivo escrito por la persona", async () => {
+    const res = await request(app)
+      .post("/api/v1/admin/horarios/bloqueos")
+      .set(auth(admin.token))
+      .send({ motivo: "Jurado de grado", fechaInicio: iso(diasDesdeHoy(1)), todoElDia: false, horaInicio: "14:00", horaFin: "16:00" });
+    expect(res.status).toBe(201);
+    expect(res.body.bloqueo).toMatchObject({ motivo: "Jurado de grado", todoElDia: false });
+    const otro = await request(app).post("/api/v1/admin/horarios/bloqueos").set(auth(admin.token)).send({ motivo: "Otro", fechaInicio: iso(diasDesdeHoy(1)) });
+    expect(otro.status).toBe(400);
+  });
+
   test("solo el personal del módulo", async () => {
     const res = await request(app).get("/api/v1/admin/horarios/bloqueos").set(auth(estudiante.token));
     expect(res.status).toBe(403);

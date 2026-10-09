@@ -17,7 +17,6 @@ const MOTIVOS = [
   "Incapacidad",
   "Vacaciones",
   "Calamidad doméstica",
-  "Otro",
 ];
 
 const ms = (d) => (d ? new Date(d).getTime() : 0);
@@ -63,12 +62,13 @@ async function listarBloqueos(modulo, { desde, hasta } = {}) {
 
 function datosBloqueo(cuerpo) {
   const motivo = String(cuerpo.motivo || "").trim();
-  if (!MOTIVOS.includes(motivo)) throw new AppError(400, "Elige el motivo por el que no vas a estar disponible.");
+  // Uno de la lista o uno escrito por la persona si no esta en la lista.
+  if (motivo.length < 3 || motivo === "Otro") throw new AppError(400, "Elige el motivo o escríbelo si no está en la lista.");
+  if (motivo.length > 60) throw new AppError(400, "Escribe el motivo en pocas palabras (máximo 60 letras).");
   const detalle =
     String(cuerpo.detalle || "")
       .trim()
       .slice(0, 300) || null;
-  if (motivo === "Otro" && !detalle) throw new AppError(400, "Cuéntanos brevemente el motivo.");
 
   const fechaInicio = aFechaUTC(cuerpo.fechaInicio, "fecha de inicio");
   const fechaFin = cuerpo.fechaFin ? aFechaUTC(cuerpo.fechaFin, "fecha de fin") : fechaInicio;
