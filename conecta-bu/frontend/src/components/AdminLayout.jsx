@@ -7,7 +7,7 @@ import { MODULOS_DISPONIBLES } from "../lib/modulos";
 // Panel del personal de Desarrollo Humano.
 const MENU_ADMIN = [
   { to: "/admin", label: "Inicio", icono: "tablero", end: true },
-  { to: "/admin/citas", label: "Agenda", icono: "calendario" },
+  { to: "/admin/citas", label: "Citas", icono: "calendario" },
   { to: "/admin/horarios", label: "Horarios", icono: "reloj" },
   { to: "/admin/eventos", label: "Talleres y eventos", icono: "estrella" },
   { to: "/admin/estadisticas", label: "Estadísticas", icono: "grafica" },

@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { fechaInputUTC, fechaLarga, formatearHora, horaInputUTC } from "../../lib/format";
 import { imagenParaEvento } from "../../lib/imagenes";
 import { Aviso, Estado, Vacio, botonPrimario, botonSecundario, claseCampo } from "../../components/ui";
 import { Icono } from "../../components/Iconos";
+import { BotonFlotante, Ventana } from "../../components/Ventana";
 
 // RF-009: talleres y eventos de Desarrollo Humano. Un solo formulario sirve
 // para crear, duplicar y editar, con vista previa en vivo de cómo lo verán
@@ -56,7 +57,7 @@ const chip = (activo) =>
     activo ? "border-primary bg-primary text-white" : "border-[#D3DBE8] bg-white text-primary hover:border-primary"
   }`;
 
-function Formulario({ inicial, modo, eventos, alGuardar, alCancelar }) {
+function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana = false }) {
   const [v, setV] = useState(inicial);
   const [intentado, setIntentado] = useState(false);
   const [enviando, setEnviando] = useState(null);
@@ -116,7 +117,7 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar }) {
   const campoError = (k) => (mostrar(k) ? "!border-red-600" : "");
 
   return (
-    <section aria-labelledby="form-evento" className="flex gap-7 flex-wrap items-start mb-10">
+    <section aria-label={modo === "editar" ? "Editar evento" : "Nuevo taller o evento"} className={`flex gap-7 flex-wrap items-start ${enVentana ? "" : "mb-10"}`}>
       <form
         noValidate
         onSubmit={(e) => {
@@ -125,14 +126,16 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar }) {
         }}
         className="flex-[999_1_540px] min-w-0 bg-white rounded-[18px] p-5 sm:p-7 flex flex-col gap-[18px]"
       >
-        <div className="flex justify-between items-start gap-3 flex-wrap">
-          <h2 id="form-evento" className="m-0 text-2xl font-extrabold">
-            {modo === "editar" ? "Editar evento" : "Nuevo taller o evento"}
-          </h2>
-          <button type="button" onClick={alCancelar} className="min-h-[44px] px-3 rounded-full font-bold text-ink-500 hover:text-primary">
-            Cerrar
-          </button>
-        </div>
+        {!enVentana && (
+          <div className="flex justify-between items-start gap-3 flex-wrap">
+            <h2 id="form-evento" className="m-0 text-2xl font-extrabold">
+              {modo === "editar" ? "Editar evento" : "Nuevo taller o evento"}
+            </h2>
+            <button type="button" onClick={alCancelar} className="min-h-[44px] px-3 rounded-full font-bold text-ink-500 hover:text-primary">
+              Cerrar
+            </button>
+          </div>
+        )}
 
         {modo !== "editar" && eventos?.length > 0 && (
           <label className="flex flex-col gap-1.5 text-sm font-bold text-ink-600">
@@ -330,8 +333,13 @@ function FilaEvento({ evento, ocupado, onEstado, onEditar, onDuplicar, onElimina
   );
 }
 
+function hoyLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export function GestionEventosPage() {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const [eventos, setEventos] = useState(null);
   const [formulario, setFormulario] = useState(params.get("nuevo") ? { modo: "crear", inicial: { ...VACIO } } : null);
   const [mensaje, setMensaje] = useState("");
@@ -353,8 +361,12 @@ export function GestionEventosPage() {
   function abrir(modo, inicial) {
     setMensaje("");
     setFormulario({ modo, inicial, clave: Date.now() });
-    requestAnimationFrame(() => arriba.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
+
+  const cerrarFormulario = useCallback(() => {
+    setFormulario(null);
+    if (params.get("nuevo")) setParams({}, { replace: true });
+  }, [params, setParams]);
 
   function editar(e) {
     const fecha = fechaInputUTC(e.fecha);
@@ -439,18 +451,12 @@ export function GestionEventosPage() {
   }
 
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8" ref={arriba}>
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8 pb-32" ref={arriba}>
       <div className="flex justify-between items-end gap-4 flex-wrap mb-6">
         <div>
           <h1 className="m-0 text-[30px] sm:text-[38px] leading-tight font-extrabold">Talleres y eventos</h1>
-          <p className="mt-1 mb-0 text-ink-500">Crea talleres, publícalos para los estudiantes y lleva sus inscripciones.</p>
+          <p className="mt-1 mb-0 text-ink-500">Tus talleres y eventos con sus inscripciones. Para crear uno, usa el botón <strong className="text-ink-700">Nuevo evento</strong>.</p>
         </div>
-        {!formulario && (
-          <button type="button" onClick={() => abrir("crear", { ...VACIO })} className={botonPrimario}>
-            <Icono nombre="calendario" size={18} strokeWidth={2} />
-            Nuevo taller o evento
-          </button>
-        )}
       </div>
 
       {mensaje && (
@@ -465,37 +471,65 @@ export function GestionEventosPage() {
       )}
 
       {formulario && (
-        <Formulario
-          key={formulario.clave}
-          modo={formulario.modo}
-          inicial={formulario.inicial}
-          eventos={eventos}
-          alCancelar={() => setFormulario(null)}
-          alGuardar={async (texto) => {
-            setFormulario(null);
-            await cargarEventos();
-            setMensaje(texto);
-          }}
-        />
+        <Ventana titulo={formulario.modo === "editar" ? "Editar evento" : "Nuevo taller o evento"} alCerrar={cerrarFormulario}>
+          <Formulario
+            key={formulario.clave}
+            enVentana
+            modo={formulario.modo}
+            inicial={formulario.inicial}
+            eventos={eventos}
+            alCancelar={cerrarFormulario}
+            alGuardar={async (texto) => {
+              cerrarFormulario();
+              await cargarEventos();
+              setMensaje(texto);
+            }}
+          />
+        </Ventana>
       )}
 
+      {!formulario && <BotonFlotante onClick={() => abrir("crear", { ...VACIO })}>Nuevo evento</BotonFlotante>}
+
       {!eventos && !error && <p className="text-ink-500">Cargando eventos…</p>}
-      {eventos && eventos.length === 0 && <Vacio>Todavía no hay eventos. Crea el primero con «Nuevo taller o evento».</Vacio>}
-      {eventos && eventos.length > 0 && (
-        <ul className="list-none m-0 p-0 bg-white rounded-[18px] divide-y divide-[#EEF2F7]">
-          {eventos.map((e) => (
-            <FilaEvento
-              key={e.id}
-              evento={e}
-              ocupado={accionando === e.id}
-              onEstado={cambiarEstado}
-              onEditar={editar}
-              onDuplicar={duplicar}
-              onEliminar={eliminar}
-            />
-          ))}
-        </ul>
+      {eventos && eventos.length === 0 && (
+        <div className="bg-white rounded-[22px] border border-gray-200 px-6 py-12 text-center flex flex-col items-center gap-3">
+          <span className="w-14 h-14 rounded-2xl bg-primary-light text-primary flex items-center justify-center">
+            <Icono nombre="estrella" size={28} strokeWidth={2} />
+          </span>
+          <p className="m-0 text-lg font-extrabold text-ink-900">Todavía no hay talleres ni eventos</p>
+          <p className="m-0 text-ink-500 max-w-[36em]">Crea el primero; puedes guardarlo como borrador y publicarlo cuando esté listo.</p>
+          <button type="button" onClick={() => abrir("crear", { ...VACIO })} className={`${botonPrimario} mt-2`}>
+            Nuevo evento
+          </button>
+        </div>
       )}
+      {eventos &&
+        eventos.length > 0 &&
+        [
+          ["Próximos", eventos.filter((e) => fechaInputUTC(e.fecha) >= hoyLocal()).sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)))],
+          ["Anteriores", eventos.filter((e) => fechaInputUTC(e.fecha) < hoyLocal()).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)))],
+        ].map(([titulo, lista]) =>
+          lista.length ? (
+            <section key={titulo} aria-label={titulo} className="mb-8">
+              <h2 className="m-0 mb-3 text-xl font-extrabold">
+                {titulo} <span className="text-base font-semibold text-ink-500">({lista.length})</span>
+              </h2>
+              <ul className="list-none m-0 p-0 bg-white rounded-[18px] border border-gray-200 divide-y divide-[#EEF2F7]">
+                {lista.map((e) => (
+                  <FilaEvento
+                    key={e.id}
+                    evento={e}
+                    ocupado={accionando === e.id}
+                    onEstado={cambiarEstado}
+                    onEditar={editar}
+                    onDuplicar={duplicar}
+                    onEliminar={eliminar}
+                  />
+                ))}
+              </ul>
+            </section>
+          ) : null
+        )}
     </main>
   );
 }
