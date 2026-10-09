@@ -6,6 +6,7 @@ const {
   listarAgendaAdmin,
   registrarAsistencia,
 } = require("./citas.service");
+const automatizaciones = require("../../integrations/automatizaciones");
 
 // RF-004 / HU-07
 async function horariosDisponibles(req, res, next) {
@@ -22,6 +23,7 @@ async function agendar(req, res, next) {
   try {
     const cita = await crearCita(req.usuario.id, req.body.horarioId);
     res.status(201).json({ cita });
+    automatizaciones.citaAgendada(req.usuario, cita); // RF-013 (no bloquea)
   } catch (err) {
     next(err);
   }
@@ -42,6 +44,7 @@ async function cancelar(req, res, next) {
   try {
     const cita = await cancelarCita(req.usuario.id, req.params.id);
     res.status(200).json({ cita });
+    automatizaciones.citaCancelada(req.usuario, cita); // RF-013 (no bloquea)
   } catch (err) {
     next(err);
   }

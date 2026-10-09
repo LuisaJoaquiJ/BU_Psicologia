@@ -13,6 +13,7 @@ const {
   listarMisInscripciones,
   obtenerEventoOFallar,
 } = require("./eventos.service");
+const automatizaciones = require("../../integrations/automatizaciones");
 
 // Envuelve cada handler para no repetir try/catch: cualquier error (incluido
 // AppError) llega al middleware de errores centralizado.
@@ -32,6 +33,7 @@ function manejar(fn) {
 const crear = manejar(async (req, res) => {
   const evento = await crearEvento(req.body);
   res.status(201).json({ evento });
+  if (evento.estado === "Publicado") automatizaciones.eventoPublicado(evento); // RF-013
 });
 
 // RF-009
@@ -56,6 +58,7 @@ const actualizar = manejar(async (req, res) => {
 const cambiarEstado = manejar(async (req, res) => {
   const evento = await cambiarEstadoEvento(req.usuario.id, req.params.id, req.body.estado);
   res.status(200).json({ evento });
+  if (evento.estado === "Publicado") automatizaciones.eventoPublicado(evento); // RF-013
 });
 
 // RF-009 (flujo alternativo: confirmacion si hay inscripciones activas)
@@ -99,12 +102,14 @@ const detalle = manejar(async (req, res) => {
 const inscribirse = manejar(async (req, res) => {
   const inscripcion = await inscribirseEnEvento(req.usuario.id, req.params.id);
   res.status(201).json({ inscripcion });
+  automatizaciones.inscripcionEvento(req.usuario, inscripcion); // RF-013
 });
 
 // RF-010
 const cancelar = manejar(async (req, res) => {
   const inscripcion = await cancelarInscripcion(req.usuario.id, req.params.id);
   res.status(200).json({ inscripcion });
+  automatizaciones.inscripcionCancelada(req.usuario, inscripcion); // RF-013
 });
 
 // RF-010

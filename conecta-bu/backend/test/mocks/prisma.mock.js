@@ -1,8 +1,8 @@
 // Base de datos "en memoria" que imita el subconjunto de la API de Prisma que
 // usa la aplicacion (Sprint 1: roles/usuarios; Sprint 2: servicios/horarios/
 // citas; Sprint 3: gestion de horarios y asistencia; Sprint 4: eventos,
-// inscripciones y asistencia a eventos). Permite correr las pruebas sin
-// necesitar PostgreSQL instalado.
+// inscripciones y asistencia a eventos; Sprint 5: usuarios y estadisticas).
+// Permite correr las pruebas sin necesitar PostgreSQL instalado.
 
 let roles = [];
 let usuarios = [];
@@ -53,6 +53,38 @@ function clone(obj) {
   return obj ? { ...obj } : obj;
 }
 
+// Soporta tanto igualdad exacta como rangos { gte, lte } sobre fechas.
+function cumpleFiltroFecha(valor, filtro) {
+  if (filtro === undefined) return true;
+  if (filtro instanceof Date || typeof filtro === "string") return mismaFecha(valor, filtro);
+  if (filtro.gte && !(new Date(valor) >= new Date(filtro.gte))) return false;
+  if (filtro.lte && !(new Date(valor) <= new Date(filtro.lte))) return false;
+  return true;
+}
+
+function nombreRol(usuario) {
+  return roles.find((r) => r.id === usuario.rolId)?.nombre;
+}
+
+function cumpleWhereUsuario(u, where = {}) {
+  if (where.habilitado !== undefined && u.habilitado !== where.habilitado) return false;
+  if (where.rol?.nombre && nombreRol(u) !== where.rol.nombre) return false;
+  if (where.OR) {
+    const coincide = where.OR.some((condicion) =>
+      Object.entries(condicion).some(([campo, filtro]) =>
+        String(u[campo] || "").toLowerCase().includes(String(filtro.contains).toLowerCase())
+      )
+    );
+    if (!coincide) return false;
+  }
+  return true;
+}
+
+function conRol(usuario, include) {
+  if (!usuario) return usuario;
+  return include?.rol ? { ...usuario, rol: roles.find((r) => r.id === usuario.rolId) } : { ...usuario };
+}
+
 function mismaFecha(a, b) {
   if (!a || !b) return false;
   return new Date(a).getTime() === new Date(b).getTime();
@@ -97,7 +129,7 @@ function cumpleWhereEvento(e, where = {}) {
   if (where.id && e.id !== where.id) return false;
   if (where.estado && typeof where.estado === "string" && e.estado !== where.estado) return false;
   if (where.estado?.in && !where.estado.in.includes(e.estado)) return false;
-  if (where.fecha?.gte && !(e.fecha >= where.fecha.gte)) return false;
+  if (where.fecha && !cumpleFiltroFecha(e.fecha, where.fecha)) return false;
   return true;
 }
 
@@ -123,8 +155,23 @@ function attachRelacionesEvento(evento, include) {
 const prisma = {
   rol: {
     findUnique: async ({ where }) => roles.find((r) => r.id === where.id || r.nombre === where.nombre) || null,
+    findMany: async () => roles.map(clone),
   },
   usuario: {
+    findMany: async ({ where, include } = {}) =>
+      usuarios.filter((u) => cumpleWhereUsuario(u, where)).map((u) => conRol(u, include)),
+    count: async ({ where } = {}) => usuarios.filter((u) => cumpleWhereUsuario(u, where)).length,
+    update: async ({ where, data, include }) => {
+      let actualizado = null;
+      usuarios = usuarios.map((u) => {
+        if (u.id === where.id) {
+          actualizado = { ...u, ...data, fechaActualizacion: new Date() };
+          return actualizado;
+        }
+        return u;
+      });
+      return conRol(actualizado, include);
+    },
     findUnique: async ({ where, include }) => {
       const usuario = usuarios.find(
         (u) => u.id === where.id || u.emailInstitucional === where.emailInstitucional
@@ -211,7 +258,7 @@ const prisma = {
         resultado = resultado.filter((c) => {
           const horario = horarios.find((h) => h.id === c.horarioId);
           if (!horario) return false;
-          if (where.horario.fecha && !mismaFecha(horario.fecha, where.horario.fecha)) return false;
+          if (where.horario.fecha && !cumpleFiltroFecha(horario.fecha, where.horario.fecha)) return false;
           if (where.horario.servicioId && horario.servicioId !== where.horario.servicioId) return false;
           return true;
         });

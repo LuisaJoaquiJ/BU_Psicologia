@@ -8,9 +8,11 @@
 > | 2 | Servicios, agendamiento, mis citas y cancelación | RF-003 a RF-006 |
 > | 3 | Gestión de horarios, agenda administrativa y asistencia a citas | RF-007, RF-008 |
 > | 4 | Eventos: gestión, inscripción y asistencia | RF-009, RF-010, RF-011 |
+> | 5 | Usuarios, automatización n8n, asistente IA y dashboard | RF-012 a RF-015 |
 >
-> El detalle de los sprints 4 en adelante está al final de este archivo
-> ([Sprint 4](#sprint-4--eventos-inscripciones-y-asistencia)).
+> El detalle de los sprints 4 y 5 está al final de este archivo
+> ([Sprint 4](#sprint-4--eventos-inscripciones-y-asistencia),
+> [Sprint 5](#sprint-5--usuarios-n8n-asistente-ia-y-dashboard)).
 
 ## Sprint 1 (código base)
 
@@ -196,3 +198,93 @@ Pruebas: `npm test` incluye `test/eventos.test.js`.
 publícalo y ábrelo en *Inscritos y asistencia*; como estudiante, entra a
 *Eventos*, inscríbete y comprueba que el cupo baja; vuelve como administrador
 y marca la asistencia.
+
+---
+
+## Sprint 5 — Usuarios, n8n, asistente IA y dashboard
+
+Requisitos de F-02: **RF-012** (administración de usuarios), **RF-013**
+(automatización con n8n), **RF-014** (agente IA de orientación) y **RF-015**
+(dashboard de estadísticas), con **RN-008** y **RN-011**. Tampoco requiere
+migración.
+
+| Método | Endpoint | Protección | RF / RN |
+|---|---|---|---|
+| GET | `/api/v1/admin/usuarios?busqueda=&rol=&habilitado=` | JWT + Administrador | RF-012 |
+| PATCH | `/api/v1/admin/usuarios/:id/rol` | JWT + Administrador | RF-012 |
+| PATCH | `/api/v1/admin/usuarios/:id/estado` | JWT + Administrador | RF-012 |
+| GET | `/api/v1/admin/estadisticas?desde=&hasta=` | JWT + Administrador | RF-015 |
+| GET | `/api/v1/admin/estadisticas/automatizaciones` | JWT + Administrador | RF-013 (últimos envíos a n8n) |
+| POST | `/api/v1/asistente/consultas` | JWT | RF-014 / RN-011 |
+
+### Usuarios (RF-012)
+
+- El administrador busca usuarios, cambia su rol y los habilita/deshabilita.
+- Un usuario deshabilitado pierde el acceso de inmediato (el middleware de
+  autenticación revisa `habilitado` en cada petición).
+- Nadie puede cambiarse su propio rol ni deshabilitarse, y siempre debe quedar
+  al menos un administrador habilitado.
+
+### Automatización con n8n (RF-013)
+
+El backend envía un `POST` JSON a `N8N_WEBHOOK_URL` cuando ocurre:
+`cita.agendada`, `cita.cancelada`, `evento.publicado`, `evento.inscripcion` y
+`evento.inscripcion_cancelada`. Cuerpo:
+
+```json
+{ "tipo": "cita.agendada", "origen": "conecta-bu", "fecha": "2026-10-01T15:00:00.000Z",
+  "datos": { "estudiante": { "id": "...", "nombre": "...", "email": "..." },
+             "cita": { "citaId": "...", "servicio": "...", "fecha": "...", "horaInicio": "..." } } }
+```
+
+- Solo viaja la información necesaria para notificar (sin datos clínicos).
+- El envío **no bloquea** la operación: si n8n no está configurado o falla, la
+  cita/inscripción ya quedó guardada y el fallo se registra (flujo
+  alternativo de RF-013). El administrador ve los últimos 50 envíos en
+  *Estadísticas → Automatizaciones* (se reinicia con el servidor).
+- Si defines `N8N_SECRET`, cada petición lleva la cabecera
+  `X-Conecta-BU-Secret` para que el flujo de n8n verifique el origen.
+
+Flujo sugerido en n8n: *Webhook* (POST) → *Switch* por `tipo` → *Gmail* /
+*Send Email* al `datos.estudiante.email` (confirmación de cita, recordatorio
+de evento, etc.).
+
+### Asistente de orientación (RF-014)
+
+1. **Filtros de seguridad (RN-011)** en el backend, antes de cualquier IA:
+   preguntas sobre diagnósticos, medicamentos o tratamientos reciben una
+   respuesta fija que orienta a agendar una cita; mensajes con señales de
+   crisis reciben las líneas de ayuda (123, 192 opción 4) y la orientación a
+   Bienestar. Estos mensajes nunca se envían al modelo.
+2. Si `N8N_AGENTE_URL` está configurada, la pregunta va a ese webhook de n8n
+   junto con contexto real (servicios activos, horarios disponibles, próximos
+   eventos) y las reglas del agente. n8n debe responder `{ "respuesta": "..." }`.
+   Ahí pueden conectar Gemini (nodo *Google Gemini Chat Model* o *AI Agent*) y
+   terminar con *Respond to Webhook*.
+3. Si n8n no está configurado o falla, el asistente responde con una base de
+   conocimiento local construida con esos mismos datos, así la funcionalidad
+   se puede demostrar sin n8n.
+
+### Dashboard (RF-015)
+
+Indicadores de estudiantes registrados, citas (atendidas, no asistieron,
+canceladas, % de asistencia), asistencia por evento (asistieron / no
+asistieron / sin registrar) y citas por servicio, con filtro por fechas. Si no
+hay datos para el filtro, el panel lo indica.
+
+### Variables nuevas en `backend/.env` (todas opcionales)
+
+```
+N8N_WEBHOOK_URL=   # webhook para automatizaciones (RF-013)
+N8N_AGENTE_URL=    # webhook del agente IA (RF-014)
+N8N_SECRET=        # se envía en la cabecera X-Conecta-BU-Secret
+N8N_TIMEOUT_MS=8000
+```
+
+Pruebas: `npm test` incluye `usuarios.test.js`, `estadisticas.test.js` y
+`asistente.test.js` (este último simula n8n disponible y caído).
+
+**Verificación manual:** como administrador, abre *Usuarios* y promueve o
+deshabilita a un estudiante; abre *Estadísticas* y filtra por fechas. Como
+estudiante, abre *Asistente* y pregunta "¿Cómo agendo una cita?" y "¿qué
+medicamento tomo?" (debe negarse y orientarte a una cita).

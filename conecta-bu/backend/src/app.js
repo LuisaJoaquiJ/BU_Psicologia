@@ -12,6 +12,9 @@ const horariosAdminRoutes = require("./modules/horarios/horarios.routes");
 const citasAdminRoutes = require("./modules/citas/citas.admin.routes");
 const eventosRoutes = require("./modules/eventos/eventos.routes");
 const eventosAdminRoutes = require("./modules/eventos/eventos.admin.routes");
+const usuariosAdminRoutes = require("./modules/usuarios/usuarios.routes");
+const estadisticasAdminRoutes = require("./modules/estadisticas/estadisticas.routes");
+const asistenteRoutes = require("./modules/asistente/asistente.routes");
 const { notFoundHandler, errorHandler } = require("./common/middlewares/error.middleware");
 
 const app = express();
@@ -33,6 +36,9 @@ app.use("/api/v1/admin/horarios", horariosAdminRoutes);
 app.use("/api/v1/admin/citas", citasAdminRoutes);
 app.use("/api/v1/eventos", eventosRoutes);
 app.use("/api/v1/admin/eventos", eventosAdminRoutes);
+app.use("/api/v1/admin/usuarios", usuariosAdminRoutes);
+app.use("/api/v1/admin/estadisticas", estadisticasAdminRoutes);
+app.use("/api/v1/asistente", asistenteRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

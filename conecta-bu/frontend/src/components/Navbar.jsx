@@ -16,6 +16,7 @@ const MENU_ADMIN = [
   { to: "/admin/citas", label: "Agenda de citas" },
   { to: "/admin/eventos", label: "Eventos" },
   { to: "/admin/usuarios", label: "Usuarios" },
+  { to: "/admin/estadisticas", label: "Estadísticas" },
 ];
 
 export function Navbar() {
@@ -29,6 +30,11 @@ export function Navbar() {
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase())
     .join("");
+
+  const claseEnlace = ({ isActive }) =>
+    `transition-colors whitespace-nowrap ${
+      isActive ? "text-primary font-semibold" : "text-gray-500 hover:text-ink-900"
+    }`;
 
   return (
     <header className="bg-white border-b border-gray-200">
@@ -47,16 +53,7 @@ export function Navbar() {
 
         <nav className="hidden md:flex items-center gap-6 text-sm">
           {menu.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end
-              className={({ isActive }) =>
-                `transition-colors ${
-                  isActive ? "text-primary font-semibold" : "text-gray-500 hover:text-ink-900"
-                }`
-              }
-            >
+            <NavLink key={item.to} to={item.to} end={item.to === "/admin" || item.to === "/estudiante"} className={claseEnlace}>
               {item.label}
             </NavLink>
           ))}
@@ -78,6 +75,15 @@ export function Navbar() {
           </button>
         </div>
       </div>
+
+      {/* RNF-005: en pantallas pequenas el menu pasa a una fila desplazable. */}
+      <nav className="md:hidden border-t border-gray-100 px-4 py-2 flex gap-5 overflow-x-auto text-sm">
+        {menu.map((item) => (
+          <NavLink key={item.to} to={item.to} end={item.to === "/admin" || item.to === "/estudiante"} className={claseEnlace}>
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
     </header>
   );
 }
