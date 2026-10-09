@@ -2,6 +2,7 @@ const { prisma } = require("../../config/prisma");
 const { AppError } = require("../../common/utils/AppError");
 const { config } = require("../../config/env");
 const { moduloDeServicio, exigirMismoModulo } = require("../../common/utils/modulos");
+const { quitarHorariosBloqueados } = require("../horarios/bloqueos.service");
 
 // Colombia no tiene horario de verano: la hora del dia de un horario
 // (guardada "tal cual" en UTC, ver seed.js) es hora de Bogota, UTC-5.
@@ -12,10 +13,7 @@ const DESFASE_BOGOTA_MS = 5 * 60 * 60 * 1000;
 function inicioDeCita(horario) {
   const fecha = new Date(horario.fecha);
   const hora = horario.horaInicio ? new Date(horario.horaInicio) : new Date(Date.UTC(1970, 0, 1, 0, 0));
-  return new Date(
-    Date.UTC(fecha.getUTCFullYear(), fecha.getUTCMonth(), fecha.getUTCDate(), hora.getUTCHours(), hora.getUTCMinutes()) +
-      DESFASE_BOGOTA_MS
-  );
+  return new Date(Date.UTC(fecha.getUTCFullYear(), fecha.getUTCMonth(), fecha.getUTCDate(), hora.getUTCHours(), hora.getUTCMinutes()) + DESFASE_BOGOTA_MS);
 }
 
 // RF-004 / HU-07: horarios habilitados y aun no ocupados, desde hoy en adelante.
@@ -29,7 +27,11 @@ async function listarHorariosDisponibles(modulo = "desarrollo-humano") {
     include: { servicio: true },
     orderBy: [{ fecha: "asc" }, { horaInicio: "asc" }],
   });
-  return horarios.filter((h) => moduloDeServicio(h.servicio) === modulo);
+  // Los horarios que caen en un tiempo no disponible del personal no se ofrecen.
+  return quitarHorariosBloqueados(
+    horarios.filter((h) => moduloDeServicio(h.servicio) === modulo),
+    modulo,
+  );
 }
 
 // RF-005 / HU-08, HU-09, HU-10: agenda una cita validando, dentro de una
@@ -103,7 +105,7 @@ async function cancelarCita(usuarioId, citaId) {
       throw new AppError(
         409,
         `Solo puedes cancelar con al menos ${config.horasMinimasCancelacion} horas de anticipacion. ` +
-          "Si no puedes asistir, comunicate con Bienestar Universitario."
+          "Si no puedes asistir, comunicate con Bienestar Universitario.",
       );
     }
 

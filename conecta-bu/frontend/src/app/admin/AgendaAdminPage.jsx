@@ -7,6 +7,7 @@ import { fechaLarga, formatearHora } from "../../lib/format";
 import { Aviso, claseCampo } from "../../components/ui";
 import { BotonFlotante, Ventana } from "../../components/Ventana";
 import { FormularioSinCita } from "./AtencionSinCita";
+import { CalendarioMes, SelectorVista } from "../../components/CalendarioMes";
 
 // Fecha de hoy en la hora local del navegador (Bogota). toISOString() da la
 // fecha UTC, que despues de las 7 p. m. ya es la de manana.
@@ -111,6 +112,9 @@ export function AgendaAdminPage({ api = "/admin" }) {
   const [estado, setEstado] = useState("todas");
   const [servicio, setServicio] = useState("");
   const [buscar, setBuscar] = useState("");
+  const [vista, setVista] = useState(fechaInicial ? "lista" : "calendario");
+  const [diaSel, setDiaSel] = useState(fechaInicial || hoyISO());
+  const [bloqueos, setBloqueos] = useState([]);
 
   const cargar = () =>
     http
@@ -130,6 +134,10 @@ export function AgendaAdminPage({ api = "/admin" }) {
 
   useEffect(() => {
     cargar();
+    http
+      .get(`${api}/horarios/bloqueos`)
+      .then((res) => setBloqueos(res.data.bloqueos))
+      .catch(() => setBloqueos([]));
     if (params.get("sincita")) setParams({}, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -161,6 +169,41 @@ export function AgendaAdminPage({ api = "/admin" }) {
   const visibles = porNombre.filter((c) => estado === "todas" || c.estado === estado);
   // Las pasadas se leen de la mas reciente a la mas antigua.
   if (cuando === "pasadas" || cuando === "registrar") visibles.reverse();
+
+  // Calendario: todas las fechas, con los filtros de servicio, estudiante y estado.
+  const enCalendario = todas
+    .filter((c) => !servicio || c.horario?.servicio?.nombre === servicio)
+    .filter((c) => !buscar || sinTildes(c.usuario?.nombre).includes(sinTildes(buscar)))
+    .filter((c) => estado === "todas" || c.estado === estado);
+  const TONO_CAL = {
+    Agendada: ["azul", "agendada", "agendadas"],
+    Atendida: ["verde", "asistió", "asistieron"],
+    NoAsistio: ["rojo", "no asistió", "no asistieron"],
+    Cancelada: ["gris", "cancelada", "canceladas"],
+  };
+  const marcas = {};
+  for (const c of enCalendario) {
+    const d = dia(c);
+    marcas[d] ||= {};
+    marcas[d][c.estado] = (marcas[d][c.estado] || 0) + 1;
+  }
+  const marcasCal = Object.fromEntries(
+    Object.entries(marcas).map(([d, conteo]) => [
+      d,
+      ["Agendada", "Atendida", "NoAsistio", "Cancelada"]
+        .filter((e) => conteo[e])
+        .map((e) => ({ texto: `${conteo[e]} ${conteo[e] === 1 ? TONO_CAL[e][1] : TONO_CAL[e][2]}`, tono: TONO_CAL[e][0] })),
+    ]),
+  );
+  for (const b of bloqueos) {
+    for (let d = new Date(`${b.fechaInicio}T12:00:00`); ; d.setDate(d.getDate() + 1)) {
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      if (k > b.fechaFin) break;
+      (marcasCal[k] ||= []).unshift({ texto: b.motivo, tono: "ambar" });
+    }
+  }
+  const citasDelDia = enCalendario.filter((c) => dia(c) === diaSel);
+  const bloqueosDelDia = bloqueos.filter((b) => b.fechaInicio <= diaSel && b.fechaFin >= diaSel);
 
   const contarCuando = (o) => todas.filter((c) => o.filtro(c, hoy, fecha)).length;
   const contarEstado = (id) => porNombre.filter((c) => id === "todas" || c.estado === id).length;
@@ -229,18 +272,24 @@ export function AgendaAdminPage({ api = "/admin" }) {
       )}
 
       {/* Filtros: cuatro listas desplegables en una sola fila */}
+      <div className="mb-4">
+        <SelectorVista vista={vista} setVista={setVista} />
+      </div>
+
       <div className="bg-white border border-gray-200 rounded-[22px] p-4 sm:p-5 mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 items-end">
-        <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
-          ¿Cuándo?
-          <select value={cuando} onChange={(e) => setCuando(e.target.value)} className={claseCampo}>
-            {CUANDO.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.id === "dia" ? "Un día en particular…" : `${o.texto} (${contarCuando(o)})`}
-              </option>
-            ))}
-          </select>
-        </label>
-        {cuando === "dia" && (
+        {vista === "lista" && (
+          <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
+            ¿Cuándo?
+            <select value={cuando} onChange={(e) => setCuando(e.target.value)} className={claseCampo}>
+              {CUANDO.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.id === "dia" ? "Un día en particular…" : `${o.texto} (${contarCuando(o)})`}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {vista === "lista" && cuando === "dia" && (
           <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
             Día
             <input type="date" value={fecha} onChange={(e) => e.target.value && setFecha(e.target.value)} className={claseCampo} />
@@ -289,7 +338,7 @@ export function AgendaAdminPage({ api = "/admin" }) {
         </div>
       )}
 
-      {citas && (
+      {citas && vista === "lista" && (
         <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
           <p className="m-0 font-bold text-ink-900" aria-live="polite">
             Mostrando {resumen}
@@ -313,7 +362,53 @@ export function AgendaAdminPage({ api = "/admin" }) {
 
       {!citas && <p className="text-ink-500">Cargando citas…</p>}
 
-      {citas && visibles.length === 0 && !error && (
+      {citas && vista === "calendario" && (
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(340px,1fr)] items-start">
+          <CalendarioMes
+            marcas={marcasCal}
+            seleccionado={diaSel}
+            onSeleccionar={setDiaSel}
+            leyenda={[
+              ["azul", "Agendadas"],
+              ["verde", "Asistieron"],
+              ["rojo", "No asistieron"],
+              ["gris", "Canceladas"],
+              ["ambar", "No disponible"],
+            ]}
+          />
+          <section aria-label={fechaLarga(`${diaSel}T12:00:00Z`)} className="bg-white rounded-[22px] border border-gray-200 overflow-hidden xl:sticky xl:top-4">
+            <h2
+              className={`m-0 px-5 py-3 text-base font-extrabold flex items-center justify-between gap-3 ${diaSel === hoy ? "bg-primary-dark text-white" : "bg-gray-50 text-ink-900"}`}
+            >
+              <span>
+                {fechaLarga(`${diaSel}T12:00:00Z`)}
+                {diaSel === hoy && <span className="ml-2 text-cyan">· Hoy</span>}
+              </span>
+              <span className={`text-sm font-semibold tabular-nums ${diaSel === hoy ? "text-[#B9C7DE]" : "text-ink-500"}`}>
+                {citasDelDia.length} {citasDelDia.length === 1 ? "cita" : "citas"}
+              </span>
+            </h2>
+            {bloqueosDelDia.map((b) => (
+              <p key={b.id} className="m-0 px-5 py-3 bg-[#FFF1DC] text-[#5C4206] text-sm">
+                <strong>No disponible: {b.motivo}</strong> · {b.todoElDia ? "todo el día" : `${formatearHora(b.horaInicio)} a ${formatearHora(b.horaFin)}`}
+              </p>
+            ))}
+            {citasDelDia.length === 0 ? (
+              <p className="m-0 px-5 py-8 text-center text-ink-500">
+                No hay citas este día{estado !== "todas" || servicio || buscar ? " con estos filtros" : ""}.
+              </p>
+            ) : (
+              <ul className="list-none m-0 p-0 divide-y divide-[#EEF2F7]">
+                {[...citasDelDia].sort(orden).map((c) => (
+                  <FilaCita key={c.id} cita={c} hoy={hoy} registrando={registrando} onRegistrar={registrar} />
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+      )}
+
+      {citas && vista === "lista" && visibles.length === 0 && !error && (
         <div className="bg-white rounded-[22px] border border-gray-200 px-6 py-10 text-center flex flex-col items-center gap-3">
           <span className="w-14 h-14 rounded-2xl bg-primary-light text-primary flex items-center justify-center">
             <Icono nombre="calendario" size={28} strokeWidth={2} />
@@ -350,28 +445,29 @@ export function AgendaAdminPage({ api = "/admin" }) {
       )}
 
       <div className="flex flex-col gap-4">
-        {grupos.map((g) => (
-          <section key={g.dia} aria-label={fechaLarga(g.fecha)} className="bg-white rounded-[22px] border border-gray-200 overflow-hidden">
-            <h2
-              className={`m-0 px-5 py-3 text-base font-extrabold flex items-center justify-between gap-3 ${
-                g.dia === hoy ? "bg-primary-dark text-white" : "bg-gray-50 text-ink-900"
-              }`}
-            >
-              <span>
-                {fechaLarga(g.fecha)}
-                {g.dia === hoy && <span className="ml-2 text-cyan">· Hoy</span>}
-              </span>
-              <span className={`text-sm font-semibold tabular-nums ${g.dia === hoy ? "text-[#B9C7DE]" : "text-ink-500"}`}>
-                {g.citas.length} {g.citas.length === 1 ? "cita" : "citas"}
-              </span>
-            </h2>
-            <ul className="list-none m-0 p-0 divide-y divide-[#EEF2F7]">
-              {g.citas.map((c) => (
-                <FilaCita key={c.id} cita={c} hoy={hoy} registrando={registrando} onRegistrar={registrar} />
-              ))}
-            </ul>
-          </section>
-        ))}
+        {vista === "lista" &&
+          grupos.map((g) => (
+            <section key={g.dia} aria-label={fechaLarga(g.fecha)} className="bg-white rounded-[22px] border border-gray-200 overflow-hidden">
+              <h2
+                className={`m-0 px-5 py-3 text-base font-extrabold flex items-center justify-between gap-3 ${
+                  g.dia === hoy ? "bg-primary-dark text-white" : "bg-gray-50 text-ink-900"
+                }`}
+              >
+                <span>
+                  {fechaLarga(g.fecha)}
+                  {g.dia === hoy && <span className="ml-2 text-cyan">· Hoy</span>}
+                </span>
+                <span className={`text-sm font-semibold tabular-nums ${g.dia === hoy ? "text-[#B9C7DE]" : "text-ink-500"}`}>
+                  {g.citas.length} {g.citas.length === 1 ? "cita" : "citas"}
+                </span>
+              </h2>
+              <ul className="list-none m-0 p-0 divide-y divide-[#EEF2F7]">
+                {g.citas.map((c) => (
+                  <FilaCita key={c.id} cita={c} hoy={hoy} registrando={registrando} onRegistrar={registrar} />
+                ))}
+              </ul>
+            </section>
+          ))}
       </div>
 
       {!sinCita && (
@@ -391,6 +487,7 @@ export function AgendaAdminPage({ api = "/admin" }) {
               setMensaje(`Quedó registrada la atención de ${cita.usuario?.nombre || "el estudiante"} (${cita.horario?.servicio?.nombre}).`);
               setCuando("dia");
               setFecha(dia(cita));
+              setDiaSel(dia(cita));
               setEstado("todas");
               setServicio("");
               setBuscar("");

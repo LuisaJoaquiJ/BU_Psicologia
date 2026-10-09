@@ -12,6 +12,7 @@ import { EstudiantePanel } from "./app/estudiante/EstudiantePanel";
 import { AdminPanel } from "./app/admin/AdminPanel";
 import { ProtectedRoute } from "./lib/auth/ProtectedRoute";
 import { useAuth } from "./lib/auth/AuthContext";
+import { AyudaOrtografia } from "./components/AyudaOrtografia";
 
 // "/" es el portal de Conecta BU con los cinco modulos de Bienestar.
 // "/desarrollo-humano" es la pagina publica de este modulo; a quien ya tiene
@@ -32,86 +33,89 @@ function DesarrolloHumano() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<PortalInicio />} />
-      <Route path="/desarrollo-humano" element={<DesarrolloHumano />} />
-      <Route path="/login" element={<LoginPage />} />
+    <>
+      <AyudaOrtografia />
+      <Routes>
+        <Route path="/" element={<PortalInicio />} />
+        <Route path="/desarrollo-humano" element={<DesarrolloHumano />} />
+        <Route path="/login" element={<LoginPage />} />
 
-      <Route
-        path="/estudiante/*"
-        element={
-          <ProtectedRoute rolesPermitidos={["Estudiante"]}>
-            <EstudiantePanel />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/estudiante/*"
+          element={
+            <ProtectedRoute rolesPermitidos={["Estudiante"]}>
+              <EstudiantePanel />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/admin/*"
-        element={
-          <ProtectedRoute rolesPermitidos={["Administrador", "SuperAdministrador"]} modulo="desarrollo-humano">
-            <AdminPanel />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute rolesPermitidos={["Administrador", "SuperAdministrador"]} modulo="desarrollo-humano">
+              <AdminPanel />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/salud/*"
-        element={
-          <ProtectedRoute rolesPermitidos={["Administrador", "SuperAdministrador"]} modulo="salud">
-            <SaludPanel />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/salud/*"
+          element={
+            <ProtectedRoute rolesPermitidos={["Administrador", "SuperAdministrador"]} modulo="salud">
+              <SaludPanel />
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Area del estudiante en Salud integral, separada de Orientacion. */}
-      <Route
-        path="/mi-salud/*"
-        element={
-          <ProtectedRoute rolesPermitidos={["Estudiante"]}>
-            <SaludEstudiantePanel />
-          </ProtectedRoute>
-        }
-      />
+        {/* Area del estudiante en Salud integral, separada de Orientacion. */}
+        <Route
+          path="/mi-salud/*"
+          element={
+            <ProtectedRoute rolesPermitidos={["Estudiante"]}>
+              <SaludEstudiantePanel />
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Modulo Deporte: area del estudiante y panel del personal. */}
-      <Route
-        path="/mi-deporte/*"
-        element={
-          <ProtectedRoute rolesPermitidos={["Estudiante"]}>
-            <MiDeportePanel />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/deporte/*"
-        element={
-          <ProtectedRoute rolesPermitidos={["Administrador", "SuperAdministrador"]} modulo="deporte">
-            <DeportePanel />
-          </ProtectedRoute>
-        }
-      />
+        {/* Modulo Deporte: area del estudiante y panel del personal. */}
+        <Route
+          path="/mi-deporte/*"
+          element={
+            <ProtectedRoute rolesPermitidos={["Estudiante"]}>
+              <MiDeportePanel />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/deporte/*"
+          element={
+            <ProtectedRoute rolesPermitidos={["Administrador", "SuperAdministrador"]} modulo="deporte">
+              <DeportePanel />
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Salidas institucionales y reportes SST: cualquier persona con sesion. */}
-      <Route
-        path="/reportes-sst/*"
-        element={
-          <ProtectedRoute>
-            <ReportesSstPanel />
-          </ProtectedRoute>
-        }
-      />
+        {/* Salidas institucionales y reportes SST: cualquier persona con sesion. */}
+        <Route
+          path="/reportes-sst/*"
+          element={
+            <ProtectedRoute>
+              <ReportesSstPanel />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/super/*"
-        element={
-          <ProtectedRoute rolesPermitidos={["SuperAdministrador"]}>
-            <SuperPanel />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/super/*"
+          element={
+            <ProtectedRoute rolesPermitidos={["SuperAdministrador"]}>
+              <SuperPanel />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }

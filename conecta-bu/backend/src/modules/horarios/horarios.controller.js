@@ -1,10 +1,4 @@
-const {
-  crearHorario,
-  listarTodosLosHorarios,
-  actualizarHorario,
-  deshabilitarHorario,
-  habilitarHorario,
-} = require("./horarios.service");
+const { crearHorario, listarTodosLosHorarios, actualizarHorario, deshabilitarHorario, habilitarHorario } = require("./horarios.service");
 // Modulo del router (Desarrollo humano o Salud), fijado por requireModulo.
 const modulo = (req) => req.modulo;
 

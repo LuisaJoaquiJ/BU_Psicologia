@@ -23,6 +23,25 @@ function validarCupos(cupos) {
   return numero;
 }
 
+const MODALIDADES = ["Presencial", "Virtual", "Hibrida"];
+
+// Enlace de reunion (Meet, Teams, Zoom...): debe ser una direccion web completa.
+function validarEnlace(valor) {
+  const texto = String(valor || "").trim();
+  if (!texto) throw new AppError(400, "Escribe el enlace de la reunion virtual.");
+  let url;
+  try {
+    url = new URL(/^https?:\/\//i.test(texto) ? texto : `https://${texto}`);
+  } catch {
+    throw new AppError(400, "El enlace de la reunion no es valido. Copialo completo desde Meet, Teams o Zoom.");
+  }
+  if (!["http:", "https:"].includes(url.protocol) || !url.hostname.includes(".")) {
+    throw new AppError(400, "El enlace de la reunion no es valido. Copialo completo desde Meet, Teams o Zoom.");
+  }
+  if (url.href.length > 500) throw new AppError(400, "El enlace de la reunion es demasiado largo.");
+  return url.href;
+}
+
 // RF-009, flujo principal paso 4: valida y normaliza los datos del formulario.
 function normalizarDatosEvento(datos, actual = {}) {
   const nombre = (datos.nombre ?? actual.nombre ?? "").trim();
@@ -44,10 +63,16 @@ function normalizarDatosEvento(datos, actual = {}) {
     throw new AppError(400, "La fecha limite de inscripcion no puede ser posterior a la fecha del evento.");
   }
 
+  const modalidad = datos.modalidad !== undefined ? datos.modalidad : actual.modalidad || "Presencial";
+  if (!MODALIDADES.includes(modalidad)) throw new AppError(400, "La modalidad debe ser presencial, virtual o hibrida.");
+  const enlaceReunion = modalidad === "Presencial" ? null : validarEnlace(datos.enlaceReunion !== undefined ? datos.enlaceReunion : actual.enlaceReunion);
+
   return {
     nombre,
-    descripcion: datos.descripcion !== undefined ? datos.descripcion || null : actual.descripcion ?? null,
-    lugar: datos.lugar !== undefined ? datos.lugar || null : actual.lugar ?? null,
+    modalidad,
+    enlaceReunion,
+    descripcion: datos.descripcion !== undefined ? datos.descripcion || null : (actual.descripcion ?? null),
+    lugar: datos.lugar !== undefined ? datos.lugar || null : (actual.lugar ?? null),
     fecha,
     horaInicio,
     horaFin,
@@ -107,10 +132,7 @@ async function actualizarEvento(id, cambios) {
   const data = normalizarDatosEvento(cambios, actual);
   const inscritos = inscritosConfirmados(actual);
   if (data.cupos < inscritos) {
-    throw new AppError(
-      409,
-      `El evento ya tiene ${inscritos} inscritos: los cupos no pueden ser menores a esa cantidad.`
-    );
+    throw new AppError(409, `El evento ya tiene ${inscritos} inscritos: los cupos no pueden ser menores a esa cantidad.`);
   }
 
   return conImagen(await prisma.evento.update({ where: { id }, data, include: CONTEO_INSCRITOS }));
@@ -154,10 +176,7 @@ async function eliminarEvento(id, confirmar) {
   const evento = await obtenerEventoOFallar(id);
   const inscritos = inscritosConfirmados(evento);
   if (inscritos > 0 && !confirmar) {
-    throw new AppError(
-      409,
-      `Este evento tiene ${inscritos} inscripciones activas. Confirma para eliminarlo de todas formas.`
-    );
+    throw new AppError(409, `Este evento tiene ${inscritos} inscripciones activas. Confirma para eliminarlo de todas formas.`);
   }
 
   await prisma.$transaction(async (tx) => {
@@ -219,17 +238,20 @@ function inscripcionAbierta(evento) {
   return evento.estado === "Publicado" && evento.fechaLimiteInscripcion >= hoyUTC();
 }
 
+// El enlace de la reunion solo se entrega a quien tiene la inscripcion confirmada.
+function sinEnlaceSiNoInscrito(evento, miInscripcion) {
+  return miInscripcion?.estado === "Confirmada" ? evento : { ...evento, enlaceReunion: null };
+}
+
 function serializarEventoEstudiante(evento, miInscripcion) {
   const inscritos = inscritosConfirmados(evento);
   return {
-    ...evento,
+    ...sinEnlaceSiNoInscrito(evento, miInscripcion),
     imagenUrl: urlImagen(evento),
     inscritos,
     cuposDisponibles: Math.max(evento.cupos - inscritos, 0),
     inscripcionAbierta: inscripcionAbierta(evento),
-    miInscripcion: miInscripcion
-      ? { id: miInscripcion.id, estado: miInscripcion.estado, fechaInscripcion: miInscripcion.fechaInscripcion }
-      : null,
+    miInscripcion: miInscripcion ? { id: miInscripcion.id, estado: miInscripcion.estado, fechaInscripcion: miInscripcion.fechaInscripcion } : null,
   };
 }
 
@@ -247,8 +269,8 @@ async function listarEventosPublicados(usuarioId) {
   return eventos.map((evento) =>
     serializarEventoEstudiante(
       evento,
-      misInscripciones.find((i) => i.eventoId === evento.id)
-    )
+      misInscripciones.find((i) => i.eventoId === evento.id),
+    ),
   );
 }
 
@@ -266,6 +288,7 @@ async function listarProximosEventosPublicos(limite = 6) {
     nombre: evento.nombre,
     descripcion: evento.descripcion,
     lugar: evento.lugar,
+    modalidad: evento.modalidad || "Presencial",
     fecha: evento.fecha,
     horaInicio: evento.horaInicio,
     horaFin: evento.horaFin,
@@ -339,7 +362,7 @@ async function registrarInscripcion(usuarioId, eventoId) {
         include: { evento: true },
       });
     },
-    { isolationLevel: "Serializable" }
+    { isolationLevel: "Serializable" },
   );
 }
 
@@ -365,11 +388,12 @@ async function cancelarInscripcion(usuarioId, eventoId) {
 
 // Inscripciones propias del estudiante, con el evento y la asistencia.
 async function listarMisInscripciones(usuarioId) {
-  return prisma.inscripcion.findMany({
+  const inscripciones = await prisma.inscripcion.findMany({
     where: { usuarioId },
     include: { evento: true, asistencia: true },
     orderBy: { fechaInscripcion: "desc" },
   });
+  return inscripciones.map((i) => (i.evento ? { ...i, evento: sinEnlaceSiNoInscrito(i.evento, i) } : i));
 }
 
 module.exports = {

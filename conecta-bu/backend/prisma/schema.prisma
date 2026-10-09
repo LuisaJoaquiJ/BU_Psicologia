@@ -77,6 +77,26 @@ model Horario {
   @@map("horarios")
 }
 
+// Tiempo en que el personal de un modulo no atiende citas: compromiso
+// institucional, incapacidad, permiso laboral, salida institucional, etc.
+// Mientras dure, los horarios que se crucen no se ofrecen a los estudiantes.
+model BloqueoAgenda {
+  id            String    @id @default(uuid())
+  modulo        String    @db.VarChar(40)
+  fechaInicio   DateTime  @db.Date
+  fechaFin      DateTime  @db.Date
+  todoElDia     Boolean   @default(true)
+  horaInicio    DateTime? @db.Time()
+  horaFin       DateTime? @db.Time()
+  motivo        String    @db.VarChar(60)
+  detalle       String?   @db.VarChar(300)
+  creadoPor     String?   @db.VarChar(200)
+  fechaCreacion DateTime  @default(now())
+
+  @@index([modulo, fechaInicio])
+  @@map("bloqueos_agenda")
+}
+
 enum EstadoCita {
   Agendada
   Cancelada
@@ -122,6 +142,10 @@ model Evento {
   fechaCreacion          DateTime     @default(now())
   // Foto del evento (nombre del archivo en uploads/eventos). Opcional.
   imagen                 String?      @db.VarChar(120)
+  // Presencial, Virtual o Hibrida. Si no es presencial lleva el enlace de
+  // la reunion, que solo ven los estudiantes inscritos.
+  modalidad              String       @default("Presencial") @db.VarChar(20)
+  enlaceReunion          String?      @db.VarChar(500)
 
   inscripciones Inscripcion[]
   historial     HistorialEstado[]

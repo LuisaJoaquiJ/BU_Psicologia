@@ -70,7 +70,7 @@ function errorUnico(campos) {
 }
 
 function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
-  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [], salidas: [], inscripcionesSalida: [] };
+  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [], salidas: [], inscripcionesSalida: [], bloqueos: [] };
   let consecutivoSst = 0;
 
   const usuarioPorId = (id) => {
@@ -108,6 +108,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     configDeporte: {},
     salidas: {},
     inscripcionesSalida: {},
+    bloqueos: {},
     adjuntosSst: {
       reporte: (r) => clonar(tablas.reportesSst.find((x) => x.id === r.reporteId)),
     },
@@ -135,10 +136,12 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     configDeporte: [["id"]],
     salidas: [],
     inscripcionesSalida: [["salidaId", "usuarioId"]],
+    bloqueos: [],
     adjuntosSst: [],
   };
 
   const defaults = {
+    bloqueos: () => ({ todoElDia: true, horaInicio: null, horaFin: null, detalle: null, creadoPor: null, fechaCreacion: new Date() }),
     personas: () => ({
       tipoDocumento: "CC",
       codigoEstudiantil: null,
@@ -387,6 +390,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       configDeporte: modelo("configDeporte", "config"),
       salidaConvocatoria: modelo("salidas", "salida"),
       inscripcionSalida: modelo("inscripcionesSalida", "insal"),
+      bloqueoAgenda: modelo("bloqueos", "bloqueo"),
     },
     reset() {
       tablas.personas = [];
@@ -407,6 +411,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       tablas.configDeporte = [];
       tablas.salidas = [];
       tablas.inscripcionesSalida = [];
+      tablas.bloqueos = [];
       consecutivoSst = 0;
     },
     tablas,

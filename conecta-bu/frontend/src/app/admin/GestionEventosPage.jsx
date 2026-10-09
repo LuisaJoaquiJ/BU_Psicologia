@@ -15,6 +15,8 @@ const VACIO = {
   nombre: "",
   descripcion: "",
   lugar: "",
+  modalidad: "Presencial",
+  enlaceReunion: "",
   fecha: "",
   horaInicio: "14:00",
   horaFin: "16:00",
@@ -56,6 +58,11 @@ function erroresDe(v) {
   if (!v.horaInicio || !v.horaFin) e.horas = "Escribe la hora de inicio y de fin.";
   else if (v.horaFin <= v.horaInicio) e.horas = "La hora de fin debe ser después de la de inicio.";
   if (!(Number(v.cupos) >= 1)) e.cupos = "Debe haber al menos un cupo.";
+  if (v.modalidad !== "Presencial") {
+    const enlace = (v.enlaceReunion || "").trim();
+    if (!enlace) e.enlace = "Pega el enlace de la reunión (Meet, Teams o Zoom).";
+    else if (!/^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/i.test(enlace)) e.enlace = "Ese enlace no parece completo. Cópialo de nuevo desde la reunión.";
+  }
   const lim = limiteDe(v);
   if (v.cierre === "otra" && !lim) e.limite = "Elige hasta cuándo hay inscripciones.";
   else if (lim && v.fecha && lim > v.fecha) e.limite = "Las inscripciones no pueden cerrar después del evento.";
@@ -97,6 +104,8 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
       nombre: e.nombre,
       descripcion: e.descripcion || "",
       lugar: e.lugar || "",
+      modalidad: e.modalidad || "Presencial",
+      enlaceReunion: e.enlaceReunion || "",
       horaInicio: horaInputUTC(e.horaInicio),
       horaFin: horaInputUTC(e.horaFin),
       cupos: e.cupos,
@@ -111,7 +120,9 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
     const datos = {
       nombre: v.nombre.trim(),
       descripcion: v.descripcion,
-      lugar: v.lugar,
+      lugar: v.modalidad === "Virtual" ? "" : v.lugar,
+      modalidad: v.modalidad,
+      enlaceReunion: v.modalidad === "Presencial" ? "" : v.enlaceReunion.trim(),
       fecha: v.fecha,
       horaInicio: v.horaInicio,
       horaFin: v.horaFin,
@@ -228,16 +239,61 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
         </div>
         {(mostrar("fecha") || mostrar("horas")) && <p className="-mt-2 m-0 text-sm font-bold text-red-700">{errores.fecha || errores.horas}</p>}
 
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <span className="font-extrabold" id="modalidad-etiqueta">
+            Modalidad
+          </span>
+          <div className="flex gap-2 flex-wrap" role="radiogroup" aria-labelledby="modalidad-etiqueta">
+            {[
+              ["Presencial", "Presencial"],
+              ["Virtual", "Virtual"],
+              ["Hibrida", "Híbrida"],
+            ].map(([id, texto]) => (
+              <button
+                key={id}
+                type="button"
+                role="radio"
+                aria-checked={v.modalidad === id}
+                onClick={() => setV((x) => ({ ...x, modalidad: id }))}
+                className={chip(v.modalidad === id)}
+              >
+                {texto}
+              </button>
+            ))}
+          </div>
+        </div>
+        {v.modalidad !== "Presencial" && (
           <label className="flex flex-col gap-1.5 font-extrabold">
-            Lugar
-            <input value={v.lugar} onChange={set("lugar")} list="lugares-eventos" placeholder="Ej.: Auditorio Sede Norte" className={claseCampo} />
-            <datalist id="lugares-eventos">
-              {lugares.map((l) => (
-                <option key={l} value={l} />
-              ))}
-            </datalist>
+            Enlace de la reunión
+            <input
+              type="url"
+              inputMode="url"
+              spellCheck={false}
+              value={v.enlaceReunion}
+              onChange={set("enlaceReunion")}
+              placeholder="Ej.: https://meet.google.com/abc-defg-hij"
+              className={`${claseCampo} ${campoError("enlace")}`}
+            />
+            {mostrar("enlace") ? (
+              <span className="text-sm font-bold text-red-700">{errores.enlace}</span>
+            ) : (
+              <span className="text-sm font-semibold text-ink-500">Solo lo verán los estudiantes inscritos.</span>
+            )}
           </label>
+        )}
+
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+          {v.modalidad !== "Virtual" && (
+            <label className="flex flex-col gap-1.5 font-extrabold">
+              {v.modalidad === "Hibrida" ? "Lugar presencial" : "Lugar"}
+              <input value={v.lugar} onChange={set("lugar")} list="lugares-eventos" placeholder="Ej.: Auditorio Sede Norte" className={claseCampo} />
+              <datalist id="lugares-eventos">
+                {lugares.map((l) => (
+                  <option key={l} value={l} />
+                ))}
+              </datalist>
+            </label>
+          )}
           <div className="flex flex-col gap-1.5">
             <span className="font-extrabold" id="cupos-etiqueta">
               Cupos
@@ -384,7 +440,8 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
             </p>
             <h3 className="m-0 text-[22px] font-extrabold tracking-tight text-primary-dark">{v.nombre.trim() || "Nombre del evento"}</h3>
             <p className="m-0 text-ink-500">
-              {v.lugar || "Lugar por definir"} · <span className="tabular-nums">{v.cupos}</span> cupos
+              {v.modalidad === "Virtual" ? "Virtual" : `${v.lugar || "Lugar por definir"}${v.modalidad === "Hibrida" ? " y virtual" : ""}`} ·{" "}
+              <span className="tabular-nums">{v.cupos}</span> cupos
             </p>
             <p className="m-0 text-ink-600 whitespace-pre-line">{v.descripcion.trim() || "Aquí aparecerá la descripción."}</p>
             {limite && <p className="mt-1 mb-0 text-sm text-ink-500">Inscripciones abiertas hasta el {fechaLarga(limite).toLowerCase()}.</p>}
@@ -402,7 +459,12 @@ function FilaEvento({ evento, ocupado, onEstado, onEditar, onDuplicar, onElimina
   const porcentaje = Math.min(100, Math.round((inscritos / Math.max(1, evento.cupos)) * 100));
   return (
     <li className="px-5 py-4 flex items-center justify-between flex-wrap gap-x-6 gap-y-3">
-      <img src={imagenDeEvento(evento).src} alt="" onError={respaldoDeFoto(evento)} className="hidden sm:block w-[88px] h-[64px] object-cover rounded-xl shrink-0" />
+      <img
+        src={imagenDeEvento(evento).src}
+        alt=""
+        onError={respaldoDeFoto(evento)}
+        className="hidden sm:block w-[88px] h-[64px] object-cover rounded-xl shrink-0"
+      />
       <div className="min-w-0 flex-[1_1_320px]">
         <div className="flex items-center gap-2 flex-wrap">
           <strong className="text-ink-900">{evento.nombre}</strong>
@@ -410,7 +472,7 @@ function FilaEvento({ evento, ocupado, onEstado, onEditar, onDuplicar, onElimina
         </div>
         <p className="m-0 text-sm text-ink-500 tabular-nums">
           {fechaLarga(evento.fecha)} · {formatearHora(evento.horaInicio)} a {formatearHora(evento.horaFin)}
-          {evento.lugar ? ` · ${evento.lugar}` : ""}
+          {evento.modalidad === "Virtual" ? " · Virtual" : evento.lugar ? ` · ${evento.lugar}${evento.modalidad === "Hibrida" ? " y virtual" : ""}` : ""}
         </p>
         <div className="mt-2 flex items-center gap-2.5 max-w-[360px]">
           <div className="flex-1 h-1.5 rounded-full bg-primary-light overflow-hidden">
@@ -507,6 +569,8 @@ export function GestionEventosPage() {
       nombre: e.nombre,
       descripcion: e.descripcion || "",
       lugar: e.lugar || "",
+      modalidad: e.modalidad || "Presencial",
+      enlaceReunion: e.enlaceReunion || "",
       fecha,
       horaInicio: horaInputUTC(e.horaInicio),
       horaFin: horaInputUTC(e.horaFin),
@@ -523,6 +587,8 @@ export function GestionEventosPage() {
       nombre: e.nombre,
       descripcion: e.descripcion || "",
       lugar: e.lugar || "",
+      modalidad: e.modalidad || "Presencial",
+      enlaceReunion: e.enlaceReunion || "",
       horaInicio: horaInputUTC(e.horaInicio),
       horaFin: horaInputUTC(e.horaFin),
       cupos: e.cupos,

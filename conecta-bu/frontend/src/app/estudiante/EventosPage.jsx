@@ -69,82 +69,95 @@ export function EventosPage() {
   return (
     <main className="max-w-6xl mx-auto p-6 lg:p-10">
       <h1 className="text-3xl font-extrabold text-primary mb-1">Eventos</h1>
-      <p className="text-gray-500 mb-8">
-        Talleres y actividades de Desarrollo Humano. Inscríbete mientras haya cupos disponibles.
-      </p>
+      <p className="text-gray-500 mb-8">Talleres y actividades de Desarrollo Humano. Inscríbete mientras haya cupos disponibles.</p>
 
       {error && <p className="text-sm text-red-600 bg-red-50 rounded-md p-3 mb-6">{error}</p>}
       {aviso && <p className="text-sm text-emerald-700 bg-emerald-50 rounded-md p-3 mb-6">{aviso}</p>}
 
       {!eventos && !error && <p className="text-gray-500">Cargando eventos...</p>}
-      {eventos && eventos.length === 0 && (
-        <p className="text-gray-500">No hay eventos publicados por ahora. Vuelve a consultar más tarde.</p>
-      )}
+      {eventos && eventos.length === 0 && <p className="text-gray-500">No hay eventos publicados por ahora. Vuelve a consultar más tarde.</p>}
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
         {eventos?.map((evento) => (
           <article key={evento.id} className="bg-white rounded-3xl border border-gray-200 overflow-hidden flex flex-col">
             <div className="relative h-[170px] bg-primary-soft">
-              <img src={imagenDeEvento(evento).src} alt={imagenDeEvento(evento).alt} onError={respaldoDeFoto(evento)} className="absolute inset-0 w-full h-full object-cover" />
+              <img
+                src={imagenDeEvento(evento).src}
+                alt={imagenDeEvento(evento).alt}
+                onError={respaldoDeFoto(evento)}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
             </div>
             <div className="p-6 flex flex-col gap-3 flex-1">
-            <div className="flex items-start justify-between gap-3">
-              <h2 className="font-extrabold text-ink-900">{evento.nombre}</h2>
-              {inscritoEn(evento) && (
-                <span className="text-xs font-medium rounded-full px-3 py-1 bg-emerald-50 text-emerald-700 shrink-0">
-                  Inscrito/a
-                </span>
-              )}
-            </div>
-            <div className="text-sm text-gray-500">
-              <p>{fechaLarga(evento.fecha)}</p>
-              <p>
-                {formatearHora(evento.horaInicio)} – {formatearHora(evento.horaFin)}
-                {evento.lugar ? ` · ${evento.lugar}` : ""}
-              </p>
-            </div>
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="font-extrabold text-ink-900">{evento.nombre}</h2>
+                {inscritoEn(evento) && <span className="text-xs font-medium rounded-full px-3 py-1 bg-emerald-50 text-emerald-700 shrink-0">Inscrito/a</span>}
+              </div>
+              <div className="text-sm text-gray-500">
+                <p>{fechaLarga(evento.fecha)}</p>
+                <p>
+                  {formatearHora(evento.horaInicio)} – {formatearHora(evento.horaFin)}
+                  {evento.modalidad === "Virtual"
+                    ? " · Virtual"
+                    : evento.lugar
+                      ? ` · ${evento.lugar}${evento.modalidad === "Hibrida" ? " y virtual" : ""}`
+                      : ""}
+                </p>
+              </div>
+              {evento.modalidad &&
+                evento.modalidad !== "Presencial" &&
+                (inscritoEn(evento) && evento.enlaceReunion ? (
+                  <a
+                    href={evento.enlaceReunion}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="self-start inline-flex items-center gap-2 min-h-[44px] px-4 rounded-full bg-cyan text-primary-dark text-sm font-extrabold hover:brightness-95"
+                  >
+                    Entrar a la reunión virtual
+                  </a>
+                ) : (
+                  <p className="text-xs font-semibold text-ink-500">Al inscribirte verás aquí el enlace de la reunión.</p>
+                ))}
 
-            {abierto === evento.id && evento.descripcion && (
-              <p className="text-sm text-gray-600 whitespace-pre-line">{evento.descripcion}</p>
-            )}
-            {evento.descripcion && (
-              <button
-                onClick={() => setAbierto(abierto === evento.id ? null : evento.id)}
-                className="text-sm text-primary font-medium self-start hover:underline"
-              >
-                {abierto === evento.id ? "Ocultar detalle" : "Ver detalle"}
-              </button>
-            )}
-
-            <div className="mt-auto pt-2 flex items-center justify-between gap-3 flex-wrap">
-              <p className="text-xs text-gray-500">
-                <strong className="text-ink-900">{evento.cuposDisponibles}</strong> de {evento.cupos} cupos ·
-                inscripciones hasta el {formatearFecha(evento.fechaLimiteInscripcion)}
-              </p>
-              {inscritoEn(evento) ? (
+              {abierto === evento.id && evento.descripcion && <p className="text-sm text-gray-600 whitespace-pre-line">{evento.descripcion}</p>}
+              {evento.descripcion && (
                 <button
-                  onClick={() => cancelarInscripcion(evento)}
-                  disabled={procesando === evento.id}
-                  className="text-sm font-medium border border-gray-200 rounded-full px-4 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-60"
+                  onClick={() => setAbierto(abierto === evento.id ? null : evento.id)}
+                  className="text-sm text-primary font-medium self-start hover:underline"
                 >
-                  Cancelar inscripción
-                </button>
-              ) : (
-                <button
-                  onClick={() => inscribirse(evento)}
-                  disabled={procesando === evento.id || !evento.inscripcionAbierta || evento.cuposDisponibles === 0}
-                  className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-1.5 hover:bg-primary-dark transition-colors disabled:opacity-50"
-                >
-                  {!evento.inscripcionAbierta
-                    ? "Inscripciones cerradas"
-                    : evento.cuposDisponibles === 0
-                    ? "Sin cupos"
-                    : procesando === evento.id
-                    ? "Inscribiendo..."
-                    : "Inscribirme"}
+                  {abierto === evento.id ? "Ocultar detalle" : "Ver detalle"}
                 </button>
               )}
-            </div>
+
+              <div className="mt-auto pt-2 flex items-center justify-between gap-3 flex-wrap">
+                <p className="text-xs text-gray-500">
+                  <strong className="text-ink-900">{evento.cuposDisponibles}</strong> de {evento.cupos} cupos · inscripciones hasta el{" "}
+                  {formatearFecha(evento.fechaLimiteInscripcion)}
+                </p>
+                {inscritoEn(evento) ? (
+                  <button
+                    onClick={() => cancelarInscripcion(evento)}
+                    disabled={procesando === evento.id}
+                    className="text-sm font-medium border border-gray-200 rounded-full px-4 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-60"
+                  >
+                    Cancelar inscripción
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => inscribirse(evento)}
+                    disabled={procesando === evento.id || !evento.inscripcionAbierta || evento.cuposDisponibles === 0}
+                    className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-1.5 hover:bg-primary-dark transition-colors disabled:opacity-50"
+                  >
+                    {!evento.inscripcionAbierta
+                      ? "Inscripciones cerradas"
+                      : evento.cuposDisponibles === 0
+                        ? "Sin cupos"
+                        : procesando === evento.id
+                          ? "Inscribiendo..."
+                          : "Inscribirme"}
+                  </button>
+                )}
+              </div>
             </div>
           </article>
         ))}
@@ -156,10 +169,7 @@ export function EventosPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {inscripciones.map((inscripcion) => (
-            <div
-              key={inscripcion.id}
-              className="bg-white rounded-2xl border border-gray-200 px-6 py-4 flex items-center justify-between flex-wrap gap-3"
-            >
+            <div key={inscripcion.id} className="bg-white rounded-2xl border border-gray-200 px-6 py-4 flex items-center justify-between flex-wrap gap-3">
               <div>
                 <p className="font-medium text-ink-900">{inscripcion.evento?.nombre}</p>
                 <p className="text-sm text-gray-500">
@@ -172,11 +182,7 @@ export function EventosPage() {
                     {inscripcion.asistencia.asistio ? "Asististe" : "No asististe"}
                   </span>
                 )}
-                <span
-                  className={`text-xs font-medium rounded-full px-3 py-1 ${
-                    ESTADO_INSCRIPCION[inscripcion.estado] || "bg-gray-100 text-gray-600"
-                  }`}
-                >
+                <span className={`text-xs font-medium rounded-full px-3 py-1 ${ESTADO_INSCRIPCION[inscripcion.estado] || "bg-gray-100 text-gray-600"}`}>
                   {inscripcion.estado}
                 </span>
               </div>

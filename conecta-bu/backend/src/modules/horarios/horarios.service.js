@@ -1,4 +1,5 @@
 const { prisma } = require("../../config/prisma");
+const { bloqueoQueCruza } = require("./bloqueos.service");
 const { AppError } = require("../../common/utils/AppError");
 const { moduloDeServicio, exigirMismoModulo } = require("../../common/utils/modulos");
 
@@ -46,6 +47,11 @@ async function crearHorario({ servicioId, fecha, horaInicio, horaFin, cupo }, mo
   const finUTC = aHoraUTC(horaFin);
   if (inicioUTC >= finUTC) {
     throw new AppError(400, "La hora de inicio debe ser anterior a la hora de fin.");
+  }
+
+  const bloqueo = await bloqueoQueCruza(modulo, fechaUTC, inicioUTC, finUTC);
+  if (bloqueo) {
+    throw new AppError(409, `Ese tiempo lo marcaste como no disponible (${bloqueo.motivo}). Elige otra hora o quita ese bloqueo.`, "HORARIO_EN_BLOQUEO");
   }
 
   const solapa = await existeSolapamiento({
@@ -109,10 +115,7 @@ async function actualizarHorario(id, cambios, modulo = "desarrollo-humano") {
 
   const citaActiva = await prisma.cita.findFirst({ where: { horarioId: id, estado: "Agendada" } });
   if (citaActiva) {
-    throw new AppError(
-      409,
-      "Este horario tiene una cita agendada. Cancelala o reagendala antes de modificarlo."
-    );
+    throw new AppError(409, "Este horario tiene una cita agendada. Cancelala o reagendala antes de modificarlo.");
   }
 
   const fechaUTC = cambios.fecha ? aFechaUTC(cambios.fecha) : horario.fecha;
@@ -123,6 +126,10 @@ async function actualizarHorario(id, cambios, modulo = "desarrollo-humano") {
   }
 
   const servicioId = cambios.servicioId || horario.servicioId;
+  const bloqueo = await bloqueoQueCruza(modulo, fechaUTC, inicioUTC, finUTC);
+  if (bloqueo) {
+    throw new AppError(409, `Ese tiempo lo marcaste como no disponible (${bloqueo.motivo}). Elige otra hora o quita ese bloqueo.`, "HORARIO_EN_BLOQUEO");
+  }
   const solapa = await existeSolapamiento({
     servicioId,
     fecha: fechaUTC,
@@ -165,10 +172,7 @@ async function deshabilitarHorario(id, confirmar, modulo = "desarrollo-humano") 
 
     const citaActiva = await tx.cita.findFirst({ where: { horarioId: id, estado: "Agendada" } });
     if (citaActiva && !confirmar) {
-      throw new AppError(
-        409,
-        "Este horario tiene una cita agendada. Confirma para deshabilitarlo y cancelar esa cita."
-      );
+      throw new AppError(409, "Este horario tiene una cita agendada. Confirma para deshabilitarlo y cancelar esa cita.");
     }
 
     if (citaActiva) {
