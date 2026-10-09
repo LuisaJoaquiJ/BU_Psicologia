@@ -3,7 +3,7 @@ import { Icono } from "../../components/Iconos";
 import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { useAuth } from "../../lib/auth/AuthContext";
-import { formatearHora } from "../../lib/format";
+import { fechaLarga, formatearHora } from "../../lib/format";
 import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo } from "../../components/ui";
 
 const ESTADO_ESTILOS = {
@@ -52,20 +52,32 @@ function Indicador({ titulo, valor, detalle, destacado = false }) {
 export function InicioAdmin() {
   const { usuario } = useAuth();
   const [stats, setStats] = useState(null);
-  const [agenda, setAgenda] = useState(null);
+  const [todas, setTodas] = useState(null);
 
   useEffect(() => {
     http.get("/admin/estadisticas").then((res) => setStats(res.data)).catch(() => setStats(false));
+    // Todas las citas del modulo: de ahi salen las de hoy, las proximas y las
+    // que esperan registro de asistencia (asi el inicio nunca queda vacio si
+    // hay citas otro dia).
     http
-      .get("/admin/citas", { params: { fecha: hoyISO() } })
-      .then((res) => setAgenda(res.data.citas))
-      .catch(() => setAgenda([]));
+      .get("/admin/citas")
+      .then((res) => setTodas(res.data.citas))
+      .catch(() => setTodas([]));
   }, []);
 
-  const porRegistrar = (agenda || []).filter((c) => c.estado === "Agendada").length;
+  const hoy = hoyISO();
+  const dia = (c) => String(c.horario?.fecha || "").slice(0, 10);
+  const orden = (a, b) => (dia(a) + String(a.horario?.horaInicio)).localeCompare(dia(b) + String(b.horario?.horaInicio));
+  const lista = [...(todas || [])].sort(orden);
+  const agenda = todas ? lista.filter((c) => dia(c) === hoy && c.estado !== "Cancelada") : null;
+  const pendientes = lista.filter((c) => c.estado === "Agendada" && dia(c) < hoy);
+  const proximas = lista.filter((c) => c.estado === "Agendada" && dia(c) > hoy);
+  const porRegistrar = (agenda || []).filter((c) => c.estado === "Agendada").length + pendientes.length;
   const eventos = stats ? stats.eventosDetalle.slice(-3) : [];
 
-  const siguiente = (agenda || []).find((c) => c.estado === "Agendada");
+  const siguiente = (agenda || []).find((c) => c.estado === "Agendada") || proximas[0];
+  const vistaAgenda = agenda && agenda.length ? agenda : proximas.slice(0, 6);
+  const fechaCorta = (c) => fechaLarga(c.horario?.fecha).split(",")[0] + " " + Number(dia(c).slice(8, 10));
 
   return (
     <>
@@ -79,7 +91,9 @@ export function InicioAdmin() {
         texto={
           agenda
             ? agenda.length === 0
-              ? "Hoy no tienes citas. Puedes publicar más horarios o preparar el próximo taller."
+              ? proximas.length
+                ? `Hoy no tienes citas. Tu próxima es el ${fechaLarga(proximas[0].horario?.fecha).toLowerCase()} a las ${formatearHora(proximas[0].horario?.horaInicio)}`
+                : "Hoy no tienes citas. Puedes publicar más horarios o preparar el próximo taller."
               : `Hoy tienes ${agenda.length} ${agenda.length === 1 ? "cita" : "citas"}${porRegistrar ? ` y ${porRegistrar} ${porRegistrar === 1 ? "espera" : "esperan"} registro de asistencia` : ""}.`
             : "Cargando tu día…"
         }
@@ -91,22 +105,23 @@ export function InicioAdmin() {
         }
         aside={
           <>
-            <h2 className="m-0 font-sans text-lg font-bold text-primary">Siguiente cita de hoy</h2>
+            <h2 className="m-0 font-sans text-lg font-bold text-primary">Siguiente cita</h2>
             {!agenda && <p className="m-0 text-ink-500">Cargando…</p>}
-            {agenda && !siguiente && <p className="m-0 text-ink-600">No quedan citas pendientes por hoy.</p>}
+            {agenda && !siguiente && <p className="m-0 text-ink-600">No tienes citas agendadas por ahora.</p>}
             {siguiente && (
               <div className="flex gap-4 items-center">
-                <span className="shrink-0 w-[76px] h-[68px] rounded-2xl bg-primary-light text-primary font-extrabold flex items-center justify-center tabular-nums text-[17px]">
+                <span className="shrink-0 w-[92px] h-[68px] rounded-2xl bg-primary-light text-primary font-extrabold flex items-center justify-center tabular-nums text-[15px] whitespace-nowrap">
                   {formatearHora(siguiente.horario?.horaInicio)}
                 </span>
                 <span className="min-w-0">
                   <strong className="block text-[17px] leading-snug text-primary truncate">{siguiente.usuario?.nombre}</strong>
-                  <span className="text-sm text-ink-500">{siguiente.horario?.servicio?.nombre}</span>
+                  <span className="block text-sm text-ink-500">{siguiente.horario?.servicio?.nombre}</span>
+                  {dia(siguiente) !== hoy && <span className="block text-sm font-semibold text-ink-700">{fechaLarga(siguiente.horario?.fecha)}</span>}
                 </span>
               </div>
             )}
             <Link to="/admin/citas" className="self-start font-bold text-sm px-4 min-h-[44px] inline-flex items-center rounded-full bg-primary-light text-primary hover:bg-[#E2E9F6]">
-              {siguiente ? "Registrar asistencia" : "Ver agenda"}
+              {siguiente && dia(siguiente) === hoy ? "Registrar asistencia" : "Ver citas"}
             </Link>
           </>
         }
@@ -118,7 +133,7 @@ export function InicioAdmin() {
         <Indicador
           titulo="Citas de hoy"
           valor={agenda ? agenda.length : "…"}
-          detalle={agenda ? `${porRegistrar} por registrar asistencia` : null}
+          detalle={agenda ? `${proximas.length} próximas · ${porRegistrar} por registrar asistencia` : null}
         />
         <Indicador
           titulo="Asistencia a citas"
@@ -134,17 +149,26 @@ export function InicioAdmin() {
       </section>
 
       <div className="flex gap-5 flex-wrap">
-        <section aria-label="Agenda de hoy" className="flex-[1_1_300px] min-w-0 bg-white border border-gray-200 rounded-[22px] p-6">
+        <section aria-label="Citas" className="flex-[1_1_300px] min-w-0 bg-white border border-gray-200 rounded-[22px] p-6">
           <div className="flex justify-between items-center mb-3.5">
-            <h2 className="m-0 text-lg font-sans font-bold">Agenda de hoy</h2>
-            <Link to="/admin/citas" className="inline-flex items-center gap-1.5 py-2 text-sm font-bold text-primary-soft">Ver agenda<Icono nombre="flecha" size={16} strokeWidth={2.2} /></Link>
+            <h2 className="m-0 text-lg font-sans font-bold">{agenda && agenda.length === 0 ? "Próximas citas" : "Citas de hoy"}</h2>
+            <Link to="/admin/citas" className="inline-flex items-center gap-1.5 py-2 text-sm font-bold text-primary-soft">Ver citas<Icono nombre="flecha" size={16} strokeWidth={2.2} /></Link>
           </div>
+          {pendientes.length > 0 && (
+            <Link to="/admin/citas" className="mb-3 flex items-center justify-between gap-3 rounded-xl bg-[#FFF6E0] text-[#7A5405] px-4 py-3 text-sm font-bold hover:brightness-[0.98]">
+              {pendientes.length} {pendientes.length === 1 ? "cita pasada espera" : "citas pasadas esperan"} registro de asistencia
+              <Icono nombre="flecha" size={16} strokeWidth={2.2} />
+            </Link>
+          )}
           {!agenda && <p className="m-0 text-sm text-ink-500">Cargando...</p>}
-          {agenda && agenda.length === 0 && <p className="m-0 text-sm text-ink-500">No hay citas para hoy.</p>}
+          {agenda && agenda.length === 0 && <p className="m-0 mb-1 text-sm text-ink-500">Hoy no hay citas{proximas.length ? "; estas son las que vienen." : " ni hay citas agendadas para los próximos días."}</p>}
           <ul className="list-none m-0 p-0 flex flex-col">
-            {(agenda || []).slice(0, 6).map((cita) => (
+            {vistaAgenda.map((cita) => (
               <li key={cita.id} className="flex items-center gap-3.5 py-3 border-t border-gray-100">
-                <span className="shrink-0 w-20 whitespace-nowrap tabular-nums font-bold text-sm text-primary">{formatearHora(cita.horario?.horaInicio)}</span>
+                <span className="shrink-0 w-24 tabular-nums font-bold text-sm text-primary leading-tight">
+                  {dia(cita) !== hoy && <span className="block text-xs font-semibold text-ink-500">{fechaCorta(cita)}</span>}
+                  <span className="whitespace-nowrap">{formatearHora(cita.horario?.horaInicio)}</span>
+                </span>
                 <span className="flex-1 min-w-0 text-sm">
                   <strong className="block truncate">{cita.usuario?.nombre}</strong>
                   <span className="text-ink-500">{cita.horario?.servicio?.nombre}</span>
