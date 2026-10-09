@@ -27,7 +27,7 @@ export function PersonasPage() {
   const paginas = datos ? Math.max(1, Math.ceil(datos.total / datos.porPagina)) : 1;
 
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-16">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16">
       <Encabezado
         kicker="Salud integral"
         titulo="Personas"
@@ -184,12 +184,12 @@ export function PersonaDetallePage() {
     }
   }
 
-  if (!persona) return <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 text-ink-500">{error ? <Aviso>{error}</Aviso> : "Cargando..."}</main>;
+  if (!persona) return <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 text-ink-500">{error ? <Aviso>{error}</Aviso> : "Cargando..."}</main>;
 
   const actividades = new Set(persona.atenciones.map((a) => a.actividadId)).size;
 
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-16 flex flex-col gap-6">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
       <div>
         <Link to="/salud/personas" className="text-sm font-bold text-primary-soft">
           ← Personas

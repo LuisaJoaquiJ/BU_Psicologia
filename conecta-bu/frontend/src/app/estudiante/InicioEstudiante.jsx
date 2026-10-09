@@ -76,7 +76,7 @@ export function InicioEstudiante() {
   const visibles = (eventos || []).slice(desde, desde + POR_VISTA);
 
   return (
-    <main className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-10 pb-20 flex flex-col gap-8">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-10 pb-20 flex flex-col gap-8">
       {/* Saludo + próxima cita */}
       <div className="flex gap-5 flex-wrap">
         <section className="relative overflow-hidden flex-[999_1_520px] bg-primary-dark text-white rounded-[28px] p-8 sm:p-10 flex flex-col gap-3.5">

@@ -114,7 +114,7 @@ export function GestionHorariosPage({ api = "/admin", modulo = "desarrollo-human
   const campoChico = claseCampo;
 
   return (
-    <main className="max-w-[1280px] mx-auto px-4 sm:px-6 py-8">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
       <h1 className="m-0 text-[30px] sm:text-[38px] leading-tight font-extrabold">Mis horarios de atención</h1>
       <p className="mt-1 mb-6 text-ink-500 max-w-[44em]">
         Toca en la semana las horas en que atiendes y elige si se repiten. Los estudiantes solo ven las horas que publiques.

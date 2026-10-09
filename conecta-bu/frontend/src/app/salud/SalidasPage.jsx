@@ -52,7 +52,7 @@ export function SalidasPage() {
   }
 
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-16">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16">
       <Encabezado
         kicker="Salud integral"
         titulo="Salidas y reportes SST"
@@ -237,7 +237,7 @@ export function SalidaDetallePage() {
   }
 
   if (!reporte || !catalogo) {
-    return <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9">{error ? <Aviso>{error}</Aviso> : <p className="text-ink-500">Cargando…</p>}</main>;
+    return <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9">{error ? <Aviso>{error}</Aviso> : <p className="text-ink-500">Cargando…</p>}</main>;
   }
 
   const salida = reporte.tipo !== "CondicionInsegura";
@@ -247,7 +247,7 @@ export function SalidaDetallePage() {
   const estado = reporte.estado;
 
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-16 flex flex-col gap-6">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
       <Link to="/salud/salidas" className="text-sm font-bold text-primary-soft inline-flex items-center gap-1 w-fit">
         <Icono nombre="izquierda" size={16} /> Salidas y reportes
       </Link>

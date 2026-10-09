@@ -68,7 +68,7 @@ export function InicioSalud() {
   const total = resumen?.totalPeriodo || 0;
 
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-16 flex flex-col gap-6">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
       <section className="relative overflow-hidden bg-primary rounded-[28px] px-6 py-8 sm:px-10 sm:py-10 text-white">
         <svg aria-hidden="true" viewBox="0 0 400 400" className="absolute -right-24 -top-28 w-[360px] h-[360px]">
           <circle cx="200" cy="200" r="180" fill="none" stroke="rgba(232,178,58,0.35)" strokeWidth="1.5" />

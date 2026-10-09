@@ -150,7 +150,7 @@ export function AgendarCitaPage() {
   const hoy = hoyISO();
 
   return (
-    <main className="max-w-[1240px] mx-auto px-4 sm:px-6 py-8 lg:py-10 flex gap-8 flex-wrap items-start">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8 lg:py-10 flex gap-8 flex-wrap items-start">
       <aside className="flex-[1_1_240px] min-w-0">
         <h1 className="m-0 text-[30px] sm:text-[34px] leading-tight font-extrabold">Pedir una cita</h1>
         <p className="mt-1.5 mb-6 text-ink-500">Orientación con el equipo de Desarrollo Humano. La cita queda agendada cuando la confirmas.</p>

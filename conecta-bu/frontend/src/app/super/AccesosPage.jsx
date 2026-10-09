@@ -62,7 +62,7 @@ export function AccesosPage() {
   const visibles = (datos?.accesos || []).filter((a) => !filtro || a.modulo === filtro);
 
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-16 flex flex-col gap-6">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
       <Encabezado
         kicker="Superadministrador"
         titulo="Accesos por módulo"

@@ -80,7 +80,7 @@ export function AgendaAdminPage({ api = "/admin" }) {
   const esHoy = fecha === hoyISO();
 
   return (
-    <main className="max-w-[1280px] mx-auto px-4 sm:px-6 py-8">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
       <div className="flex justify-between items-center gap-5 flex-wrap mb-6">
         <div>
           <h1 className="m-0 text-[30px] sm:text-[38px] leading-tight font-extrabold">{fechaLarga(fecha)}</h1>

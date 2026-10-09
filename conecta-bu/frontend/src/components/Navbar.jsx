@@ -78,7 +78,7 @@ export function Navbar({ modulo = "desarrollo-humano" }) {
 
   return (
     <header className="bg-white border-b border-gray-200">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0 xl:shrink-0">
           <Link to={datos.inicio} className="flex items-center gap-3 min-w-0 no-underline">
             <img src="/img/logo-uniautonoma-marca.png" alt="Uniautónoma del Cauca" className="h-11 sm:h-[52px] w-auto shrink-0" />

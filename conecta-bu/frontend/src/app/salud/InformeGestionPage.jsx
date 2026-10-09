@@ -590,7 +590,7 @@ export function InformeGestionPage() {
   const editable = informe?.editable;
 
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-28">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-28">
       <div className="flex justify-between items-end gap-4 flex-wrap mb-6">
         <div className="min-w-0">
           <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Salud integral · Formato INFBI-002</p>
@@ -697,7 +697,7 @@ export function InformeGestionPage() {
 
       {editable && sucio && (
         <div className="fixed bottom-0 inset-x-0 z-20 bg-white/95 backdrop-blur border-t border-gray-200">
-          <div className="max-w-[1160px] mx-auto px-5 sm:px-8 py-3 flex items-center justify-between gap-3">
+          <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-3 flex items-center justify-between gap-3">
             <span className="text-sm font-semibold text-ink-600">Tienes cambios sin guardar en el informe {periodo}.</span>
             <button type="button" onClick={guardar} disabled={guardando} className={botonPrimario}>
               {guardando ? "Guardando…" : "Guardar borrador"}

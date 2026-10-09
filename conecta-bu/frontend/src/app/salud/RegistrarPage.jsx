@@ -390,7 +390,7 @@ export function RegistrarPage() {
   }, [actividades]);
 
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-16">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16">
       <Encabezado
         kicker="Salud integral"
         titulo="Registrar atención o asistencia"

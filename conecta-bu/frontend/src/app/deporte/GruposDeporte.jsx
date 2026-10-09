@@ -172,7 +172,7 @@ export function GruposPage() {
   }, [datos]);
 
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-16">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16">
       <Encabezado
         kicker="Deporte"
         titulo="Grupos"
@@ -369,11 +369,11 @@ export function GrupoDetallePage() {
     }
   }
 
-  if (!grupo) return <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9">{error ? <Aviso>{error}</Aviso> : <p className="text-ink-500">Cargando…</p>}</main>;
+  if (!grupo) return <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9">{error ? <Aviso>{error}</Aviso> : <p className="text-ink-500">Cargando…</p>}</main>;
   const activos = grupo.inscritos.filter((i) => i.estado === "Activa");
 
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-16 flex flex-col gap-6">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
       <Link to="/deporte/grupos" className="text-sm font-bold text-primary-soft inline-flex items-center gap-1 w-fit">
         <Icono nombre="izquierda" size={16} /> Grupos
       </Link>

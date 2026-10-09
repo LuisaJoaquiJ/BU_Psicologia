@@ -256,7 +256,7 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-cream overflow-x-hidden">
       <header className="px-4 sm:px-6 pt-5">
-        <div className="max-w-[1152px] mx-auto bg-white rounded-[28px] sm:rounded-full shadow-[0_10px_30px_rgba(11,42,91,0.08)] pl-5 pr-3 py-3 flex items-center justify-between gap-4 flex-wrap">
+        <div className="max-w-[1392px] mx-auto bg-white rounded-[28px] sm:rounded-full shadow-[0_10px_30px_rgba(11,42,91,0.08)] pl-5 pr-3 py-3 flex items-center justify-between gap-4 flex-wrap">
           <Logo subtitulo="Desarrollo humano y orientación" />
           <nav aria-label="Principal" className="flex items-center gap-6 text-[15px] font-semibold flex-wrap">
             <Link to="/" className="text-ink-600 hover:text-primary">← Todos los módulos</Link>
@@ -273,11 +273,11 @@ export function LandingPage() {
         </div>
       </header>
 
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-8">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8">
         <Carrusel />
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
         <div className="grid gap-4 mt-12 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
           {[
             { icono: "calendario", titulo: "Citas en línea", texto: "Agenda sin filas ni llamadas", tono: "bg-primary-light text-primary-soft" },
@@ -381,7 +381,7 @@ export function LandingPage() {
       </div>
 
       <footer className="border-t border-gray-200 bg-white">
-        <div className="max-w-[1200px] mx-auto px-6 py-7 flex justify-between gap-4 flex-wrap text-sm text-ink-500">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-7 flex justify-between gap-4 flex-wrap text-sm text-ink-500">
           <span>© {new Date().getFullYear()} Corporación Universitaria Autónoma del Cauca · Bienestar Universitario</span>
           <span>Conecta BU</span>
         </div>

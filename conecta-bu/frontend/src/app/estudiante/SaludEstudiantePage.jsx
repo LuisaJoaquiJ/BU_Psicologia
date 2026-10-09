@@ -46,7 +46,7 @@ export function SaludEstudiantePage() {
   const visibles = (horarios || []).filter((h) => !servicioId || h.servicioId === servicioId).slice(0, 24);
 
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-8 pb-16 flex flex-col gap-8">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 pb-16 flex flex-col gap-8">
       <section className="relative overflow-hidden rounded-[28px] bg-primary text-white isolate">
         <img src={IMAGENES.salud.src} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover -z-10 opacity-40" />
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[linear-gradient(100deg,rgba(7,29,64,0.96)_0%,rgba(11,42,91,0.85)_55%,rgba(11,42,91,0.5)_100%)]" />

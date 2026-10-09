@@ -19,7 +19,7 @@ function Encabezado() {
   const { estaAutenticado, usuario, cerrarSesion } = useAuth();
   return (
     <header className="bg-white border-b border-gray-200 relative z-20">
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-2.5 flex items-center justify-between gap-4">
         <span className="hidden sm:block">
           <Logo alto={60} />
         </span>
@@ -92,7 +92,7 @@ function Portada() {
   return (
     <section className="relative bg-primary-dark text-white overflow-hidden">
       <img src={IMAGENES.integracion.src} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover opacity-30" />
-      <div className="relative max-w-[1240px] mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-14 flex flex-col gap-5">
+      <div className="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-16 sm:pt-24 pb-14 flex flex-col gap-5">
         <h1 className="m-0 text-white text-[40px] sm:text-[64px] leading-[1.03] font-extrabold max-w-[13em]">
           {nombre ? `Hola, ${nombre}.` : "Tu bienestar también hace parte de tu formación."}
         </h1>
@@ -140,7 +140,7 @@ function Dimensiones() {
   const ruta = rutaModulo(modulo, usuario);
 
   return (
-    <section id="dimensiones" className="scroll-mt-6 max-w-[1240px] mx-auto px-4 sm:px-6 py-20">
+    <section id="dimensiones" className="scroll-mt-6 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20">
       <h2 className="m-0 mb-2 text-[34px] sm:text-[44px] leading-tight font-extrabold">Cinco dimensiones, una sola cuenta</h2>
       <p className="m-0 mb-9 text-ink-500 max-w-[40em]">
         Así organiza la Uniautónoma su Bienestar Institucional. Elige una dimensión para ver qué puedes hacer en ella.
@@ -239,7 +239,7 @@ function Agenda() {
 
   return (
     <section id="agenda" className="scroll-mt-6 bg-cream">
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-20">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20">
         <div className="flex justify-between items-end gap-5 flex-wrap mb-7">
           <h2 className="m-0 text-[32px] sm:text-[40px] leading-tight font-extrabold">Próximamente en el campus</h2>
           <Link to="/desarrollo-humano#eventos" className="inline-flex items-center gap-1.5 py-3 font-extrabold text-primary">
@@ -295,7 +295,7 @@ export function PortalPage() {
       <Dimensiones />
       <Agenda />
 
-      <section id="ayuda" className="scroll-mt-6 max-w-[1240px] mx-auto px-4 sm:px-6 py-16">
+      <section id="ayuda" className="scroll-mt-6 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-16">
         <div className="flex gap-8 flex-wrap items-center justify-between p-7 sm:p-10 border-[1.5px] border-gray-200 rounded-[18px]">
           <div className="flex-[1_1_460px] min-w-0">
             <h2 className="m-0 mb-2 text-[28px] sm:text-[30px] font-extrabold">¿Necesitas hablar con alguien ahora?</h2>
@@ -317,7 +317,7 @@ export function PortalPage() {
       </section>
 
       <footer className="bg-primary-dark text-[#D9E2F2]">
-        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 flex gap-10 flex-wrap justify-between items-end">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-12 flex gap-10 flex-wrap justify-between items-end">
           <div>
             <p className="m-0 text-[32px] sm:text-[40px] font-extrabold tracking-tight leading-[1.05] text-white">
               Somos el motor

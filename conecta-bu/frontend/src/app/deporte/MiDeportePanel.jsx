@@ -68,7 +68,7 @@ function InicioDeporte() {
   const { usuario } = useAuth();
   const { datos, error } = useMisHoras();
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-16 flex flex-col gap-6">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
       <section className="relative overflow-hidden bg-primary rounded-[28px] px-6 py-8 sm:px-10 sm:py-10 text-white flex items-center gap-8 flex-wrap">
         <svg aria-hidden="true" viewBox="0 0 400 400" className="absolute -right-24 -top-28 w-[360px] h-[360px]">
           <circle cx="200" cy="200" r="180" fill="none" stroke="rgba(232,178,58,0.35)" strokeWidth="1.5" />
@@ -247,7 +247,7 @@ function OfertaPage() {
   const visibles = useMemo(() => (oferta?.disciplinas || []).filter((d) => !filtro || d.tipo === filtro), [oferta, filtro]);
 
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-16">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16">
       <div className="flex justify-between items-end gap-4 flex-wrap mb-6">
         <div>
           <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Deporte · periodo {oferta?.periodo || "…"}</p>
@@ -323,7 +323,7 @@ function OfertaPage() {
 function MisHorasPage() {
   const { datos, error } = useMisHoras();
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-16 flex flex-col gap-6">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
       <div className="flex justify-between items-end gap-4 flex-wrap">
         <div>
           <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Deporte</p>

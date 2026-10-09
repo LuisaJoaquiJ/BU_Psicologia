@@ -38,7 +38,7 @@ export function PanelLayout({ menu, panel, children }) {
   return (
     <div className="min-h-screen bg-cream overflow-x-hidden">
       <header className="bg-primary-dark text-white">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-4">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-3 pb-2 flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-3 min-w-0 no-underline">
             <span className="shrink-0 flex bg-white rounded-[10px] px-1.5 py-1">
               <img src="/img/logo-uniautonoma-marca.png" alt="Uniautónoma del Cauca" className="h-9 sm:h-11 w-auto" />
@@ -72,7 +72,7 @@ export function PanelLayout({ menu, panel, children }) {
         </div>
         <nav
           aria-label="Menú del panel"
-          className="max-w-[1280px] mx-auto px-3 sm:px-5 pb-2.5 flex gap-1 overflow-x-auto text-sm sm:text-[15px] font-bold [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_90%,transparent)] lg:[mask-image:none] lg:flex-wrap"
+          className="max-w-[1440px] mx-auto px-3 sm:px-5 lg:px-9 pb-2.5 flex gap-1 overflow-x-auto text-sm sm:text-[15px] font-bold [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_90%,transparent)] lg:[mask-image:none] lg:flex-wrap"
         >
           {menu.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={clasePildora}>

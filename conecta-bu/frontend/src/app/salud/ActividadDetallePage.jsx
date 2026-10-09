@@ -228,8 +228,8 @@ export function ActividadDetallePage() {
     }
   }
 
-  if (error && !actividad) return <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9"><Aviso>{error}</Aviso></main>;
-  if (!actividad) return <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 text-ink-500">Cargando actividad...</main>;
+  if (error && !actividad) return <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9"><Aviso>{error}</Aviso></main>;
+  if (!actividad) return <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 text-ink-500">Cargando actividad...</main>;
 
   const ind = actividad.indicadores;
   const texto = filtro.trim().toLowerCase();
@@ -238,7 +238,7 @@ export function ActividadDetallePage() {
   );
 
   return (
-    <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-16 flex flex-col gap-6">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
       <div>
         <Link to="/salud/actividades" className="text-sm font-bold text-primary-soft">
           ← Actividades

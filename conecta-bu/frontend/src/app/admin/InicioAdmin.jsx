@@ -65,7 +65,7 @@ export function InicioAdmin() {
   const eventos = stats ? stats.eventosDetalle.slice(-3) : [];
 
   return (
-    <main className="max-w-[1100px] mx-auto px-5 sm:px-10 pt-9 pb-16 flex flex-col gap-7">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-7">
       <div className="flex justify-between items-end gap-4 flex-wrap">
         <div>
           <h1 className="m-0 text-[36px] sm:text-[38px] font-extrabold">
