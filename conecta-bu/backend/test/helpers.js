@@ -16,8 +16,8 @@ function configurarEntorno(extra = {}) {
 function crearUsuario(rol, email, nombre) {
   const usuario = prisma.__seedUsuario({
     emailInstitucional: email,
-    nombre: nombre || (rol === "Administrador" ? "Admin de Prueba" : "Estudiante de Prueba"),
-    rolId: rol === "Administrador" ? "rol-administrador" : "rol-estudiante",
+    nombre: nombre || ({ Administrador: "Admin de Prueba", Salud: "Enfermera de Prueba" }[rol] || "Estudiante de Prueba"),
+    rolId: { Administrador: "rol-administrador", Salud: "rol-salud" }[rol] || "rol-estudiante",
   });
   // Se requiere aqui (y no arriba) para que configurarEntorno() corra antes
   // de que env.js lea las variables de entorno.

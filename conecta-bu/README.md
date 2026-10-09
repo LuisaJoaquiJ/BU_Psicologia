@@ -9,6 +9,7 @@
 > | 3 | Gestión de horarios, agenda administrativa y asistencia a citas | RF-007, RF-008 |
 > | 4 | Eventos: gestión, inscripción y asistencia | RF-009, RF-010, RF-011 |
 > | 5 | Usuarios, automatización n8n, asistente IA y dashboard | RF-012 a RF-015 |
+> | — | Portal de los 5 módulos y módulo **Salud integral** | ver sección al final |
 >
 > El detalle de los sprints 4 y 5 está al final de este archivo
 > ([Sprint 4](#sprint-4--eventos-inscripciones-y-asistencia),
@@ -290,3 +291,50 @@ Pruebas: `npm test` incluye `usuarios.test.js`, `estadisticas.test.js` y
 deshabilita a un estudiante; abre *Estadísticas* y filtra por fechas. Como
 estudiante, abre *Asistente* y pregunta "¿Cómo agendo una cita?" y "¿qué
 medicamento tomo?" (debe negarse y orientarte a una cita).
+
+## Módulo Salud integral
+
+Reemplaza los Excel de la Unidad de Salud (registro general SPADIEZ,
+formulario de atención de enfermería, reporte SNIES e informe de gestión
+INFBI-002) y el formulario de asistencia.
+
+**Rol nuevo `Salud`** (personal de la Unidad de Salud). El administrador lo
+asigna en *Usuarios*, o se crea uno de prueba con `SALUD_EMAIL` en el seed.
+El panel está en `/salud`:
+
+- **Registrar**: con la cédula o el código estudiantil (también lector de
+  código de barras) la persona queda registrada al instante. Si es la primera
+  vez, se registra una sola vez con autorización de datos (Ley 1581). Modo
+  *lista* para jornadas. En atención de enfermería se anotan signos vitales,
+  insumos, descripción y remisión.
+- **Actividades**: catálogo del periodo con código SNIES, meta, jornadas,
+  asistentes y **evidencias** (fotos y PDF).
+- **Personas** con su historial, **horarios y agenda de citas de salud**.
+- **Reportes**: informe de gestión (matriz de atendidos, estadísticas y
+  registro fotográfico), plantilla SNIES y registro de atenciones; e
+  **importador** de los Excel existentes (vista previa, sin duplicados).
+
+El estudiante agenda citas de salud en *Salud* (`/estudiante/salud`) y ve sus
+participaciones. Las citas se separan por módulo: se puede tener una cita de
+orientación y una de salud a la vez.
+
+**Después de actualizar el código:**
+
+```
+cd backend
+npm install                 # librerías nuevas: multer (evidencias)
+npx prisma migrate dev      # aplica la migración modulo_salud (tablas salud_*) y regenera el cliente
+npm run prisma:seed         # rol Salud, servicios y catálogo de actividades
+```
+
+Variables opcionales en `backend/.env`:
+
+```
+SALUD_EMAIL=enfermeria@uniautonoma.edu.co   # usuario de salud de prueba (seed)
+SALUD_NOMBRE=Personal de Salud
+SALUD_UPLOADS_DIR=                          # carpeta de evidencias (por defecto backend/uploads)
+SALUD_MAX_EVIDENCIA_MB=10
+```
+
+Las evidencias se guardan en `backend/uploads/` (ignorada por git). En el
+despliegue hay que apuntar `SALUD_UPLOADS_DIR` a un volumen persistente.

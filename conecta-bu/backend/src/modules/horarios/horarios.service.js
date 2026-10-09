@@ -1,5 +1,6 @@
 const { prisma } = require("../../config/prisma");
 const { AppError } = require("../../common/utils/AppError");
+const { moduloDeServicio, exigirMismoModulo } = require("../../common/utils/modulos");
 
 // Los horarios guardan solo la "hora del dia" usando una fecha de referencia
 // fija (1970-01-01) en UTC (ver prisma/seed.js). Estos helpers convierten los
@@ -32,11 +33,12 @@ async function existeSolapamiento({ servicioId, fecha, horaInicio, horaFin, excl
 }
 
 // RF-007 / HU-13: el administrador publica un nuevo horario disponible.
-async function crearHorario({ servicioId, fecha, horaInicio, horaFin, cupo }) {
+async function crearHorario({ servicioId, fecha, horaInicio, horaFin, cupo }, modulo = "desarrollo-humano") {
   const servicio = await prisma.servicio.findUnique({ where: { id: servicioId } });
   if (!servicio) {
     throw new AppError(404, "El servicio seleccionado no existe.");
   }
+  exigirMismoModulo(servicio, modulo);
 
   const fechaUTC = aFechaUTC(fecha);
   const inicioUTC = aHoraUTC(horaInicio);
@@ -71,31 +73,38 @@ async function crearHorario({ servicioId, fecha, horaInicio, horaFin, cupo }) {
 // RF-007 / HU-13, HU-14: vista administrativa de todos los horarios
 // (a diferencia de /citas/horarios-disponibles, aqui se listan tambien los
 // ocupados/deshabilitados para poder gestionarlos).
-async function listarTodosLosHorarios({ fecha, servicioId } = {}) {
+async function listarTodosLosHorarios({ fecha, servicioId, modulo = "desarrollo-humano" } = {}) {
   const where = {};
   if (fecha) where.fecha = aFechaUTC(fecha);
   if (servicioId) where.servicioId = servicioId;
 
-  return prisma.horario.findMany({
+  const horarios = await prisma.horario.findMany({
     where,
     include: { servicio: true },
     orderBy: [{ fecha: "asc" }, { horaInicio: "asc" }],
   });
+  return horarios.filter((h) => moduloDeServicio(h.servicio) === modulo);
 }
 
-async function obtenerHorarioOFallar(id) {
-  const horario = await prisma.horario.findUnique({ where: { id } });
+async function obtenerHorarioOFallar(id, modulo) {
+  const horario = await prisma.horario.findUnique({ where: { id }, include: { servicio: true } });
   if (!horario) {
     throw new AppError(404, "El horario no existe.");
   }
+  if (modulo) exigirMismoModulo(horario.servicio, modulo);
   return horario;
 }
 
 // RF-007 / HU-14: modifica un horario que todavia no tiene una cita activa.
 // Si ya tiene una cita agendada, se pide cancelarla o reasignarla antes de
 // mover la fecha/hora, para no dejar al estudiante con datos inconsistentes.
-async function actualizarHorario(id, cambios) {
-  const horario = await obtenerHorarioOFallar(id);
+async function actualizarHorario(id, cambios, modulo = "desarrollo-humano") {
+  const horario = await obtenerHorarioOFallar(id, modulo);
+  if (cambios.servicioId && cambios.servicioId !== horario.servicioId) {
+    const nuevo = await prisma.servicio.findUnique({ where: { id: cambios.servicioId } });
+    if (!nuevo) throw new AppError(404, "El servicio seleccionado no existe.");
+    exigirMismoModulo(nuevo, modulo);
+  }
 
   const citaActiva = await prisma.cita.findFirst({ where: { horarioId: id, estado: "Agendada" } });
   if (citaActiva) {
@@ -141,7 +150,8 @@ async function actualizarHorario(id, cambios) {
 // tiene una cita agendada, exige una confirmacion explicita (confirmar=true)
 // porque tambien cancela esa cita, igual que la cancelacion del propio
 // estudiante (libera el registro pero no vuelve a marcarlo como disponible).
-async function deshabilitarHorario(id, confirmar) {
+async function deshabilitarHorario(id, confirmar, modulo = "desarrollo-humano") {
+  await obtenerHorarioOFallar(id, modulo);
   return prisma.$transaction(async (tx) => {
     const horario = await tx.horario.findUnique({ where: { id } });
     if (!horario) {
@@ -171,8 +181,8 @@ async function deshabilitarHorario(id, confirmar) {
 // RF-007 / HU-14: vuelve a habilitar un horario deshabilitado manualmente.
 // Se rechaza si el horario esta "ocupado" por una cita activa real, para no
 // permitir que dos estudiantes terminen compitiendo por el mismo cupo.
-async function habilitarHorario(id) {
-  const horario = await obtenerHorarioOFallar(id);
+async function habilitarHorario(id, modulo = "desarrollo-humano") {
+  const horario = await obtenerHorarioOFallar(id, modulo);
   if (!horario.ocupado) {
     return prisma.horario.findUnique({ where: { id }, include: { servicio: true } });
   }

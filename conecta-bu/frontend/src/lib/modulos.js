@@ -42,11 +42,13 @@ export const MODULOS = [
     id: "salud",
     nombre: "Salud integral",
     corto: "Salud",
-    descripcion: "Promoción, prevención y atención en salud para toda la comunidad universitaria.",
+    descripcion:
+      "Consultas de enfermería y médicas, jornadas de promoción y prevención, campañas y el registro de atenciones de la Unidad de Salud.",
     icono: "pulso",
     imagen: IMAGENES.salud,
-    estado: "pronto",
-    servicios: ["Atención", "Prevención", "Campañas"],
+    estado: "disponible",
+    panel: { Estudiante: "/estudiante/salud", Salud: "/salud" },
+    servicios: ["Citas de enfermería y médicas", "Jornadas y campañas", "Registro con la cédula"],
   },
   {
     id: "cultura",
@@ -62,9 +64,15 @@ export const MODULOS = [
 
 export const MODULOS_DISPONIBLES = MODULOS.filter((m) => m.estado === "disponible");
 
+// Modulos a los que puede entrar quien tiene la sesion.
+export function modulosDe(usuario) {
+  return MODULOS_DISPONIBLES.filter((m) => !usuario || m.panel?.[usuario.rol]);
+}
+
 // Ruta de entrada de un modulo: el panel del rol si hay sesion, o su pagina publica.
+// Con sesion, null si el rol no tiene acceso a ese modulo.
 export function rutaModulo(modulo, usuario) {
   if (modulo.estado !== "disponible") return null;
-  if (usuario && modulo.panel?.[usuario.rol]) return modulo.panel[usuario.rol];
+  if (usuario) return modulo.panel?.[usuario.rol] || null;
   return modulo.publica || "/login";
 }

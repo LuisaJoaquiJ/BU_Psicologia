@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage } from "./app/login/LoginPage";
 import { LandingPage } from "./app/inicio/LandingPage";
 import { PortalPage } from "./app/portal/PortalPage";
+import { SaludPanel } from "./app/salud/SaludPanel";
 import { EstudiantePanel } from "./app/estudiante/EstudiantePanel";
 import { AdminPanel } from "./app/admin/AdminPanel";
 import { ProtectedRoute } from "./lib/auth/ProtectedRoute";
@@ -44,6 +45,15 @@ export default function App() {
         element={
           <ProtectedRoute rolesPermitidos={["Administrador"]}>
             <AdminPanel />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/salud/*"
+        element={
+          <ProtectedRoute rolesPermitidos={["Salud"]}>
+            <SaludPanel />
           </ProtectedRoute>
         }
       />

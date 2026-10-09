@@ -35,6 +35,8 @@ model Usuario {
   asistenciasEventoRegistradas AsistenciaEvento[] @relation("registradoPorEvento")
   alertas                      AlertaInApp[]
   historial                    HistorialEstado[]
+  atencionesSaludRegistradas   AtencionSalud[]    @relation("atencionSaludRegistradaPor")
+  evidenciasSaludSubidas       EvidenciaSalud[]   @relation("evidenciaSaludSubidaPor")
 
   @@map("usuarios")
 }
@@ -44,6 +46,8 @@ model Servicio {
   nombre        String    @db.VarChar(150)
   descripcion   String?   @db.Text
   activo        Boolean   @default(true)
+  // Modulo de Bienestar al que pertenece el servicio ("desarrollo-humano", "salud").
+  modulo        String    @default("desarrollo-humano") @db.VarChar(40)
   fechaCreacion DateTime  @default(now())
   horarios      Horario[]
 
@@ -192,4 +196,149 @@ model HistorialEstado {
   fecha          DateTime @default(now())
 
   @@map("historial_estados")
+}
+
+// ---------------------------------------------------------------------------
+// Modulo Salud integral: reemplaza el registro general (SPADIEZ), el
+// formulario de atencion de enfermeria, el reporte SNIES y el informe de
+// gestion. Una persona se registra una sola vez y luego basta su documento o
+// codigo estudiantil para registrar cada atencion o asistencia.
+// ---------------------------------------------------------------------------
+
+enum TipoDocumento {
+  CC
+  TI
+  CE
+  PA
+  RC
+  OTRO
+}
+
+enum PoblacionSalud {
+  Estudiante
+  Docente
+  Administrativo
+  Egresado
+  Externo
+}
+
+enum CategoriaActividadSalud {
+  AtencionEnfermeria
+  PromocionPrevencion
+  CampanaSalud
+  DonacionSangre
+  MedicinaLaboral
+  Otra
+}
+
+enum ExamenMedicoLaboral {
+  Ingreso
+  Egreso
+  Periodico
+  EnfasisAlturas
+  PostIncapacidad
+}
+
+model PersonaSalud {
+  id                  String         @id @default(uuid())
+  tipoDocumento       TipoDocumento  @default(CC)
+  numeroDocumento     String         @unique @db.VarChar(30)
+  codigoEstudiantil   String?        @unique @db.VarChar(30)
+  nombres             String         @db.VarChar(120)
+  apellidos           String         @db.VarChar(120)
+  telefono            String?        @db.VarChar(30)
+  correo              String?        @db.VarChar(120)
+  poblacion           PoblacionSalud @default(Estudiante)
+  programa            String?        @db.VarChar(150)
+  // Autorizacion de tratamiento de datos (Ley 1581 de 2012).
+  consentimientoDatos Boolean        @default(false)
+  fechaConsentimiento DateTime?
+  fechaCreacion       DateTime       @default(now())
+  fechaActualizacion  DateTime       @updatedAt
+
+  atenciones AtencionSalud[]
+
+  @@index([apellidos, nombres])
+  @@map("salud_personas")
+}
+
+model ActividadSalud {
+  id                   String                  @id @default(uuid())
+  // Codigo de la actividad en el reporte SNIES, unico dentro del periodo.
+  codigo               Int
+  periodo              String                  @db.VarChar(10)
+  nombre               String                  @db.VarChar(200)
+  categoria            CategoriaActividadSalud
+  tipoSnies            Int                     @default(1)
+  fechaInicio          DateTime                @db.Date
+  fechaFin             DateTime                @db.Date
+  // Servicio continuo (atencion basica, telemedicina...) frente a una jornada puntual.
+  permanente           Boolean                 @default(false)
+  // Pide signos vitales y descripcion del evento (atencion de enfermeria).
+  clinica              Boolean                 @default(false)
+  meta                 Int?
+  presupuesto          Int?
+  horasDedicacion      Int?
+  responsableDocumento String?                 @db.VarChar(30)
+  avances              String?                 @db.Text
+  dificultades         String?                 @db.Text
+  aprendizajes         String?                 @db.Text
+  observaciones        String?                 @db.Text
+  activa               Boolean                 @default(true)
+  fechaCreacion        DateTime                @default(now())
+
+  atenciones AtencionSalud[]
+  evidencias EvidenciaSalud[]
+
+  @@unique([periodo, codigo])
+  @@map("salud_actividades")
+}
+
+model AtencionSalud {
+  id                     String               @id @default(uuid())
+  personaId              String
+  persona                PersonaSalud         @relation(fields: [personaId], references: [id])
+  actividadId            String
+  actividad              ActividadSalud       @relation(fields: [actividadId], references: [id])
+  fecha                  DateTime             @db.Date
+  // Poblacion y programa al momento de la atencion (para los reportes).
+  poblacion              PoblacionSalud
+  programa               String?              @db.VarChar(150)
+  examenLaboral          ExamenMedicoLaboral?
+  insumo                 String?              @db.VarChar(200)
+  tensionArterial        String?              @db.VarChar(15)
+  frecuenciaCardiaca     Int?
+  frecuenciaRespiratoria Int?
+  pesoKg                 Float?
+  tallaCm                Int?
+  glucometria            String?              @db.VarChar(20)
+  descripcion            String?              @db.Text
+  remitido               Boolean              @default(false)
+  origen                 String               @default("registro") @db.VarChar(20)
+  registradoPorId        String?
+  registradoPor          Usuario?             @relation("atencionSaludRegistradaPor", fields: [registradoPorId], references: [id])
+  fechaRegistro          DateTime             @default(now())
+
+  @@index([fecha])
+  @@index([personaId])
+  @@index([actividadId])
+  @@map("salud_atenciones")
+}
+
+model EvidenciaSalud {
+  id            String         @id @default(uuid())
+  actividadId   String
+  actividad     ActividadSalud @relation(fields: [actividadId], references: [id])
+  fecha         DateTime       @db.Date
+  descripcion   String?        @db.VarChar(300)
+  nombreArchivo String         @db.VarChar(255)
+  ruta          String         @db.VarChar(400)
+  tipoMime      String         @db.VarChar(100)
+  tamanoBytes   Int
+  subidoPorId   String?
+  subidoPor     Usuario?       @relation("evidenciaSaludSubidaPor", fields: [subidoPorId], references: [id])
+  fechaSubida   DateTime       @default(now())
+
+  @@index([actividadId])
+  @@map("salud_evidencias")
 }

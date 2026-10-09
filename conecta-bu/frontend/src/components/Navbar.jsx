@@ -11,6 +11,7 @@ const MENU_ESTUDIANTE = [
   { to: "/estudiante/mis-citas", label: "Mis citas" },
   { to: "/estudiante/eventos", label: "Eventos" },
   { to: "/estudiante/asistente", label: "Asistente" },
+  { to: "/estudiante/salud", label: "Salud" },
 ];
 
 export function iniciales(nombre = "") {

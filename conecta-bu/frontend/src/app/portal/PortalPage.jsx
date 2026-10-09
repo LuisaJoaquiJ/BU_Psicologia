@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../lib/auth/AuthContext";
 import { IMAGENES } from "../../lib/imagenes";
-import { MODULOS, MODULOS_DISPONIBLES, rutaModulo } from "../../lib/modulos";
+import { MODULOS, MODULOS_DISPONIBLES, modulosDe, rutaModulo } from "../../lib/modulos";
 import { Logo } from "../../components/Logo";
 import { Icono } from "../../components/Iconos";
 import { iniciales } from "../../components/Navbar";
@@ -59,8 +59,9 @@ function Encabezado() {
 function Hero() {
   const { usuario } = useAuth();
   const nombre = usuario?.nombre?.split(" ")[0];
-  const habilitados = MODULOS_DISPONIBLES.map((m) => m.nombre.charAt(0).toLowerCase() + m.nombre.slice(1));
-  const principal = MODULOS_DISPONIBLES[0];
+  const accesibles = modulosDe(usuario);
+  const habilitados = accesibles.map((m) => m.nombre.charAt(0).toLowerCase() + m.nombre.slice(1));
+  const principal = accesibles[0];
 
   return (
     <section className="relative rounded-[32px] overflow-hidden bg-primary isolate">
@@ -140,18 +141,21 @@ function Hero() {
           <ul className="list-none m-0 p-0 flex flex-col gap-2">
             {MODULOS.map((m) => {
               const ruta = rutaModulo(m, usuario);
+              const activo = m.estado === "disponible";
               const contenido = (
                 <>
                   <span
                     className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                      ruta ? "bg-gold text-primary" : "bg-white/10 text-white/80"
+                      ruta ? "bg-gold text-primary" : activo ? "bg-white/20 text-white" : "bg-white/10 text-white/80"
                     }`}
                   >
                     <Icono nombre={m.icono} size={20} strokeWidth={2} />
                   </span>
                   <span className="flex-1 min-w-0 text-[15px] leading-snug font-semibold text-white">{m.nombre}</span>
-                  {ruta ? (
-                    <span className="text-xs font-bold text-primary bg-gold-soft rounded-full px-2.5 py-1 shrink-0">Disponible</span>
+                  {activo ? (
+                    <span className={`text-xs font-bold rounded-full px-2.5 py-1 shrink-0 ${ruta ? "text-primary bg-gold-soft" : "text-white bg-white/15"}`}>
+                      Disponible
+                    </span>
                   ) : (
                     <span className="text-xs font-semibold text-white/70 border border-white/25 rounded-full px-2.5 py-1 shrink-0">
                       Pronto
@@ -181,15 +185,15 @@ function Hero() {
 function TarjetaModulo({ modulo, destacada }) {
   const { usuario } = useAuth();
   const ruta = rutaModulo(modulo, usuario);
-  const disponible = Boolean(ruta);
+  const disponible = modulo.estado === "disponible";
 
   return (
     <article
       className={`group relative rounded-[26px] overflow-hidden flex flex-col bg-white border border-gray-200 transition-all ${
         disponible ? "hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(11,42,91,0.14)]" : ""
-      } ${destacada ? "sm:col-span-2 md:row-span-2" : ""}`}
+      } ${destacada ? "sm:col-span-2 md:col-span-3" : "md:col-span-2"}`}
     >
-      <div className={`relative overflow-hidden bg-primary ${destacada ? "h-[230px] md:h-auto md:flex-1 md:min-h-[300px]" : "h-[150px]"}`}>
+      <div className={`relative overflow-hidden bg-primary ${destacada ? "h-[240px]" : "h-[150px]"}`}>
         <img
           src={modulo.imagen.src}
           alt={modulo.imagen.alt}
@@ -239,7 +243,9 @@ function TarjetaModulo({ modulo, destacada }) {
           </ul>
         )}
         <div className="mt-auto pt-1">
-          {disponible ? (
+          {disponible && !ruta ? (
+            <span className="text-[13px] font-semibold text-ink-500">Disponible para estudiantes y para el equipo del módulo</span>
+          ) : disponible ? (
             <Link
               to={ruta}
               className={`inline-flex items-center gap-2 font-bold rounded-full ${
@@ -261,8 +267,8 @@ function TarjetaModulo({ modulo, destacada }) {
 }
 
 function Modulos() {
-  // El primer modulo disponible ocupa el bloque grande; el resto, en orden.
-  const ordenados = [...MODULOS].sort((a, b) => (a.estado === "disponible" ? -1 : 0) - (b.estado === "disponible" ? -1 : 0));
+  // Los modulos disponibles van primero, en tarjetas grandes; el resto, en orden.
+  const ordenados = [...MODULOS_DISPONIBLES, ...MODULOS.filter((m) => m.estado !== "disponible")];
   return (
     <section id="modulos" className="pt-20 scroll-mt-6">
       <div className="flex justify-between items-end gap-6 flex-wrap mb-8">
@@ -274,9 +280,9 @@ function Modulos() {
           {MODULOS_DISPONIBLES.length} de {MODULOS.length} módulos disponibles. Los demás se habilitarán durante el semestre.
         </p>
       </div>
-      <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-4 md:auto-rows-[minmax(0,auto)]">
-        {ordenados.map((m, i) => (
-          <TarjetaModulo key={m.id} modulo={m} destacada={i === 0 && m.estado === "disponible"} />
+      <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-6">
+        {ordenados.map((m) => (
+          <TarjetaModulo key={m.id} modulo={m} destacada={m.estado === "disponible"} />
         ))}
       </div>
     </section>

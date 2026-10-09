@@ -71,7 +71,7 @@ export function MisCitasPage() {
           Agendar nueva cita
         </Link>
       </div>
-      <p className="text-gray-500 mb-8">Consulta o cancela tus citas de orientación (hasta 24 horas antes).</p>
+      <p className="text-gray-500 mb-8">Consulta o cancela tus citas de orientación y de salud (hasta 24 horas antes).</p>
 
       {error && <p className="text-sm text-red-600 bg-red-50 rounded-md p-3 mb-6">{error}</p>}
 

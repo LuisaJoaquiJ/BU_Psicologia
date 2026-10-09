@@ -18,7 +18,28 @@ async function main() {
     create: { nombre: "Administrador" },
   });
 
-  console.log("Roles listos:", { estudiante: estudiante.id, administrador: administrador.id });
+  // Modulo Salud integral: rol del personal de salud (enfermeria).
+  const salud = await prisma.rol.upsert({
+    where: { nombre: "Salud" },
+    update: {},
+    create: { nombre: "Salud" },
+  });
+
+  console.log("Roles listos:", { estudiante: estudiante.id, administrador: administrador.id, salud: salud.id });
+
+  // Opcional: SALUD_EMAIL / SALUD_NOMBRE crean un usuario del personal de salud de prueba.
+  if (process.env.SALUD_EMAIL) {
+    const personal = await prisma.usuario.upsert({
+      where: { emailInstitucional: process.env.SALUD_EMAIL },
+      update: { rolId: salud.id, habilitado: true },
+      create: {
+        emailInstitucional: process.env.SALUD_EMAIL,
+        nombre: process.env.SALUD_NOMBRE || "Personal de Salud",
+        rolId: salud.id,
+      },
+    });
+    console.log("Usuario de salud listo:", personal.emailInstitucional);
+  }
 
   const adminEmail = process.env.ADMIN_EMAIL;
   if (adminEmail) {
@@ -38,6 +59,7 @@ async function main() {
 
   await seedServiciosYHorarios();
   await seedEventos();
+  await seedSalud();
 }
 
 // Sprint 2 (RF-003 / RF-004): un par de servicios y horarios de ejemplo para
@@ -162,6 +184,76 @@ async function seedEventos() {
     ],
   });
   console.log("Eventos de ejemplo creados (3).");
+}
+
+// Modulo Salud integral: servicios con cita (modulo "salud"), algunos
+// horarios y el catalogo de actividades del periodo actual (tomado del
+// reporte SNIES). Cada parte se crea solo si todavia no existe.
+async function seedSalud() {
+  const { ACTIVIDADES_BASE, periodoDeFecha, rangoDePeriodo } = require("../src/modules/salud/catalogos");
+
+  const serviciosSalud = await prisma.servicio.count({ where: { modulo: "salud" } });
+  if (serviciosSalud === 0) {
+    const enfermeria = await prisma.servicio.create({
+      data: {
+        nombre: "Consulta de enfermería",
+        descripcion: "Valoración básica, toma de signos vitales, curaciones y orientación en salud.",
+        modulo: "salud",
+      },
+    });
+    const medica = await prisma.servicio.create({
+      data: {
+        nombre: "Atención médica",
+        descripcion: "Consulta médica general en la Unidad de Salud Integral.",
+        modulo: "salud",
+      },
+    });
+    await prisma.servicio.create({
+      data: {
+        nombre: "Telemedicina",
+        descripcion: "Atención básica a distancia por videollamada.",
+        modulo: "salud",
+      },
+    });
+
+    const horaUTC = (hora, minuto = 0) => new Date(Date.UTC(1970, 0, 1, hora, minuto, 0));
+    const cursor = new Date();
+    cursor.setUTCHours(0, 0, 0, 0);
+    let creados = 0;
+    for (let i = 0; creados < 9; i += 1) {
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+      if ([0, 6].includes(cursor.getUTCDay())) continue;
+      for (const [servicio, hora] of [[enfermeria, 8], [enfermeria, 9], [medica, 14]]) {
+        await prisma.horario.create({
+          data: { servicioId: servicio.id, fecha: new Date(cursor), horaInicio: horaUTC(hora), horaFin: horaUTC(hora, 30) },
+        });
+        creados += 1;
+      }
+    }
+    console.log("Servicios y horarios de Salud creados.");
+  }
+
+  const periodo = periodoDeFecha(new Date());
+  const existentes = await prisma.actividadSalud.count({ where: { periodo } });
+  if (existentes > 0) {
+    console.log(`Ya existen actividades de Salud para ${periodo}: se omite el catalogo.`);
+    return;
+  }
+  const rango = rangoDePeriodo(periodo);
+  await prisma.actividadSalud.createMany({
+    data: ACTIVIDADES_BASE.map((a, i) => ({
+      codigo: i + 1,
+      periodo,
+      nombre: a.nombre,
+      categoria: a.categoria,
+      permanente: Boolean(a.permanente),
+      clinica: Boolean(a.clinica),
+      fechaInicio: rango.desde,
+      fechaFin: rango.hasta,
+      meta: 1,
+    })),
+  });
+  console.log(`Catalogo de actividades de Salud ${periodo} creado (${ACTIVIDADES_BASE.length}).`);
 }
 
 main()

@@ -6,6 +6,7 @@ import { AgendarCitaPage } from "./AgendarCitaPage";
 import { MisCitasPage } from "./MisCitasPage";
 import { EventosPage } from "./EventosPage";
 import { AsistentePage } from "./AsistentePage";
+import { SaludEstudiantePage } from "./SaludEstudiantePage";
 
 // Layout + enrutado del rol Estudiante (HU-04). Sprint 2 agrega Servicios,
 // Agendar cita y Mis citas (HU-06 a HU-12); Sprint 4 agrega Eventos
@@ -22,6 +23,7 @@ export function EstudiantePanel() {
         <Route path="mis-citas" element={<MisCitasPage />} />
         <Route path="eventos" element={<EventosPage />} />
         <Route path="asistente" element={<AsistentePage />} />
+        <Route path="salud" element={<SaludEstudiantePage />} />
       </Routes>
     </div>
   );

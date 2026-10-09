@@ -28,6 +28,10 @@ const config = {
   n8nTimeoutMs: Number(process.env.N8N_TIMEOUT_MS || 8000),
   // El agente consulta a Gemini y tarda mas que una notificacion.
   n8nAgenteTimeoutMs: Number(process.env.N8N_AGENTE_TIMEOUT_MS || 20000),
+  // Modulo Salud integral: carpeta donde se guardan las evidencias (fotos,
+  // planillas). En produccion puede apuntar a un volumen persistente.
+  saludUploadsDir: process.env.SALUD_UPLOADS_DIR || require("path").join(__dirname, "..", "..", "uploads"),
+  saludMaxEvidenciaMb: Number(process.env.SALUD_MAX_EVIDENCIA_MB || 10),
 };
 
 module.exports = { config };

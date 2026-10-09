@@ -1,6 +1,7 @@
 const { prisma } = require("../../config/prisma");
 const { AppError } = require("../../common/utils/AppError");
 const { config } = require("../../config/env");
+const { moduloDeServicio, exigirMismoModulo } = require("../../common/utils/modulos");
 
 // Colombia no tiene horario de verano: la hora del dia de un horario
 // (guardada "tal cual" en UTC, ver seed.js) es hora de Bogota, UTC-5.
@@ -18,32 +19,37 @@ function inicioDeCita(horario) {
 }
 
 // RF-004 / HU-07: horarios habilitados y aun no ocupados, desde hoy en adelante.
-async function listarHorariosDisponibles() {
+// Se filtran por modulo (Desarrollo humano o Salud integral).
+async function listarHorariosDisponibles(modulo = "desarrollo-humano") {
   const inicioHoy = new Date();
   inicioHoy.setHours(0, 0, 0, 0);
 
-  return prisma.horario.findMany({
-    where: { ocupado: false, fecha: { gte: inicioHoy } },
+  const horarios = await prisma.horario.findMany({
+    where: { ocupado: false, fecha: { gte: inicioHoy }, servicio: { modulo } },
     include: { servicio: true },
     orderBy: [{ fecha: "asc" }, { horaInicio: "asc" }],
   });
+  return horarios.filter((h) => moduloDeServicio(h.servicio) === modulo);
 }
 
 // RF-005 / HU-08, HU-09, HU-10: agenda una cita validando, dentro de una
 // misma transaccion, que el estudiante no tenga ya una cita activa (RN-004)
 // y que el horario siga disponible (RN-003: evita doble reserva por carreras
-// entre solicitudes simultaneas).
+// entre solicitudes simultaneas). Con el modulo de Salud, RN-004 aplica por
+// modulo: se puede tener una cita de orientacion y una de salud a la vez.
 async function crearCita(usuarioId, horarioId) {
   return prisma.$transaction(async (tx) => {
-    const horario = await tx.horario.findUnique({ where: { id: horarioId } });
+    const horario = await tx.horario.findUnique({ where: { id: horarioId }, include: { servicio: true } });
     if (!horario) {
       throw new AppError(404, "El horario seleccionado no existe.");
     }
 
-    const citaActiva = await tx.cita.findFirst({
+    const modulo = moduloDeServicio(horario.servicio);
+    const citasActivas = await tx.cita.findMany({
       where: { usuarioId, estado: "Agendada" },
+      include: { horario: { include: { servicio: true } } },
     });
-    if (citaActiva) {
+    if (citasActivas.some((c) => moduloDeServicio(c.horario?.servicio) === modulo)) {
       throw new AppError(409, "Ya tienes una cita activa. Cancelala antes de agendar otra.");
     }
 
@@ -111,7 +117,7 @@ async function cancelarCita(usuarioId, citaId) {
 // fecha, servicio y estado. A diferencia de "mis citas", aqui se ven las de
 // todos los estudiantes junto con sus datos, para que el administrador pueda
 // darle seguimiento a la jornada.
-async function listarAgendaAdmin({ fecha, servicioId, estado } = {}) {
+async function listarAgendaAdmin({ fecha, servicioId, estado, modulo = "desarrollo-humano" } = {}) {
   const where = {};
   if (estado) where.estado = estado;
   if (fecha || servicioId) {
@@ -120,22 +126,24 @@ async function listarAgendaAdmin({ fecha, servicioId, estado } = {}) {
     if (servicioId) where.horario.servicioId = servicioId;
   }
 
-  return prisma.cita.findMany({
+  const citas = await prisma.cita.findMany({
     where,
     include: { usuario: true, horario: { include: { servicio: true } } },
     orderBy: [{ horario: { fecha: "asc" } }, { horario: { horaInicio: "asc" } }],
   });
+  return citas.filter((c) => moduloDeServicio(c.horario?.servicio) === modulo);
 }
 
 // RF-008 / HU-16: registra si el estudiante asistio o no a una cita ya
 // realizada. Deja tanto el cambio de estado (Atendida/NoAsistio) como un
 // registro de auditoria en AsistenciaCita con quien la registro.
-async function registrarAsistencia(adminId, citaId, asistio) {
+async function registrarAsistencia(adminId, citaId, asistio, modulo = "desarrollo-humano") {
   return prisma.$transaction(async (tx) => {
-    const cita = await tx.cita.findUnique({ where: { id: citaId } });
+    const cita = await tx.cita.findUnique({ where: { id: citaId }, include: { horario: { include: { servicio: true } } } });
     if (!cita) {
       throw new AppError(404, "Cita no encontrada.");
     }
+    exigirMismoModulo(cita.horario?.servicio, modulo);
     if (cita.estado !== "Agendada") {
       throw new AppError(409, "Solo se puede registrar asistencia de una cita que este agendada.");
     }

@@ -19,7 +19,12 @@ function notFoundHandler(req, res) {
 
 // Middleware de errores centralizado (4 argumentos: Express lo reconoce por su firma).
 function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-vars
-  const statusCode = err instanceof AppError ? err.statusCode : 500;
+  let statusCode = err instanceof AppError ? err.statusCode : 500;
+  // Archivo demasiado grande o tipo no permitido al subir evidencias/Excel.
+  if (err?.name === "MulterError") {
+    statusCode = 400;
+    err.message = err.code === "LIMIT_FILE_SIZE" ? "El archivo supera el tamano maximo permitido." : "No se pudo procesar el archivo enviado.";
+  }
   if (statusCode === 500) {
     // Un error inesperado si conviene verlo en los logs del servidor.
     console.error(err);
@@ -28,6 +33,7 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
     statusCode,
     message: statusCode === 500 ? "Ha ocurrido un error inesperado." : err.message,
     error: REASON_PHRASES[statusCode] || "Error",
+    ...(err.codigo && statusCode !== 500 ? { codigo: err.codigo } : {}),
   });
 }
 

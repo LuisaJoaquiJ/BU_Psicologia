@@ -20,17 +20,19 @@ const claseEnlace = ({ isActive }) =>
     isActive ? "bg-gold/15 text-[#F3CF7A]" : "text-[#D6DDEC] hover:bg-white/5 hover:text-white"
   }`;
 
-export function AdminLayout({ children }) {
+// Layout con menu lateral, compartido por los paneles administrativos
+// (Desarrollo humano y Salud integral).
+export function PanelLayout({ menu, subtitulo, children }) {
   const { usuario, cerrarSesion } = useAuth();
 
   return (
     <div className="min-h-screen bg-cream lg:flex overflow-x-hidden">
       <aside className="bg-primary text-white lg:w-[260px] lg:shrink-0 lg:min-h-screen px-4 py-5 lg:py-7 flex flex-col gap-5 lg:gap-7">
         <div className="px-2">
-          <Logo to="/" subtitulo="Panel administrativo" invertido />
+          <Logo to="/" subtitulo={subtitulo} invertido />
         </div>
         <nav aria-label="Administración" className="min-w-0 flex lg:flex-col gap-1 text-[15px] font-semibold overflow-x-auto">
-          {MENU_ADMIN.map((item) => (
+          {menu.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={claseEnlace}>
               <Icono nombre={item.icono} size={18} strokeWidth={2} />
               {item.label}
@@ -47,7 +49,7 @@ export function AdminLayout({ children }) {
           </span>
           <span className="flex-1 min-w-0 leading-tight text-sm">
             <strong className="block truncate">{usuario?.nombre}</strong>
-            <span className="text-xs text-white/70">{usuario?.rol}</span>
+            <span className="text-xs text-white/70">{usuario?.rol === "Salud" ? "Personal de salud" : usuario?.rol}</span>
           </span>
           <button onClick={cerrarSesion} className="text-[13px] font-semibold text-[#D6DDEC] hover:text-white px-2 min-h-[40px]">
             Salir
@@ -56,5 +58,13 @@ export function AdminLayout({ children }) {
       </aside>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
+  );
+}
+
+export function AdminLayout({ children }) {
+  return (
+    <PanelLayout menu={MENU_ADMIN} subtitulo="Desarrollo humano · Admin">
+      {children}
+    </PanelLayout>
   );
 }

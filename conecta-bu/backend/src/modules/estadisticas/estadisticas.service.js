@@ -3,6 +3,7 @@ const { AppError } = require("../../common/utils/AppError");
 const { aFechaUTC } = require("../../common/utils/fechas");
 const analitica = require("./analitica");
 const { construirInforme } = require("./informe.datos");
+const { moduloDeServicio } = require("../../common/utils/modulos");
 
 // Porcentaje con un decimal; null cuando no hay base para calcularlo
 // (el frontend muestra "sin datos" en lugar de un 0% enganoso).
@@ -116,7 +117,15 @@ async function consultarDatos(fecha) {
     prisma.usuario.count({ where: { rol: { nombre: "Estudiante" } } }),
     prisma.horario.findMany({ where: fecha ? { fecha } : {}, include: { servicio: true } }),
   ]);
-  return { citas, eventos, estudiantes, horarios };
+  // El dashboard es del modulo Desarrollo humano: las citas de Salud integral
+  // tienen sus propios reportes.
+  const delModulo = (servicio) => moduloDeServicio(servicio) === "desarrollo-humano";
+  return {
+    citas: citas.filter((c) => delModulo(c.horario?.servicio)),
+    eventos,
+    estudiantes,
+    horarios: horarios.filter((h) => delModulo(h.servicio)),
+  };
 }
 
 function armarEstadisticas({ citas, eventos, estudiantes, horarios }, { desde, hasta } = {}) {

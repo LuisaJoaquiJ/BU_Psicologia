@@ -7,8 +7,9 @@ const { agendaAdmin, asistencia } = require("./citas.controller");
 const router = Router();
 
 // RN-008: la agenda administrativa y el registro de asistencia son
-// exclusivos del rol Administrador.
-router.use(authMiddleware, requireRole("Administrador"));
+// exclusivos de los roles administrativos; cada uno ve solo su modulo
+// (Administrador: Desarrollo humano; Salud: Salud integral).
+router.use(authMiddleware, requireRole("Administrador", "Salud"));
 
 // RF-008 / HU-15
 router.get("/", agendaAdmin);

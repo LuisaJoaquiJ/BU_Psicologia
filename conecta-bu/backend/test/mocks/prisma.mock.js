@@ -15,11 +15,14 @@ let inscripciones = [];
 let asistenciasEvento = [];
 let historial = [];
 let contador = 0;
+const { crearModelosSalud } = require("./salud.mock");
+const salud = crearModelosSalud({ obtenerUsuarios: () => usuarios, siguienteId: () => ++contador });
 
 function seedRoles() {
   roles = [
     { id: "rol-estudiante", nombre: "Estudiante" },
     { id: "rol-administrador", nombre: "Administrador" },
+    { id: "rol-salud", nombre: "Salud" },
   ];
 }
 
@@ -45,6 +48,7 @@ function reset() {
   inscripciones = [];
   asistenciasEvento = [];
   historial = [];
+  salud.reset();
   contador = 0;
 }
 reset();
@@ -396,6 +400,7 @@ const prisma = {
       return { count: antes - historial.length };
     },
   },
+  ...salud.modelos,
   // El mock no necesita aislamiento transaccional real para las pruebas:
   // basta con ejecutar el callback pasandole el propio objeto prisma.
   $transaction: async (fn) => fn(prisma),
@@ -417,6 +422,13 @@ const prisma = {
     return evento;
   },
   __reset: reset,
+  __saludTablas: salud.tablas,
+  __seedServicio: (data) => {
+    contador += 1;
+    const servicio = { id: `servicio-${contador}`, activo: true, descripcion: null, ...data };
+    servicios.push(servicio);
+    return servicio;
+  },
   __seedUsuario: (data) => {
     contador += 1;
     const usuario = {

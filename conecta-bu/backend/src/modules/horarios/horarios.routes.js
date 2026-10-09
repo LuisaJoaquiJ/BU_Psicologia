@@ -6,8 +6,9 @@ const { crear, listar, actualizar, deshabilitar, habilitar } = require("./horari
 
 const router = Router();
 
-// RN-008: toda la gestion de horarios es exclusiva del rol Administrador.
-router.use(authMiddleware, requireRole("Administrador"));
+// RN-008: la gestion de horarios es exclusiva de los roles administrativos;
+// cada uno gestiona los servicios de su modulo (Administrador / Salud).
+router.use(authMiddleware, requireRole("Administrador", "Salud"));
 
 // RF-007 / HU-13
 router.post("/", requireFields(["servicioId", "fecha", "horaInicio", "horaFin"]), crear);

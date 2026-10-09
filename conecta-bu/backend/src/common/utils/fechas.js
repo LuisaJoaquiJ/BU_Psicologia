@@ -27,4 +27,11 @@ function hoyUTC() {
   return new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()));
 }
 
-module.exports = { aFechaUTC, aHoraUTC, hoyUTC };
+// "Hoy" en Colombia (UTC-5) como fecha UTC a medianoche: evita que un
+// registro hecho a las 8 p. m. quede con la fecha del dia siguiente.
+function hoyBogota() {
+  const ahora = new Date(Date.now() - 5 * 60 * 60 * 1000);
+  return new Date(Date.UTC(ahora.getUTCFullYear(), ahora.getUTCMonth(), ahora.getUTCDate()));
+}
+
+module.exports = { aFechaUTC, aHoraUTC, hoyUTC, hoyBogota };

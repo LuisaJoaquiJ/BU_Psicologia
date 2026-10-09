@@ -15,12 +15,21 @@ const eventosAdminRoutes = require("./modules/eventos/eventos.admin.routes");
 const usuariosAdminRoutes = require("./modules/usuarios/usuarios.routes");
 const estadisticasAdminRoutes = require("./modules/estadisticas/estadisticas.routes");
 const asistenteRoutes = require("./modules/asistente/asistente.routes");
+const saludEstudianteRoutes = require("./modules/salud/salud.estudiante.routes");
+const saludRoutes = require("./modules/salud/salud.routes");
 const { notFoundHandler, errorHandler } = require("./common/middlewares/error.middleware");
 
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: config.frontendUrl, credentials: true }));
+app.use(
+  cors({
+    origin: config.frontendUrl,
+    credentials: true,
+    // Para leer el nombre de los Excel descargados y avisos de los reportes.
+    exposedHeaders: ["Content-Disposition", "X-Actividades-Sin-Responsable"],
+  })
+);
 app.use(morgan("dev"));
 app.use(express.json());
 
@@ -39,6 +48,9 @@ app.use("/api/v1/admin/eventos", eventosAdminRoutes);
 app.use("/api/v1/admin/usuarios", usuariosAdminRoutes);
 app.use("/api/v1/admin/estadisticas", estadisticasAdminRoutes);
 app.use("/api/v1/asistente", asistenteRoutes);
+// Modulo Salud integral: vista del estudiante y panel del personal de salud.
+app.use("/api/v1/salud/estudiante", saludEstudianteRoutes);
+app.use("/api/v1/salud", saludRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
