@@ -153,15 +153,19 @@ function responderLocal(textoNormalizado, contexto, nombre) {
 }
 
 async function consultarN8n(pregunta, contexto, usuario) {
-  const resultado = await postJson(config.n8nAgenteUrl, {
-    pregunta,
-    usuario: { nombre: usuario.nombre },
-    contexto,
-    reglas:
-      "Responde en español, de forma breve y amable, solo sobre los servicios de Desarrollo Humano / " +
-      "Orientación y el uso de Conecta BU. No hagas diagnósticos, no recomiendes medicamentos ni " +
-      "tratamientos y no tomes decisiones clínicas (RN-011); en esos casos orienta a agendar una cita.",
-  });
+  const resultado = await postJson(
+    config.n8nAgenteUrl,
+    {
+      pregunta,
+      usuario: { nombre: usuario.nombre },
+      contexto,
+      reglas:
+        "Responde en español, de forma breve y amable, solo sobre los servicios de Desarrollo Humano / " +
+        "Orientación y el uso de Conecta BU. No hagas diagnósticos, no recomiendes medicamentos ni " +
+        "tratamientos y no tomes decisiones clínicas (RN-011); en esos casos orienta a agendar una cita.",
+    },
+    config.n8nAgenteTimeoutMs
+  );
   const respuesta = typeof resultado?.respuesta === "string" ? resultado.respuesta.trim() : "";
   if (!respuesta) {
     throw new Error("n8n no devolvio el campo 'respuesta'.");

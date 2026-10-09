@@ -1,0 +1,85 @@
+{
+  "id": "CbuNotificacion1",
+  "name": "Conecta BU - Notificaciones (RF-013)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "conecta-bu",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "0ce86a1a-44c1-5963-af55-4fa8db65469c",
+      "name": "Webhook Conecta BU",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "c7f4241f-d730-5ca2-8b01-658ae2ae78da"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Conecta BU -> correo al estudiante (RF-013).\n// 1) Verifica que la peticion venga del backend (cabecera X-Conecta-BU-Secret).\n// 2) Arma asunto y mensaje segun el tipo de automatizacion.\nconst secreto = $env.CONECTA_BU_SECRET || '';\nconst cabeceras = $json.headers || {};\nif (secreto && cabeceras['x-conecta-bu-secret'] !== secreto) {\n  throw new Error('Peticion rechazada: secreto invalido.');\n}\n\nconst { tipo, datos = {} } = $json.body || {};\nconst estudiante = datos.estudiante;\nif (!estudiante || !estudiante.email) {\n  // evento.publicado no tiene destinatario individual: no se envia correo.\n  return [];\n}\n\nconst fecha = (iso) => iso\n  ? new Date(iso).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })\n  : '';\nconst hora = (iso) => iso\n  ? new Date(iso).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' })\n  : '';\n\nconst nombre = (estudiante.nombre || '').split(' ')[0] || 'estudiante';\nconst cita = datos.cita || {};\nconst evento = datos.evento || {};\n\nconst plantillas = {\n  'cita.agendada': {\n    asunto: 'Tu cita de orientación quedó agendada',\n    cuerpo: `Tu cita de <b>${cita.servicio || 'orientación'}</b> quedó agendada para el <b>${fecha(cita.fecha)}</b> a las <b>${hora(cita.horaInicio)}</b>.<br>Si no puedes asistir, cancélala desde «Mis citas» con al menos 24 horas de anticipación.`,\n  },\n  'cita.cancelada': {\n    asunto: 'Tu cita de orientación fue cancelada',\n    cuerpo: `Tu cita de <b>${cita.servicio || 'orientación'}</b> del ${fecha(cita.fecha)} a las ${hora(cita.horaInicio)} fue cancelada. Puedes agendar una nueva cuando quieras.`,\n  },\n  'evento.inscripcion': {\n    asunto: `Inscripción confirmada: ${evento.nombre || 'evento'}`,\n    cuerpo: `Quedaste inscrito/a en <b>${evento.nombre || 'el evento'}</b>, el <b>${fecha(evento.fecha)}</b> a las <b>${hora(evento.horaInicio)}</b>${evento.lugar ? ' en ' + evento.lugar : ''}. ¡Te esperamos!`,\n  },\n  'evento.inscripcion_cancelada': {\n    asunto: `Cancelaste tu inscripción: ${evento.nombre || 'evento'}`,\n    cuerpo: `Cancelaste tu inscripción a <b>${evento.nombre || 'el evento'}</b>. Tu cupo quedó libre para otra persona.`,\n  },\n};\n\nconst plantilla = plantillas[tipo];\nif (!plantilla) return [];\n\nconst html = `<div style=\"font-family:Arial,sans-serif;max-width:560px;color:#0E1726\">\n  <div style=\"background:#0B2A5B;color:#fff;padding:20px 24px;border-radius:12px 12px 0 0\">\n    <strong style=\"font-size:18px\">Conecta BU</strong><br><span style=\"color:#E8B23A;font-size:13px\">Bienestar Universitario · Uniautónoma del Cauca</span>\n  </div>\n  <div style=\"background:#FBF7EE;padding:24px;border-radius:0 0 12px 12px;line-height:1.6\">\n    <p>Hola, ${nombre}:</p><p>${plantilla.cuerpo}</p>\n    <p style=\"font-size:12px;color:#5B6478\">Este es un mensaje automático de Conecta BU. En una emergencia llama a la línea 123.</p>\n  </div></div>`;\n\nreturn [{ json: { para: estudiante.email, asunto: plantilla.asunto, html } }];"
+      },
+      "id": "7ab58df6-8f4b-5f4d-9a5e-c5b9cab9e9c3",
+      "name": "Preparar correo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.CONECTA_BU_REMITENTE || 'conectabu@uniautonoma.edu.co' }}",
+        "toEmail": "={{ $json.para }}",
+        "subject": "={{ $json.asunto }}",
+        "emailFormat": "html",
+        "html": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "119f6b52-9051-54d3-9975-0c2b3904b19d",
+      "name": "Enviar correo",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        520,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Conecta BU": {
+      "main": [
+        [
+          {
+            "node": "Preparar correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar correo": {
+      "main": [
+        [
+          {
+            "node": "Enviar correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota"
+  },
+  "active": false
+}

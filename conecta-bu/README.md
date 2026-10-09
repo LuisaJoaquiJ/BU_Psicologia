@@ -245,9 +245,9 @@ El backend envía un `POST` JSON a `N8N_WEBHOOK_URL` cuando ocurre:
 - Si defines `N8N_SECRET`, cada petición lleva la cabecera
   `X-Conecta-BU-Secret` para que el flujo de n8n verifique el origen.
 
-Flujo sugerido en n8n: *Webhook* (POST) → *Switch* por `tipo` → *Gmail* /
-*Send Email* al `datos.estudiante.email` (confirmación de cita, recordatorio
-de evento, etc.).
+Los flujos de n8n listos para importar (notificaciones por correo y agente con
+Gemini) están en la carpeta [`n8n/`](n8n/README.md), con la guía paso a paso.
+`docker compose up -d n8n` levanta n8n en http://localhost:5678.
 
 ### Asistente de orientación (RF-014)
 
@@ -279,6 +279,8 @@ N8N_WEBHOOK_URL=   # webhook para automatizaciones (RF-013)
 N8N_AGENTE_URL=    # webhook del agente IA (RF-014)
 N8N_SECRET=        # se envía en la cabecera X-Conecta-BU-Secret
 N8N_TIMEOUT_MS=8000
+N8N_AGENTE_TIMEOUT_MS=20000
+HORAS_MINIMAS_CANCELACION=24
 ```
 
 Pruebas: `npm test` incluye `usuarios.test.js`, `estadisticas.test.js` y

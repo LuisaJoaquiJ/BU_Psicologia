@@ -1,7 +1,10 @@
-# Levanta una base de datos PostgreSQL 16 local para desarrollo, sin depender
-# de Supabase. Uso: docker compose up -d
-# Luego, en backend/.env: DATABASE_URL="postgresql://postgres:postgres@localhost:5432/conecta_bu?schema=public"
-version: "3.8"
+# Servicios de apoyo para desarrollo local. Uso: docker compose up -d
+#
+# - postgres: base de datos. En backend/.env:
+#     DATABASE_URL="postgresql://postgres:postgres@localhost:5432/conecta_bu?schema=public"
+# - n8n (Sprint 5, RF-013 / RF-014): automatizaciones y agente IA en http://localhost:5678
+#     Las claves se leen de un archivo .env junto a este docker-compose.yml (ver n8n/README.md):
+#     CONECTA_BU_SECRET, GEMINI_API_KEY, GEMINI_MODEL, CONECTA_BU_REMITENTE.
 services:
   postgres:
     image: postgres:16
@@ -15,5 +18,24 @@ services:
     volumes:
       - conecta_bu_pgdata:/var/lib/postgresql/data
 
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      GENERIC_TIMEZONE: America/Bogota
+      TZ: America/Bogota
+      # Los flujos de Conecta BU leen sus claves con $env.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      CONECTA_BU_SECRET: ${CONECTA_BU_SECRET:-}
+      CONECTA_BU_REMITENTE: ${CONECTA_BU_REMITENTE:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-latest}
+    volumes:
+      - conecta_bu_n8n:/home/node/.n8n
+      - ./n8n:/home/node/flujos:ro
+
 volumes:
   conecta_bu_pgdata:
+  conecta_bu_n8n:

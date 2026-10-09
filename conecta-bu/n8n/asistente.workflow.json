@@ -1,0 +1,144 @@
+{
+  "id": "CbuAsistenteIA01",
+  "name": "Conecta BU - Asistente de orientación (RF-014)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "asistente",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "ef7d4f5d-43d1-5eef-95d3-d8ab99fb56a8",
+      "name": "Webhook Asistente",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "e98a3876-8b3d-5409-a9b1-ca9172dea0ea"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Conecta BU -> agente de orientacion (RF-014, RN-011).\n// El backend ya filtro crisis y preguntas clinicas; aqui se arma la consulta a Gemini\n// con el contexto real que envia el backend (servicios, horarios y eventos).\nconst secreto = $env.CONECTA_BU_SECRET || '';\nconst cabeceras = $json.headers || {};\nif (secreto && cabeceras['x-conecta-bu-secret'] !== secreto) {\n  throw new Error('Peticion rechazada: secreto invalido.');\n}\n\nconst { pregunta = '', usuario = {}, contexto = {}, reglas = '' } = $json.body || {};\n\nconst servicios = (contexto.servicios || []).map((s) => `- ${s.nombre}${s.descripcion ? ': ' + s.descripcion : ''}`).join('\\n') || '- (sin servicios activos)';\nconst eventos = (contexto.eventos || []).map((e) => `- ${e.nombre} (${e.fecha}${e.lugar ? ', ' + e.lugar : ''})`).join('\\n') || '- (sin eventos publicados)';\n\nconst instrucciones = [\n  'Eres el asistente de orientación de Conecta BU, la plataforma de Bienestar Universitario (Desarrollo Humano / Orientación) de la Uniautónoma del Cauca.',\n  reglas,\n  'Responde en máximo 5 frases, en español de Colombia, con tono cálido y respetuoso.',\n  'Solo usa la información de abajo; si no la tienes, dilo y sugiere agendar una cita o hablar con Bienestar.',\n  'Cómo funciona la plataforma: «Agendar cita» para elegir un horario libre (solo una cita activa a la vez); «Mis citas» para consultar o cancelar (mínimo 24 horas antes); «Eventos» para inscribirse mientras haya cupos.',\n  `Servicios activos:\\n${servicios}`,\n  `Horarios disponibles en este momento: ${contexto.horariosDisponibles ?? 'sin dato'}.`,\n  `Próximos eventos:\\n${eventos}`,\n].filter(Boolean).join('\\n\\n');\n\nreturn [{ json: {\n  cuerpoGemini: {\n    systemInstruction: { parts: [{ text: instrucciones }] },\n    contents: [{ role: 'user', parts: [{ text: `${usuario.nombre ? 'Estudiante: ' + usuario.nombre + '. ' : ''}Pregunta: ${pregunta}` }] }],\n    generationConfig: { temperature: 0.4, maxOutputTokens: 400 },\n  },\n} }];"
+      },
+      "id": "3632b308-7f6f-5cb2-8d96-7208093d618f",
+      "name": "Armar consulta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta') + '/models/' + ($env.GEMINI_MODEL || 'gemini-flash-latest') + ':generateContent' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "={{ $env.GEMINI_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.cuerpoGemini) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "e7d6a017-2f0c-5b09-a37f-f2dee33d876a",
+      "name": "Gemini",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Toma el texto que devolvio Gemini y lo entrega con la forma que espera el backend: { respuesta }.\nconst partes = $json.candidates?.[0]?.content?.parts || [];\nconst respuesta = partes.map((p) => p.text || '').join('').trim();\nif (!respuesta) {\n  throw new Error('Gemini no devolvio texto.');\n}\nreturn [{ json: { respuesta } }];"
+      },
+      "id": "c94af2db-7198-514c-a3bf-075682a25cc5",
+      "name": "Extraer respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ respuesta: $json.respuesta }) }}",
+        "options": {}
+      },
+      "id": "79d3141a-c79a-5fdf-9bf3-5b48db927afe",
+      "name": "Responder al backend",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        960,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Asistente": {
+      "main": [
+        [
+          {
+            "node": "Armar consulta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar consulta": {
+      "main": [
+        [
+          {
+            "node": "Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini": {
+      "main": [
+        [
+          {
+            "node": "Extraer respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer respuesta": {
+      "main": [
+        [
+          {
+            "node": "Responder al backend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota"
+  },
+  "active": false
+}

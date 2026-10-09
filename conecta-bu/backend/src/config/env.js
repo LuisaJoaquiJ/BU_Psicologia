@@ -26,6 +26,8 @@ const config = {
   n8nAgenteUrl: process.env.N8N_AGENTE_URL || "",
   n8nSecret: process.env.N8N_SECRET || "",
   n8nTimeoutMs: Number(process.env.N8N_TIMEOUT_MS || 8000),
+  // El agente consulta a Gemini y tarda mas que una notificacion.
+  n8nAgenteTimeoutMs: Number(process.env.N8N_AGENTE_TIMEOUT_MS || 20000),
 };
 
 module.exports = { config };
