@@ -91,7 +91,8 @@ function responderLocal(textoNormalizado, contexto, nombre) {
   if (tiene("cancel")) {
     return {
       respuesta:
-        "Para cancelar una cita entra a «Mis citas» y pulsa «Cancelar» en la cita agendada; el horario queda libre " +
+        "Para cancelar una cita entra a «Mis citas» y pulsa «Cancelar» en la cita agendada, con al menos 24 horas " +
+        "de anticipación; el horario queda libre " +
         "para otra persona. Para cancelar la inscripción a un evento, ve a «Eventos» y pulsa «Cancelar inscripción».",
       sugerencias: [SUGERENCIAS.misCitas, SUGERENCIAS.eventos],
     };

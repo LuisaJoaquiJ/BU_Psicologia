@@ -1,5 +1,21 @@
 const { prisma } = require("../../config/prisma");
 const { AppError } = require("../../common/utils/AppError");
+const { config } = require("../../config/env");
+
+// Colombia no tiene horario de verano: la hora del dia de un horario
+// (guardada "tal cual" en UTC, ver seed.js) es hora de Bogota, UTC-5.
+const DESFASE_BOGOTA_MS = 5 * 60 * 60 * 1000;
+
+// Instante real en que empieza una cita, a partir de la fecha y la hora
+// del horario.
+function inicioDeCita(horario) {
+  const fecha = new Date(horario.fecha);
+  const hora = horario.horaInicio ? new Date(horario.horaInicio) : new Date(Date.UTC(1970, 0, 1, 0, 0));
+  return new Date(
+    Date.UTC(fecha.getUTCFullYear(), fecha.getUTCMonth(), fecha.getUTCDate(), hora.getUTCHours(), hora.getUTCMinutes()) +
+      DESFASE_BOGOTA_MS
+  );
+}
 
 // RF-004 / HU-07: horarios habilitados y aun no ocupados, desde hoy en adelante.
 async function listarHorariosDisponibles() {
@@ -58,10 +74,9 @@ async function listarMisCitas(usuarioId) {
   });
 }
 
-// RF-006 / HU-12: cancela una cita propia y libera el horario.
-// Nota: la regla de "minimo 24 horas de anticipacion" que aparece en el
-// backlog (HU-12) queda pendiente de confirmar con el cliente -- por ahora
-// solo se exige que la cita sea del estudiante y siga en estado "Agendada".
+// RF-006 / HU-12: cancela una cita propia y libera el horario. Regla
+// confirmada con el cliente: solo se puede cancelar con al menos 24 horas
+// de anticipacion (configurable con HORAS_MINIMAS_CANCELACION).
 async function cancelarCita(usuarioId, citaId) {
   return prisma.$transaction(async (tx) => {
     const cita = await tx.cita.findUnique({ where: { id: citaId } });
@@ -70,6 +85,16 @@ async function cancelarCita(usuarioId, citaId) {
     }
     if (cita.estado !== "Agendada") {
       throw new AppError(409, "Esta cita ya no se puede cancelar.");
+    }
+
+    const horario = await tx.horario.findUnique({ where: { id: cita.horarioId } });
+    const horasRestantes = (inicioDeCita(horario) - Date.now()) / (60 * 60 * 1000);
+    if (horasRestantes < config.horasMinimasCancelacion) {
+      throw new AppError(
+        409,
+        `Solo puedes cancelar con al menos ${config.horasMinimasCancelacion} horas de anticipacion. ` +
+          "Si no puedes asistir, comunicate con Bienestar Universitario."
+      );
     }
 
     const actualizada = await tx.cita.update({
@@ -139,6 +164,7 @@ module.exports = {
   crearCita,
   listarMisCitas,
   cancelarCita,
+  inicioDeCita,
   listarAgendaAdmin,
   registrarAsistencia,
 };

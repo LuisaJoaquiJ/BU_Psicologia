@@ -10,6 +10,25 @@ const ESTADO_ESTILOS = {
   NoAsistio: "bg-amber-50 text-amber-700",
 };
 
+// HU-12: solo se cancela con al menos 24 horas de anticipacion (el backend
+// lo valida; aqui se avisa antes para no ofrecer un boton que va a fallar).
+const HORAS_MINIMAS_CANCELACION = 24;
+
+function horasHastaLaCita(horario) {
+  if (!horario?.fecha) return Infinity;
+  const fecha = new Date(horario.fecha);
+  const hora = horario.horaInicio ? new Date(horario.horaInicio) : new Date(0);
+  // Hora de Bogota (UTC-5): la hora guardada es la hora local del horario.
+  const inicio = Date.UTC(
+    fecha.getUTCFullYear(),
+    fecha.getUTCMonth(),
+    fecha.getUTCDate(),
+    hora.getUTCHours() + 5,
+    hora.getUTCMinutes()
+  );
+  return (inicio - Date.now()) / 3600000;
+}
+
 // RF-006 · HU-11, HU-12: consulta y cancelacion de citas propias.
 export function MisCitasPage() {
   const [citas, setCitas] = useState(null);
@@ -52,7 +71,7 @@ export function MisCitasPage() {
           Agendar nueva cita
         </Link>
       </div>
-      <p className="text-gray-500 mb-8">Consulta o cancela tus citas de orientación.</p>
+      <p className="text-gray-500 mb-8">Consulta o cancela tus citas de orientación (hasta 24 horas antes).</p>
 
       {error && <p className="text-sm text-red-600 bg-red-50 rounded-md p-3 mb-6">{error}</p>}
 
@@ -93,15 +112,20 @@ export function MisCitasPage() {
               >
                 {cita.estado}
               </span>
-              {cita.estado === "Agendada" && (
-                <button
-                  onClick={() => cancelar(cita.id)}
-                  disabled={cancelando === cita.id}
-                  className="text-sm font-medium border border-gray-200 rounded-full px-4 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-60"
-                >
-                  {cancelando === cita.id ? "Cancelando..." : "Cancelar"}
-                </button>
-              )}
+              {cita.estado === "Agendada" &&
+                (horasHastaLaCita(cita.horario) >= HORAS_MINIMAS_CANCELACION ? (
+                  <button
+                    onClick={() => cancelar(cita.id)}
+                    disabled={cancelando === cita.id}
+                    className="text-sm font-medium border border-gray-200 rounded-full px-4 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-60"
+                  >
+                    {cancelando === cita.id ? "Cancelando..." : "Cancelar"}
+                  </button>
+                ) : (
+                  <span className="text-xs text-ink-500 max-w-[220px]">
+                    Faltan menos de 24 h: para cancelar, comunícate con Bienestar.
+                  </span>
+                ))}
             </div>
           </div>
         ))}

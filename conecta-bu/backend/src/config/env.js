@@ -16,6 +16,9 @@ const config = {
   googleClientId: required("GOOGLE_CLIENT_ID"),
   allowedGoogleDomain: process.env.ALLOWED_GOOGLE_DOMAIN || "uniautonoma.edu.co",
   frontendUrl: process.env.FRONTEND_URL || "http://localhost:5173",
+  // HU-12 (regla confirmada con el cliente): horas minimas de anticipacion
+  // para que un estudiante cancele su cita.
+  horasMinimasCancelacion: Number(process.env.HORAS_MINIMAS_CANCELACION || 24),
   // Sprint 5 (RF-013 / RF-014): integracion con n8n. Son opcionales: si no se
   // configuran, la app sigue funcionando (las automatizaciones se omiten y el
   // asistente responde con su base de conocimiento local).

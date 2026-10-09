@@ -27,11 +27,17 @@ function crearEstudiante(email = "estudiante@uniautonoma.edu.co") {
 }
 
 function manana() {
+  return enDias(1);
+}
+
+function enDias(dias) {
   const fecha = new Date();
   fecha.setUTCHours(0, 0, 0, 0);
-  fecha.setUTCDate(fecha.getUTCDate() + 1);
+  fecha.setUTCDate(fecha.getUTCDate() + dias);
   return fecha;
 }
+
+const nueveAM = () => new Date(Date.UTC(1970, 0, 1, 9, 0, 0));
 
 beforeEach(() => {
   prisma.__reset();
@@ -162,7 +168,7 @@ describe("RF-006 / HU-11 y HU-12: mis citas y cancelacion", () => {
 
   test("HU-12: cancela una cita propia y libera el horario", async () => {
     const { token } = crearEstudiante();
-    const horario = prisma.__seedHorario({ fecha: manana() });
+    const horario = prisma.__seedHorario({ fecha: enDias(3), horaInicio: nueveAM() });
     const agendada = await request(app)
       .post("/api/v1/citas")
       .set("Authorization", `Bearer ${token}`)
@@ -184,7 +190,7 @@ describe("RF-006 / HU-11 y HU-12: mis citas y cancelacion", () => {
   test("no permite cancelar la cita de otro estudiante (404)", async () => {
     const { token: tokenDueno } = crearEstudiante("dueno@uniautonoma.edu.co");
     const { token: tokenIntruso } = crearEstudiante("intruso@uniautonoma.edu.co");
-    const horario = prisma.__seedHorario({ fecha: manana() });
+    const horario = prisma.__seedHorario({ fecha: enDias(3), horaInicio: nueveAM() });
 
     const agendada = await request(app)
       .post("/api/v1/citas")
@@ -200,7 +206,7 @@ describe("RF-006 / HU-11 y HU-12: mis citas y cancelacion", () => {
 
   test("no permite cancelar dos veces la misma cita (409)", async () => {
     const { token } = crearEstudiante();
-    const horario = prisma.__seedHorario({ fecha: manana() });
+    const horario = prisma.__seedHorario({ fecha: enDias(3), horaInicio: nueveAM() });
     const agendada = await request(app)
       .post("/api/v1/citas")
       .set("Authorization", `Bearer ${token}`)
@@ -215,5 +221,27 @@ describe("RF-006 / HU-11 y HU-12: mis citas y cancelacion", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(409);
+  });
+
+  test("HU-12: no permite cancelar con menos de 24 horas de anticipacion (409)", async () => {
+    const { token } = crearEstudiante();
+    const ahora = new Date();
+    // Horario que empieza en ~2 horas (hora de Bogota = UTC-5).
+    const inicio = new Date(ahora.getTime() + 2 * 60 * 60 * 1000 - 5 * 60 * 60 * 1000);
+    const horario = prisma.__seedHorario({
+      fecha: new Date(Date.UTC(inicio.getUTCFullYear(), inicio.getUTCMonth(), inicio.getUTCDate())),
+      horaInicio: new Date(Date.UTC(1970, 0, 1, inicio.getUTCHours(), inicio.getUTCMinutes())),
+    });
+    const agendada = await request(app)
+      .post("/api/v1/citas")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ horarioId: horario.id });
+
+    const res = await request(app)
+      .patch(`/api/v1/citas/${agendada.body.cita.id}/cancelar`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toMatch(/24 horas/);
   });
 });
