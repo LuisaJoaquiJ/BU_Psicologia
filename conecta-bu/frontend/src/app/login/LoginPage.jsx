@@ -22,7 +22,8 @@ export function LoginPage() {
       const idToken = credentialResponse.credential;
       const { data } = await http.post("/auth/google", { idToken });
       iniciarSesion(data.token, data.usuario);
-      navigate(data.usuario.rol === "Administrador" ? "/admin" : "/estudiante");
+      // Tras iniciar sesion se llega al portal con los modulos habilitados.
+      navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "No fue posible iniciar sesion. Intenta nuevamente.");
     } finally {

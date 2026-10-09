@@ -5,6 +5,7 @@ import { Logo } from "./Logo";
 // HU-04: barra del rol Estudiante (rediseño: menú en "píldoras"). El rol
 // Administrador usa AdminLayout, con menú lateral.
 const MENU_ESTUDIANTE = [
+  { to: "/", label: "Módulos", end: true },
   { to: "/estudiante", label: "Inicio", end: true },
   { to: "/estudiante/servicios", label: "Servicios" },
   { to: "/estudiante/mis-citas", label: "Mis citas" },
@@ -34,7 +35,7 @@ export function Navbar() {
   return (
     <header className="bg-white border-b border-gray-200">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-5">
-        <Logo to="/estudiante" subtitulo={null} />
+        <Logo to="/" subtitulo={null} />
 
         <nav aria-label="Estudiante" className="hidden md:flex gap-1.5 text-sm font-semibold">
           {MENU_ESTUDIANTE.map((item) => (

@@ -6,8 +6,8 @@ import { IMAGENES } from "../../lib/imagenes";
 import { Logo } from "../../components/Logo";
 import { Icono } from "../../components/Iconos";
 
-// Pagina de inicio publica (rediseño): presenta Conecta BU antes de iniciar
-// sesion. Carrusel de destacados, cinta de servicios, servicios, proximos
+// Pagina publica del modulo Desarrollo humano y orientacion (/desarrollo-humano):
+// presenta el modulo antes de iniciar sesion. Carrusel de destacados, cinta de servicios, servicios, proximos
 // eventos (GET /eventos/publicos) y pasos para agendar.
 
 const DESTACADOS = [
@@ -179,11 +179,11 @@ function Carrusel() {
   );
 }
 
-function Cinta() {
-  const items = [...CINTA, ...CINTA];
+export function Cinta({ items: lista = CINTA }) {
+  const items = [...lista, ...lista];
   return (
     <div className="mt-10 bg-primary -rotate-[1.5deg] overflow-hidden py-4 shadow-[0_10px_30px_rgba(11,42,91,0.18)]">
-      <p className="sr-only">Servicios: {CINTA.join(", ")}.</p>
+      <p className="sr-only">{lista.join(", ")}.</p>
       <div aria-hidden="true" className="animate-cinta flex gap-10 w-max items-center whitespace-nowrap font-display text-[28px] font-semibold text-white">
         {items.map((texto, i) => (
           <span key={i} className="flex items-center gap-10">
@@ -196,7 +196,7 @@ function Cinta() {
   );
 }
 
-function ProximosEventos() {
+export function ProximosEventos() {
   const [eventos, setEventos] = useState(null);
 
   useEffect(() => {
@@ -273,8 +273,9 @@ export function LandingPage() {
     <div className="min-h-screen bg-cream overflow-x-hidden">
       <header className="px-4 sm:px-6 pt-5">
         <div className="max-w-[1152px] mx-auto bg-white rounded-[28px] sm:rounded-full shadow-[0_10px_30px_rgba(11,42,91,0.08)] pl-5 pr-3 py-3 flex items-center justify-between gap-4 flex-wrap">
-          <Logo subtitulo="Bienestar Universitario · Uniautónoma del Cauca" />
+          <Logo subtitulo="Desarrollo humano y orientación" />
           <nav aria-label="Principal" className="flex items-center gap-6 text-[15px] font-semibold flex-wrap">
+            <Link to="/" className="text-ink-600 hover:text-primary">← Todos los módulos</Link>
             <a href="#servicios" className="text-primary hover:text-primary-soft">Servicios</a>
             <a href="#eventos" className="text-ink-600 hover:text-primary">Eventos</a>
             <a href="#como" className="text-ink-600 hover:text-primary">Cómo funciona</a>

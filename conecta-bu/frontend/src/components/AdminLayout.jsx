@@ -27,7 +27,7 @@ export function AdminLayout({ children }) {
     <div className="min-h-screen bg-cream lg:flex overflow-x-hidden">
       <aside className="bg-primary text-white lg:w-[260px] lg:shrink-0 lg:min-h-screen px-4 py-5 lg:py-7 flex flex-col gap-5 lg:gap-7">
         <div className="px-2">
-          <Logo to="/admin" subtitulo="Panel administrativo" invertido />
+          <Logo to="/" subtitulo="Panel administrativo" invertido />
         </div>
         <nav aria-label="Administración" className="min-w-0 flex lg:flex-col gap-1 text-[15px] font-semibold overflow-x-auto">
           {MENU_ADMIN.map((item) => (
@@ -36,6 +36,10 @@ export function AdminLayout({ children }) {
               {item.label}
             </NavLink>
           ))}
+          <NavLink to="/" end className={({ isActive }) => `${claseEnlace({ isActive })} lg:mt-3 lg:border-t lg:border-white/10 lg:rounded-none lg:pt-4`}>
+            <Icono nombre="cuadricula" size={18} strokeWidth={2} />
+            Módulos BU
+          </NavLink>
         </nav>
         <div className="lg:mt-auto flex items-center gap-3 p-3.5 rounded-2xl bg-white/5">
           <span className="w-10 h-10 rounded-full bg-gold text-primary font-bold flex items-center justify-center shrink-0">
