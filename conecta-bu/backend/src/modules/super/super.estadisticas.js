@@ -3,11 +3,12 @@ const { moduloDeServicio } = require("../../common/utils/modulos");
 const { CATEGORIAS } = require("../salud/catalogos");
 const { TIPOS: TIPOS_SST } = require("../salud/sst.catalogos");
 const deporte = require("../deporte/deporte.service");
+const { crearPeriodo, variacion, mesActual, aDia, aDiaBogota, iso } = require("../../common/utils/periodos");
 
 // Tablero del superadministrador: cifras de todos los modulos de Bienestar
-// en un mismo rango de meses (por defecto, los ultimos 6 incluido el actual).
+// en un mismo periodo (semana, mes, trimestre o año), comparadas con el
+// periodo anterior de la misma duracion.
 
-const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const ESTADOS_CITA = ["Atendida", "NoAsistio", "Agendada", "Cancelada"];
 const ESTADOS_SST = ["Recibido", "Verificado", "RequiereAjustes", "Cerrado"];
 
@@ -16,18 +17,6 @@ function claveMes(fecha) {
   const d = new Date(fecha);
   if (Number.isNaN(d.getTime())) return null;
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-}
-
-// Meses del rango, del mas antiguo al actual (hora de Bogota, UTC-5).
-function mesesDelRango(cantidad) {
-  const ahora = new Date(Date.now() - 5 * 3600 * 1000);
-  const lista = [];
-  for (let i = cantidad - 1; i >= 0; i -= 1) {
-    const d = new Date(Date.UTC(ahora.getUTCFullYear(), ahora.getUTCMonth() - i, 1));
-    const clave = claveMes(d);
-    lista.push({ clave, etiqueta: `${MESES[d.getUTCMonth()]} ${String(d.getUTCFullYear()).slice(2)}` });
-  }
-  return lista;
 }
 
 function contarPor(lista, clave) {
@@ -47,11 +36,10 @@ const ordenar = (mapa, etiquetas = {}) =>
 
 const tasa = (parte, total) => (total ? Math.round((parte / total) * 1000) / 10 : null);
 
-async function estadisticas({ meses } = {}) {
-  const cantidad = [3, 6, 12].includes(Number(meses)) ? Number(meses) : 6;
-  const rango = mesesDelRango(cantidad);
-  const claves = new Set(rango.map((m) => m.clave));
-  const enRango = (fecha) => claves.has(claveMes(fecha));
+async function estadisticas({ periodo } = {}) {
+  const p = crearPeriodo(periodo);
+  const enRango = (fecha) => p.enActual(fecha);
+  const enAnterior = (fecha) => p.enAnterior(fecha);
 
   const [usuarios, citas, eventos, inscripciones, atenciones, actividades, reportes, sesiones, asistencias, config, resumenDeporte, horas] =
     await Promise.all([
@@ -82,11 +70,19 @@ async function estadisticas({ meses } = {}) {
   const citasSalud = citasDe("salud");
 
   // ---- Eventos de Desarrollo Humano ----
-  const eventosRango = eventos.filter((e) => ["Publicado", "Cerrado"].includes(e.estado) && enRango(e.fecha));
+  // Inscripciones hechas en el periodo (por la fecha en que la persona se
+  // inscribio), y eventos del periodo, con inscripciones en el o proximos.
+  const publicados = eventos.filter((e) => ["Publicado", "Cerrado"].includes(e.estado));
+  const idsPublicados = new Set(publicados.map((e) => e.id));
+  const confirmadas = inscripciones.filter((i) => i.estado === "Confirmada" && idsPublicados.has(i.eventoId));
+  const inscRango = confirmadas.filter((i) => enRango(aDiaBogota(i.fechaInscripcion)));
+  const conInscripcion = new Set(inscRango.map((i) => i.eventoId));
+  const hoyDia = aDia(new Date(Date.now() - 5 * 3600 * 1000));
+  const eventosRango = publicados.filter((e) => enRango(e.fecha) || conInscripcion.has(e.id) || aDia(e.fecha) >= hoyDia);
   const idsEventos = new Set(eventosRango.map((e) => e.id));
-  const inscRango = inscripciones.filter((i) => i.estado === "Confirmada" && idsEventos.has(i.eventoId));
+  const inscEventos = confirmadas.filter((i) => idsEventos.has(i.eventoId));
   const porEvento = new Map();
-  for (const i of inscRango) {
+  for (const i of inscEventos) {
     const r = porEvento.get(i.eventoId) || { inscritos: 0, asistieron: 0, registrados: 0 };
     r.inscritos += 1;
     if (i.asistencia) {
@@ -131,34 +127,110 @@ async function estadisticas({ meses } = {}) {
   const etiquetasSst = Object.fromEntries(Object.entries(TIPOS_SST).map(([id, t]) => [id, t.corto || t.nombre]));
   const estadosSst = contarPor(reportesRango, (r) => r.estado);
 
-  // ---- Tendencia mensual: participaciones de cada modulo ----
-  const sumarMes = (lista, fecha) => contarPor(lista.filter((x) => enRango(fecha(x))), (x) => claveMes(fecha(x)));
-  const dhMes = [
-    sumarMes(citasDH.filter((c) => c.estado !== "Cancelada"), (c) => c.horario?.fecha),
-    sumarMes(inscRango, (i) => eventosRango.find((e) => e.id === i.eventoId)?.fecha),
-  ];
-  const saludMes = [sumarMes(atencionesRango, (a) => a.fecha), sumarMes(citasSalud.filter((c) => c.estado !== "Cancelada"), (c) => c.horario?.fecha)];
-  const deporteMes = [sumarMes(asistenciasRango, (a) => sesionPorId.get(a.sesionId)?.fecha)];
-  const suma = (mapas, k) => mapas.reduce((s, m) => s + (m[k] || 0), 0);
-  const tendencia = rango.map((m) => ({
-    mes: m.clave,
-    etiqueta: m.etiqueta,
-    "desarrollo-humano": suma(dhMes, m.clave),
-    salud: suma(saludMes, m.clave),
-    deporte: suma(deporteMes, m.clave),
-  }));
+  // ---- Tendencia: participaciones de cada modulo por cubeta del periodo ----
+  // Una participacion = una cita no cancelada, una inscripcion a un evento,
+  // una atencion de salud o una asistencia a una clase de deporte.
+  const eventoPorId = new Map(eventos.map((e) => [e.id, e]));
+  const fechaInsc = (i) => aDiaBogota(i.fechaInscripcion);
+  const fuentes = {
+    "desarrollo-humano": [
+      [citas.filter((c) => c.estado !== "Cancelada" && moduloDeServicio(c.horario?.servicio) === "desarrollo-humano"), (c) => c.horario?.fecha],
+      [inscripciones.filter((i) => i.estado === "Confirmada" && ["Publicado", "Cerrado"].includes(eventoPorId.get(i.eventoId)?.estado)), fechaInsc],
+    ],
+    salud: [
+      [atenciones, (a) => a.fecha],
+      [citas.filter((c) => c.estado !== "Cancelada" && moduloDeServicio(c.horario?.servicio) === "salud"), (c) => c.horario?.fecha],
+    ],
+    deporte: [[asistencias, (a) => sesionPorId.get(a.sesionId)?.fecha]],
+  };
+  const tendencia = p.cubetas.map((c) => ({ mes: c.clave, etiqueta: c.etiqueta, "desarrollo-humano": 0, salud: 0, deporte: 0 }));
+  const cubetaPorClave = new Map(tendencia.map((t) => [t.clave || t.mes, t]));
+  const participacionesAnt = { "desarrollo-humano": 0, salud: 0, deporte: 0 };
+  for (const [modulo, lista] of Object.entries(fuentes)) {
+    for (const [items, fecha] of lista) {
+      for (const x of items) {
+        const f = fecha(x);
+        const k = p.cubetaDe(f);
+        if (k) cubetaPorClave.get(k)[modulo] += 1;
+        else if (enAnterior(f)) participacionesAnt[modulo] += 1;
+      }
+    }
+  }
+  const totalModulo = (m) => tendencia.reduce((s, t) => s + t[m], 0);
+
+  // ---- Periodo anterior (para comparar) ----
+  const citasAnt = citas.filter((c) => enAnterior(c.horario?.fecha));
+  const atencionesAnt = atenciones.filter((a) => enAnterior(a.fecha));
+  const inscAnt = inscripciones.filter((i) => i.estado === "Confirmada" && enAnterior(fechaInsc(i)));
+  const asistAnt = asistencias.filter((a) => enAnterior(sesionPorId.get(a.sesionId)?.fecha));
+  const horasAnt = asistAnt.reduce((s, a) => s + (sesionPorId.get(a.sesionId)?.horas || 0), 0);
+  const reportesAnt = reportes.filter((r) => enAnterior(r.fechaCreacion));
+  const participAct = ["desarrollo-humano", "salud", "deporte"].reduce((s, m) => s + totalModulo(m), 0);
+  const participAnt = Object.values(participacionesAnt).reduce((s, n) => s + n, 0);
+
+  // ---- Calendario del mes: actividad por dia y modulo ----
+  const mes = mesActual();
+  const dias = {};
+  for (const [modulo, lista] of Object.entries(fuentes)) {
+    for (const [items, fecha] of lista) {
+      for (const x of items) {
+        const d = aDia(fecha(x));
+        if (!d || d < mes.desde || d > mes.hasta) continue;
+        const k = iso(d);
+        dias[k] = dias[k] || { "desarrollo-humano": 0, salud: 0, deporte: 0 };
+        dias[k][modulo] += 1;
+      }
+    }
+  }
+
+  // ---- Actividad reciente en todos los modulos ----
+  const servicioDe = (c) => c.horario?.servicio;
+  const usuarioPorId = new Map(usuarios.map((u) => [u.id, u]));
+  const nombre = (id) => String(usuarioPorId.get(id)?.nombre || "Un estudiante").split(" ")[0];
+  const actividad = [
+    ...citas.map((c) => ({
+      modulo: moduloDeServicio(servicioDe(c)),
+      tipo: c.estado === "Cancelada" ? "cancelada" : "cita",
+      fecha: c.estado === "Cancelada" ? c.fechaActualizacion || c.fechaAgendamiento : c.fechaAgendamiento,
+      texto: `${nombre(c.usuarioId)} ${c.estado === "Cancelada" ? "canceló" : "agendó"} una cita`,
+      detalle: servicioDe(c)?.nombre,
+    })),
+    ...inscripciones
+      .filter((i) => i.estado === "Confirmada")
+      .map((i) => ({ modulo: "desarrollo-humano", tipo: "inscripcion", fecha: i.fechaInscripcion, texto: `${nombre(i.usuarioId)} se inscribió a un evento`, detalle: eventoPorId.get(i.eventoId)?.nombre })),
+    ...atenciones.map((a) => ({ modulo: "salud", tipo: "atencion", fecha: a.fechaRegistro, texto: "Atención de salud registrada", detalle: actividadPorId.get(a.actividadId)?.nombre })),
+    ...sesiones.map((s) => ({ modulo: "deporte", tipo: "sesion", fecha: s.fechaRegistro, texto: "Asistencia de deporte tomada", detalle: s.tema || `${s.inicio} a ${s.fin}` })),
+    ...reportes.map((r) => ({ modulo: "salud", tipo: "sst", fecha: r.fechaCreacion, texto: "Nuevo reporte de salida o seguridad", detalle: etiquetasSst[r.tipo] || r.tipo })),
+  ]
+    .filter((a) => a.fecha && !Number.isNaN(new Date(a.fecha).getTime()))
+    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+    .slice(0, 8)
+    .map((a) => ({ ...a, fecha: new Date(a.fecha).toISOString() }));
 
   // ---- Usuarios ----
   const porRol = contarPor(usuarios, (x) => x.rol?.nombre);
-  const nuevos = sumarMes(usuarios, (x) => x.fechaCreacion);
+  const nuevos = contarPor(usuarios, (x) => p.cubetaDe(aDiaBogota(x.fechaCreacion)));
 
   const personasDeporte = new Set(asistenciasRango.map((a) => a.usuarioId));
   return {
-    meses: cantidad,
-    desde: rango[0].clave,
-    hasta: rango[rango.length - 1].clave,
+    periodo: p.periodo,
+    texto: p.texto,
+    textoAnterior: p.textoAnterior,
+    desde: p.desde,
+    hasta: p.hasta,
+    kpis: [
+      { id: "participaciones", titulo: "Participaciones", valor: participAct, anterior: participAnt, variacion: variacion(participAct, participAnt), serie: tendencia.map((t) => t["desarrollo-humano"] + t.salud + t.deporte) },
+      { id: "citas", titulo: "Citas", valor: citasDH.length + citasSalud.length, anterior: citasAnt.length, variacion: variacion(citasDH.length + citasSalud.length, citasAnt.length) },
+      { id: "atenciones", titulo: "Atenciones de salud", valor: atencionesRango.length, anterior: atencionesAnt.length, variacion: variacion(atencionesRango.length, atencionesAnt.length), serie: tendencia.map((t) => t.salud) },
+      { id: "inscritos", titulo: "Inscritos a eventos", valor: inscRango.length, anterior: inscAnt.length, variacion: variacion(inscRango.length, inscAnt.length) },
+      { id: "horas", titulo: "Horas de deporte", valor: Math.round(horasRango * 10) / 10, anterior: Math.round(horasAnt * 10) / 10, unidad: "h", variacion: variacion(horasRango, horasAnt), serie: tendencia.map((t) => t.deporte) },
+      { id: "sst", titulo: "Reportes SST", valor: reportesRango.length, anterior: reportesAnt.length, variacion: variacion(reportesRango.length, reportesAnt.length) },
+    ],
+    porModulo: ["desarrollo-humano", "salud", "deporte"].map((m) => ({ id: m, total: totalModulo(m), anterior: participacionesAnt[m], variacion: variacion(totalModulo(m), participacionesAnt[m]) })),
+    calendario: { mes: mes.clave, hoy: mes.hoy, dias },
+    actividad,
     totales: {
-      participaciones: tendencia.reduce((s, m) => s + m["desarrollo-humano"] + m.salud + m.deporte, 0),
+      participaciones: participAct,
       citas: citasDH.length + citasSalud.length,
       atenciones: atencionesRango.length,
       inscritosEventos: inscRango.length,
@@ -176,7 +248,7 @@ async function estadisticas({ meses } = {}) {
       total: eventosDetalle.length,
       inscritos: inscRango.length,
       cupos: cuposEventos,
-      ocupacion: tasa(inscRango.length, cuposEventos),
+      ocupacion: tasa(inscEventos.length, cuposEventos),
       tasaAsistencia: tasa(asistieronEventos, asistenciaRegistrada),
       top: eventosDetalle.slice(0, 6).map(({ id, nombre, cupos, inscritos, asistieron }) => ({ id, nombre, cupos, inscritos, asistieron })),
     },
@@ -204,9 +276,9 @@ async function estadisticas({ meses } = {}) {
     usuarios: {
       total: usuarios.length,
       porRol,
-      nuevosPorMes: rango.map((m) => ({ mes: m.clave, etiqueta: m.etiqueta, total: nuevos[m.clave] || 0 })),
+      nuevosPorMes: p.cubetas.map((m) => ({ mes: m.clave, etiqueta: m.etiqueta, total: nuevos[m.clave] || 0 })),
     },
   };
 }
 
-module.exports = { estadisticas, mesesDelRango, claveMes };
+module.exports = { estadisticas, claveMes };

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { http } from "../../lib/api/http";
 import { formatearFecha, fechaLarga } from "../../lib/format";
 import { Icono } from "../../components/Iconos";
+import { TableroDH } from "./TableroDH";
 import {
   COLORES_ESTADO,
   ETIQUETA_ESTADO,
@@ -96,7 +97,9 @@ function hallazgos(datos) {
 
 // RF-015 (ampliado): dashboard de participacion y asistencia con tendencia,
 // demanda por franja, probabilidades con intervalo de confianza y lectura rapida.
-export function EstadisticasPage() {
+// Analisis detallado (RF-015): filtros por fechas, informe descargable,
+// probabilidades, mapa de demanda y detalle por evento y servicio.
+function AnalisisDetallado() {
   const [preset, setPreset] = useState("todo");
   const [rango, setRango] = useState({ desde: "", hasta: "" });
   const [datos, setDatos] = useState(null);
@@ -157,11 +160,11 @@ export function EstadisticasPage() {
   const maximoServicio = Math.max(0, ...(datos?.citasPorServicio || []).map((s) => s.total));
 
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16">
+    <div>
       <div className="flex justify-between items-end gap-4 flex-wrap mb-6">
         <div>
-          <h1 className="m-0 text-3xl font-extrabold">Estadísticas</h1>
-          <p className="mt-1.5 mb-0 text-ink-500">Participación, asistencia y demanda de Bienestar Universitario.</p>
+          <h2 className="m-0 text-2xl font-extrabold">Análisis detallado</h2>
+          <p className="mt-1.5 mb-0 text-ink-500">Probabilidades, demanda por hora y detalle por evento y servicio, con el informe descargable.</p>
         </div>
         <div className="flex flex-col items-start sm:items-end gap-1.5">
           <span className="text-xs text-ink-500">Descargar informe del periodo</span>
@@ -426,6 +429,42 @@ export function EstadisticasPage() {
           </Tarjeta>
         </div>
       )}
+    </div>
+  );
+}
+
+const PESTANAS = [
+  { id: "resumen", texto: "Resumen" },
+  { id: "detalle", texto: "Análisis detallado" },
+];
+
+export function EstadisticasPage() {
+  const [pestana, setPestana] = useState("resumen");
+  return (
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16">
+      <div className="flex justify-between items-end gap-4 flex-wrap mb-6">
+        <div>
+          <h1 className="m-0 text-3xl sm:text-[34px] font-extrabold">Estadísticas</h1>
+          <p className="mt-1.5 mb-0 text-ink-500">Cómo va Desarrollo Humano: citas, asistencia y eventos.</p>
+        </div>
+        <div role="tablist" aria-label="Vista" className="inline-flex border-b-2 border-gray-200">
+          {PESTANAS.map((p) => (
+            <button
+              key={p.id}
+              role="tab"
+              type="button"
+              aria-selected={pestana === p.id}
+              onClick={() => setPestana(p.id)}
+              className={`-mb-[2px] px-4 min-h-[44px] text-[15px] font-bold border-b-2 ${
+                pestana === p.id ? "border-primary-dark text-primary-dark" : "border-transparent text-ink-500 hover:text-primary"
+              }`}
+            >
+              {p.texto}
+            </button>
+          ))}
+        </div>
+      </div>
+      {pestana === "resumen" ? <TableroDH alVerDetalle={() => setPestana("detalle")} /> : <AnalisisDetallado />}
     </main>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { Icono } from "../../components/Iconos";
 import { iniciales } from "../../components/Navbar";
@@ -29,7 +30,9 @@ const FILA = {
 // RF-008 · HU-15, HU-16: agenda del día como línea de tiempo. Al tocar una
 // cita se abre su detalle a la derecha, donde se registra la asistencia.
 export function AgendaAdminPage({ api = "/admin" }) {
-  const [fecha, setFecha] = useState(hoyISO());
+  const [params] = useSearchParams();
+  // ?fecha=AAAA-MM-DD abre la agenda en ese dia (desde el calendario de Estadisticas).
+  const [fecha, setFecha] = useState(/^\d{4}-\d{2}-\d{2}$/.test(params.get("fecha") || "") ? params.get("fecha") : hoyISO());
   const [citas, setCitas] = useState(null);
   const [elegidaId, setElegidaId] = useState(null);
   const [error, setError] = useState("");

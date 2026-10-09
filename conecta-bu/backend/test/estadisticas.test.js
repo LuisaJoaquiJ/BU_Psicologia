@@ -110,3 +110,28 @@ describe("RF-015: dashboard administrativo", () => {
     expect(invalido.status).toBe(400);
   });
 });
+
+describe("Tablero de Desarrollo Humano (lectura rapida)", () => {
+  test("compara el periodo con el anterior de la misma duracion", async () => {
+    const { token } = crearUsuario("Administrador", "admin@uniautonoma.edu.co");
+    const est = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
+    await sembrarCita(est.usuario.id, "Atendida", diasDesdeHoy(0));
+    await sembrarCita(est.usuario.id, "NoAsistio", diasDesdeHoy(-1));
+    await sembrarCita(est.usuario.id, "Atendida", diasDesdeHoy(-10));
+
+    const res = await request(app).get("/api/v1/admin/estadisticas/tablero?periodo=semana").set(auth(token));
+    expect(res.status).toBe(200);
+    expect(res.body.serie).toHaveLength(7);
+    const citas = res.body.kpis.find((k) => k.id === "citas");
+    expect(citas).toMatchObject({ valor: 2, anterior: 1, variacion: 100 });
+    const asistencia = res.body.kpis.find((k) => k.id === "asistencia");
+    expect(asistencia).toMatchObject({ valor: 50, anterior: 100, puntos: -50 });
+    expect(res.body.estados).toMatchObject({ Atendida: 1, NoAsistio: 1, total: 2 });
+    expect(res.body.actividad.length).toBeGreaterThan(0);
+  });
+
+  test("un estudiante no lo puede ver", async () => {
+    const { token } = crearUsuario("Estudiante", "e2@uniautonoma.edu.co");
+    expect((await request(app).get("/api/v1/admin/estadisticas/tablero").set(auth(token))).status).toBe(403);
+  });
+});

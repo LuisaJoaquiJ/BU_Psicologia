@@ -157,10 +157,11 @@ describe("Superadministrador: tablero de estadisticas de todos los modulos", () 
   });
 
   test("sin datos responde con ceros y los meses del rango", async () => {
-    const res = await api("get", "/estadisticas?meses=3");
+    const res = await api("get", "/estadisticas?periodo=semana");
     expect(res.status).toBe(200);
-    expect(res.body.meses).toBe(3);
-    expect(res.body.tendencia).toHaveLength(3);
+    expect(res.body.periodo).toBe("semana");
+    expect(res.body.tendencia).toHaveLength(7);
+    expect(res.body.kpis.map((k) => k.id)).toContain("participaciones");
     expect(res.body.totales).toMatchObject({ citas: 0, atenciones: 0, reportesSst: 0 });
     expect(res.body.citas["desarrollo-humano"].tasaAsistencia).toBeNull();
   });

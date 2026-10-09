@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Tip, useTooltip } from "./Graficas";
+import { Icono as IconoBase } from "../Iconos";
 
 // Graficas del tablero del superadministrador (SVG/HTML a mano, sin
 // librerias). Reglas:
@@ -320,5 +321,393 @@ export function VerDatos({ columnas, filas }) {
         </table>
       </div>
     </details>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Piezas del tablero de lectura rapida (inicio de Estadisticas).
+
+export const PERIODOS = [
+  { id: "semana", texto: "Semana" },
+  { id: "mes", texto: "Mes" },
+  { id: "trimestre", texto: "Trimestre" },
+  { id: "anio", texto: "Año" },
+];
+
+export function SelectorPeriodo({ valor, onCambio }) {
+  return (
+    <div role="group" aria-label="Periodo" className="inline-flex bg-white border border-gray-200 rounded-full p-1 gap-1">
+      {PERIODOS.map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          aria-pressed={valor === p.id}
+          onClick={() => onCambio(p.id)}
+          className={`min-h-[40px] px-4 sm:px-5 rounded-full text-sm font-bold transition-colors ${
+            valor === p.id ? "bg-primary-dark text-white" : "text-primary hover:bg-primary-light"
+          }`}
+        >
+          {p.texto}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// Tonos de las fichas de icono (fondo claro + icono oscuro del mismo tono).
+const TONOS = {
+  azul: "bg-[#E3EEFB] text-[#1C5CAB]",
+  verde: "bg-[#DDF3EA] text-[#0E6B4A]",
+  naranja: "bg-[#FDE8DE] text-[#A8431B]",
+  cian: "bg-[#E4FAFF] text-[#0E5F73]",
+  morado: "bg-[#ECE9FB] text-[#4A3AA7]",
+  gris: "bg-gray-100 text-ink-600",
+};
+const LINEA_TONO = { azul: "#2a78d6", verde: "#1baf7a", naranja: "#eb6834", cian: "#0E7C93", morado: "#4a3aa7", gris: "#6B7385" };
+
+function Minilinea({ valores, color }) {
+  const v = valores.map((x) => (x === null || x === undefined ? null : x));
+  const nums = v.filter((x) => x !== null);
+  if (nums.length < 2) return null;
+  const ancho = 96;
+  const alto = 34;
+  const max = Math.max(1, ...nums);
+  const pts = v.map((x, i) => (x === null ? null : [(i / (v.length - 1)) * ancho, alto - 3 - (x / max) * (alto - 6)])).filter(Boolean);
+  const linea = pts.map((p) => p.join(",")).join(" ");
+  const area = `0,${alto} ${linea} ${ancho},${alto}`;
+  return (
+    <svg width={ancho} height={alto} viewBox={`0 0 ${ancho} ${alto}`} aria-hidden="true" className="overflow-visible shrink-0">
+      <polygon points={area} fill={color} opacity="0.1" />
+      <polyline points={linea} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={pts.at(-1)[0]} cy={pts.at(-1)[1]} r="3.5" fill={color} stroke="#fff" strokeWidth="2" />
+    </svg>
+  );
+}
+
+// Cambio frente al periodo anterior: flecha + texto (nunca solo color).
+function Cambio({ variacion, puntos, subirEsBueno = true, textoAnterior }) {
+  const valor = puntos !== undefined ? puntos : variacion;
+  let tono = "text-ink-500 bg-gray-100";
+  let flecha = "→";
+  let texto;
+  if (valor === null || valor === undefined) {
+    texto = "Sin datos para comparar";
+  } else if (valor === 0) {
+    texto = "Igual";
+  } else {
+    const sube = valor > 0;
+    flecha = sube ? "↑" : "↓";
+    const bueno = subirEsBueno === null ? null : sube === subirEsBueno;
+    tono = bueno === null ? "text-ink-600 bg-gray-100" : bueno ? "text-[#0B6B2E] bg-[#E3F5E9]" : "text-[#A32020] bg-[#FDECEC]";
+    texto = puntos !== undefined ? `${Math.abs(valor).toLocaleString("es-CO")} pts` : `${Math.abs(valor).toLocaleString("es-CO")} %`;
+  }
+  return (
+    <p className="m-0 flex items-center gap-1.5 flex-wrap text-xs">
+      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold ${tono}`}>
+        {valor !== null && valor !== undefined && valor !== 0 && <span aria-hidden="true">{flecha}</span>}
+        {texto}
+      </span>
+      {valor !== null && valor !== undefined && <span className="text-ink-500">vs. {textoAnterior}</span>}
+    </p>
+  );
+}
+
+export function TarjetaKpi({ icono, tono = "azul", titulo, valor, unidad = "", variacion, puntos, subirEsBueno, textoAnterior, serie, a }) {
+  const Icono = IconoBase;
+  const cuerpo = (
+    <>
+      <div className="flex items-start justify-between gap-3">
+        <span className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${TONOS[tono]}`}>{Icono && <Icono nombre={icono} size={22} strokeWidth={2} />}</span>
+        {serie && (
+          <span className="hidden sm:block">
+            <Minilinea valores={serie} color={LINEA_TONO[tono]} />
+          </span>
+        )}
+      </div>
+      <p className="mt-3 mb-0 text-[13px] font-semibold text-ink-500">{titulo}</p>
+      <p className="m-0 text-[26px] sm:text-[32px] leading-tight font-extrabold text-primary-dark">
+        {valor === null || valor === undefined ? "—" : Number(valor).toLocaleString("es-CO")}
+        {valor !== null && valor !== undefined && unidad && <span className="text-xl font-bold text-ink-600"> {unidad}</span>}
+      </p>
+      <div className="mt-2">
+        <Cambio variacion={variacion} puntos={puntos} subirEsBueno={subirEsBueno} textoAnterior={textoAnterior} />
+      </div>
+    </>
+  );
+  const clase = "bg-white border border-gray-200 rounded-[22px] p-4 sm:p-5 min-w-0 flex flex-col";
+  return a ? (
+    <a href={a} className={`${clase} hover:border-primary/40 hover:shadow-[0_8px_24px_rgba(11,35,71,0.08)] transition-shadow`}>
+      {cuerpo}
+    </a>
+  ) : (
+    <div className={clase}>{cuerpo}</div>
+  );
+}
+
+// Dona (parte de un todo, pocas categorias): cifra principal en el centro y
+// leyenda con cantidad y porcentaje de cada parte.
+export function Dona({ partes, centro, etiquetaCentro, tamano = 200 }) {
+  const { mostrar, ocultar, nodo } = useTooltip();
+  const total = partes.reduce((s, p) => s + (p.valor || 0), 0);
+  const r = tamano / 2 - 14;
+  const c = 2 * Math.PI * r;
+  let acumulado = 0;
+  return (
+    <div data-grafica className="relative flex flex-col sm:flex-row items-center gap-6">
+      {nodo}
+      <div className="relative shrink-0" style={{ width: tamano, height: tamano }}>
+        <svg width={tamano} height={tamano} viewBox={`0 0 ${tamano} ${tamano}`} className="-rotate-90" role="img" aria-label={etiquetaCentro}>
+          <circle cx={tamano / 2} cy={tamano / 2} r={r} fill="none" stroke="#EEF2F7" strokeWidth="22" />
+          {total > 0 &&
+            partes.map((p) => {
+              if (!p.valor) return null;
+              const largo = (p.valor / total) * c;
+              const trazo = Math.max(largo - (partes.filter((x) => x.valor).length > 1 ? 3 : 0), 1);
+              const el = (
+                <circle
+                  key={p.clave}
+                  cx={tamano / 2}
+                  cy={tamano / 2}
+                  r={r}
+                  fill="none"
+                  stroke={p.color}
+                  strokeWidth="22"
+                  strokeDasharray={`${trazo} ${c - trazo}`}
+                  strokeDashoffset={-acumulado}
+                  tabIndex={0}
+                  aria-label={`${p.etiqueta}: ${p.valor}`}
+                  onMouseEnter={(ev) => mostrar(ev, <Tip valor={`${fmt(p.valor)} · ${Math.round((p.valor / total) * 100)} %`} etiqueta={p.etiqueta} />)}
+                  onFocus={(ev) => mostrar(ev, <Tip valor={`${fmt(p.valor)} · ${Math.round((p.valor / total) * 100)} %`} etiqueta={p.etiqueta} />)}
+                  onMouseLeave={ocultar}
+                  onBlur={ocultar}
+                  className="outline-none hover:opacity-85 cursor-default"
+                />
+              );
+              acumulado += largo;
+              return el;
+            })}
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+          <span className="text-[34px] leading-none font-extrabold text-primary-dark">{centro}</span>
+          <span className="mt-1 text-xs text-ink-500 max-w-[110px] leading-tight">{etiquetaCentro}</span>
+        </div>
+      </div>
+      <ul className="list-none m-0 p-0 flex flex-col gap-2.5 w-full min-w-0">
+        {partes.map((p) => (
+          <li key={p.clave} className="flex items-center gap-2.5 text-sm">
+            <span className="w-3 h-3 rounded-[3px] shrink-0" style={{ background: p.color }} />
+            <span className="flex-1 min-w-0 text-ink-700">{p.etiqueta}</span>
+            <strong className="text-ink-900 tabular-nums">{fmt(p.valor || 0)}</strong>
+            <span className="w-11 text-right text-ink-500 tabular-nums">{total ? `${Math.round(((p.valor || 0) / total) * 100)} %` : "—"}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// Columnas apiladas por cubeta (dia, semana o mes), con eje y lectura al pasar.
+export function ColumnasApiladas({ datos, partes, alto = 240 }) {
+  const [ref, ancho] = useAncho();
+  const [activo, setActivo] = useState(null);
+  const margen = { izq: 36, der: 8, arr: 10, aba: 26 };
+  const w = ancho - margen.izq - margen.der;
+  const h = alto - margen.arr - margen.aba;
+  const totales = datos.map((d) => partes.reduce((s, p) => s + (d[p.clave] || 0), 0));
+  const { tope, marcas } = escala(Math.max(0, ...totales));
+  const banda = w / Math.max(datos.length, 1);
+  const grosor = Math.max(3, Math.min(24, banda * 0.6));
+  const y = (v) => margen.arr + h - (v / tope) * h;
+  const cada = Math.ceil(46 / Math.max(banda, 1));
+  const tip = activo !== null ? datos[activo] : null;
+  return (
+    <div ref={ref} className="relative">
+      <svg width={ancho} height={alto} role="img" aria-label="Columnas por periodo" className="block">
+        {marcas.map((m) => (
+          <g key={m}>
+            <line x1={margen.izq} x2={margen.izq + w} y1={y(m)} y2={y(m)} stroke={m === 0 ? "#C3C9D4" : "#E8ECF2"} strokeWidth="1" />
+            <text x={margen.izq - 8} y={y(m)} dy="0.32em" textAnchor="end" className="fill-[#6B7385] text-[11px] tabular-nums">
+              {fmt(m)}
+            </text>
+          </g>
+        ))}
+        {datos.map((d, i) => {
+          const x = margen.izq + i * banda + (banda - grosor) / 2;
+          let base = 0;
+          const visibles = partes.filter((p) => d[p.clave] > 0);
+          return (
+            <g key={d.clave || d.mes} opacity={activo === null || activo === i ? 1 : 0.45}>
+              {visibles.map((p, j) => {
+                const v = d[p.clave];
+                const y1 = y(base + v);
+                const alt = Math.max(y(base) - y1 - (j < visibles.length - 1 ? 2 : 0), 1);
+                base += v;
+                const ultimo = j === visibles.length - 1;
+                return ultimo ? (
+                  <path
+                    key={p.clave}
+                    d={`M${x},${y1 + alt} V${y1 + Math.min(4, alt)} Q${x},${y1} ${x + Math.min(4, grosor / 2)},${y1} H${x + grosor - Math.min(4, grosor / 2)} Q${x + grosor},${y1} ${x + grosor},${y1 + Math.min(4, alt)} V${y1 + alt} Z`}
+                    fill={p.color}
+                  />
+                ) : (
+                  <rect key={p.clave} x={x} y={y1 + 2} width={grosor} height={alt} fill={p.color} />
+                );
+              })}
+            </g>
+          );
+        })}
+        {datos.map((d, i) =>
+          i === activo || i === datos.length - 1 || (datos.length - 1 - i) % cada === 0 ? (
+            <text key={`e-${i}`} x={margen.izq + i * banda + banda / 2} y={alto - 8} textAnchor="middle" className={`text-[11px] ${activo === i ? "fill-[#0E1726] font-bold" : "fill-[#6B7385]"}`}>
+              {d.etiqueta}
+            </text>
+          ) : null
+        )}
+        {datos.map((d, i) => (
+          <rect
+            key={`hit-${i}`}
+            x={margen.izq + i * banda}
+            y={margen.arr}
+            width={banda}
+            height={h}
+            fill="transparent"
+            tabIndex={0}
+            aria-label={`${d.etiqueta}: ${partes.map((p) => `${p.etiqueta} ${fmt(d[p.clave] || 0)}`).join(", ")}`}
+            onMouseEnter={() => setActivo(i)}
+            onFocus={() => setActivo(i)}
+            onMouseLeave={() => setActivo(null)}
+            onBlur={() => setActivo(null)}
+            className="outline-none"
+          />
+        ))}
+      </svg>
+      {tip && (
+        <div
+          role="status"
+          className="pointer-events-none absolute z-10 top-0 bg-ink-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap"
+          style={{ left: Math.min(Math.max(margen.izq + activo * banda + banda / 2 - 80, 0), ancho - 180) }}
+        >
+          <p className="m-0 mb-1 font-bold">
+            {tip.etiqueta} · {fmt(totales[activo])} en total
+          </p>
+          {partes.map((p) => (
+            <p key={p.clave} className="m-0 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-[2px]" style={{ background: p.color }} />
+              <strong className="text-sm tabular-nums">{fmt(tip[p.clave] || 0)}</strong>
+              <span className="text-white/70">{p.etiqueta}</span>
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Calendario del mes con la actividad de cada dia (mas oscuro = mas actividad).
+const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+const NOMBRES_MES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+const RAMPA = ["#E3EEFB", "#B7D3F6", "#6DA7EC", "#2A78D6", "#184F95"];
+
+export function CalendarioActividad({ mes, hoy, dias, cantidad, describir, alElegir }) {
+  const [anio, m] = mes.split("-").map(Number);
+  const primero = new Date(Date.UTC(anio, m - 1, 1));
+  const total = new Date(Date.UTC(anio, m, 0)).getUTCDate();
+  const desfase = (primero.getUTCDay() + 6) % 7;
+  const valores = Object.values(dias).map(cantidad);
+  const max = Math.max(1, ...valores);
+  const celdas = [...Array(desfase).fill(null), ...Array.from({ length: total }, (_, i) => i + 1)];
+  return (
+    <div>
+      <p className="m-0 mb-3 font-bold text-ink-900">
+        {NOMBRES_MES[m - 1]} {anio}
+      </p>
+      <div className="grid grid-cols-7 gap-1.5 text-center">
+        {DIAS_SEMANA.map((d) => (
+          <span key={d} className="text-[11px] font-semibold text-ink-500 pb-1">
+            {d}
+          </span>
+        ))}
+        {celdas.map((dia, i) => {
+          if (!dia) return <span key={`v-${i}`} />;
+          const clave = `${mes}-${String(dia).padStart(2, "0")}`;
+          const info = dias[clave];
+          const n = info ? cantidad(info) : 0;
+          const nivel = n ? Math.min(RAMPA.length - 1, Math.ceil((n / max) * (RAMPA.length - 1))) : -1;
+          const fondo = nivel >= 0 ? RAMPA[nivel] : "transparent";
+          const oscuro = nivel >= 3;
+          const esHoy = clave === hoy;
+          const titulo = `${dia} de ${NOMBRES_MES[m - 1].toLowerCase()}: ${info ? describir(info) : "sin actividad"}`;
+          const Etiqueta = alElegir ? "button" : "span";
+          return (
+            <Etiqueta
+              key={clave}
+              type={alElegir ? "button" : undefined}
+              title={titulo}
+              aria-label={titulo}
+              onClick={alElegir ? () => alElegir(clave) : undefined}
+              className={`aspect-square min-h-[34px] rounded-xl flex flex-col items-center justify-center text-sm tabular-nums ${
+                oscuro ? "text-white font-bold" : "text-ink-900"
+              } ${esHoy ? "ring-2 ring-offset-2 ring-primary-dark font-extrabold" : ""} ${alElegir ? "hover:outline hover:outline-2 hover:outline-primary/40" : ""}`}
+              style={{ background: fondo }}
+            >
+              {dia}
+            </Etiqueta>
+          );
+        })}
+      </div>
+      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-ink-500">
+        Menos
+        {RAMPA.map((c) => (
+          <span key={c} className="w-3.5 h-3.5 rounded-[4px]" style={{ background: c }} />
+        ))}
+        Más
+      </div>
+    </div>
+  );
+}
+
+// "hace 5 min", "hace 3 h", "ayer", "12 sep".
+export function haceCuanto(fechaIso) {
+  const ms = Date.now() - new Date(fechaIso).getTime();
+  const min = Math.round(ms / 60000);
+  if (min < 1) return "ahora";
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.round(h / 24);
+  if (d === 1) return "ayer";
+  if (d < 7) return `hace ${d} días`;
+  return new Date(fechaIso).toLocaleDateString("es-CO", { day: "numeric", month: "short" });
+}
+
+const ACTIVIDAD = {
+  cita: { icono: "calendario", tono: "azul" },
+  cancelada: { icono: "cerrar", tono: "gris" },
+  inscripcion: { icono: "estrella", tono: "morado" },
+  atencion: { icono: "pulso", tono: "verde" },
+  sesion: { icono: "balon", tono: "naranja" },
+  sst: { icono: "alerta", tono: "cian" },
+};
+
+export function ActividadReciente({ items, Icono = IconoBase }) {
+  if (!items.length) return <p className="m-0 text-sm text-ink-500">Todavía no hay actividad registrada.</p>;
+  return (
+    <ul className="list-none m-0 p-0 flex flex-col">
+      {items.map((a, i) => {
+        const estilo = ACTIVIDAD[a.tipo] || ACTIVIDAD.cita;
+        return (
+          <li key={i} className="flex items-start gap-3 py-2.5 border-b border-gray-100 last:border-b-0">
+            <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${TONOS[estilo.tono]}`}>
+              <Icono nombre={estilo.icono} size={17} strokeWidth={2} />
+            </span>
+            <span className="flex-1 min-w-0 leading-snug">
+              <span className="block text-sm font-semibold text-ink-900">{a.texto}</span>
+              {a.detalle && <span className="block text-[13px] text-ink-500 truncate">{a.detalle}</span>}
+            </span>
+            <span className="text-xs text-ink-500 whitespace-nowrap pt-0.5">{haceCuanto(a.fecha)}</span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

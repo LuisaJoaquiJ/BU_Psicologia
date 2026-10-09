@@ -2,6 +2,7 @@ const { Router } = require("express");
 const { authMiddleware } = require("../../common/middlewares/auth.middleware");
 const { requireModulo } = require("../../common/middlewares/roles.middleware");
 const { obtenerEstadisticas, obtenerInforme } = require("./estadisticas.service");
+const { tablero } = require("./estadisticas.tablero");
 const { generarExcel } = require("./informe.excel");
 const { generarPdf } = require("./informe.pdf");
 const { AppError } = require("../../common/utils/AppError");
@@ -16,6 +17,15 @@ router.get("/", async (req, res, next) => {
   try {
     const estadisticas = await obtenerEstadisticas({ desde: req.query.desde, hasta: req.query.hasta });
     res.status(200).json(estadisticas);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Tablero de lectura rapida (?periodo=semana|mes|trimestre|anio).
+router.get("/tablero", async (req, res, next) => {
+  try {
+    res.status(200).json(await tablero({ periodo: req.query.periodo }));
   } catch (err) {
     next(err);
   }
