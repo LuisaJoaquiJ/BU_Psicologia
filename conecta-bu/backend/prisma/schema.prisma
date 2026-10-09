@@ -284,6 +284,7 @@ model ActividadSalud {
   avances              String?                 @db.Text
   dificultades         String?                 @db.Text
   aprendizajes         String?                 @db.Text
+  pendientes           String?                 @db.Text
   observaciones        String?                 @db.Text
   activa               Boolean                 @default(true)
   fechaCreacion        DateTime                @default(now())
@@ -475,4 +476,68 @@ model AdjuntoReporteSST {
 
   @@index([reporteId])
   @@map("sst_adjuntos")
+}
+
+// ---------------------------------------------------------------------------
+// Informe de gestion (formato INFBI-002 "Direccionamiento estrategico"):
+// hojas PROYECTO e INFORME - EVALUACION, mas la matriz de atendidos, las
+// estadisticas y el registro fotografico que se calculan de lo registrado.
+// El modulo lo prepara y lo envia al superadministrador, que lo descarga en
+// PDF o Excel y lo aprueba o lo devuelve con observaciones.
+// ---------------------------------------------------------------------------
+
+enum EstadoInformeGestion {
+  Borrador
+  Enviado
+  Devuelto
+  Aprobado
+}
+
+model InformeGestion {
+  id                  String               @id @default(uuid())
+  modulo              String               @default("salud") @db.VarChar(40)
+  periodo             String               @db.VarChar(10)
+  fechaPresentacion   DateTime?            @db.Date
+  responsable         String?              @db.VarChar(200)
+  accionMejora        Boolean              @default(true)
+  accionCorrectiva    Boolean              @default(true)
+  accionPreventiva    Boolean              @default(true)
+  descripcion         String?              @db.Text
+  justificacion       String?              @db.Text
+  alineacion          String?              @db.Text
+  // [{ objetivo, resultado, beneficio }]
+  objetivos           Json?
+  logros              String?              @db.Text
+  dificultades        String?              @db.Text
+  accionesMejora      String?              @db.Text
+  estado              EstadoInformeGestion @default(Borrador)
+  version             Int                  @default(0)
+  enviadoPor          String?              @db.VarChar(120)
+  fechaEnvio          DateTime?
+  observacionRevision String?              @db.Text
+  revisadoPor         String?              @db.VarChar(120)
+  fechaRevision       DateTime?
+  // Cifras calculadas en el momento del envio (lo que recibe el superadministrador).
+  datosEnviados       Json?
+  fechaCreacion       DateTime             @default(now())
+  fechaActualizacion  DateTime             @updatedAt
+
+  @@unique([modulo, periodo])
+  @@map("informes_gestion")
+}
+
+// Cifras de años anteriores (hoja "ESTADISTICAS POBLACION ATENDIDA"), para
+// comparar con lo que ya se registra en Conecta BU.
+model HistoricoSalud {
+  id               String @id @default(uuid())
+  periodo          String @unique @db.VarChar(10)
+  estudiantes      Int    @default(0)
+  docentes         Int    @default(0)
+  administrativos  Int    @default(0)
+  externos         Int    @default(0)
+  egresados        Int    @default(0)
+  enfermeria       Int?
+  poblacionGeneral Int?
+
+  @@map("salud_historicos")
 }

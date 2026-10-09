@@ -61,9 +61,12 @@ function dimensiones(buffer) {
 // ---------------------------------------------------------------------------
 
 function hojaAtendidos(libro, periodo, matriz) {
-  const hoja = libro.addWorksheet("ATENDIDOS", { views: [{ state: "frozen", xSplit: 6, ySplit: 3 }] });
+  const hoja = libro.addWorksheet("ATENDIDOS", {
+    views: [{ state: "frozen", xSplit: 6, ySplit: 3 }],
+    pageSetup: { paperSize: 9, orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+  });
   const fijas = ["AÑO", "SEMESTRE", "CÓDIGO", "ACTIVIDAD", "ACTIVIDAD / JORNADA", "FECHA DE EJECUCIÓN"];
-  const finales = ["TOTAL", "META", "LOGRO", "CUMPLIMIENTO", "AVANCES", "DIFICULTADES", "APRENDIZAJES", "PRESUPUESTO EJECUTADO", "OBSERVACIONES"];
+  const finales = ["TOTAL", "META", "LOGRO", "CUMPLIMIENTO", "AVANCES", "DIFICULTADES", "APRENDIZAJES", "PRESUPUESTO EJECUTADO", "PENDIENTES", "OBSERVACIONES"];
   const nCols = fijas.length + matriz.columnas.length + finales.length;
   const colConteo = fijas.length + 1;
   const colTotal = colConteo + matriz.columnas.length;
@@ -125,7 +128,8 @@ function hojaAtendidos(libro, periodo, matriz) {
       r.getCell(colTotal + 6).value = f.aprendizajes;
       r.getCell(colTotal + 7).value = f.presupuesto;
       r.getCell(colTotal + 7).numFmt = '"$"#,##0';
-      r.getCell(colTotal + 8).value = f.observaciones;
+      r.getCell(colTotal + 8).value = f.pendientes;
+      r.getCell(colTotal + 9).value = f.observaciones;
     }
     r.eachCell({ includeEmpty: true }, (celda, n) => {
       if (n > nCols) return;
@@ -168,86 +172,7 @@ function hojaAtendidos(libro, periodo, matriz) {
   hoja.getColumn(6).width = 23;
   for (let c = colConteo; c < colTotal; c += 1) hoja.getColumn(c).width = 5;
   hoja.getColumn(colTotal).width = 8;
-  [7, 7, 11, 34, 34, 34, 13, 30].forEach((w, i) => (hoja.getColumn(colTotal + 1 + i).width = w));
-}
-
-function tablaSimple(hoja, filaInicio, tituloTabla, columnas, filas) {
-  const t = hoja.getCell(filaInicio, 2);
-  t.value = tituloTabla;
-  t.font = { bold: true, size: 12, color: { argb: AZUL } };
-  t.border = { bottom: { style: "medium", color: { argb: DORADO } } };
-  columnas.forEach((c, i) => {
-    const celda = hoja.getCell(filaInicio + 1, 2 + i);
-    celda.value = c.titulo;
-    encabezado(celda);
-  });
-  filas.forEach((f, j) => {
-    columnas.forEach((c, i) => {
-      const celda = hoja.getCell(filaInicio + 2 + j, 2 + i);
-      celda.value = f[c.clave];
-      celda.border = BORDES;
-      if (c.pct) celda.numFmt = "0.0%";
-      if (j % 2) celda.fill = { type: "pattern", pattern: "solid", fgColor: { argb: MARFIL } };
-    });
-  });
-  if (!filas.length) hoja.getCell(filaInicio + 2, 2).value = "Sin datos.";
-  return filaInicio + 3 + Math.max(filas.length, 1);
-}
-
-function hojaEstadisticas(libro, periodo, { impacto, porCategoria, porPrograma, porPoblacion, totalPeriodo }) {
-  const hoja = libro.addWorksheet("ESTADÍSTICAS");
-  hoja.getColumn(1).width = 3;
-  hoja.getColumn(2).width = 46;
-  for (let c = 3; c <= 9; c += 1) hoja.getColumn(c).width = 15;
-  titulo(hoja, "B1:H1", "ESTADÍSTICAS SALUD INTEGRAL", `Periodo del informe: ${periodo} · Datos registrados en Conecta BU`);
-
-  let fila = 4;
-  fila = tablaSimple(
-    hoja,
-    fila,
-    "Impacto poblacional por periodo",
-    [
-      { clave: "periodo", titulo: "Periodo" },
-      { clave: "Estudiante", titulo: "Estudiantes" },
-      { clave: "Docente", titulo: "Docentes" },
-      { clave: "Administrativo", titulo: "Administrativos" },
-      { clave: "Externo", titulo: "Externos" },
-      { clave: "Egresado", titulo: "Egresados" },
-      { clave: "total", titulo: "Total" },
-    ],
-    impacto
-  );
-  fila = tablaSimple(
-    hoja,
-    fila,
-    `Población atendida ${periodo}`,
-    [
-      { clave: "nombre", titulo: "Población" },
-      { clave: "total", titulo: "Atenciones" },
-      { clave: "porcentaje", titulo: "Porcentaje", pct: true },
-    ],
-    porPoblacion.map((p) => ({ ...p, porcentaje: totalPeriodo ? p.total / totalPeriodo : 0 }))
-  );
-  fila = tablaSimple(
-    hoja,
-    fila,
-    `Atenciones por línea de acción ${periodo}`,
-    [
-      { clave: "nombre", titulo: "Línea" },
-      { clave: "total", titulo: "Atenciones" },
-    ],
-    porCategoria
-  );
-  tablaSimple(
-    hoja,
-    fila,
-    `Estudiantes atendidos por programa ${periodo}`,
-    [
-      { clave: "nombre", titulo: "Programa" },
-      { clave: "total", titulo: "Atenciones" },
-    ],
-    porPrograma
-  );
+  [7, 7, 11, 34, 34, 34, 13, 26, 30].forEach((w, i) => (hoja.getColumn(colTotal + 1 + i).width = w));
 }
 
 async function hojaFotografica(libro, periodo, evidencias, leerArchivo) {
@@ -274,7 +199,8 @@ async function hojaFotografica(libro, periodo, evidencias, leerArchivo) {
       const id = libro.addImage({ buffer, extension: e.tipoMime === "image/png" ? "png" : "jpeg" });
       hoja.addImage(id, { tl: { col: j === 0 ? 1 : 3, row: fila - 1 }, ext: { width: ancho, height: Math.min(alto, 420) } });
       const pie = hoja.getCell(fila + 1, j === 0 ? 2 : 4);
-      pie.value = `${e.actividad?.nombre || ""} · ${fechaISO(e.fecha)}${e.descripcion ? ` · ${e.descripcion}` : ""}`;
+      const actividad = typeof e.actividad === "string" ? e.actividad : e.actividad?.nombre || "";
+      pie.value = `${actividad} · ${String(fechaISO(e.fecha)).slice(0, 10)}${e.descripcion ? ` · ${e.descripcion}` : ""}`;
       pie.font = { size: 9, italic: true, color: { argb: GRIS } };
       pie.alignment = { wrapText: true, vertical: "top" };
     }
@@ -291,19 +217,10 @@ async function hojaFotografica(libro, periodo, evidencias, leerArchivo) {
     hoja.getCell(fila, 2).value = "Otros soportes (PDF y otros formatos, disponibles en Conecta BU)";
     hoja.getCell(fila, 2).font = { bold: true, color: { argb: AZUL } };
     otros.forEach((e, k) => {
-      hoja.getCell(fila + 1 + k, 2).value = `${e.nombreArchivo} — ${e.actividad?.nombre || ""} (${fechaISO(e.fecha)})`;
+      const actividad = typeof e.actividad === "string" ? e.actividad : e.actividad?.nombre || "";
+      hoja.getCell(fila + 1 + k, 2).value = `${e.nombreArchivo} — ${actividad} (${String(fechaISO(e.fecha)).slice(0, 10)})`;
     });
   }
-}
-
-async function generarInformeGestion(datos, leerArchivo) {
-  const libro = new ExcelJS.Workbook();
-  libro.creator = "Conecta BU · Salud integral";
-  libro.created = new Date();
-  hojaAtendidos(libro, datos.periodo, datos.matriz);
-  hojaEstadisticas(libro, datos.periodo, datos);
-  await hojaFotografica(libro, datos.periodo, datos.evidencias, leerArchivo);
-  return libro.xlsx.writeBuffer();
 }
 
 // ---------------------------------------------------------------------------
@@ -475,4 +392,19 @@ function estiloTabla(hoja) {
   hoja.autoFilter = { from: { row: 1, column: 1 }, to: { row: Math.max(hoja.rowCount, 1), column: hoja.columnCount } };
 }
 
-module.exports = { generarInformeGestion, generarSnies, generarRegistro, dimensiones, CATEGORIAS };
+module.exports = {
+  generarSnies,
+  generarRegistro,
+  dimensiones,
+  CATEGORIAS,
+  hojaAtendidos,
+  hojaFotografica,
+  encabezado,
+  titulo,
+  BORDES,
+  AZUL,
+  DORADO,
+  MARFIL,
+  GRIS,
+  SEMAFORO,
+};

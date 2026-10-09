@@ -213,7 +213,7 @@ export function ReportesPage() {
           icono="grafica"
           titulo="Informe de gestión"
           reemplaza="INFBI-002"
-          descripcion="Matriz de atendidos por actividad y jornada (administrativos, docentes, egresados, externos y estudiantes por programa), meta, logro y semáforo, estadísticas de población y registro fotográfico con las evidencias."
+          descripcion="Proyecto, evaluación, matriz de atendidos con meta, logro y semáforo, estadísticas con gráficas frente a años anteriores y registro fotográfico. Para escribir los textos, verlo en PDF y enviarlo al superadministrador, usa «Informe de gestión»."
           onDescargar={() => descargar("/salud/reportes/gestion", { periodo }, `informe-gestion-salud-${periodo}.xlsx`)}
         >
           {selectorPeriodo}

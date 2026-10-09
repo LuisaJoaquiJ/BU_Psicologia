@@ -11,6 +11,7 @@ const evidencias = require("./evidencias.service");
 const reportes = require("./reportes.service");
 const { importarExcel } = require("./importador.service");
 const { routerPersonal: reportesSst } = require("./sst.routes");
+const informes = require("./informe.service");
 
 // Modulo Salud integral (/api/v1/salud). Todo es exclusivo del rol "Salud"
 // (personal de la Unidad de Salud): maneja datos personales y de salud.
@@ -26,6 +27,10 @@ const manejar = (fn) => async (req, res, next) => {
 };
 
 const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+function enviarArchivo(res, { buffer, nombre, tipo }) {
+  res.set({ "Content-Type": tipo, "Content-Disposition": `attachment; filename="${nombre}"`, "Cache-Control": "no-store" });
+  res.status(200).send(Buffer.from(buffer));
+}
 function enviarExcel(res, { buffer, nombre }) {
   res.set({ "Content-Type": XLSX, "Content-Disposition": `attachment; filename="${nombre}"`, "Cache-Control": "no-store" });
   res.status(200).send(Buffer.from(buffer));
@@ -106,7 +111,20 @@ router.delete("/atenciones/:id", manejar(async (req, res) => res.json(await aten
 
 // ---- Reportes --------------------------------------------------------------
 router.get("/resumen", manejar(async (req, res) => res.json(await reportes.resumen(req.query))));
-router.get("/reportes/gestion", manejar(async (req, res) => enviarExcel(res, await reportes.informeGestion(req.query))));
+// Informe de gestion en Excel (formato INFBI-002 completo, con graficas).
+router.get("/reportes/gestion", manejar(async (req, res) => enviarArchivo(res, await informes.descargarDelModulo(req.query.periodo, "xlsx"))));
+
+// ---- Informe de gestion para el superadministrador --------------------------
+router.get("/informes", manejar(async (req, res) => res.json({ informes: await informes.listarInformes() })));
+router.get("/informes/historicos", manejar(async (req, res) => res.json({ historicos: await informes.listarHistoricos() })));
+router.put("/informes/historicos", manejar(async (req, res) => res.json({ historicos: await informes.guardarHistoricos(req.body.historicos) })));
+router.get("/informes/:periodo", manejar(async (req, res) => res.json(await informes.obtenerInforme(req.params.periodo))));
+router.put("/informes/:periodo", manejar(async (req, res) => res.json(await informes.guardarInforme(req.params.periodo, req.body))));
+router.post("/informes/:periodo/enviar", manejar(async (req, res) => res.json(await informes.enviarInforme(req.params.periodo, req.usuario))));
+router.get(
+  "/informes/:periodo/archivo",
+  manejar(async (req, res) => enviarArchivo(res, await informes.descargarDelModulo(req.params.periodo, req.query.formato || "pdf")))
+);
 router.get(
   "/reportes/snies",
   manejar(async (req, res) => {

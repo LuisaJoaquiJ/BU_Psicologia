@@ -1,11 +1,9 @@
-const fs = require("fs");
 const { prisma } = require("../../config/prisma");
 const { AppError } = require("../../common/utils/AppError");
 const { aFechaUTC, hoyBogota } = require("../../common/utils/fechas");
 const { CATEGORIAS, POBLACIONES, periodoDeFecha, rangoDePeriodo } = require("./catalogos");
 const datos = require("./reportes.datos");
 const excel = require("./reportes.excel");
-const { rutaAbsoluta } = require("./evidencias.service");
 
 const DIA_MS = 24 * 60 * 60 * 1000;
 
@@ -82,40 +80,6 @@ async function resumen({ periodo } = {}) {
   };
 }
 
-async function leerArchivo(evidencia) {
-  return fs.promises.readFile(rutaAbsoluta(evidencia));
-}
-
-async function informeGestion({ periodo } = {}) {
-  const { periodo: per, rango } = validarPeriodo(periodo);
-  const [actividades, atenciones, historicas, evidencias] = await Promise.all([
-    prisma.actividadSalud.findMany({ where: { periodo: per } }),
-    atencionesDelPeriodo(rango),
-    prisma.atencionSalud.findMany({ select: { fecha: true, poblacion: true } }),
-    prisma.evidenciaSalud.findMany({
-      where: { fecha: { gte: rango.desde, lte: rango.hasta } },
-      include: { actividad: true },
-      orderBy: { fecha: "asc" },
-    }),
-  ]);
-  const enPeriodo = atenciones.filter((a) => actividades.some((x) => x.id === a.actividadId));
-  const nombreActividad = new Map(actividades.map((a) => [a.id, a]));
-  const buffer = await excel.generarInformeGestion(
-    {
-      periodo: per,
-      matriz: datos.matrizGestion(actividades, enPeriodo),
-      impacto: datos.impactoPoblacional(historicas),
-      totalPeriodo: enPeriodo.length,
-      porPoblacion: POBLACIONES.map((p) => ({ nombre: p, total: enPeriodo.filter((a) => a.poblacion === p).length })),
-      porCategoria: datos.contarPor(enPeriodo, (a) => CATEGORIAS[nombreActividad.get(a.actividadId)?.categoria]),
-      porPrograma: datos.contarPor(enPeriodo.filter((a) => a.poblacion === "Estudiante"), (a) => a.programa || datos.SIN_PROGRAMA),
-      evidencias,
-    },
-    leerArchivo
-  );
-  return { buffer, nombre: `informe-gestion-salud-${per}.xlsx` };
-}
-
 async function reporteSnies({ periodo } = {}) {
   const { periodo: per, rango } = validarPeriodo(periodo);
   const [actividades, atenciones] = await Promise.all([
@@ -144,4 +108,4 @@ async function registroGeneral({ desde, hasta } = {}) {
   return { buffer, nombre: `registro-salud-${sufijo}.xlsx` };
 }
 
-module.exports = { resumen, informeGestion, reporteSnies, registroGeneral, validarPeriodo };
+module.exports = { resumen, reporteSnies, registroGeneral, validarPeriodo };

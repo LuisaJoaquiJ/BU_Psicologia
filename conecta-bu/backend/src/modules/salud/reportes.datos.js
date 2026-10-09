@@ -90,6 +90,7 @@ function matrizGestion(actividades, atenciones) {
           dificultades: i === 0 ? actividad.dificultades : null,
           aprendizajes: i === 0 ? actividad.aprendizajes : null,
           presupuesto: i === 0 ? actividad.presupuesto : null,
+          pendientes: i === 0 ? actividad.pendientes || null : null,
           observaciones: i === 0 ? actividad.observaciones : null,
         });
       });
@@ -163,20 +164,6 @@ function datosSnies(actividades, atenciones, periodo) {
   return { actividades: actividadesSnies, beneficiarios, recursoHumano, sinResponsable };
 }
 
-// Poblacion atendida por periodo (hoja "ESTADISTICAS POBLACION ATENDIDA").
-function impactoPoblacional(atenciones) {
-  const porPeriodo = new Map();
-  for (const at of atenciones) {
-    const f = new Date(at.fecha);
-    const periodo = `${f.getUTCFullYear()}-${f.getUTCMonth() < 6 ? 1 : 2}`;
-    if (!porPeriodo.has(periodo)) porPeriodo.set(periodo, Object.fromEntries(POBLACIONES.map((p) => [p, 0])));
-    porPeriodo.get(periodo)[at.poblacion] += 1;
-  }
-  return [...porPeriodo.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([periodo, conteo]) => ({ periodo, ...conteo, total: Object.values(conteo).reduce((a, b) => a + b, 0) }));
-}
-
 function contarPor(lista, clave) {
   const mapa = new Map();
   for (const x of lista) {
@@ -205,7 +192,6 @@ module.exports = {
   semaforo,
   matrizGestion,
   datosSnies,
-  impactoPoblacional,
   contarPor,
   cargoRegistro,
 };

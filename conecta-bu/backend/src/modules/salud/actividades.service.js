@@ -54,7 +54,7 @@ function validarActividad(datos, { parcial = false } = {}) {
   if (datos.responsableDocumento !== undefined) {
     limpio.responsableDocumento = String(datos.responsableDocumento || "").replace(/[^0-9A-Za-z]/g, "").slice(0, 30) || null;
   }
-  for (const campo of ["avances", "dificultades", "aprendizajes", "observaciones"]) {
+  for (const campo of ["avances", "dificultades", "aprendizajes", "pendientes", "observaciones"]) {
     const t = textoLargo(datos[campo]);
     if (t !== undefined) limpio[campo] = t;
   }

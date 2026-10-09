@@ -77,18 +77,20 @@ async function quitarAcceso(id) {
 
 // Vista general de Conecta BU para el superadministrador.
 async function resumen() {
-  const [usuarios, accesos, citas, eventos, atenciones, personas] = await Promise.all([
+  const [usuarios, accesos, citas, eventos, atenciones, personas, informesPorRevisar] = await Promise.all([
     prisma.usuario.findMany({ include: { rol: true } }),
     prisma.accesoModulo.findMany(),
     prisma.cita.findMany({ include: { horario: { include: { servicio: true } } } }),
     prisma.evento.findMany({ where: { estado: { in: ["Publicado", "Cerrado"] } } }),
     prisma.atencionSalud.count(),
     prisma.personaSalud.count(),
+    prisma.informeGestion.count({ where: { estado: "Enviado" } }),
   ]);
   const porRol = {};
   for (const u of usuarios) porRol[u.rol?.nombre] = (porRol[u.rol?.nombre] || 0) + 1;
   const citasDe = (m) => citas.filter((c) => moduloDeServicio(c.horario?.servicio) === m);
   return {
+    informesPorRevisar,
     usuarios: { total: usuarios.length, porRol },
     modulos: [
       {

@@ -38,6 +38,14 @@ export function SuperInicio() {
         </p>
       </div>
       {error && <Aviso>{error}</Aviso>}
+      {resumen?.informesPorRevisar > 0 && (
+        <Aviso tono="azul">
+          <strong>{resumen.informesPorRevisar} informe(s) de gestión por revisar.</strong>{" "}
+          <Link to="/super/informes" className="underline font-semibold">
+            Abrir informes
+          </Link>
+        </Aviso>
+      )}
 
       <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
         <Kpi destacado titulo="Usuarios registrados" valor={resumen ? resumen.usuarios.total : "…"} />

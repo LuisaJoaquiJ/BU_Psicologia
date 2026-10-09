@@ -341,6 +341,48 @@ SALUD_MAX_EVIDENCIA_MB=10
 Las evidencias se guardan en `backend/uploads/` (ignorada por git). En el
 despliegue hay que apuntar `SALUD_UPLOADS_DIR` a un volumen persistente.
 
+### Informe de gestión para el superadministrador (INFBI-002)
+
+Reemplaza el Excel "INFORME DE GESTIÓN FINAL" con sus cinco hojas:
+
+- **PROYECTO**: encabezado institucional (código INFBI-002, versión, fecha,
+  página, logo), nombre del proyecto, fecha de presentación, tipo de acción,
+  responsable, descripción, justificación, alineación estratégica y la tabla
+  de objetivos, resultados y beneficios esperados.
+- **INFORME - EVALUACIÓN**: logros significativos, dificultades presentadas y
+  acciones de mejora, más los indicadores del periodo.
+- **ATENDIDOS**: matriz por actividad y jornada (administrativos, docentes,
+  egresados, externos, posgrados y cada programa de pregrado), total, meta,
+  logro, cumplimiento con semáforo, avances, dificultades, aprendizajes,
+  presupuesto ejecutado, **pendientes** y observaciones.
+- **ESTADÍSTICAS**: impacto poblacional por año, población atendida del
+  periodo, atención del servicio de enfermería, población general frente a
+  años anteriores, asistencia de la población objeto y atenciones por línea
+  de acción, con **gráficas nativas de Excel** (columnas, torta, líneas y
+  barras) que apuntan a las celdas.
+- **REGISTRO FOTOGRÁFICO**: las fotos subidas como evidencia.
+
+En el panel de Salud, **Informe de gestión** (`/salud/informe`) guía en cinco
+pasos: proyecto, evaluación (con un botón que inserta las cifras del periodo),
+avances por actividad, cifras y años anteriores (tabla editable de 2014 a
+2025, que viene precargada con las cifras del informe vigente) y revisar y
+enviar (lista de lo que falta y avisos: actividades sin avances, sin meta, sin
+fotos o con cumplimiento bajo). Se descarga en **PDF o Excel** en cualquier
+momento. El primer informe trae los textos del formato vigente y los siguientes
+copian los del informe anterior.
+
+Al **enviarlo**, se guarda una copia de las cifras y queda bloqueado. El
+superadministrador lo ve en **Informes de gestión** (`/super/informes`), lo
+descarga en PDF o Excel (siempre con las cifras enviadas) y lo **aprueba** o lo
+**devuelve** con observaciones; si lo devuelve, el módulo lo corrige y lo
+reenvía (versión 2, 3…).
+
+- Migración `20261007100000_informe_gestion` (tablas `informes_gestion` y
+  `salud_historicos` con las cifras de 2014 a 2025, y la columna `pendientes`
+  en las actividades). Librería nueva: `jszip` (ejecuta `npm install`).
+- El logo de la Uniautónoma está en `backend/assets/logo-uniautonoma.png`
+  (tomado del formato institucional).
+
 ### Salidas institucionales y reportes SST
 
 Reemplaza el formulario de Google **"0 SALUD INTEGRAL"** con las mismas

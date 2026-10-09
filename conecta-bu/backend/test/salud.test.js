@@ -292,7 +292,7 @@ describe("Salud integral: reportes", () => {
     const res = await api("get", "/reportes/gestion").buffer(true).parse(binario);
     expect(res.status).toBe(200);
     const libro = await libroDe(res);
-    expect(libro.worksheets.map((h) => h.name)).toEqual(["ATENDIDOS", "ESTADÍSTICAS", "REGISTRO FOTOGRÁFICO"]);
+    expect(libro.worksheets.map((h) => h.name)).toEqual(["PROYECTO", "INFORME - EVALUACIÓN", "ATENDIDOS", "ESTADÍSTICAS", "REGISTRO FOTOGRÁFICO"]);
     const hoja = libro.getWorksheet("ATENDIDOS");
     const fila = hoja.getRow(4);
     expect(fila.getCell(5).value).toBe("Atención básica");
