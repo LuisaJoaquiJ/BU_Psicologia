@@ -45,26 +45,6 @@ const INSIGNIA = {
   Cancelada: ["Cancelada", "bg-gray-100 text-ink-600"],
 };
 
-function Pildora({ activa, onClick, children, cantidad }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={activa}
-      onClick={onClick}
-      className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 min-h-[42px] px-4 rounded-full text-sm font-bold border-[1.5px] transition-colors ${
-        activa ? "bg-primary-dark text-white border-primary-dark" : "bg-white text-primary border-gray-200 hover:border-primary/40"
-      }`}
-    >
-      {children}
-      {cantidad !== undefined && (
-        <span className={`min-w-[24px] px-1.5 rounded-full text-xs tabular-nums ${activa ? "bg-white/20 text-white" : "bg-gray-100 text-ink-600"}`}>
-          {cantidad}
-        </span>
-      )}
-    </button>
-  );
-}
-
 function FilaCita({ cita, hoy, registrando, onRegistrar }) {
   const puedeRegistrar = cita.estado === "Agendada" && dia(cita) <= hoy;
   const [texto, clase] = INSIGNIA[cita.estado] || [cita.estado, "bg-gray-100 text-ink-600"];
@@ -175,7 +155,7 @@ export function AgendaAdminPage({ api = "/admin" }) {
 
   const contarCuando = (o) => todas.filter((c) => o.filtro(c, hoy, fecha)).length;
   const contarEstado = (id) => porNombre.filter((c) => id === "todas" || c.estado === id).length;
-  const hayFiltrosExtra = estado !== "todas" || servicio || buscar;
+  const hayFiltrosExtra = cuando !== "proximas" || estado !== "todas" || servicio || buscar;
   const porRegistrar = todas.filter((c) => dia(c) < hoy && c.estado === "Agendada").length;
 
   // Agrupadas por dia.
@@ -236,68 +216,54 @@ export function AgendaAdminPage({ api = "/admin" }) {
         </button>
       )}
 
-      {/* Filtros: una fila por pregunta */}
-      <div className="bg-white border border-gray-200 rounded-[22px] p-5 flex flex-col gap-4 mb-5">
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-extrabold text-ink-900">¿Cuándo?</span>
-          <div className="flex gap-2 items-center overflow-x-auto sm:flex-wrap -mx-1 px-1 pb-1 [scrollbar-width:none]">
+      {/* Filtros: cuatro listas desplegables en una sola fila */}
+      <div className="bg-white border border-gray-200 rounded-[22px] p-4 sm:p-5 mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 items-end">
+        <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
+          ¿Cuándo?
+          <select value={cuando} onChange={(e) => setCuando(e.target.value)} className={claseCampo}>
             {CUANDO.map((o) => (
-              <Pildora key={o.id} activa={cuando === o.id} onClick={() => setCuando(o.id)} cantidad={o.id === "dia" ? undefined : contarCuando(o)}>
-                {o.texto}
-              </Pildora>
+              <option key={o.id} value={o.id}>
+                {o.id === "dia" ? "Un día en particular…" : `${o.texto} (${contarCuando(o)})`}
+              </option>
             ))}
-            {cuando === "dia" && (
-              <label className="inline-flex items-center gap-2">
-                <span className="sr-only">Fecha</span>
-                <input
-                  type="date"
-                  value={fecha}
-                  onChange={(e) => e.target.value && setFecha(e.target.value)}
-                  className={`${claseCampo} !w-auto min-h-[42px]`}
-                />
-              </label>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-extrabold text-ink-900">¿En qué estado?</span>
-          <div className="flex gap-2 overflow-x-auto sm:flex-wrap -mx-1 px-1 pb-1 [scrollbar-width:none]">
+          </select>
+        </label>
+        {cuando === "dia" && (
+          <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
+            Día
+            <input type="date" value={fecha} onChange={(e) => e.target.value && setFecha(e.target.value)} className={claseCampo} />
+          </label>
+        )}
+        <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
+          Estado
+          <select value={estado} onChange={(e) => setEstado(e.target.value)} className={claseCampo}>
             {ESTADOS.map((e) => (
-              <Pildora key={e.id} activa={estado === e.id} onClick={() => setEstado(e.id)} cantidad={contarEstado(e.id)}>
-                {e.punto && <span className="w-2.5 h-2.5 rounded-full" style={{ background: e.punto }} />}
-                {e.texto}
-              </Pildora>
+              <option key={e.id} value={e.id}>
+                {e.texto} ({contarEstado(e.id)})
+              </option>
             ))}
-          </div>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
-            Servicio
-            <select value={servicio} onChange={(e) => setServicio(e.target.value)} className={claseCampo}>
-              <option value="">Todos los servicios</option>
-              {servicios.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
-            Estudiante
-            <span className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500">
-                <Icono nombre="buscar" size={18} />
-              </span>
-              <input
-                type="search"
-                value={buscar}
-                onChange={(e) => setBuscar(e.target.value)}
-                placeholder="Escribe un nombre"
-                className={`${claseCampo} pl-10`}
-              />
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
+          Servicio
+          <select value={servicio} onChange={(e) => setServicio(e.target.value)} className={claseCampo}>
+            <option value="">Todos los servicios</option>
+            {servicios.map((x) => (
+              <option key={x} value={x}>
+                {x}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
+          Estudiante
+          <span className="relative">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500">
+              <Icono nombre="buscar" size={18} />
             </span>
-          </label>
-        </div>
+            <input type="search" value={buscar} onChange={(e) => setBuscar(e.target.value)} placeholder="Buscar por nombre" className={`${claseCampo} pl-10`} />
+          </span>
+        </label>
       </div>
 
       {mensaje && (
@@ -320,6 +286,7 @@ export function AgendaAdminPage({ api = "/admin" }) {
             <button
               type="button"
               onClick={() => {
+                setCuando("proximas");
                 setEstado("todas");
                 setServicio("");
                 setBuscar("");
