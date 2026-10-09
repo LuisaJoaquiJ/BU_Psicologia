@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { fechaInputUTC, fechaLarga, formatearHora, horaInputUTC } from "../../lib/format";
-import { imagenParaEvento } from "../../lib/imagenes";
+import { imagenDeEvento, imagenParaEvento, urlDelServidor } from "../../lib/imagenes";
 import { Aviso, Estado, Vacio, botonPrimario, botonSecundario, claseCampo } from "../../components/ui";
 import { Icono } from "../../components/Iconos";
 import { BotonFlotante, Ventana } from "../../components/Ventana";
@@ -11,7 +11,17 @@ import { BotonFlotante, Ventana } from "../../components/Ventana";
 // para crear, duplicar y editar, con vista previa en vivo de cómo lo verán
 // los estudiantes. Desde cada evento se va a inscritos y asistencia (RF-011).
 
-const VACIO = { nombre: "", descripcion: "", lugar: "", fecha: "", horaInicio: "14:00", horaFin: "16:00", cupos: 30, cierre: "antes", fechaLimiteInscripcion: "" };
+const VACIO = {
+  nombre: "",
+  descripcion: "",
+  lugar: "",
+  fecha: "",
+  horaInicio: "14:00",
+  horaFin: "16:00",
+  cupos: 30,
+  cierre: "antes",
+  fechaLimiteInscripcion: "",
+};
 
 // Acción principal de estado según el estado actual; el resto va en "Más".
 const ACCION_PRINCIPAL = {
@@ -62,6 +72,17 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
   const [intentado, setIntentado] = useState(false);
   const [enviando, setEnviando] = useState(null);
   const [error, setError] = useState("");
+  // Foto: la que ya tenia el evento, una nueva elegida o la marca de quitarla.
+  const [foto, setFoto] = useState({ archivo: null, vista: inicial.imagenUrl ? urlDelServidor(inicial.imagenUrl) : null, quitar: false });
+  const [errorFoto, setErrorFoto] = useState("");
+  const [arrastrando, setArrastrando] = useState(false);
+  function elegirFoto(archivo) {
+    setErrorFoto("");
+    if (!archivo) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(archivo.type)) return setErrorFoto("La foto debe ser JPG, PNG o WEBP.");
+    if (archivo.size > 5 * 1024 * 1024) return setErrorFoto("La foto no puede pesar más de 5 MB.");
+    setFoto({ archivo, vista: URL.createObjectURL(archivo), quitar: false });
+  }
   const set = (clave) => (e) => setV((x) => ({ ...x, [clave]: e.target.value }));
   const errores = erroresDe(v);
   const mostrar = (k) => intentado && errores[k];
@@ -98,14 +119,27 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
       fechaLimiteInscripcion: limite,
     };
     try {
-      if (modo === "editar") await http.patch(`/admin/eventos/${inicial.id}`, datos);
-      else await http.post("/admin/eventos", { ...datos, estado });
+      const res = modo === "editar" ? await http.patch(`/admin/eventos/${inicial.id}`, datos) : await http.post("/admin/eventos", { ...datos, estado });
+      const id = res.data.evento?.id || inicial.id;
+      // La foto va aparte: si falla, el evento igual queda guardado.
+      let avisoFoto = "";
+      try {
+        if (foto.archivo) {
+          const forma = new FormData();
+          forma.append("imagen", foto.archivo);
+          await http.post(`/admin/eventos/${id}/imagen`, forma);
+        } else if (foto.quitar && inicial.imagenUrl) {
+          await http.delete(`/admin/eventos/${id}/imagen`);
+        }
+      } catch (errFoto) {
+        avisoFoto = ` Pero no pudimos guardar la foto: ${errFoto.response?.data?.message || "intenta subirla de nuevo editando el evento."}`;
+      }
       await alGuardar(
-        modo === "editar"
+        (modo === "editar"
           ? "Guardamos los cambios del evento."
           : estado === "Publicado"
-          ? "Publicado. Los estudiantes ya lo ven en la agenda y pueden inscribirse."
-          : "Guardado como borrador. Solo el personal lo ve hasta que lo publiques."
+            ? "Publicado. Los estudiantes ya lo ven en la agenda y pueden inscribirse."
+            : "Guardado como borrador. Solo el personal lo ve hasta que lo publiques.") + avisoFoto,
       );
     } catch (err) {
       setError(err.response?.data?.message || "No pudimos guardar el evento. Intenta de nuevo.");
@@ -117,7 +151,10 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
   const campoError = (k) => (mostrar(k) ? "!border-red-600" : "");
 
   return (
-    <section aria-label={modo === "editar" ? "Editar evento" : "Nuevo taller o evento"} className={`flex gap-7 flex-wrap items-start ${enVentana ? "" : "mb-10"}`}>
+    <section
+      aria-label={modo === "editar" ? "Editar evento" : "Nuevo taller o evento"}
+      className={`flex gap-7 flex-wrap items-start ${enVentana ? "" : "mb-10"}`}
+    >
       <form
         noValidate
         onSubmit={(e) => {
@@ -153,7 +190,13 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
 
         <label className="flex flex-col gap-1.5 font-extrabold">
           Nombre del evento
-          <input value={v.nombre} onChange={set("nombre")} placeholder="Ej.: Taller de manejo del estrés" aria-invalid={!!mostrar("nombre")} className={`${claseCampo} ${campoError("nombre")}`} />
+          <input
+            value={v.nombre}
+            onChange={set("nombre")}
+            placeholder="Ej.: Taller de manejo del estrés"
+            aria-invalid={!!mostrar("nombre")}
+            className={`${claseCampo} ${campoError("nombre")}`}
+          />
           {mostrar("nombre") && <span className="text-sm font-bold text-red-700">{errores.nombre}</span>}
         </label>
 
@@ -164,11 +207,23 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
           </label>
           <label className="flex flex-col gap-1.5 font-extrabold">
             Empieza
-            <input type="time" value={v.horaInicio} onChange={set("horaInicio")} aria-invalid={!!mostrar("horas")} className={`${claseCampo} ${campoError("horas")}`} />
+            <input
+              type="time"
+              value={v.horaInicio}
+              onChange={set("horaInicio")}
+              aria-invalid={!!mostrar("horas")}
+              className={`${claseCampo} ${campoError("horas")}`}
+            />
           </label>
           <label className="flex flex-col gap-1.5 font-extrabold">
             Termina
-            <input type="time" value={v.horaFin} onChange={set("horaFin")} aria-invalid={!!mostrar("horas")} className={`${claseCampo} ${campoError("horas")}`} />
+            <input
+              type="time"
+              value={v.horaFin}
+              onChange={set("horaFin")}
+              aria-invalid={!!mostrar("horas")}
+              className={`${claseCampo} ${campoError("horas")}`}
+            />
           </label>
         </div>
         {(mostrar("fecha") || mostrar("horas")) && <p className="-mt-2 m-0 text-sm font-bold text-red-700">{errores.fecha || errores.horas}</p>}
@@ -184,13 +239,32 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
             </datalist>
           </label>
           <div className="flex flex-col gap-1.5">
-            <span className="font-extrabold" id="cupos-etiqueta">Cupos</span>
+            <span className="font-extrabold" id="cupos-etiqueta">
+              Cupos
+            </span>
             <div className="flex items-center gap-2" role="group" aria-labelledby="cupos-etiqueta">
-              <button type="button" aria-label="Cinco cupos menos" onClick={() => setV((x) => ({ ...x, cupos: Math.max(1, Number(x.cupos) - 5) }))} className="w-12 h-12 rounded-xl border-[1.5px] border-[#D3DBE8] text-primary text-xl font-extrabold hover:border-primary">
+              <button
+                type="button"
+                aria-label="Cinco cupos menos"
+                onClick={() => setV((x) => ({ ...x, cupos: Math.max(1, Number(x.cupos) - 5) }))}
+                className="w-12 h-12 rounded-xl border-[1.5px] border-[#D3DBE8] text-primary text-xl font-extrabold hover:border-primary"
+              >
                 −
               </button>
-              <input type="number" min="1" value={v.cupos} onChange={set("cupos")} aria-label="Cupos" className={`${claseCampo} text-center font-extrabold tabular-nums`} />
-              <button type="button" aria-label="Cinco cupos más" onClick={() => setV((x) => ({ ...x, cupos: Number(x.cupos) + 5 }))} className="w-12 h-12 rounded-xl border-[1.5px] border-[#D3DBE8] text-primary text-xl font-extrabold hover:border-primary">
+              <input
+                type="number"
+                min="1"
+                value={v.cupos}
+                onChange={set("cupos")}
+                aria-label="Cupos"
+                className={`${claseCampo} text-center font-extrabold tabular-nums`}
+              />
+              <button
+                type="button"
+                aria-label="Cinco cupos más"
+                onClick={() => setV((x) => ({ ...x, cupos: Number(x.cupos) + 5 }))}
+                className="w-12 h-12 rounded-xl border-[1.5px] border-[#D3DBE8] text-primary text-xl font-extrabold hover:border-primary"
+              >
                 +
               </button>
             </div>
@@ -211,9 +285,65 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
             ))}
           </div>
           {v.cierre === "otra" && (
-            <input type="date" value={v.fechaLimiteInscripcion} onChange={set("fechaLimiteInscripcion")} aria-label="Fecha de cierre de inscripciones" className={`${claseCampo} mt-2 max-w-[240px]`} />
+            <input
+              type="date"
+              value={v.fechaLimiteInscripcion}
+              onChange={set("fechaLimiteInscripcion")}
+              aria-label="Fecha de cierre de inscripciones"
+              className={`${claseCampo} mt-2 max-w-[240px]`}
+            />
           )}
           {mostrar("limite") && <p className="mt-1.5 mb-0 text-sm font-bold text-red-700">{errores.limite}</p>}
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <p className="m-0 font-extrabold">
+            Foto del evento <span className="font-medium text-sm text-ink-500">(opcional)</span>
+          </p>
+          {foto.vista ? (
+            <div className="flex items-center gap-4 flex-wrap">
+              <img src={foto.vista} alt="Foto elegida para el evento" className="w-[168px] h-[104px] object-cover rounded-xl border border-gray-200" />
+              <div className="flex gap-2 flex-wrap">
+                <label className={`${botonSecundario} cursor-pointer`}>
+                  Cambiar foto
+                  <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => elegirFoto(e.target.files?.[0])} />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setFoto({ archivo: null, vista: null, quitar: true })}
+                  className="min-h-[44px] px-4 rounded-full font-bold text-red-700 hover:bg-red-50"
+                >
+                  Quitar foto
+                </button>
+              </div>
+            </div>
+          ) : (
+            <label
+              onDragOver={(e) => {
+                e.preventDefault();
+                setArrastrando(true);
+              }}
+              onDragLeave={() => setArrastrando(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setArrastrando(false);
+                elegirFoto(e.dataTransfer.files?.[0]);
+              }}
+              className={`cursor-pointer flex items-center gap-4 rounded-2xl border-2 border-dashed px-5 py-4 transition-colors ${
+                arrastrando ? "border-primary bg-primary-light" : "border-gray-300 hover:border-primary/50 hover:bg-gray-50"
+              }`}
+            >
+              <span className="w-12 h-12 rounded-xl bg-primary-light text-primary flex items-center justify-center shrink-0">
+                <Icono nombre="imagen" size={24} strokeWidth={2} />
+              </span>
+              <span className="min-w-0">
+                <span className="block font-bold text-primary">Elige una foto o arrástrala aquí</span>
+                <span className="block text-sm text-ink-500">JPG, PNG o WEBP, hasta 5 MB. Si no subes ninguna, usamos una foto de la universidad.</span>
+              </span>
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => elegirFoto(e.target.files?.[0])} />
+            </label>
+          )}
+          {errorFoto && <p className="m-0 text-sm font-bold text-red-700">{errorFoto}</p>}
         </div>
 
         <label className="flex flex-col gap-1.5 font-extrabold">
@@ -247,7 +377,7 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
       <aside aria-label="Vista previa" className="flex-[1_1_340px] min-w-0 lg:sticky lg:top-4">
         <p className="m-0 mb-2.5 text-sm font-extrabold text-ink-600">Así lo verán los estudiantes</p>
         <article className="bg-white rounded-[18px] overflow-hidden shadow-[0_16px_40px_rgba(11,35,71,0.12)]">
-          <img src={imagenParaEvento(inicial.id || "nuevo-evento").src} alt="" className="w-full h-[180px] object-cover" />
+          <img src={foto.vista || imagenParaEvento(inicial.id || "nuevo-evento").src} alt="" className="w-full h-[180px] object-cover" />
           <div className="p-5 flex flex-col gap-2">
             <p className="m-0 text-sm font-extrabold text-primary tabular-nums">
               {v.fecha ? `${fechaLarga(v.fecha)} · ${horaTexto(v.horaInicio)} a ${horaTexto(v.horaFin)}` : "Elige una fecha"}
@@ -272,6 +402,7 @@ function FilaEvento({ evento, ocupado, onEstado, onEditar, onDuplicar, onElimina
   const porcentaje = Math.min(100, Math.round((inscritos / Math.max(1, evento.cupos)) * 100));
   return (
     <li className="px-5 py-4 flex items-center justify-between flex-wrap gap-x-6 gap-y-3">
+      <img src={imagenDeEvento(evento).src} alt="" className="hidden sm:block w-[88px] h-[64px] object-cover rounded-xl shrink-0" />
       <div className="min-w-0 flex-[1_1_320px]">
         <div className="flex items-center gap-2 flex-wrap">
           <strong className="text-ink-900">{evento.nombre}</strong>
@@ -382,6 +513,7 @@ export function GestionEventosPage() {
       cupos: e.cupos,
       cierre: limite === fecha ? "mismo" : limite === restarDia(fecha) ? "antes" : "otra",
       fechaLimiteInscripcion: limite,
+      imagenUrl: e.imagenUrl || null,
     });
   }
 
@@ -455,7 +587,9 @@ export function GestionEventosPage() {
       <div className="flex justify-between items-end gap-4 flex-wrap mb-6">
         <div>
           <h1 className="m-0 text-[30px] sm:text-[38px] leading-tight font-extrabold">Talleres y eventos</h1>
-          <p className="mt-1 mb-0 text-ink-500">Tus talleres y eventos con sus inscripciones. Para crear uno, usa el botón <strong className="text-ink-700">Nuevo evento</strong>.</p>
+          <p className="mt-1 mb-0 text-ink-500">
+            Tus talleres y eventos con sus inscripciones. Para crear uno, usa el botón <strong className="text-ink-700">Nuevo evento</strong>.
+          </p>
         </div>
       </div>
 
@@ -528,7 +662,7 @@ export function GestionEventosPage() {
                 ))}
               </ul>
             </section>
-          ) : null
+          ) : null,
         )}
     </main>
   );

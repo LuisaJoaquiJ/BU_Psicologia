@@ -1,6 +1,10 @@
 const { prisma } = require("../../config/prisma");
 const { AppError } = require("../../common/utils/AppError");
 const { aFechaUTC, aHoraUTC, hoyUTC } = require("../../common/utils/fechas");
+const { urlImagen, borrar: borrarImagen } = require("./eventos.imagen");
+
+// Agrega la URL publica de la foto (o null) a un evento.
+const conImagen = (evento) => (evento ? { ...evento, imagenUrl: urlImagen(evento) } : evento);
 
 const ESTADOS_EVENTO = ["Borrador", "Publicado", "Cerrado", "Cancelado"];
 
@@ -72,7 +76,7 @@ async function crearEvento(datos) {
     throw new AppError(400, "Un evento nuevo solo puede crearse como Borrador o Publicado.");
   }
   const data = { ...normalizarDatosEvento(datos), estado };
-  return prisma.evento.create({ data, include: CONTEO_INSCRITOS });
+  return conImagen(await prisma.evento.create({ data, include: CONTEO_INSCRITOS }));
 }
 
 // RF-009: vista administrativa de todos los eventos con su numero de inscritos.
@@ -84,11 +88,12 @@ async function listarEventosAdmin({ estado } = {}) {
     }
     where.estado = estado;
   }
-  return prisma.evento.findMany({
+  const eventos = await prisma.evento.findMany({
     where,
     include: CONTEO_INSCRITOS,
     orderBy: [{ fecha: "asc" }, { horaInicio: "asc" }],
   });
+  return eventos.map(conImagen);
 }
 
 // RF-009: edita un evento. RN-007: no se permite dejar menos cupos que
@@ -108,7 +113,7 @@ async function actualizarEvento(id, cambios) {
     );
   }
 
-  return prisma.evento.update({ where: { id }, data, include: CONTEO_INSCRITOS });
+  return conImagen(await prisma.evento.update({ where: { id }, data, include: CONTEO_INSCRITOS }));
 }
 
 // RF-009: publica, cierra, cancela o devuelve a borrador un evento, dejando
@@ -161,6 +166,7 @@ async function eliminarEvento(id, confirmar) {
     await tx.historialEstado.deleteMany({ where: { eventoId: id } });
     await tx.evento.delete({ where: { id } });
   });
+  if (evento.imagen) borrarImagen(evento.imagen);
   return { id, eliminado: true };
 }
 
@@ -217,6 +223,7 @@ function serializarEventoEstudiante(evento, miInscripcion) {
   const inscritos = inscritosConfirmados(evento);
   return {
     ...evento,
+    imagenUrl: urlImagen(evento),
     inscritos,
     cuposDisponibles: Math.max(evento.cupos - inscritos, 0),
     inscripcionAbierta: inscripcionAbierta(evento),
@@ -264,6 +271,7 @@ async function listarProximosEventosPublicos(limite = 6) {
     horaFin: evento.horaFin,
     cupos: evento.cupos,
     cuposDisponibles: Math.max(evento.cupos - inscritosConfirmados(evento), 0),
+    imagenUrl: urlImagen(evento),
   }));
 }
 

@@ -19,3 +19,18 @@ export function imagenParaEvento(id = "") {
   for (const caracter of String(id)) suma += caracter.charCodeAt(0);
   return IMAGENES[ROTACION[suma % ROTACION.length]];
 }
+
+// URL completa de un archivo que sirve el backend ("/api/v1/..."): si el
+// frontend usa VITE_API_URL con otro dominio, se antepone ese dominio.
+const BASE_API = import.meta.env.VITE_API_URL || "";
+const ORIGEN_API = /^https?:\/\//.test(BASE_API) ? new URL(BASE_API).origin : "";
+export function urlDelServidor(ruta) {
+  return ruta && ruta.startsWith("/") ? `${ORIGEN_API}${ruta}` : ruta;
+}
+
+// Foto de un evento: la que subio el personal o, si no tiene, una
+// institucional estable segun su id.
+export function imagenDeEvento(evento = {}) {
+  if (evento.imagenUrl) return { src: urlDelServidor(evento.imagenUrl), alt: evento.nombre ? `Foto de ${evento.nombre}` : "" };
+  return imagenParaEvento(evento.id);
+}

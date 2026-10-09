@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { useAuth } from "../../lib/auth/AuthContext";
 import { formatearFecha, formatearHora, fechaLarga } from "../../lib/format";
-import { imagenParaEvento } from "../../lib/imagenes";
+import { imagenDeEvento } from "../../lib/imagenes";
 import { Icono } from "../../components/Iconos";
 
 const MESES = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
@@ -188,7 +188,7 @@ export function InicioEstudiante() {
         <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
           {visibles.map((evento) => {
             const { dia, mes } = diaMes(evento.fecha);
-            const imagen = imagenParaEvento(evento.id);
+            const imagen = imagenDeEvento(evento);
             const inscrito = evento.miInscripcion?.estado === "Confirmada";
             const ocupacion = Math.round((evento.inscritos / evento.cupos) * 100);
             const bloqueado = !inscrito && (!evento.inscripcionAbierta || evento.cuposDisponibles === 0);

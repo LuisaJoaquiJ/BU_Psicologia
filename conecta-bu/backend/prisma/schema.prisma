@@ -116,6 +116,8 @@ model Evento {
   fechaLimiteInscripcion DateTime     @db.Date
   estado                 EstadoEvento @default(Borrador)
   fechaCreacion          DateTime     @default(now())
+  // Foto del evento (nombre del archivo en uploads/eventos). Opcional.
+  imagen                 String?      @db.VarChar(120)
 
   inscripciones Inscripcion[]
   historial     HistorialEstado[]

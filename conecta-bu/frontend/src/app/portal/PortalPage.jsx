@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../lib/auth/AuthContext";
 import { http } from "../../lib/api/http";
-import { IMAGENES, imagenParaEvento } from "../../lib/imagenes";
+import { IMAGENES, imagenDeEvento } from "../../lib/imagenes";
 import { MODULOS, puedeAdministrar, rutaModulo } from "../../lib/modulos";
 import { fechaLarga, formatearHora } from "../../lib/format";
 import { Logo } from "../../components/Logo";
@@ -256,7 +256,7 @@ function Agenda() {
           {(eventos || [null, null, null]).map((e, i) =>
             e ? (
               <article key={e.id} className="flex flex-col gap-3">
-                <img src={imagenParaEvento(e.id).src} alt="" className="w-full h-[200px] object-cover rounded-[14px]" />
+                <img src={imagenDeEvento(e).src} alt="" className="w-full h-[200px] object-cover rounded-[14px]" />
                 <p className="m-0 text-sm font-bold text-primary tabular-nums">
                   {fechaLarga(e.fecha)} · {formatearHora(e.horaInicio)}
                 </p>
