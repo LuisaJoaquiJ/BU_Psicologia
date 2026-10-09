@@ -112,6 +112,9 @@ export function InicioAdmin() {
             <Link to="/admin/horarios?agregar=1" className={botonBandaSecundario}>
               Publicar horario
             </Link>
+            <Link to="/admin/citas?sincita=1" className={botonBandaSecundario}>
+              Atender sin cita
+            </Link>
           </>
         }
         aside={

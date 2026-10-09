@@ -124,7 +124,7 @@ async function consultarDatos(fecha) {
     citas: citas.filter((c) => delModulo(c.horario?.servicio)),
     eventos,
     estudiantes,
-    horarios: horarios.filter((h) => delModulo(h.servicio)),
+    horarios: horarios.filter((h) => !h.sinCita && delModulo(h.servicio)),
   };
 }
 

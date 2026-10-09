@@ -192,7 +192,7 @@ async function estadisticas({ periodo } = {}) {
       modulo: moduloDeServicio(servicioDe(c)),
       tipo: c.estado === "Cancelada" ? "cancelada" : "cita",
       fecha: c.estado === "Cancelada" ? c.fechaActualizacion || c.fechaAgendamiento : c.fechaAgendamiento,
-      texto: `${nombre(c.usuarioId)} ${c.estado === "Cancelada" ? "canceló" : "agendó"} una cita`,
+      texto: `${nombre(c.usuarioId)} ${c.estado === "Cancelada" ? "canceló una cita" : c.horario?.sinCita ? "fue atendido sin cita" : "agendó una cita"}`,
       detalle: servicioDe(c)?.nombre,
     })),
     ...inscripciones

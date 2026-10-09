@@ -68,6 +68,9 @@ model Horario {
   horaFin       DateTime @db.Time()
   cupo          Int      @default(1)
   ocupado       Boolean  @default(false)
+  // Horario creado al registrar una atencion sin cita (el estudiante llego
+  // sin agendar): no se muestra en la lista de horarios publicados.
+  sinCita       Boolean  @default(false)
   fechaCreacion DateTime @default(now())
   citas         Cita[]
 

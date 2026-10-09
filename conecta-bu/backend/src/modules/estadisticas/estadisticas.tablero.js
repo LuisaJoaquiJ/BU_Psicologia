@@ -98,7 +98,12 @@ async function tablero({ periodo } = {}) {
     ...citas.map((c) =>
       c.estado === "Cancelada"
         ? { tipo: "cancelada", fecha: c.fechaActualizacion || c.fechaAgendamiento, texto: `${primerNombre(c.usuario?.nombre)} canceló su cita`, detalle: c.horario?.servicio?.nombre }
-        : { tipo: "cita", fecha: c.fechaAgendamiento, texto: `${primerNombre(c.usuario?.nombre)} agendó una cita`, detalle: c.horario?.servicio?.nombre }
+        : {
+            tipo: "cita",
+            fecha: c.fechaAgendamiento,
+            texto: `${primerNombre(c.usuario?.nombre)} ${c.horario?.sinCita ? "fue atendido sin cita" : "agendó una cita"}`,
+            detalle: c.horario?.servicio?.nombre,
+          }
     ),
     ...inscritas.map((i) => ({
       tipo: "inscripcion",

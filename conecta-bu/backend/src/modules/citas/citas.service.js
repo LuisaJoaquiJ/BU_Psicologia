@@ -79,7 +79,9 @@ async function listarMisCitas(usuarioId, modulo) {
     include: { horario: { include: { servicio: true } } },
     orderBy: { horario: { fecha: "desc" } },
   });
-  return modulo ? citas.filter((c) => moduloDeServicio(c.horario?.servicio) === modulo) : citas;
+  // Las observaciones son notas internas del personal: no se envian al estudiante.
+  const propias = citas.map(({ observaciones, ...c }) => c);
+  return modulo ? propias.filter((c) => moduloDeServicio(c.horario?.servicio) === modulo) : propias;
 }
 
 // RF-006 / HU-12: cancela una cita propia y libera el horario. Regla

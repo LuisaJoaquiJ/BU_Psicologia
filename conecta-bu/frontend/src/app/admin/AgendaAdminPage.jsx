@@ -5,6 +5,8 @@ import { Icono } from "../../components/Iconos";
 import { iniciales } from "../../components/Navbar";
 import { fechaLarga, formatearHora } from "../../lib/format";
 import { Aviso, claseCampo } from "../../components/ui";
+import { BotonFlotante, Ventana } from "../../components/Ventana";
+import { FormularioSinCita } from "./AtencionSinCita";
 
 // Fecha de hoy en la hora local del navegador (Bogota). toISOString() da la
 // fecha UTC, que despues de las 7 p. m. ya es la de manana.
@@ -58,7 +60,10 @@ function FilaCita({ cita, hoy, registrando, onRegistrar }) {
           </span>
           <span className="min-w-0">
             <span className="block font-bold text-ink-900 truncate">{cita.usuario?.nombre}</span>
-            <span className="block text-sm text-ink-500 truncate">{cita.horario?.servicio?.nombre}</span>
+            <span className="block text-sm text-ink-500 truncate">
+              {cita.horario?.servicio?.nombre}
+              {cita.horario?.sinCita && <span className="ml-1.5 font-bold text-[#8A4B00]">· Sin cita</span>}
+            </span>
           </span>
         </span>
       </div>
@@ -92,7 +97,10 @@ function FilaCita({ cita, hoy, registrando, onRegistrar }) {
 // RF-008 · HU-15, HU-16: citas del modulo, con filtros sencillos (cuando,
 // estado, servicio y nombre) y el registro de asistencia en la misma fila.
 export function AgendaAdminPage({ api = "/admin" }) {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
+  const modulo = api === "/salud" ? "salud" : "desarrollo-humano";
+  // ?sincita=1 (desde el inicio) abre de una vez el registro de atencion sin cita.
+  const [sinCita, setSinCita] = useState(Boolean(params.get("sincita")));
   const fechaInicial = /^\d{4}-\d{2}-\d{2}$/.test(params.get("fecha") || "") ? params.get("fecha") : "";
   const [citas, setCitas] = useState(null);
   const [error, setError] = useState("");
@@ -122,6 +130,7 @@ export function AgendaAdminPage({ api = "/admin" }) {
 
   useEffect(() => {
     cargar();
+    if (params.get("sincita")) setParams({}, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -196,7 +205,10 @@ export function AgendaAdminPage({ api = "/admin" }) {
   return (
     <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8 pb-24">
       <h1 className="m-0 text-[30px] sm:text-[38px] leading-tight font-extrabold">Citas</h1>
-      <p className="mt-1 mb-6 text-ink-500 max-w-[48em]">Quién pidió cita contigo y si asistió. Usa los filtros para encontrar lo que buscas.</p>
+      <p className="mt-1 mb-6 text-ink-500 max-w-[48em]">
+        Quién pidió cita contigo y si asistió. Si alguien llega sin cita y lo atiendes, regístralo con{" "}
+        <strong className="text-ink-900">Atender sin cita</strong>.
+      </p>
 
       {porRegistrar > 0 && cuando !== "registrar" && (
         <button
@@ -361,6 +373,32 @@ export function AgendaAdminPage({ api = "/admin" }) {
           </section>
         ))}
       </div>
+
+      {!sinCita && (
+        <BotonFlotante icono="persona" onClick={() => setSinCita(true)}>
+          Atender sin cita
+        </BotonFlotante>
+      )}
+
+      {sinCita && (
+        <Ventana titulo="Atención sin cita" alCerrar={() => setSinCita(false)}>
+          <FormularioSinCita
+            api={api}
+            modulo={modulo}
+            alGuardar={async (cita) => {
+              setSinCita(false);
+              setError("");
+              setMensaje(`Quedó registrada la atención de ${cita.usuario?.nombre || "el estudiante"} (${cita.horario?.servicio?.nombre}).`);
+              setCuando("dia");
+              setFecha(dia(cita));
+              setEstado("todas");
+              setServicio("");
+              setBuscar("");
+              await cargar();
+            }}
+          />
+        </Ventana>
+      )}
     </main>
   );
 }

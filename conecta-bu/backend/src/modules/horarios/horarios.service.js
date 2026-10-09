@@ -28,6 +28,7 @@ async function existeSolapamiento({ servicioId, fecha, horaInicio, horaFin, excl
   const horarios = await prisma.horario.findMany({ where: { servicioId, fecha } });
   return horarios.some((h) => {
     if (excluirId && h.id === excluirId) return false;
+    if (h.sinCita) return false;
     return h.horaInicio < horaFin && h.horaFin > horaInicio;
   });
 }
@@ -83,7 +84,7 @@ async function listarTodosLosHorarios({ fecha, servicioId, modulo = "desarrollo-
     include: { servicio: true },
     orderBy: [{ fecha: "asc" }, { horaInicio: "asc" }],
   });
-  return horarios.filter((h) => moduloDeServicio(h.servicio) === modulo);
+  return horarios.filter((h) => !h.sinCita && moduloDeServicio(h.servicio) === modulo);
 }
 
 async function obtenerHorarioOFallar(id, modulo) {
