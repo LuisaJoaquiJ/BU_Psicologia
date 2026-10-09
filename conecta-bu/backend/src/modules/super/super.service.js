@@ -77,7 +77,7 @@ async function quitarAcceso(id) {
 
 // Vista general de Conecta BU para el superadministrador.
 async function resumen() {
-  const [usuarios, accesos, citas, eventos, atenciones, personas, informesPorRevisar] = await Promise.all([
+  const [usuarios, accesos, citas, eventos, atenciones, personas, informesPorRevisar, inscripcionesDeporte, sesionesDeporte] = await Promise.all([
     prisma.usuario.findMany({ include: { rol: true } }),
     prisma.accesoModulo.findMany(),
     prisma.cita.findMany({ include: { horario: { include: { servicio: true } } } }),
@@ -85,6 +85,8 @@ async function resumen() {
     prisma.atencionSalud.count(),
     prisma.personaSalud.count(),
     prisma.informeGestion.count({ where: { estado: "Enviado" } }),
+    prisma.inscripcionDeporte.findMany({ where: { estado: "Activa" } }),
+    prisma.sesionDeporte.count(),
   ]);
   const porRol = {};
   for (const u of usuarios) porRol[u.rol?.nombre] = (porRol[u.rol?.nombre] || 0) + 1;
@@ -110,6 +112,15 @@ async function resumen() {
           { nombre: "Citas", valor: citasDe("salud").length },
           { nombre: "Atenciones registradas", valor: atenciones },
           { nombre: "Personas", valor: personas },
+        ],
+      },
+      {
+        id: "deporte",
+        nombre: MODULOS.deporte,
+        personal: accesos.filter((a) => a.modulo === "deporte").length,
+        indicadores: [
+          { nombre: "Estudiantes inscritos", valor: new Set(inscripcionesDeporte.map((i) => i.usuarioId)).size },
+          { nombre: "Sesiones registradas", valor: sesionesDeporte },
         ],
       },
     ],

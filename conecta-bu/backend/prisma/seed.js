@@ -5,6 +5,7 @@
 //   SUPERADMIN_EMAIL / SUPERADMIN_NOMBRE -> superadministrador
 //   ADMIN_EMAIL / ADMIN_NOMBRE           -> personal de Desarrollo humano y orientacion
 //   SALUD_EMAIL / SALUD_NOMBRE           -> personal de Salud integral
+//   DEPORTE_EMAIL / DEPORTE_NOMBRE       -> personal de Deporte
 
 // "npm run prisma:seed" corre con node directamente: hay que cargar el .env
 // para leer SUPERADMIN_EMAIL, ADMIN_EMAIL y SALUD_EMAIL.
@@ -54,6 +55,11 @@ async function main() {
     const u = await usuarioDePrueba(process.env.SALUD_EMAIL, process.env.SALUD_NOMBRE || "Personal de Salud", administrador.id);
     await darAcceso(u.emailInstitucional, "salud");
     console.log("Personal de Salud listo:", u.emailInstitucional);
+  }
+  if (process.env.DEPORTE_EMAIL) {
+    const u = await usuarioDePrueba(process.env.DEPORTE_EMAIL, process.env.DEPORTE_NOMBRE || "Coordinación de Deportes", administrador.id);
+    await darAcceso(u.emailInstitucional, "deporte");
+    console.log("Personal de Deporte listo:", u.emailInstitucional);
   }
 
   await seedServiciosYHorarios();

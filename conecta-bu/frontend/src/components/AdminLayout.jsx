@@ -23,6 +23,7 @@ const claseEnlace = ({ isActive }) =>
 const PANELES = {
   "desarrollo-humano": { nombre: "Desarrollo humano y orientación", icono: "persona", color: "bg-gold text-primary" },
   salud: { nombre: "Salud integral", icono: "pulso", color: "bg-[#14B8A6] text-primary" },
+  deporte: { nombre: "Deporte", icono: "balon", color: "bg-[#F97316] text-white" },
   super: { nombre: "Superadministrador", icono: "escudo", color: "bg-white text-primary" },
 };
 

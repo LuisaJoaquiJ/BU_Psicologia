@@ -81,7 +81,7 @@ describe("Superadministrador: accesos por modulo", () => {
       const conRol = await prisma.usuario.findUnique({ where: { id: persona.usuario.id }, include: { rol: true } });
       const resultado = await aplicarAccesos(conRol);
       expect(resultado.rol.nombre).toBe("SuperAdministrador");
-      expect(serializarUsuario(resultado).modulos).toEqual(["desarrollo-humano", "salud"]);
+      expect(serializarUsuario(resultado).modulos).toEqual(["desarrollo-humano", "salud", "deporte"]);
       const otro = crearUsuario("Administrador", "otra@uniautonoma.edu.co");
       const otroConRol = await prisma.usuario.findUnique({ where: { id: otro.usuario.id }, include: { rol: true } });
       expect((await aplicarAccesos(otroConRol)).rol.nombre).toBe("Administrador");
@@ -101,10 +101,10 @@ describe("Superadministrador: accesos por modulo", () => {
     expect((await request(app).get("/api/v1/admin/estadisticas").set(auth(superadmin.token))).status).toBe(200);
     expect((await request(app).get("/api/v1/salud/resumen").set(auth(superadmin.token))).status).toBe(200);
     const me = await request(app).get("/api/v1/auth/me").set(auth(superadmin.token));
-    expect(me.body.usuario.modulos).toEqual(["desarrollo-humano", "salud"]);
+    expect(me.body.usuario.modulos).toEqual(["desarrollo-humano", "salud", "deporte"]);
     const res = await api("get", "/resumen");
     expect(res.status).toBe(200);
-    expect(res.body.modulos.map((m) => m.id)).toEqual(["desarrollo-humano", "salud"]);
+    expect(res.body.modulos.map((m) => m.id)).toEqual(["desarrollo-humano", "salud", "deporte"]);
   });
 });
 

@@ -31,6 +31,17 @@ const MODULOS_ESTUDIANTE = {
       { to: "/reportes-sst", label: "Salidas y reportes" },
     ],
   },
+  deporte: {
+    nombre: "Deporte",
+    icono: "balon",
+    color: "bg-[#F97316] text-white",
+    inicio: "/mi-deporte",
+    menu: [
+      { to: "/mi-deporte", label: "Mi avance", end: true },
+      { to: "/mi-deporte/oferta", label: "Disciplinas e inscripción" },
+      { to: "/mi-deporte/horas", label: "Mis horas" },
+    ],
+  },
   // Salidas institucionales y reportes SST (cualquier persona de la Institucion).
   sst: {
     nombre: "Salud integral · Salidas y reportes",

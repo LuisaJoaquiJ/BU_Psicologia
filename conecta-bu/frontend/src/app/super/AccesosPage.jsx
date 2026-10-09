@@ -5,7 +5,7 @@ import { Icono } from "../../components/Iconos";
 import { fechaCorta, mensajeError } from "../../lib/salud";
 import { Aviso, Campo, Encabezado, Insignia, Tarjeta, Vacio, botonPrimario, claseCampo } from "../salud/ui";
 
-const COLOR = { "desarrollo-humano": "dorado", salud: "verde" };
+const COLOR = { "desarrollo-humano": "dorado", salud: "verde", deporte: "azul" };
 
 // Accesos por modulo: el superadministrador asigna por correo quien del
 // personal entra a cada modulo. Se puede asignar a alguien que todavia no ha

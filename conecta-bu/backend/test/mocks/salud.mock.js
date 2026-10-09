@@ -70,7 +70,7 @@ function errorUnico(campos) {
 }
 
 function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
-  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [] };
+  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [] };
   let consecutivoSst = 0;
 
   const usuarioPorId = (id) => {
@@ -99,6 +99,13 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     },
     informes: {},
     historicos: {},
+    disciplinas: {},
+    gruposDeporte: {},
+    inscripcionesDeporte: {},
+    sesionesDeporte: {},
+    asistenciasDeporte: {},
+    horasDeporte: {},
+    configDeporte: {},
     adjuntosSst: {
       reporte: (r) => clonar(tablas.reportesSst.find((x) => x.id === r.reporteId)),
     },
@@ -117,6 +124,13 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     reportesSst: [["consecutivo"]],
     informes: [["modulo", "periodo"]],
     historicos: [["periodo"]],
+    disciplinas: [["nombre"]],
+    gruposDeporte: [],
+    inscripcionesDeporte: [["grupoId", "usuarioId"]],
+    sesionesDeporte: [["grupoId", "fecha", "inicio"]],
+    asistenciasDeporte: [["sesionId", "usuarioId"]],
+    horasDeporte: [],
+    configDeporte: [["id"]],
     adjuntosSst: [],
   };
 
@@ -205,6 +219,13 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       fechaCreacion: new Date(),
       fechaActualizacion: new Date(),
     }),
+    disciplinas: () => ({ descripcion: null, tipo: "Individual", activa: true, fechaCreacion: new Date() }),
+    gruposDeporte: () => ({ instructor: null, lugar: null, cupo: 25, inscripcionesAbiertas: true, activo: true, fechaCreacion: new Date() }),
+    inscripcionesDeporte: () => ({ estado: "Activa", fechaInscripcion: new Date(), fechaRetiro: null }),
+    sesionesDeporte: () => ({ tema: null, registradaPor: null, fechaRegistro: new Date() }),
+    asistenciasDeporte: () => ({ presente: true }),
+    horasDeporte: () => ({ disciplinaId: null, registradoPor: null, fechaRegistro: new Date() }),
+    configDeporte: () => ({ horasRequeridas: 40, maxGruposPorPeriodo: 2 }),
     historicos: () => ({ estudiantes: 0, docentes: 0, administrativos: 0, externos: 0, egresados: 0, enfermeria: null, poblacionGeneral: null }),
   };
 
@@ -324,6 +345,13 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       adjuntoReporteSST: modelo("adjuntosSst", "adjunto-sst"),
       informeGestion: modelo("informes", "informe"),
       historicoSalud: modelo("historicos", "historico"),
+      disciplinaDeportiva: modelo("disciplinas", "disciplina"),
+      grupoDeporte: modelo("gruposDeporte", "grupo"),
+      inscripcionDeporte: modelo("inscripcionesDeporte", "insc"),
+      sesionDeporte: modelo("sesionesDeporte", "sesion"),
+      asistenciaDeporte: modelo("asistenciasDeporte", "asis"),
+      horaDeporteManual: modelo("horasDeporte", "hora"),
+      configDeporte: modelo("configDeporte", "config"),
     },
     reset() {
       tablas.personas = [];
@@ -335,6 +363,13 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       tablas.adjuntosSst = [];
       tablas.informes = [];
       tablas.historicos = [];
+      tablas.disciplinas = [];
+      tablas.gruposDeporte = [];
+      tablas.inscripcionesDeporte = [];
+      tablas.sesionesDeporte = [];
+      tablas.asistenciasDeporte = [];
+      tablas.horasDeporte = [];
+      tablas.configDeporte = [];
       consecutivoSst = 0;
     },
     tablas,

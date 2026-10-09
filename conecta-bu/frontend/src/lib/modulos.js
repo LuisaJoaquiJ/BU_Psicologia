@@ -24,11 +24,13 @@ export const MODULOS = [
     id: "deporte",
     nombre: "Deporte",
     corto: "Deporte",
-    descripcion: "Inscripción a disciplinas, horarios de entrenamiento, cupos y práctica formativa y competitiva.",
+    descripcion:
+      "Natación, running, voleibol, fútbol, ajedrez y más: inscríbete a un grupo, asiste a tus clases y completa tus horas de deporte.",
     icono: "balon",
     imagen: IMAGENES.deportes,
-    estado: "pronto",
-    servicios: ["Disciplinas", "Horarios", "Torneos"],
+    estado: "disponible",
+    panel: { Estudiante: "/mi-deporte", personal: "/deporte" },
+    servicios: ["Disciplinas e inscripción", "Control de horas", "Constancia"],
   },
   {
     id: "permanencia",

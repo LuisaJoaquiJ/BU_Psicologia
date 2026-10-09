@@ -420,6 +420,31 @@ llena su cédula (`GET /reportes-sst/personas?q=`, solo nombre y documento).
 - Migración `20261006090000_reportes_sst` (tablas `sst_reportes` y
   `sst_adjuntos`). Los documentos se guardan en `SALUD_UPLOADS_DIR/sst/`.
 
+## Módulo Deporte
+
+La Universidad oferta disciplinas (natación, running, voleibol, fútbol,
+ajedrez, baloncesto, tenis de mesa… se pueden agregar más) en **grupos** por
+periodo, con horario, lugar, instructor y cupo. Cada estudiante debe completar
+**40 horas** (configurable).
+
+- **Estudiante** (`/mi-deporte`): su avance (anillo de horas), su semana con
+  las clases, la **oferta** del periodo para inscribirse o retirarse (cupos,
+  cruce de horario y máximo de grupos por periodo, 2 por defecto), el
+  historial de horas y la **constancia en PDF**.
+- **Personal de Deporte** (`/deporte`, correos asignados por el
+  superadministrador): clases de hoy, grupos (crear y editar con varias
+  franjas de horario, abrir o cerrar inscripciones, inscribir por correo),
+  **toma de asistencia** por sesión (cada presente suma las horas de la
+  sesión; se puede corregir o eliminar), estudiantes con su avance, **horas
+  reconocidas** por torneos o eventos, constancias, disciplinas y el requisito
+  de horas, y **reporte en Excel** (estudiantes, grupos y asistencia).
+- Las horas se acumulan en toda la carrera (no se reinician por periodo); el
+  detalle muestra cuántas se hicieron en cada periodo.
+- Migración `20261008090000_modulo_deporte` (tablas `deporte_*`, con las
+  disciplinas iniciales y el requisito de 40 horas). Para un usuario de prueba
+  del personal, agrega `DEPORTE_EMAIL` en `backend/.env` y corre el seed, o
+  asígnalo desde el panel del superadministrador.
+
 ## Módulos independientes y superadministrador
 
 Conecta BU agrupa varios módulos de Bienestar que **no se mezclan**:

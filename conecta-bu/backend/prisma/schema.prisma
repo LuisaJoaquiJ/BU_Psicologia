@@ -38,6 +38,9 @@ model Usuario {
   atencionesSaludRegistradas   AtencionSalud[]    @relation("atencionSaludRegistradaPor")
   evidenciasSaludSubidas       EvidenciaSalud[]   @relation("evidenciaSaludSubidaPor")
   reportesSst                  ReporteSST[]       @relation("reporteSstReportadoPor")
+  inscripcionesDeporte         InscripcionDeporte[]
+  asistenciasDeporte           AsistenciaDeporte[]
+  horasDeporteManuales         HoraDeporteManual[]
 
   @@map("usuarios")
 }
@@ -540,4 +543,119 @@ model HistoricoSalud {
   poblacionGeneral Int?
 
   @@map("salud_historicos")
+}
+
+// ---------------------------------------------------------------------------
+// Modulo Deporte: la Universidad oferta disciplinas (natacion, running,
+// voleibol, futbol, ajedrez...) en grupos con horario por periodo. Los
+// estudiantes se inscriben y acumulan horas con la asistencia que registra
+// el instructor (o con horas que el personal reconoce por torneos y
+// eventos) hasta completar las horas requeridas (40 por defecto).
+// ---------------------------------------------------------------------------
+
+model DisciplinaDeportiva {
+  id            String   @id @default(uuid())
+  nombre        String   @unique @db.VarChar(80)
+  descripcion   String?  @db.Text
+  tipo          String   @default("Individual") @db.VarChar(30)
+  activa        Boolean  @default(true)
+  fechaCreacion DateTime @default(now())
+
+  grupos        GrupoDeporte[]
+  horasManuales HoraDeporteManual[]
+
+  @@map("deporte_disciplinas")
+}
+
+model GrupoDeporte {
+  id                    String              @id @default(uuid())
+  disciplinaId          String
+  disciplina            DisciplinaDeportiva @relation(fields: [disciplinaId], references: [id])
+  periodo               String              @db.VarChar(10)
+  nombre                String              @db.VarChar(80)
+  instructor            String?             @db.VarChar(150)
+  lugar                 String?             @db.VarChar(150)
+  cupo                  Int                 @default(25)
+  // [{ dia: 1 (lunes) a 7 (domingo), inicio: "HH:mm", fin: "HH:mm" }]
+  horario               Json
+  inscripcionesAbiertas Boolean             @default(true)
+  activo                Boolean             @default(true)
+  fechaCreacion         DateTime            @default(now())
+
+  inscripciones InscripcionDeporte[]
+  sesiones      SesionDeporte[]
+
+  @@index([periodo])
+  @@map("deporte_grupos")
+}
+
+model InscripcionDeporte {
+  id               String       @id @default(uuid())
+  grupoId          String
+  grupo            GrupoDeporte @relation(fields: [grupoId], references: [id])
+  usuarioId        String
+  usuario          Usuario      @relation(fields: [usuarioId], references: [id])
+  estado           String       @default("Activa") @db.VarChar(15)
+  fechaInscripcion DateTime     @default(now())
+  fechaRetiro      DateTime?
+
+  @@unique([grupoId, usuarioId])
+  @@index([usuarioId])
+  @@map("deporte_inscripciones")
+}
+
+model SesionDeporte {
+  id            String       @id @default(uuid())
+  grupoId       String
+  grupo         GrupoDeporte @relation(fields: [grupoId], references: [id])
+  fecha         DateTime     @db.Date
+  inicio        String       @db.VarChar(5)
+  fin           String       @db.VarChar(5)
+  horas         Float
+  tema          String?      @db.VarChar(200)
+  registradaPor String?      @db.VarChar(120)
+  fechaRegistro DateTime     @default(now())
+
+  asistencias AsistenciaDeporte[]
+
+  @@unique([grupoId, fecha, inicio])
+  @@map("deporte_sesiones")
+}
+
+model AsistenciaDeporte {
+  id        String        @id @default(uuid())
+  sesionId  String
+  sesion    SesionDeporte @relation(fields: [sesionId], references: [id], onDelete: Cascade)
+  usuarioId String
+  usuario   Usuario       @relation(fields: [usuarioId], references: [id])
+  presente  Boolean       @default(true)
+
+  @@unique([sesionId, usuarioId])
+  @@index([usuarioId])
+  @@map("deporte_asistencias")
+}
+
+// Horas reconocidas por el personal (torneos, representacion, eventos).
+model HoraDeporteManual {
+  id            String               @id @default(uuid())
+  usuarioId     String
+  usuario       Usuario              @relation(fields: [usuarioId], references: [id])
+  disciplinaId  String?
+  disciplina    DisciplinaDeportiva? @relation(fields: [disciplinaId], references: [id])
+  fecha         DateTime             @db.Date
+  horas         Float
+  motivo        String               @db.VarChar(200)
+  registradoPor String?              @db.VarChar(120)
+  fechaRegistro DateTime             @default(now())
+
+  @@index([usuarioId])
+  @@map("deporte_horas_manuales")
+}
+
+model ConfigDeporte {
+  id                  Int @id @default(1)
+  horasRequeridas     Int @default(40)
+  maxGruposPorPeriodo Int @default(2)
+
+  @@map("deporte_config")
 }

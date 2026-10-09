@@ -96,7 +96,7 @@ async function obtenerEvidenciaOFallar(id) {
 async function eliminarEvidencia(id) {
   const evidencia = await obtenerEvidenciaOFallar(id);
   await prisma.evidenciaSalud.delete({ where: { id } });
-  fs.promises.unlink(rutaAbsoluta(evidencia)).catch(() => {});
+  await fs.promises.unlink(rutaAbsoluta(evidencia)).catch(() => {});
   return { eliminada: id };
 }
 

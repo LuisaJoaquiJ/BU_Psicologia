@@ -71,6 +71,8 @@ function nombreRol(usuario) {
 }
 
 function cumpleWhereUsuario(u, where = {}) {
+  if (typeof where.id === "string" && u.id !== where.id) return false;
+  if (where.id?.in && !where.id.in.includes(u.id)) return false;
   if (where.habilitado !== undefined && u.habilitado !== where.habilitado) return false;
   const email = where.emailInstitucional;
   if (typeof email === "string" && u.emailInstitucional !== email) return false;

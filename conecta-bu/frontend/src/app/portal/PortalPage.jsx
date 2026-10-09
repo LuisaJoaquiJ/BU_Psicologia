@@ -199,7 +199,7 @@ function Hero() {
   );
 }
 
-function TarjetaModulo({ modulo, destacada }) {
+function TarjetaModulo({ modulo, destacada, ancho }) {
   const { usuario } = useAuth();
   const ruta = rutaModulo(modulo, usuario);
   const disponible = modulo.estado === "disponible";
@@ -208,7 +208,7 @@ function TarjetaModulo({ modulo, destacada }) {
     <article
       className={`group relative rounded-[26px] overflow-hidden flex flex-col bg-white border border-gray-200 transition-all ${
         disponible ? "hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(11,42,91,0.14)]" : ""
-      } ${destacada ? "sm:col-span-2 md:col-span-3" : "md:col-span-2"}`}
+      } ${ancho || (destacada ? "sm:col-span-2 md:col-span-3" : "md:col-span-2")}`}
     >
       <div className={`relative overflow-hidden bg-primary ${destacada ? "h-[240px]" : "h-[150px]"}`}>
         <img
@@ -241,7 +241,7 @@ function TarjetaModulo({ modulo, destacada }) {
           {disponible ? "● Disponible" : "Próximamente"}
         </span>
         {destacada && (
-          <h3 className="absolute left-6 right-6 bottom-5 m-0 font-display text-[30px] sm:text-[36px] leading-tight font-semibold text-white">
+          <h3 className="absolute left-6 right-6 bottom-5 m-0 font-display text-[26px] lg:text-[30px] leading-tight font-semibold text-white">
             {modulo.nombre}
           </h3>
         )}
@@ -289,9 +289,18 @@ function TarjetaModulo({ modulo, destacada }) {
   );
 }
 
+// Ancho de cada tarjeta en la cuadricula de 6 columnas: filas completas
+// tanto para los modulos disponibles como para los que vienen.
+function anchoTarjeta(cantidad) {
+  if (cantidad % 3 === 0) return "sm:col-span-1 md:col-span-2";
+  return "sm:col-span-2 md:col-span-3";
+}
+
 function Modulos() {
   // Los modulos disponibles van primero, en tarjetas grandes; el resto, en orden.
-  const ordenados = [...MODULOS_DISPONIBLES, ...MODULOS.filter((m) => m.estado !== "disponible")];
+  const proximos = MODULOS.filter((m) => m.estado !== "disponible");
+  const ordenados = [...MODULOS_DISPONIBLES, ...proximos];
+  const anchoDe = (m) => anchoTarjeta(m.estado === "disponible" ? MODULOS_DISPONIBLES.length : proximos.length);
   return (
     <section id="modulos" className="pt-20 scroll-mt-6">
       <div className="flex justify-between items-end gap-6 flex-wrap mb-8">
@@ -305,7 +314,7 @@ function Modulos() {
       </div>
       <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-6">
         {ordenados.map((m) => (
-          <TarjetaModulo key={m.id} modulo={m} destacada={m.estado === "disponible"} />
+          <TarjetaModulo key={m.id} modulo={m} destacada={m.estado === "disponible"} ancho={anchoDe(m)} />
         ))}
       </div>
     </section>

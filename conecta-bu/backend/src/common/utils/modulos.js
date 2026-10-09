@@ -9,6 +9,7 @@ const MODULOS_CON_CITAS = ["desarrollo-humano", "salud"];
 const MODULOS = {
   "desarrollo-humano": "Desarrollo humano y orientación",
   salud: "Salud integral",
+  deporte: "Deporte",
 };
 
 // Modulo por defecto de cada rol cuando no se indica (compatibilidad).
