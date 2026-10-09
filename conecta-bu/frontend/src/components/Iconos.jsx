@@ -24,6 +24,7 @@ const TRAZOS = {
   izquierda: <path d="M15 18l-6-6 6-6" />,
   derecha: <path d="M9 18l6-6-6-6" />,
   menu: <path d="M4 6h16M4 12h16M4 18h16" />,
+  descarga: <path d="M12 3v12M7 10l5 5 5-5M4 21h16" />,
   alerta: <><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></>,
 };
 

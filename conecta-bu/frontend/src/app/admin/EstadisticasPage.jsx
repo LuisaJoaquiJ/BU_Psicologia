@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { http } from "../../lib/api/http";
 import { formatearFecha } from "../../lib/format";
+import { Icono } from "../../components/Iconos";
 import {
   COLORES_ESTADO,
   ETIQUETA_ESTADO,
@@ -102,6 +103,7 @@ export function EstadisticasPage() {
   const [automatizaciones, setAutomatizaciones] = useState([]);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
+  const [descargando, setDescargando] = useState("");
 
   function cargar(filtro) {
     setError("");
@@ -127,6 +129,29 @@ export function EstadisticasPage() {
     if (id === "90") cargar({ desde: isoHace(90), hasta: isoHace(0) });
   }
 
+  // RF-015: informe descargable (Excel o PDF) con el mismo periodo del panel.
+  async function descargar(formato) {
+    setError("");
+    setDescargando(formato);
+    try {
+      const filtro = Object.fromEntries(Object.entries(datos?.filtro || {}).filter(([, v]) => v));
+      const res = await http.get("/admin/estadisticas/informe", { params: { formato, ...filtro }, responseType: "blob" });
+      const sufijo = filtro.desde || filtro.hasta ? `${filtro.desde || "inicio"}_a_${filtro.hasta || "hoy"}` : isoHace(0);
+      const url = URL.createObjectURL(res.data);
+      const enlace = document.createElement("a");
+      enlace.href = url;
+      enlace.download = `informe-bienestar-${sufijo}.${formato}`;
+      document.body.appendChild(enlace);
+      enlace.click();
+      enlace.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setError("No fue posible generar el informe. Intenta de nuevo.");
+    } finally {
+      setDescargando("");
+    }
+  }
+
   const lectura = useMemo(() => (datos ? hallazgos(datos) : []), [datos]);
   const maximoEvento = Math.max(0, ...(datos?.eventosDetalle || []).map((e) => e.inscritos));
   const maximoServicio = Math.max(0, ...(datos?.citasPorServicio || []).map((s) => s.total));
@@ -138,6 +163,26 @@ export function EstadisticasPage() {
           <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Dashboard · RF-015</p>
           <h1 className="m-0 text-3xl font-semibold">Estadísticas</h1>
           <p className="mt-1.5 mb-0 text-ink-500">Participación, asistencia y demanda de Bienestar Universitario.</p>
+        </div>
+        <div className="flex flex-col items-start sm:items-end gap-1.5">
+          <span className="text-xs text-ink-500">Descargar informe del periodo</span>
+          <div className="flex gap-2">
+            {[
+              ["xlsx", "Excel", "bg-primary text-white"],
+              ["pdf", "PDF", "bg-gold text-primary"],
+            ].map(([formato, texto, estilo]) => (
+              <button
+                key={formato}
+                type="button"
+                onClick={() => descargar(formato)}
+                disabled={!datos || Boolean(descargando)}
+                className={`inline-flex items-center gap-2 text-sm font-bold rounded-full px-4 min-h-[42px] disabled:opacity-60 ${estilo}`}
+              >
+                <Icono nombre="descarga" size={18} strokeWidth={2.2} />
+                {descargando === formato ? "Generando..." : texto}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

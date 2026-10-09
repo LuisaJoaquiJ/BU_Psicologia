@@ -2,6 +2,7 @@ const { prisma } = require("../../config/prisma");
 const { AppError } = require("../../common/utils/AppError");
 const { aFechaUTC } = require("../../common/utils/fechas");
 const analitica = require("./analitica");
+const { construirInforme } = require("./informe.datos");
 
 // Porcentaje con un decimal; null cuando no hay base para calcularlo
 // (el frontend muestra "sin datos" en lugar de un 0% enganoso).
@@ -89,29 +90,36 @@ function calcularIndicadoresEventos(eventos) {
   };
 }
 
-// RF-015: panel de estadisticas. Filtra opcionalmente por rango de fechas
-// (fecha de la cita / del evento). Los calculos se hacen en memoria sobre el
-// resultado de la consulta: con el volumen de un modulo de Bienestar es mas
-// simple y suficientemente rapido (RNF-001).
-async function obtenerEstadisticas({ desde, hasta } = {}) {
-  const fecha = rangoFechas({ desde, hasta });
-
+// Consulta comun del dashboard y del informe descargable.
+async function consultarDatos(fecha) {
   const [citas, eventos, estudiantes, horarios] = await Promise.all([
     prisma.cita.findMany({
       where: fecha ? { horario: { fecha } } : {},
-      include: { horario: { include: { servicio: true } } },
+      include: {
+        horario: { include: { servicio: true } },
+        usuario: { select: { id: true, nombre: true, emailInstitucional: true } },
+      },
     }),
     prisma.evento.findMany({
       where: { estado: { in: ["Publicado", "Cerrado"] }, ...(fecha ? { fecha } : {}) },
       include: {
-        inscripciones: { where: { estado: "Confirmada" }, include: { asistencia: true } },
+        inscripciones: {
+          where: { estado: "Confirmada" },
+          include: {
+            asistencia: true,
+            usuario: { select: { id: true, nombre: true, emailInstitucional: true } },
+          },
+        },
       },
       orderBy: { fecha: "asc" },
     }),
     prisma.usuario.count({ where: { rol: { nombre: "Estudiante" } } }),
-    prisma.horario.findMany({ where: fecha ? { fecha } : {} }),
+    prisma.horario.findMany({ where: fecha ? { fecha } : {}, include: { servicio: true } }),
   ]);
+  return { citas, eventos, estudiantes, horarios };
+}
 
+function armarEstadisticas({ citas, eventos, estudiantes, horarios }, { desde, hasta } = {}) {
   const indicadoresCitas = calcularIndicadoresCitas(citas);
   const indicadoresEventos = calcularIndicadoresEventos(eventos);
 
@@ -132,4 +140,22 @@ async function obtenerEstadisticas({ desde, hasta } = {}) {
   };
 }
 
-module.exports = { obtenerEstadisticas };
+// RF-015: panel de estadisticas. Filtra opcionalmente por rango de fechas
+// (fecha de la cita / del evento). Los calculos se hacen en memoria sobre el
+// resultado de la consulta: con el volumen de un modulo de Bienestar es mas
+// simple y suficientemente rapido (RNF-001).
+async function obtenerEstadisticas({ desde, hasta } = {}) {
+  const fecha = rangoFechas({ desde, hasta });
+  return armarEstadisticas(await consultarDatos(fecha), { desde, hasta });
+}
+
+// RF-015 (informe descargable): las mismas estadisticas mas el detalle
+// (citas, asistentes a eventos, estudiantes) para exportar a Excel o PDF.
+async function obtenerInforme({ desde, hasta } = {}) {
+  const fecha = rangoFechas({ desde, hasta });
+  const filas = await consultarDatos(fecha);
+  const estadisticas = armarEstadisticas(filas, { desde, hasta });
+  return construirInforme(filas, estadisticas);
+}
+
+module.exports = { obtenerEstadisticas, obtenerInforme };
