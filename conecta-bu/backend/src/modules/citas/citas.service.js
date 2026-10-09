@@ -82,9 +82,63 @@ async function cancelarCita(usuarioId, citaId) {
   });
 }
 
+// RF-008 / HU-15: agenda administrativa de citas, con filtros opcionales por
+// fecha, servicio y estado. A diferencia de "mis citas", aqui se ven las de
+// todos los estudiantes junto con sus datos, para que el administrador pueda
+// darle seguimiento a la jornada.
+async function listarAgendaAdmin({ fecha, servicioId, estado } = {}) {
+  const where = {};
+  if (estado) where.estado = estado;
+  if (fecha || servicioId) {
+    where.horario = {};
+    if (fecha) where.horario.fecha = new Date(`${fecha}T00:00:00.000Z`);
+    if (servicioId) where.horario.servicioId = servicioId;
+  }
+
+  return prisma.cita.findMany({
+    where,
+    include: { usuario: true, horario: { include: { servicio: true } } },
+    orderBy: [{ horario: { fecha: "asc" } }, { horario: { horaInicio: "asc" } }],
+  });
+}
+
+// RF-008 / HU-16: registra si el estudiante asistio o no a una cita ya
+// realizada. Deja tanto el cambio de estado (Atendida/NoAsistio) como un
+// registro de auditoria en AsistenciaCita con quien la registro.
+async function registrarAsistencia(adminId, citaId, asistio) {
+  return prisma.$transaction(async (tx) => {
+    const cita = await tx.cita.findUnique({ where: { id: citaId } });
+    if (!cita) {
+      throw new AppError(404, "Cita no encontrada.");
+    }
+    if (cita.estado !== "Agendada") {
+      throw new AppError(409, "Solo se puede registrar asistencia de una cita que este agendada.");
+    }
+
+    const yaRegistrada = await tx.asistenciaCita.findUnique({ where: { citaId } });
+    if (yaRegistrada) {
+      throw new AppError(409, "Ya se registro la asistencia de esta cita.");
+    }
+
+    const actualizada = await tx.cita.update({
+      where: { id: citaId },
+      data: { estado: asistio ? "Atendida" : "NoAsistio" },
+      include: { usuario: true, horario: { include: { servicio: true } } },
+    });
+
+    await tx.asistenciaCita.create({
+      data: { citaId, asistio: Boolean(asistio), registradoPorId: adminId },
+    });
+
+    return actualizada;
+  });
+}
+
 module.exports = {
   listarHorariosDisponibles,
   crearCita,
   listarMisCitas,
   cancelarCita,
+  listarAgendaAdmin,
+  registrarAsistencia,
 };

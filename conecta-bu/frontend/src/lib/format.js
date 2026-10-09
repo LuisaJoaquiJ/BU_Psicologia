@@ -22,3 +22,17 @@ export function formatearHora(horaIso) {
     timeZone: "UTC",
   });
 }
+
+// Convierte una fecha/hora ISO (siempre en UTC, ver arriba) al valor que
+// esperan los inputs <input type="date"> ("YYYY-MM-DD") y
+// <input type="time"> ("HH:mm"), usada por los formularios del Administrador
+// (Sprint 3 · HU-13, HU-14) para precargar y filtrar.
+export function fechaInputUTC(fechaIso) {
+  if (!fechaIso) return "";
+  return new Date(fechaIso).toISOString().slice(0, 10);
+}
+
+export function horaInputUTC(horaIso) {
+  if (!horaIso) return "";
+  return new Date(horaIso).toISOString().slice(11, 16);
+}

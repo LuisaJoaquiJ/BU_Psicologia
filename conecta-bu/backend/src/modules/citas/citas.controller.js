@@ -3,6 +3,8 @@ const {
   crearCita,
   listarMisCitas,
   cancelarCita,
+  listarAgendaAdmin,
+  registrarAsistencia,
 } = require("./citas.service");
 
 // RF-004 / HU-07
@@ -45,4 +47,28 @@ async function cancelar(req, res, next) {
   }
 }
 
-module.exports = { horariosDisponibles, agendar, misCitas, cancelar };
+// RF-008 / HU-15
+async function agendaAdmin(req, res, next) {
+  try {
+    const citas = await listarAgendaAdmin({
+      fecha: req.query.fecha,
+      servicioId: req.query.servicioId,
+      estado: req.query.estado,
+    });
+    res.status(200).json({ citas });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// RF-008 / HU-16
+async function asistencia(req, res, next) {
+  try {
+    const cita = await registrarAsistencia(req.usuario.id, req.params.id, req.body.asistio);
+    res.status(200).json({ cita });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { horariosDisponibles, agendar, misCitas, cancelar, agendaAdmin, asistencia };
