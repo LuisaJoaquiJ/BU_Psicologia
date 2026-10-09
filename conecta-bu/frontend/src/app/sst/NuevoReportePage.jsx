@@ -7,6 +7,7 @@ import { ESTILO_GRUPO, diasPara } from "../../lib/sst";
 import { mensajeError } from "../../lib/salud";
 import { Aviso, Campo, Tarjeta, botonPrimario, botonSecundario, claseCampo } from "../salud/ui";
 import { SelectorDocumento } from "./DetalleReporte";
+import { CampoPersona } from "./CampoPersona";
 
 const TEXTO_DOCUMENTO = { CC: "C.C.", CE: "C.E.", TI: "T.I." };
 
@@ -110,18 +111,20 @@ function ListaPersonas({ etiqueta, valor = [], onCambio }) {
         </button>
       </div>
       {filas.length === 0 ? (
-        <p className="m-0 text-sm text-ink-500">Si viajan más personas, agrégalas aquí con su número de cédula, o adjunta un listado abajo.</p>
+        <p className="m-0 text-sm text-ink-500">
+          Si viajan más personas, agrégalas aquí: escribe el nombre, elígelo de la lista y su cédula se llena sola. También puedes adjuntar un listado abajo.
+        </p>
       ) : (
         <ul className="list-none m-0 p-0 flex flex-col gap-2">
           {filas.map((f, i) => (
             <li key={i} className="grid gap-2 grid-cols-[1fr_150px_auto] items-center">
-              <input
-                aria-label={`Nombre completo de la persona ${i + 1}`}
+              <CampoPersona
+                ariaLabel={`Nombre completo de la persona ${i + 1}`}
                 placeholder="Nombre completo"
-                value={f.nombre}
+                valor={f.nombre}
                 required
-                onChange={(e) => cambiar(i, "nombre", e.target.value)}
-                className={claseCampo}
+                onCambio={(v) => cambiar(i, "nombre", v)}
+                onElegir={(p) => onCambio(filas.map((x, j) => (j === i ? { nombre: p.nombre, documento: p.documento } : x)))}
               />
               <input
                 aria-label={`Cédula de la persona ${i + 1}`}
@@ -338,7 +341,25 @@ export function NuevoReportePage({ catalogo }) {
                       }
                       className={c.tipo === "parrafo" || ["evento", "motivo"].includes(c.campo) ? "sm:col-span-2" : ""}
                     >
-                      <CampoDinamico def={c} valor={datos[c.campo]} onCambio={poner(c.campo)} catalogo={catalogo} />
+                      {c.campo === "responsableNombre" ? (
+                        <CampoPersona
+                          id={`c-${c.campo}`}
+                          required
+                          valor={datos.responsableNombre}
+                          onCambio={poner("responsableNombre")}
+                          onElegir={(p) => {
+                            const opciones = def.campos.find((x) => x.campo === "responsableTipoDoc")?.opciones || [];
+                            setDatos((d) => ({
+                              ...d,
+                              responsableNombre: p.nombre,
+                              responsableDocumento: p.documento,
+                              responsableTipoDoc: opciones.includes(p.tipoDocumento) ? p.tipoDocumento : d.responsableTipoDoc,
+                            }));
+                          }}
+                        />
+                      ) : (
+                        <CampoDinamico def={c} valor={datos[c.campo]} onCambio={poner(c.campo)} catalogo={catalogo} />
+                      )}
                     </Campo>
                   )
                 )}

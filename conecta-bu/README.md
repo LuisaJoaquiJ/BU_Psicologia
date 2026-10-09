@@ -359,7 +359,10 @@ Además, según el transporte: **particular** → licencia, tarjeta de propiedad
 revisión técnico-mecánica y SOAT; **aéreo** → información del vuelo;
 **público** → medio y empresa; **institucional** → conductor y placa. Los
 demás participantes (colaboradores o docentes) se escriben en una lista con
-su cédula o se adjunta el listado.
+su cédula o se adjunta el listado. Al escribir el nombre de quien viaja se
+despliegan sugerencias (docentes y administrativos registrados en Salud y
+personas de reportes anteriores, sin importar tildes) y al elegir una se
+llena su cédula (`GET /reportes-sst/personas?q=`, solo nombre y documento).
 
 - **Quién reporta:** cualquier persona de la Institución con su cuenta
   (`/reportes-sst`; también desde la tarjeta de Salud en el portal). Ve el

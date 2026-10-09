@@ -250,6 +250,38 @@ describe("Reportar una salida (cualquier persona de la Institución)", () => {
   });
 });
 
+describe("Sugerencias de personas al escribir el nombre de quien viaja", () => {
+  const buscar = (q, token = docente.token) => request(app).get(`/api/v1/reportes-sst/personas?q=${encodeURIComponent(q)}`).set(auth(token));
+
+  beforeEach(async () => {
+    await prisma.personaSalud.create({ data: { numeroDocumento: "10541234", nombres: "JORGE IVÁN", apellidos: "PAZ MUÑOZ", poblacion: "Docente" } });
+    await prisma.personaSalud.create({ data: { numeroDocumento: "34567123", nombres: "Diana", apellidos: "Ruiz", poblacion: "Administrativo", tipoDocumento: "CE" } });
+    // Los estudiantes registrados en Salud no se sugieren (datos de salud).
+    await prisma.personaSalud.create({ data: { numeroDocumento: "1061999888", nombres: "Jorge", apellidos: "Estudiante", poblacion: "Estudiante" } });
+  });
+
+  it("sugiere docentes y administrativos con su cédula, sin datos de salud", async () => {
+    const res = await buscar("jorge paz");
+    expect(res.status).toBe(200);
+    expect(res.body.personas).toEqual([{ nombre: "Jorge Iván Paz Muñoz", tipoDocumento: "CC", documento: "10541234", detalle: "Docente" }]);
+    const porCedula = await buscar("3456");
+    expect(porCedula.body.personas[0]).toMatchObject({ nombre: "Diana Ruiz", tipoDocumento: "CE", documento: "34567123" });
+    expect((await buscar("j")).body.personas).toEqual([]);
+    // Sin tildes ni mayusculas tambien encuentra.
+    expect((await buscar("ivan munoz")).body.personas[0].documento).toBe("10541234");
+  });
+
+  it("también sugiere a quienes ya viajaron en reportes anteriores", async () => {
+    await enviar(salidaLocal({ acompanantes: [{ nombre: "Camilo Andrés Ortega", documento: "76.111.222" }] }), { Poliza: 1 });
+    const res = await buscar("ortega", otro.token);
+    expect(res.body.personas).toEqual([{ nombre: "Camilo Andrés Ortega", tipoDocumento: "CC", documento: "76111222", detalle: "Reporte anterior" }]);
+  });
+
+  it("exige iniciar sesión", async () => {
+    expect((await request(app).get("/api/v1/reportes-sst/personas?q=jorge")).status).toBe(401);
+  });
+});
+
 describe("Revisión del personal de Salud", () => {
   const panel = (metodo, ruta, token = salud.token) => request(app)[metodo](`/api/v1/salud/reportes-sst${ruta}`).set(auth(token));
 

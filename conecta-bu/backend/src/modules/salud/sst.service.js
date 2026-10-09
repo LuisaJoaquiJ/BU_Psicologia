@@ -304,6 +304,80 @@ async function obtenerAdjunto(id, usuario) {
   return adjunto;
 }
 
+// ---- Busqueda de personas para el formulario ---------------------------------
+// Al escribir el nombre de quien viaja se sugieren personas ya conocidas
+// (docentes y administrativos registrados en Salud, y quienes ya viajaron en
+// otros reportes) para llenar su cedula. Solo devuelve nombre y documento.
+const TIPOS_DOC_SST = new Set(cat.TIPOS_DOCUMENTO);
+
+function normalizar(texto) {
+  return String(texto || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function nombrePropio(texto) {
+  return String(texto || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/(^|\s)(\p{L})/gu, (m, esp, letra) => esp + letra.toUpperCase());
+}
+
+async function buscarPersonas(q) {
+  const busqueda = texto(q, 60);
+  if (!busqueda || busqueda.length < 2) return [];
+  const palabras = busqueda.split(" ").filter(Boolean).slice(0, 4);
+  const esDocumento = /^\d{3,}$/.test(busqueda.replace(/[.\s]/g, ""));
+  const encontradas = new Map();
+  const agregar = (p) => {
+    if (!p.documento || encontradas.has(p.documento) || encontradas.size >= 8) return;
+    encontradas.set(p.documento, p);
+  };
+
+  // 1. Docentes y administrativos registrados en la Unidad de Salud. Se
+  // filtra aqui (no en SQL) para ignorar tildes: "gomez" encuentra "Gómez".
+  const doc = busqueda.replace(/[.\s]/g, "");
+  const claves = palabras.map(normalizar);
+  const coincide = (nombre, documento) =>
+    esDocumento ? String(documento || "").startsWith(doc) : claves.every((w) => normalizar(nombre).includes(w));
+  const personas = await prisma.personaSalud.findMany({
+    where: { poblacion: { in: ["Docente", "Administrativo"] }, ...(esDocumento ? { numeroDocumento: { startsWith: doc } } : {}) },
+    select: { nombres: true, apellidos: true, tipoDocumento: true, numeroDocumento: true, poblacion: true },
+    orderBy: [{ apellidos: "asc" }, { nombres: "asc" }],
+    take: 5000,
+  });
+  for (const p of personas) {
+    if (!coincide(`${p.nombres} ${p.apellidos}`, p.numeroDocumento)) continue;
+    agregar({
+      nombre: nombrePropio(`${p.nombres} ${p.apellidos}`),
+      tipoDocumento: TIPOS_DOC_SST.has(p.tipoDocumento) ? p.tipoDocumento : "CC",
+      documento: p.numeroDocumento,
+      detalle: p.poblacion,
+    });
+  }
+
+  // 2. Quienes ya aparecen en reportes anteriores (responsables y acompanantes).
+  if (encontradas.size < 8) {
+    const recientes = await prisma.reporteSST.findMany({
+      where: { tipo: { not: "CondicionInsegura" } },
+      orderBy: { fechaCreacion: "desc" },
+      take: 400,
+      select: { responsableNombre: true, responsableTipoDoc: true, responsableDocumento: true, acompanantes: true },
+    });
+    for (const r of recientes) {
+      if (r.responsableNombre && coincide(r.responsableNombre, r.responsableDocumento)) {
+        agregar({ nombre: r.responsableNombre, tipoDocumento: r.responsableTipoDoc || "CC", documento: r.responsableDocumento, detalle: "Reporte anterior" });
+      }
+      for (const a of Array.isArray(r.acompanantes) ? r.acompanantes : []) {
+        if (coincide(a.nombre, a.documento)) agregar({ nombre: a.nombre, tipoDocumento: "CC", documento: a.documento, detalle: "Reporte anterior" });
+      }
+    }
+  }
+  return [...encontradas.values()];
+}
+
 // ---- Personal de Salud -------------------------------------------------------
 function filtroReportes({ tipo, grupo, estado, desde, hasta, q, area } = {}) {
   const where = {};
@@ -408,6 +482,7 @@ module.exports = {
   filtroReportes,
   revisarReporte,
   resumen,
+  buscarPersonas,
   serializar,
   esPersonalSalud,
 };

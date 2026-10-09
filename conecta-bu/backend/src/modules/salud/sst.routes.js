@@ -39,6 +39,7 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get("/catalogos", (req, res) => res.json(catalogoPublico()));
+router.get("/personas", manejar(async (req, res) => res.json({ personas: await sst.buscarPersonas(req.query.q) })));
 router.get("/mios", manejar(async (req, res) => res.json({ reportes: await sst.listarMios(req.usuario) })));
 router.post(
   "/",
