@@ -5,9 +5,8 @@ const {
   deshabilitarHorario,
   habilitarHorario,
 } = require("./horarios.service");
-const { moduloDeRol } = require("../../common/utils/modulos");
-
-const modulo = (req) => moduloDeRol(req.usuario.rol.nombre);
+// Modulo del router (Desarrollo humano o Salud), fijado por requireModulo.
+const modulo = (req) => req.modulo;
 
 // RF-007 / HU-13
 async function crear(req, res, next) {

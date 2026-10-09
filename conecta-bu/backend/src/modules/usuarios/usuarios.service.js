@@ -51,14 +51,14 @@ function validarNoEsElMismo(adminId, usuarioId) {
   }
 }
 
-// Siempre debe quedar al menos un administrador habilitado en el sistema.
+// Siempre debe quedar al menos un superadministrador habilitado.
 async function validarQuedaOtroAdmin(usuario) {
-  if (usuario.rol?.nombre !== "Administrador" || !usuario.habilitado) return;
+  if (usuario.rol?.nombre !== "SuperAdministrador" || !usuario.habilitado) return;
   const adminsHabilitados = await prisma.usuario.count({
-    where: { habilitado: true, rol: { nombre: "Administrador" } },
+    where: { habilitado: true, rol: { nombre: "SuperAdministrador" } },
   });
   if (adminsHabilitados <= 1) {
-    throw new AppError(409, "Debe quedar al menos un administrador habilitado en Conecta BU.");
+    throw new AppError(409, "Debe quedar al menos un superadministrador habilitado en Conecta BU.");
   }
 }
 

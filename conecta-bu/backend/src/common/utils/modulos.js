@@ -5,8 +5,14 @@ const { AppError } = require("./AppError");
 // antes del modulo de Salud quedan en "desarrollo-humano".
 const MODULOS_CON_CITAS = ["desarrollo-humano", "salud"];
 
-// Modulo que gestiona cada rol administrativo.
-const MODULO_POR_ROL = { Administrador: "desarrollo-humano", Salud: "salud" };
+// Modulos con personal asignado (accesos por correo).
+const MODULOS = {
+  "desarrollo-humano": "Desarrollo humano y orientación",
+  salud: "Salud integral",
+};
+
+// Modulo por defecto de cada rol cuando no se indica (compatibilidad).
+const MODULO_POR_ROL = { Administrador: "desarrollo-humano" };
 
 function moduloDeServicio(servicio) {
   return servicio?.modulo || "desarrollo-humano";
@@ -23,7 +29,7 @@ function moduloSolicitado(req) {
     if (!MODULOS_CON_CITAS.includes(pedido)) throw new AppError(400, "El modulo indicado no existe.");
     return pedido;
   }
-  return moduloDeRol(req.usuario?.rol?.nombre);
+  return "desarrollo-humano";
 }
 
 // Un rol administrativo solo gestiona la agenda de su propio modulo.
@@ -33,4 +39,12 @@ function exigirMismoModulo(servicio, modulo) {
   }
 }
 
-module.exports = { MODULOS_CON_CITAS, moduloDeServicio, moduloDeRol, moduloSolicitado, exigirMismoModulo };
+// Modulos que puede gestionar un usuario: el superadministrador, todos; el
+// personal (Administrador), los que tenga asignados por correo.
+function modulosDeUsuario(usuario) {
+  if (usuario?.rol?.nombre === "SuperAdministrador") return Object.keys(MODULOS);
+  if (usuario?.rol?.nombre === "Administrador") return usuario.modulos || [];
+  return [];
+}
+
+module.exports = { MODULOS, modulosDeUsuario, MODULOS_CON_CITAS, moduloDeServicio, moduloDeRol, moduloSolicitado, exigirMismoModulo };

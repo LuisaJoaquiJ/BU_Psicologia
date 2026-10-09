@@ -30,14 +30,14 @@ function horasHastaLaCita(horario) {
 }
 
 // RF-006 · HU-11, HU-12: consulta y cancelacion de citas propias.
-export function MisCitasPage() {
+export function MisCitasPage({ modulo = "desarrollo-humano" }) {
   const [citas, setCitas] = useState(null);
   const [error, setError] = useState("");
   const [cancelando, setCancelando] = useState(null);
 
   function cargarCitas() {
     return http
-      .get("/citas/mias")
+      .get("/citas/mias", { params: { modulo } })
       .then((res) => setCitas(res.data.citas))
       .catch(() => setError("No fue posible cargar tus citas."));
   }
@@ -65,13 +65,13 @@ export function MisCitasPage() {
       <div className="flex items-center justify-between mb-1 flex-wrap gap-3">
         <h1 className="text-3xl font-semibold text-primary">Mis citas</h1>
         <Link
-          to="/estudiante/agendar"
+          to={modulo === "salud" ? "/mi-salud" : "/estudiante/agendar"}
           className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors"
         >
           Agendar nueva cita
         </Link>
       </div>
-      <p className="text-gray-500 mb-8">Consulta o cancela tus citas de orientación y de salud (hasta 24 horas antes).</p>
+      <p className="text-gray-500 mb-8">{modulo === "salud" ? "Consulta o cancela tus citas de salud (hasta 24 horas antes)." : "Consulta o cancela tus citas de orientación (hasta 24 horas antes)."}</p>
 
       {error && <p className="text-sm text-red-600 bg-red-50 rounded-md p-3 mb-6">{error}</p>}
 
@@ -80,7 +80,7 @@ export function MisCitasPage() {
       {citas && citas.length === 0 && (
         <p className="text-gray-500">
           Todavía no tienes citas registradas.{" "}
-          <Link to="/estudiante/agendar" className="text-primary font-medium hover:underline">
+          <Link to={modulo === "salud" ? "/mi-salud" : "/estudiante/agendar"} className="text-primary font-medium hover:underline">
             Agenda la primera
           </Link>
           .

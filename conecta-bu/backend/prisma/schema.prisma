@@ -342,3 +342,21 @@ model EvidenciaSalud {
   @@index([actividadId])
   @@map("salud_evidencias")
 }
+
+// ---------------------------------------------------------------------------
+// Acceso del personal a cada modulo de Conecta BU. Los modulos (Desarrollo
+// humano y orientacion, Salud integral, ...) son independientes: el
+// superadministrador asigna por correo quien entra a cada uno. Se guarda por
+// correo para poder asignar a alguien antes de su primer inicio de sesion.
+// ---------------------------------------------------------------------------
+model AccesoModulo {
+  id              String   @id @default(uuid())
+  email           String   @db.VarChar(120)
+  modulo          String   @db.VarChar(40)
+  asignadoPor     String?  @db.VarChar(120)
+  fechaAsignacion DateTime @default(now())
+
+  @@unique([email, modulo])
+  @@index([email])
+  @@map("accesos_modulo")
+}

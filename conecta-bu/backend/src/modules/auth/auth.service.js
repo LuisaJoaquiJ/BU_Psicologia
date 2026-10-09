@@ -3,6 +3,7 @@ const { config } = require("../../config/env");
 const { prisma } = require("../../config/prisma");
 const { signToken } = require("../../common/utils/jwt");
 const { AppError } = require("../../common/utils/AppError");
+const { modulosDeUsuario } = require("../../common/utils/modulos");
 
 const client = new OAuth2Client(config.googleClientId);
 
@@ -72,7 +73,29 @@ function serializarUsuario(usuario) {
     nombre: usuario.nombre,
     rol: usuario.rol.nombre,
     habilitado: usuario.habilitado,
+    // Modulos que puede administrar (vacio para estudiantes).
+    modulos: modulosDeUsuario(usuario),
   };
+}
+
+// Quien tiene un acceso asignado a algun modulo entra como personal
+// (Administrador) aunque haya iniciado sesion antes como estudiante.
+async function aplicarAccesos(usuario) {
+  const accesos = await prisma.accesoModulo.findMany({ where: { email: usuario.emailInstitucional.toLowerCase() } });
+  usuario.modulos = accesos.map((a) => a.modulo);
+  if (accesos.length && usuario.rol.nombre === "Estudiante") {
+    const rolPersonal = await prisma.rol.findUnique({ where: { nombre: "Administrador" } });
+    if (rolPersonal) {
+      const actualizado = await prisma.usuario.update({
+        where: { id: usuario.id },
+        data: { rolId: rolPersonal.id },
+        include: { rol: true },
+      });
+      actualizado.modulos = usuario.modulos;
+      return actualizado;
+    }
+  }
+  return usuario;
 }
 
 // RF-001 completo: valida el token de Google, aplica la regla de dominio,
@@ -80,11 +103,11 @@ function serializarUsuario(usuario) {
 async function loginConGoogle(idToken) {
   const payload = await verifyGoogleIdToken(idToken);
   verificarDominioInstitucional(payload);
-  const usuario = await buscarOCrearUsuario(payload);
+  const usuario = await aplicarAccesos(await buscarOCrearUsuario(payload));
 
   const token = signToken({ sub: usuario.id, rol: usuario.rol.nombre });
 
   return { token, usuario: serializarUsuario(usuario) };
 }
 
-module.exports = { loginConGoogle, serializarUsuario };
+module.exports = { loginConGoogle, serializarUsuario, aplicarAccesos };

@@ -70,7 +70,7 @@ function errorUnico(campos) {
 }
 
 function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
-  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [] };
+  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [] };
 
   const usuarioPorId = (id) => {
     const u = obtenerUsuarios().find((x) => x.id === id);
@@ -91,6 +91,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       actividad: (r) => clonar(tablas.actividades.find((a) => a.id === r.actividadId)),
       registradoPor: (r, o) => (r.registradoPorId ? seleccionar(usuarioPorId(r.registradoPorId), o?.select) : null),
     },
+    accesos: {},
     evidencias: {
       actividad: (r) => clonar(tablas.actividades.find((a) => a.id === r.actividadId)),
       subidoPor: (r, o) => (r.subidoPorId ? seleccionar(usuarioPorId(r.subidoPorId), o?.select) : null),
@@ -102,6 +103,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     actividades: [["periodo", "codigo"]],
     atenciones: [],
     evidencias: [],
+    accesos: [["email", "modulo"]],
   };
 
   const defaults = {
@@ -149,6 +151,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       fechaRegistro: new Date(),
     }),
     evidencias: () => ({ descripcion: null, subidoPorId: null, fechaSubida: new Date() }),
+    accesos: () => ({ asignadoPor: null, fechaAsignacion: new Date() }),
   };
 
   function clonar(r) {
@@ -184,6 +187,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
 
   function buscarUnico(tabla, where) {
     if (where.periodo_codigo) return tablas[tabla].find((r) => cumpleWhere(r, where.periodo_codigo));
+    if (where.email_modulo) return tablas[tabla].find((r) => cumpleWhere(r, where.email_modulo));
     return tablas[tabla].find((r) => cumpleWhere(r, where));
   }
 
@@ -245,12 +249,14 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       actividadSalud: modelo("actividades", "actividad-salud"),
       atencionSalud: modelo("atenciones", "atencion"),
       evidenciaSalud: modelo("evidencias", "evidencia"),
+      accesoModulo: modelo("accesos", "acceso"),
     },
     reset() {
       tablas.personas = [];
       tablas.actividades = [];
       tablas.atenciones = [];
       tablas.evidencias = [];
+      tablas.accesos = [];
     },
     tablas,
   };

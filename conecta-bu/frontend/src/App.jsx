@@ -3,6 +3,8 @@ import { LoginPage } from "./app/login/LoginPage";
 import { LandingPage } from "./app/inicio/LandingPage";
 import { PortalPage } from "./app/portal/PortalPage";
 import { SaludPanel } from "./app/salud/SaludPanel";
+import { SuperPanel } from "./app/super/SuperPanel";
+import { SaludEstudiantePanel } from "./app/estudiante/SaludEstudiantePanel";
 import { EstudiantePanel } from "./app/estudiante/EstudiantePanel";
 import { AdminPanel } from "./app/admin/AdminPanel";
 import { ProtectedRoute } from "./lib/auth/ProtectedRoute";
@@ -21,7 +23,8 @@ function DesarrolloHumano() {
   const { estaAutenticado, usuario, cargando } = useAuth();
   if (cargando) return null;
   if (!estaAutenticado) return <LandingPage />;
-  return <Navigate to={usuario.rol === "Administrador" ? "/admin" : "/estudiante"} replace />;
+  if (usuario.rol === "Estudiante") return <Navigate to="/estudiante" replace />;
+  return <Navigate to="/" replace />;
 }
 
 export default function App() {
@@ -43,7 +46,7 @@ export default function App() {
       <Route
         path="/admin/*"
         element={
-          <ProtectedRoute rolesPermitidos={["Administrador"]}>
+          <ProtectedRoute rolesPermitidos={["Administrador", "SuperAdministrador"]} modulo="desarrollo-humano">
             <AdminPanel />
           </ProtectedRoute>
         }
@@ -52,8 +55,27 @@ export default function App() {
       <Route
         path="/salud/*"
         element={
-          <ProtectedRoute rolesPermitidos={["Salud"]}>
+          <ProtectedRoute rolesPermitidos={["Administrador", "SuperAdministrador"]} modulo="salud">
             <SaludPanel />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Area del estudiante en Salud integral, separada de Orientacion. */}
+      <Route
+        path="/mi-salud/*"
+        element={
+          <ProtectedRoute rolesPermitidos={["Estudiante"]}>
+            <SaludEstudiantePanel />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/super/*"
+        element={
+          <ProtectedRoute rolesPermitidos={["SuperAdministrador"]}>
+            <SuperPanel />
           </ProtectedRoute>
         }
       />

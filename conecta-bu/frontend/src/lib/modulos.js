@@ -3,7 +3,9 @@ import { IMAGENES } from "./imagenes";
 // Los cinco modulos de Conecta BU (Bienestar Universitario). Cada equipo
 // habilita su modulo cambiando "estado" a "disponible" y definiendo sus rutas:
 //   - publica: pagina informativa sin iniciar sesion.
-//   - panel: a donde entra cada rol una vez autenticado.
+//   - panel.Estudiante: area del estudiante en ese modulo.
+//   - panel.personal: panel del personal; solo entran los correos que el
+//     superadministrador asigno a ese modulo (y el superadministrador).
 export const MODULOS = [
   {
     id: "desarrollo-humano",
@@ -15,7 +17,7 @@ export const MODULOS = [
     imagen: IMAGENES.permanencia,
     estado: "disponible",
     publica: "/desarrollo-humano",
-    panel: { Estudiante: "/estudiante", Administrador: "/admin" },
+    panel: { Estudiante: "/estudiante", personal: "/admin" },
     servicios: ["Citas de orientación", "Talleres y eventos", "Asistente IA"],
   },
   {
@@ -47,7 +49,7 @@ export const MODULOS = [
     icono: "pulso",
     imagen: IMAGENES.salud,
     estado: "disponible",
-    panel: { Estudiante: "/estudiante/salud", Salud: "/salud" },
+    panel: { Estudiante: "/mi-salud", personal: "/salud" },
     servicios: ["Citas de enfermería y médicas", "Jornadas y campañas", "Registro con la cédula"],
   },
   {
@@ -66,13 +68,24 @@ export const MODULOS_DISPONIBLES = MODULOS.filter((m) => m.estado === "disponibl
 
 // Modulos a los que puede entrar quien tiene la sesion.
 export function modulosDe(usuario) {
-  return MODULOS_DISPONIBLES.filter((m) => !usuario || m.panel?.[usuario.rol]);
+  return MODULOS_DISPONIBLES.filter((m) => !usuario || rutaModulo(m, usuario));
+}
+
+export function moduloPorId(id) {
+  return MODULOS.find((m) => m.id === id);
 }
 
 // Ruta de entrada de un modulo: el panel del rol si hay sesion, o su pagina publica.
-// Con sesion, null si el rol no tiene acceso a ese modulo.
+// ¿Puede el usuario entrar al panel del personal de este modulo?
+export function puedeAdministrar(usuario, idModulo) {
+  if (usuario?.rol === "SuperAdministrador") return true;
+  return usuario?.rol === "Administrador" && Boolean(usuario.modulos?.includes(idModulo));
+}
+
+// Con sesion, null si el usuario no tiene acceso a ese modulo.
 export function rutaModulo(modulo, usuario) {
   if (modulo.estado !== "disponible") return null;
-  if (usuario) return modulo.panel?.[usuario.rol] || null;
-  return modulo.publica || "/login";
+  if (!usuario) return modulo.publica || "/login";
+  if (usuario.rol === "Estudiante") return modulo.panel?.Estudiante || null;
+  return puedeAdministrar(usuario, modulo.id) ? modulo.panel?.personal || null : null;
 }

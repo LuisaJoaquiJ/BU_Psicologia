@@ -5,12 +5,11 @@ import { formatearFecha, formatearHora } from "../../lib/format";
 import { IMAGENES } from "../../lib/imagenes";
 import { Icono } from "../../components/Iconos";
 
-// Salud integral para el estudiante: servicios, horarios para agendar una
-// cita de salud y sus participaciones en jornadas y campañas.
+// Salud integral para el estudiante (/mi-salud): horarios para agendar una
+// cita de salud y servicios de la Unidad de Salud.
 export function SaludEstudiantePage() {
   const [servicios, setServicios] = useState(null);
   const [horarios, setHorarios] = useState(null);
-  const [participaciones, setParticipaciones] = useState(null);
   const [servicioId, setServicioId] = useState("");
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
@@ -25,7 +24,6 @@ export function SaludEstudiantePage() {
 
   useEffect(() => {
     http.get("/servicios", { params: { modulo: "salud" } }).then((res) => setServicios(res.data.servicios)).catch(() => setServicios([]));
-    http.get("/salud/estudiante/mis-participaciones").then((res) => setParticipaciones(res.data)).catch(() => setParticipaciones(null));
     cargarHorarios();
   }, []);
 
@@ -67,7 +65,7 @@ export function SaludEstudiantePage() {
             <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Agenda tu cita</p>
             <h2 className="m-0 text-[28px] font-semibold">Horarios disponibles</h2>
           </div>
-          <Link to="/estudiante/mis-citas" className="text-sm font-bold text-primary-soft">
+          <Link to="/mi-salud/mis-citas" className="text-sm font-bold text-primary-soft">
             Mis citas →
           </Link>
         </div>
@@ -115,47 +113,63 @@ export function SaludEstudiantePage() {
         </div>
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-2">
-        <div className="bg-white border border-gray-200 rounded-[22px] p-6">
-          <h2 className="m-0 mb-4 font-sans text-lg font-bold text-primary">Servicios de la Unidad de Salud</h2>
-          <ul className="list-none m-0 p-0 flex flex-col gap-3">
-            {(servicios || []).map((s) => (
-              <li key={s.id} className="flex gap-3">
-                <span className="w-10 h-10 rounded-xl bg-[#E3F4F1] text-[#0B6B61] flex items-center justify-center shrink-0">
-                  <Icono nombre="pulso" size={20} />
-                </span>
-                <span>
-                  <strong className="block text-ink-900">{s.nombre}</strong>
-                  <span className="text-sm text-ink-500">{s.descripcion}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-[22px] p-6">
-          <h2 className="m-0 mb-1 font-sans text-lg font-bold text-primary">Tus participaciones</h2>
-          <p className="m-0 mb-4 text-sm text-ink-500">Jornadas, campañas y atenciones registradas con tu correo institucional.</p>
-          {participaciones && !participaciones.vinculado && (
-            <p className="m-0 text-sm text-ink-500 bg-gray-50 rounded-xl p-4">
-              Aún no tienes participaciones asociadas a tu correo. Cuando asistas a una jornada, pide que registren tu correo institucional.
-            </p>
-          )}
-          {participaciones?.vinculado && participaciones.participaciones.length === 0 && (
-            <p className="m-0 text-sm text-ink-500 bg-gray-50 rounded-xl p-4">Todavía no hay participaciones registradas.</p>
-          )}
-          <ul className="list-none m-0 p-0 flex flex-col">
-            {participaciones?.participaciones?.slice(0, 8).map((p) => (
-              <li key={p.id} className="flex justify-between gap-3 py-2.5 border-t border-gray-100 first:border-t-0 text-sm">
-                <span>
-                  <strong className="block text-ink-900">{p.actividad}</strong>
-                  <span className="text-ink-500">{p.categoria}</span>
-                </span>
-                <span className="text-ink-500 shrink-0 capitalize">{formatearFecha(p.fecha)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+      <section className="bg-white border border-gray-200 rounded-[22px] p-6">
+        <h2 className="m-0 mb-4 font-sans text-lg font-bold text-primary">Servicios de la Unidad de Salud</h2>
+        <ul className="list-none m-0 p-0 grid gap-4 sm:grid-cols-3">
+          {(servicios || []).map((s) => (
+            <li key={s.id} className="flex gap-3">
+              <span className="w-10 h-10 rounded-xl bg-[#E3F4F1] text-[#0B6B61] flex items-center justify-center shrink-0">
+                <Icono nombre="pulso" size={20} />
+              </span>
+              <span>
+                <strong className="block text-ink-900">{s.nombre}</strong>
+                <span className="text-sm text-ink-500">{s.descripcion}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
       </section>
+    </main>
+  );
+}
+
+// Jornadas, campañas y atenciones en las que participó el estudiante (sin
+// datos clínicos), asociadas por su correo institucional.
+export function SaludParticipacionesPage() {
+  const [datos, setDatos] = useState(null);
+  useEffect(() => {
+    http
+      .get("/salud/estudiante/mis-participaciones")
+      .then((res) => setDatos(res.data))
+      .catch(() => setDatos({ vinculado: false, participaciones: [] }));
+  }, []);
+  return (
+    <main className="max-w-[900px] mx-auto px-5 sm:px-8 pt-8 pb-16">
+      <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Salud integral</p>
+      <h1 className="m-0 text-3xl font-semibold">Mis participaciones</h1>
+      <p className="mt-1.5 mb-6 text-ink-500">Jornadas, campañas y atenciones registradas con tu correo institucional.</p>
+      {!datos && <div className="h-32 bg-white/60 border border-gray-200 rounded-[22px] animate-pulse" />}
+      {datos && !datos.vinculado && (
+        <p className="text-ink-500 bg-white border border-gray-200 rounded-2xl p-6">
+          Aún no tienes participaciones asociadas a tu correo. Cuando asistas a una jornada, pide que registren tu correo institucional.
+        </p>
+      )}
+      {datos?.vinculado && datos.participaciones.length === 0 && (
+        <p className="text-ink-500 bg-white border border-gray-200 rounded-2xl p-6">Todavía no hay participaciones registradas.</p>
+      )}
+      {datos?.participaciones?.length > 0 && (
+        <ul className="list-none m-0 p-0 bg-white border border-gray-200 rounded-[22px] px-6 py-2">
+          {datos.participaciones.map((p) => (
+            <li key={p.id} className="flex justify-between gap-3 py-3.5 border-t border-gray-100 first:border-t-0 text-sm">
+              <span>
+                <strong className="block text-ink-900">{p.actividad}</strong>
+                <span className="text-ink-500">{p.categoria}</span>
+              </span>
+              <span className="text-ink-500 shrink-0 capitalize">{formatearFecha(p.fecha)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }

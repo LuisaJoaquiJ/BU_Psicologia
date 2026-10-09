@@ -72,12 +72,14 @@ async function crearCita(usuarioId, horarioId) {
 }
 
 // RF-006 / HU-11: citas propias del estudiante.
-async function listarMisCitas(usuarioId) {
-  return prisma.cita.findMany({
+// Cada modulo muestra solo sus citas (?modulo=desarrollo-humano | salud).
+async function listarMisCitas(usuarioId, modulo) {
+  const citas = await prisma.cita.findMany({
     where: { usuarioId },
     include: { horario: { include: { servicio: true } } },
     orderBy: { horario: { fecha: "desc" } },
   });
+  return modulo ? citas.filter((c) => moduloDeServicio(c.horario?.servicio) === modulo) : citas;
 }
 
 // RF-006 / HU-12: cancela una cita propia y libera el horario. Regla

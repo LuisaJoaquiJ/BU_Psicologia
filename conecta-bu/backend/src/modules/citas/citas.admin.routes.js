@@ -1,20 +1,20 @@
 const { Router } = require("express");
 const { authMiddleware } = require("../../common/middlewares/auth.middleware");
-const { requireRole } = require("../../common/middlewares/roles.middleware");
+const { requireModulo } = require("../../common/middlewares/roles.middleware");
 const { requireFields } = require("../../common/validators/validate");
 const { agendaAdmin, asistencia } = require("./citas.controller");
 
-const router = Router();
+// RN-008: la agenda de citas y el registro de asistencia son del personal de
+// cada modulo (Desarrollo humano en /admin/citas, Salud en /salud/citas).
+function crearRouterAgenda(modulo) {
+  const router = Router();
+  router.use(authMiddleware, requireModulo(modulo));
+  // RF-008 / HU-15
+  router.get("/", agendaAdmin);
+  // RF-008 / HU-16
+  router.patch("/:id/asistencia", requireFields(["asistio"]), asistencia);
+  return router;
+}
 
-// RN-008: la agenda administrativa y el registro de asistencia son
-// exclusivos de los roles administrativos; cada uno ve solo su modulo
-// (Administrador: Desarrollo humano; Salud: Salud integral).
-router.use(authMiddleware, requireRole("Administrador", "Salud"));
-
-// RF-008 / HU-15
-router.get("/", agendaAdmin);
-
-// RF-008 / HU-16
-router.patch("/:id/asistencia", requireFields(["asistio"]), asistencia);
-
-module.exports = router;
+module.exports = crearRouterAgenda("desarrollo-humano");
+module.exports.crearRouterAgenda = crearRouterAgenda;

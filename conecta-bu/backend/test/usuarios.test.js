@@ -1,4 +1,5 @@
 // Pruebas del Sprint 5 · RF-012: administracion de usuarios (RN-008).
+// La administracion de usuarios y roles es del superadministrador.
 
 jest.mock("../src/config/prisma", () => require("./mocks/prisma.mock"));
 const { configurarEntorno, crearUsuario, auth } = require("./helpers");
@@ -13,21 +14,23 @@ beforeEach(() => {
 });
 
 describe("RF-012: consulta de usuarios", () => {
-  test("un estudiante no puede consultar usuarios (403)", async () => {
+  test("un estudiante o el personal de un modulo no pueden consultar usuarios (403)", async () => {
     const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
     const res = await request(app).get("/api/v1/admin/usuarios").set(auth(token));
     expect(res.status).toBe(403);
+    const personal = crearUsuario("Administrador", "dh@uniautonoma.edu.co");
+    expect((await request(app).get("/api/v1/admin/usuarios").set(auth(personal.token))).status).toBe(403);
   });
 
   test("el administrador lista usuarios con su rol y puede filtrar", async () => {
-    const { token } = crearUsuario("Administrador", "admin@uniautonoma.edu.co");
+    const { token } = crearUsuario("SuperAdministrador", "admin@uniautonoma.edu.co");
     crearUsuario("Estudiante", "ana@uniautonoma.edu.co", "Ana Pérez");
     crearUsuario("Estudiante", "luis@uniautonoma.edu.co", "Luis Gómez");
 
     const todos = await request(app).get("/api/v1/admin/usuarios").set(auth(token));
     expect(todos.status).toBe(200);
     expect(todos.body.usuarios).toHaveLength(3);
-    expect(todos.body.roles).toEqual(expect.arrayContaining(["Estudiante", "Administrador"]));
+    expect(todos.body.roles).toEqual(expect.arrayContaining(["Estudiante", "Administrador", "SuperAdministrador"]));
     expect(todos.body.usuarios[0]).toEqual(
       expect.objectContaining({ email: expect.any(String), rol: expect.any(String), habilitado: true })
     );
@@ -42,7 +45,7 @@ describe("RF-012: consulta de usuarios", () => {
 
 describe("RF-012: cambio de rol y estado", () => {
   test("promueve un estudiante a administrador", async () => {
-    const admin = crearUsuario("Administrador", "admin@uniautonoma.edu.co");
+    const admin = crearUsuario("SuperAdministrador", "admin@uniautonoma.edu.co");
     const estudiante = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
 
     const res = await request(app)
@@ -55,7 +58,7 @@ describe("RF-012: cambio de rol y estado", () => {
   });
 
   test("rechaza un rol inexistente (400)", async () => {
-    const admin = crearUsuario("Administrador", "admin@uniautonoma.edu.co");
+    const admin = crearUsuario("SuperAdministrador", "admin@uniautonoma.edu.co");
     const estudiante = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
     const res = await request(app)
       .patch(`/api/v1/admin/usuarios/${estudiante.usuario.id}/rol`)
@@ -65,7 +68,7 @@ describe("RF-012: cambio de rol y estado", () => {
   });
 
   test("deshabilitar a un usuario le corta el acceso de inmediato", async () => {
-    const admin = crearUsuario("Administrador", "admin@uniautonoma.edu.co");
+    const admin = crearUsuario("SuperAdministrador", "admin@uniautonoma.edu.co");
     const estudiante = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
 
     const res = await request(app)
@@ -86,7 +89,7 @@ describe("RF-012: cambio de rol y estado", () => {
   });
 
   test("el administrador no puede cambiarse su propio rol ni deshabilitarse", async () => {
-    const admin = crearUsuario("Administrador", "admin@uniautonoma.edu.co");
+    const admin = crearUsuario("SuperAdministrador", "admin@uniautonoma.edu.co");
 
     const rol = await request(app)
       .patch(`/api/v1/admin/usuarios/${admin.usuario.id}/rol`)
@@ -101,9 +104,9 @@ describe("RF-012: cambio de rol y estado", () => {
     expect(estado.status).toBe(403);
   });
 
-  test("siempre debe quedar al menos un administrador habilitado", async () => {
-    const admin = crearUsuario("Administrador", "admin@uniautonoma.edu.co");
-    const otroAdmin = crearUsuario("Administrador", "admin2@uniautonoma.edu.co");
+  test("siempre debe quedar al menos un superadministrador habilitado", async () => {
+    const admin = crearUsuario("SuperAdministrador", "admin@uniautonoma.edu.co");
+    const otroAdmin = crearUsuario("SuperAdministrador", "admin2@uniautonoma.edu.co");
 
     // Con dos administradores, se puede deshabilitar a uno.
     const primero = await request(app)
@@ -121,7 +124,7 @@ describe("RF-012: cambio de rol y estado", () => {
   });
 
   test("habilitado debe ser booleano", async () => {
-    const admin = crearUsuario("Administrador", "admin@uniautonoma.edu.co");
+    const admin = crearUsuario("SuperAdministrador", "admin@uniautonoma.edu.co");
     const estudiante = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
     const res = await request(app)
       .patch(`/api/v1/admin/usuarios/${estudiante.usuario.id}/estado`)

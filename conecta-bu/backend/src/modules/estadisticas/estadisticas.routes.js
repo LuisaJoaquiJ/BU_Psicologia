@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const { authMiddleware } = require("../../common/middlewares/auth.middleware");
-const { requireRole } = require("../../common/middlewares/roles.middleware");
+const { requireModulo } = require("../../common/middlewares/roles.middleware");
 const { obtenerEstadisticas, obtenerInforme } = require("./estadisticas.service");
 const { generarExcel } = require("./informe.excel");
 const { generarPdf } = require("./informe.pdf");
@@ -9,7 +9,7 @@ const { listarEjecuciones } = require("../../integrations/n8n.client");
 
 const router = Router();
 
-router.use(authMiddleware, requireRole("Administrador"));
+router.use(authMiddleware, requireModulo("desarrollo-humano"));
 
 // RF-015: indicadores de participacion y asistencia (citas y eventos).
 router.get("/", async (req, res, next) => {

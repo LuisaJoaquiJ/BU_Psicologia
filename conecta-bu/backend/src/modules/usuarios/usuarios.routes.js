@@ -6,8 +6,9 @@ const { listar, cambiarRol, cambiarEstado } = require("./usuarios.controller");
 
 const router = Router();
 
-// RN-008: la administracion de usuarios es exclusiva del Administrador.
-router.use(authMiddleware, requireRole("Administrador"));
+// RN-008: la administracion de usuarios y roles es exclusiva del
+// superadministrador de Conecta BU (controla todos los modulos).
+router.use(authMiddleware, requireRole("SuperAdministrador"));
 
 // RF-012
 router.get("/", listar);

@@ -17,6 +17,9 @@ const estadisticasAdminRoutes = require("./modules/estadisticas/estadisticas.rou
 const asistenteRoutes = require("./modules/asistente/asistente.routes");
 const saludEstudianteRoutes = require("./modules/salud/salud.estudiante.routes");
 const saludRoutes = require("./modules/salud/salud.routes");
+const superRoutes = require("./modules/super/super.routes");
+const { crearRouterHorarios } = require("./modules/horarios/horarios.routes");
+const { crearRouterAgenda } = require("./modules/citas/citas.admin.routes");
 const { notFoundHandler, errorHandler } = require("./common/middlewares/error.middleware");
 
 const app = express();
@@ -50,6 +53,10 @@ app.use("/api/v1/admin/estadisticas", estadisticasAdminRoutes);
 app.use("/api/v1/asistente", asistenteRoutes);
 // Modulo Salud integral: vista del estudiante y panel del personal de salud.
 app.use("/api/v1/salud/estudiante", saludEstudianteRoutes);
+app.use("/api/v1/salud/horarios", crearRouterHorarios("salud"));
+app.use("/api/v1/salud/citas", crearRouterAgenda("salud"));
+// Superadministrador: accesos de cada modulo y vista general de Conecta BU.
+app.use("/api/v1/super", superRoutes);
 app.use("/api/v1/salud", saludRoutes);
 
 app.use(notFoundHandler);

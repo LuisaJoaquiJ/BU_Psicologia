@@ -29,6 +29,12 @@ async function authMiddleware(req, res, next) {
       throw new AppError(401, "Tu usuario no tiene acceso habilitado en Conecta BU.");
     }
 
+    // Modulos a los que tiene acceso el personal (asignados por correo).
+    const accesos = await prisma.accesoModulo.findMany({
+      where: { email: usuario.emailInstitucional.toLowerCase() },
+    });
+    usuario.modulos = accesos.map((a) => a.modulo);
+
     req.usuario = usuario;
     next();
   } catch (err) {

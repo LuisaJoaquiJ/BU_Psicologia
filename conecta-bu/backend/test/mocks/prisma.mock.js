@@ -22,7 +22,7 @@ function seedRoles() {
   roles = [
     { id: "rol-estudiante", nombre: "Estudiante" },
     { id: "rol-administrador", nombre: "Administrador" },
-    { id: "rol-salud", nombre: "Salud" },
+    { id: "rol-super", nombre: "SuperAdministrador" },
   ];
 }
 
@@ -72,6 +72,10 @@ function nombreRol(usuario) {
 
 function cumpleWhereUsuario(u, where = {}) {
   if (where.habilitado !== undefined && u.habilitado !== where.habilitado) return false;
+  const email = where.emailInstitucional;
+  if (typeof email === "string" && u.emailInstitucional !== email) return false;
+  if (email?.equals && u.emailInstitucional.toLowerCase() !== String(email.equals).toLowerCase()) return false;
+  if (email?.in && !email.in.includes(u.emailInstitucional)) return false;
   if (where.rol?.nombre && nombreRol(u) !== where.rol.nombre) return false;
   if (where.OR) {
     const coincide = where.OR.some((condicion) =>
@@ -165,6 +169,7 @@ const prisma = {
     findMany: async ({ where, include } = {}) =>
       usuarios.filter((u) => cumpleWhereUsuario(u, where)).map((u) => conRol(u, include)),
     count: async ({ where } = {}) => usuarios.filter((u) => cumpleWhereUsuario(u, where)).length,
+    findFirst: async ({ where, include } = {}) => conRol(usuarios.find((u) => cumpleWhereUsuario(u, where)), include) || null,
     update: async ({ where, data, include }) => {
       let actualizado = null;
       usuarios = usuarios.map((u) => {
@@ -423,13 +428,16 @@ const prisma = {
   },
   __reset: reset,
   __saludTablas: salud.tablas,
+  __darAcceso: (email, modulo) => salud.tablas.accesos.push({ id: `acceso-${++contador}`, email: email.toLowerCase(), modulo, asignadoPor: null, fechaAsignacion: new Date() }),
   __seedServicio: (data) => {
     contador += 1;
     const servicio = { id: `servicio-${contador}`, activo: true, descripcion: null, ...data };
     servicios.push(servicio);
     return servicio;
   },
-  __seedUsuario: (data) => {
+  // "modulos": accesos del personal; por defecto un Administrador tiene
+  // acceso a Desarrollo humano (como los administradores migrados).
+  __seedUsuario: ({ modulos, ...data }) => {
     contador += 1;
     const usuario = {
       id: `u-${contador}`,
@@ -439,6 +447,9 @@ const prisma = {
       ...data,
     };
     usuarios.push(usuario);
+    for (const m of modulos ?? (usuario.rolId === "rol-administrador" ? ["desarrollo-humano"] : [])) {
+      salud.tablas.accesos.push({ id: `acceso-${++contador}`, email: usuario.emailInstitucional.toLowerCase(), modulo: m, asignadoPor: null, fechaAsignacion: new Date() });
+    }
     return usuario;
   },
   __seedHorario: (data) => {

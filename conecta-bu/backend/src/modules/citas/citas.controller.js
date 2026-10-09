@@ -7,7 +7,7 @@ const {
   registrarAsistencia,
 } = require("./citas.service");
 const automatizaciones = require("../../integrations/automatizaciones");
-const { moduloSolicitado, moduloDeRol } = require("../../common/utils/modulos");
+const { moduloSolicitado } = require("../../common/utils/modulos");
 
 // RF-004 / HU-07
 async function horariosDisponibles(req, res, next) {
@@ -33,7 +33,7 @@ async function agendar(req, res, next) {
 // RF-006 / HU-11
 async function misCitas(req, res, next) {
   try {
-    const citas = await listarMisCitas(req.usuario.id);
+    const citas = await listarMisCitas(req.usuario.id, req.query.modulo);
     res.status(200).json({ citas });
   } catch (err) {
     next(err);
@@ -58,7 +58,7 @@ async function agendaAdmin(req, res, next) {
       fecha: req.query.fecha,
       servicioId: req.query.servicioId,
       estado: req.query.estado,
-      modulo: moduloDeRol(req.usuario.rol.nombre),
+      modulo: req.modulo,
     });
     res.status(200).json({ citas });
   } catch (err) {
@@ -69,7 +69,7 @@ async function agendaAdmin(req, res, next) {
 // RF-008 / HU-16
 async function asistencia(req, res, next) {
   try {
-    const cita = await registrarAsistencia(req.usuario.id, req.params.id, req.body.asistio, moduloDeRol(req.usuario.rol.nombre));
+    const cita = await registrarAsistencia(req.usuario.id, req.params.id, req.body.asistio, req.modulo);
     res.status(200).json({ cita });
   } catch (err) {
     next(err);

@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const { authMiddleware } = require("../../common/middlewares/auth.middleware");
-const { requireRole } = require("../../common/middlewares/roles.middleware");
+const { requireModulo } = require("../../common/middlewares/roles.middleware");
 const { requireFields } = require("../../common/validators/validate");
 const {
   crear,
@@ -16,7 +16,7 @@ const {
 const router = Router();
 
 // RN-008: la gestion de eventos y su asistencia es exclusiva del Administrador.
-router.use(authMiddleware, requireRole("Administrador"));
+router.use(authMiddleware, requireModulo("desarrollo-humano"));
 
 // RF-009
 router.get("/", listarAdmin);

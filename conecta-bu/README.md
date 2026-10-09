@@ -298,9 +298,9 @@ Reemplaza los Excel de la Unidad de Salud (registro general SPADIEZ,
 formulario de atención de enfermería, reporte SNIES e informe de gestión
 INFBI-002) y el formulario de asistencia.
 
-**Rol nuevo `Salud`** (personal de la Unidad de Salud). El administrador lo
-asigna en *Usuarios*, o se crea uno de prueba con `SALUD_EMAIL` en el seed.
-El panel está en `/salud`:
+**Acceso:** solo entra al panel `/salud` el personal cuyo correo fue asignado
+al módulo Salud por el superadministrador (ver *Módulos independientes y
+superadministrador*). El panel incluye:
 
 - **Registrar**: con la cédula o el código estudiantil (también lector de
   código de barras) la persona queda registrada al instante. Si es la primera
@@ -314,8 +314,8 @@ El panel está en `/salud`:
   registro fotográfico), plantilla SNIES y registro de atenciones; e
   **importador** de los Excel existentes (vista previa, sin duplicados).
 
-El estudiante agenda citas de salud en *Salud* (`/estudiante/salud`) y ve sus
-participaciones. Las citas se separan por módulo: se puede tener una cita de
+El estudiante tiene su propia área de Salud (`/mi-salud`): agenda citas de
+salud, ve *sus* citas de salud y sus participaciones. Las citas se separan por módulo: se puede tener una cita de
 orientación y una de salud a la vez.
 
 **Después de actualizar el código:**
@@ -330,7 +330,8 @@ npm run prisma:seed         # rol Salud, servicios y catálogo de actividades
 Variables opcionales en `backend/.env`:
 
 ```
-SALUD_EMAIL=enfermeria@uniautonoma.edu.co   # usuario de salud de prueba (seed)
+SUPERADMIN_EMAIL=tu-correo@uniautonoma.edu.co  # superadministrador (seed)
+SALUD_EMAIL=enfermeria@uniautonoma.edu.co   # personal de Salud de prueba (seed)
 SALUD_NOMBRE=Personal de Salud
 SALUD_UPLOADS_DIR=                          # carpeta de evidencias (por defecto backend/uploads)
 SALUD_MAX_EVIDENCIA_MB=10
@@ -338,3 +339,29 @@ SALUD_MAX_EVIDENCIA_MB=10
 
 Las evidencias se guardan en `backend/uploads/` (ignorada por git). En el
 despliegue hay que apuntar `SALUD_UPLOADS_DIR` a un volumen persistente.
+
+## Módulos independientes y superadministrador
+
+Conecta BU agrupa varios módulos de Bienestar que **no se mezclan**:
+Desarrollo humano y orientación (`/estudiante` para estudiantes, `/admin`
+para su personal) y Salud integral (`/mi-salud` y `/salud`). Cada uno tiene
+su menú, sus citas y sus reportes; el portal (`/`) permite cambiar de módulo.
+
+**Roles**
+
+| Rol | Qué puede hacer |
+|---|---|
+| Estudiante | Entra al área de estudiante de los módulos disponibles. |
+| Administrador (personal) | Entra **solo** al panel de los módulos cuyo acceso le asignaron por correo. |
+| SuperAdministrador | Entra a todos los módulos, asigna el personal de cada uno (`/super/accesos`) y administra usuarios y roles (`/super/usuarios`). |
+
+El superadministrador asigna correos institucionales a cada módulo; se puede
+asignar a alguien que todavía no ha entrado. Al quitarle todos los accesos,
+la persona vuelve a ser estudiante. El backend lo valida en cada petición
+(`403 SIN_ACCESO_MODULO`).
+
+**Al actualizar:** `npx prisma migrate dev` aplica la migración
+`accesos_modulo`, que crea el rol SuperAdministrador y conserva el acceso a
+Desarrollo humano de los administradores que ya existían. Para crear el
+primer superadministrador, define `SUPERADMIN_EMAIL` en `backend/.env` y
+ejecuta `npm run prisma:seed`.

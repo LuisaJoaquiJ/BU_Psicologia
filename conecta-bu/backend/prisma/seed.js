@@ -1,60 +1,55 @@
-// Crea los dos roles iniciales (Estudiante, Administrador) definidos en F-02 / F-03.
+// Roles de Conecta BU: Estudiante, Administrador (personal de un modulo) y
+// SuperAdministrador (controla todos los modulos y asigna los accesos).
 // Ejecutar con: npm run prisma:seed
-// Opcional: define ADMIN_EMAIL y ADMIN_NOMBRE en .env para crear/promover un administrador de prueba.
+// Opcional en .env (cada uno crea o actualiza un usuario de prueba):
+//   SUPERADMIN_EMAIL / SUPERADMIN_NOMBRE -> superadministrador
+//   ADMIN_EMAIL / ADMIN_NOMBRE           -> personal de Desarrollo humano y orientacion
+//   SALUD_EMAIL / SALUD_NOMBRE           -> personal de Salud integral
 
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
+async function rol(nombre) {
+  return prisma.rol.upsert({ where: { nombre }, update: {}, create: { nombre } });
+}
+
+async function usuarioDePrueba(email, nombre, rolId) {
+  return prisma.usuario.upsert({
+    where: { emailInstitucional: email },
+    update: { rolId, habilitado: true },
+    create: { emailInstitucional: email, nombre, rolId },
+  });
+}
+
+async function darAcceso(email, modulo) {
+  await prisma.accesoModulo.upsert({
+    where: { email_modulo: { email: email.toLowerCase(), modulo } },
+    update: {},
+    create: { email: email.toLowerCase(), modulo, asignadoPor: "seed" },
+  });
+}
+
 async function main() {
-  const estudiante = await prisma.rol.upsert({
-    where: { nombre: "Estudiante" },
-    update: {},
-    create: { nombre: "Estudiante" },
-  });
+  const estudiante = await rol("Estudiante");
+  const administrador = await rol("Administrador");
+  const superadmin = await rol("SuperAdministrador");
+  console.log("Roles listos:", [estudiante.nombre, administrador.nombre, superadmin.nombre].join(", "));
 
-  const administrador = await prisma.rol.upsert({
-    where: { nombre: "Administrador" },
-    update: {},
-    create: { nombre: "Administrador" },
-  });
-
-  // Modulo Salud integral: rol del personal de salud (enfermeria).
-  const salud = await prisma.rol.upsert({
-    where: { nombre: "Salud" },
-    update: {},
-    create: { nombre: "Salud" },
-  });
-
-  console.log("Roles listos:", { estudiante: estudiante.id, administrador: administrador.id, salud: salud.id });
-
-  // Opcional: SALUD_EMAIL / SALUD_NOMBRE crean un usuario del personal de salud de prueba.
-  if (process.env.SALUD_EMAIL) {
-    const personal = await prisma.usuario.upsert({
-      where: { emailInstitucional: process.env.SALUD_EMAIL },
-      update: { rolId: salud.id, habilitado: true },
-      create: {
-        emailInstitucional: process.env.SALUD_EMAIL,
-        nombre: process.env.SALUD_NOMBRE || "Personal de Salud",
-        rolId: salud.id,
-      },
-    });
-    console.log("Usuario de salud listo:", personal.emailInstitucional);
-  }
-
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (adminEmail) {
-    const admin = await prisma.usuario.upsert({
-      where: { emailInstitucional: adminEmail },
-      update: { rolId: administrador.id, habilitado: true },
-      create: {
-        emailInstitucional: adminEmail,
-        nombre: process.env.ADMIN_NOMBRE || "Administrador Conecta BU",
-        rolId: administrador.id,
-      },
-    });
-    console.log("Usuario administrador listo:", admin.emailInstitucional);
+  if (process.env.SUPERADMIN_EMAIL) {
+    const u = await usuarioDePrueba(process.env.SUPERADMIN_EMAIL, process.env.SUPERADMIN_NOMBRE || "Superadministrador Conecta BU", superadmin.id);
+    console.log("Superadministrador listo:", u.emailInstitucional);
   } else {
-    console.log("No se definio ADMIN_EMAIL en .env: no se creo administrador de prueba.");
+    console.log("No se definio SUPERADMIN_EMAIL: no se creo superadministrador.");
+  }
+  if (process.env.ADMIN_EMAIL) {
+    const u = await usuarioDePrueba(process.env.ADMIN_EMAIL, process.env.ADMIN_NOMBRE || "Administrador Desarrollo Humano", administrador.id);
+    await darAcceso(u.emailInstitucional, "desarrollo-humano");
+    console.log("Personal de Desarrollo humano listo:", u.emailInstitucional);
+  }
+  if (process.env.SALUD_EMAIL) {
+    const u = await usuarioDePrueba(process.env.SALUD_EMAIL, process.env.SALUD_NOMBRE || "Personal de Salud", administrador.id);
+    await darAcceso(u.emailInstitucional, "salud");
+    console.log("Personal de Salud listo:", u.emailInstitucional);
   }
 
   await seedServiciosYHorarios();

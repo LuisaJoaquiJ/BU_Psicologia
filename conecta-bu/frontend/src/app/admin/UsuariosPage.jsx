@@ -66,7 +66,10 @@ export function UsuariosPage() {
   return (
     <main className="max-w-6xl mx-auto p-6 lg:p-10">
       <h1 className="text-3xl font-semibold text-primary mb-1">Usuarios</h1>
-      <p className="text-gray-500 mb-6">Consulta los usuarios de Conecta BU y gestiona su rol y acceso.</p>
+      <p className="text-gray-500 mb-6">
+        Consulta los usuarios de Conecta BU, habilítalos o deshabilítalos y define quién es superadministrador. El personal de cada
+        módulo se asigna por correo en <a href="/super/accesos" className="font-semibold text-primary-soft">Accesos por módulo</a>.
+      </p>
 
       <form onSubmit={buscar} className="flex items-end gap-3 mb-6 flex-wrap">
         <label className="flex flex-col gap-1 text-sm text-gray-600 grow sm:grow-0 sm:w-72">
@@ -145,7 +148,7 @@ export function UsuariosPage() {
                       >
                         {roles.map((r) => (
                           <option key={r} value={r}>
-                            {r}
+                            {{ Administrador: "Personal (según accesos)", SuperAdministrador: "Superadministrador" }[r] || r}
                           </option>
                         ))}
                       </select>

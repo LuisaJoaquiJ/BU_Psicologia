@@ -6,7 +6,9 @@ const FORM_VACIO = { servicioId: "", fecha: "", horaInicio: "", horaFin: "", cup
 
 // RF-007 · HU-13, HU-14: el administrador publica horarios de atención y
 // puede modificarlos o deshabilitarlos/habilitarlos despues.
-export function GestionHorariosPage() {
+// "api" y "modulo" permiten usar la misma pantalla en Desarrollo humano
+// (/admin) y en Salud integral (/salud), cada una con sus servicios.
+export function GestionHorariosPage({ api = "/admin", modulo = "desarrollo-humano" }) {
   const [servicios, setServicios] = useState([]);
   const [horarios, setHorarios] = useState(null);
   const [form, setForm] = useState(FORM_VACIO);
@@ -18,13 +20,13 @@ export function GestionHorariosPage() {
 
   function cargarHorarios() {
     return http
-      .get("/admin/horarios")
+      .get(`${api}/horarios`)
       .then((res) => setHorarios(res.data.horarios))
       .catch(() => setError("No fue posible cargar los horarios."));
   }
 
   useEffect(() => {
-    http.get("/servicios").then((res) => {
+    http.get("/servicios", { params: { modulo } }).then((res) => {
       setServicios(res.data.servicios);
       setForm((f) => ({ ...f, servicioId: f.servicioId || res.data.servicios[0]?.id || "" }));
     });
@@ -36,7 +38,7 @@ export function GestionHorariosPage() {
     setError("");
     setEnviando(true);
     try {
-      await http.post("/admin/horarios", form);
+      await http.post(`${api}/horarios`, form);
       setForm((f) => ({ ...FORM_VACIO, servicioId: f.servicioId }));
       await cargarHorarios();
     } catch (err) {
@@ -61,7 +63,7 @@ export function GestionHorariosPage() {
     setError("");
     setAccionando(id);
     try {
-      await http.patch(`/admin/horarios/${id}`, formEdicion);
+      await http.patch(`${api}/horarios/${id}`, formEdicion);
       setEditandoId(null);
       await cargarHorarios();
     } catch (err) {
@@ -76,9 +78,9 @@ export function GestionHorariosPage() {
     setAccionando(horario.id);
     try {
       if (horario.ocupado) {
-        await http.patch(`/admin/horarios/${horario.id}/habilitar`);
+        await http.patch(`${api}/horarios/${horario.id}/habilitar`);
       } else {
-        await http.patch(`/admin/horarios/${horario.id}/deshabilitar`, {});
+        await http.patch(`${api}/horarios/${horario.id}/deshabilitar`, {});
       }
       await cargarHorarios();
     } catch (err) {
@@ -88,7 +90,7 @@ export function GestionHorariosPage() {
       if (err.response?.status === 409 && mensaje.toLowerCase().includes("confirma")) {
         if (window.confirm(`${mensaje}\n\n¿Deseas continuar de todas formas?`)) {
           try {
-            await http.patch(`/admin/horarios/${horario.id}/deshabilitar`, { confirmar: true });
+            await http.patch(`${api}/horarios/${horario.id}/deshabilitar`, { confirmar: true });
             await cargarHorarios();
           } catch (err2) {
             setError(err2.response?.data?.message || "No fue posible deshabilitar el horario.");

@@ -15,7 +15,7 @@ function hoyISO() {
 
 // RF-008 · HU-15, HU-16: agenda administrativa del dia (con filtro por
 // fecha) y registro de asistencia de cada cita agendada.
-export function AgendaAdminPage() {
+export function AgendaAdminPage({ api = "/admin" }) {
   const [fecha, setFecha] = useState(hoyISO());
   const [citas, setCitas] = useState(null);
   const [error, setError] = useState("");
@@ -24,7 +24,7 @@ export function AgendaAdminPage() {
   function cargarAgenda(fechaFiltro) {
     setCitas(null);
     return http
-      .get("/admin/citas", { params: fechaFiltro ? { fecha: fechaFiltro } : {} })
+      .get(`${api}/citas`, { params: fechaFiltro ? { fecha: fechaFiltro } : {} })
       .then((res) => setCitas(res.data.citas))
       .catch(() => setError("No fue posible cargar la agenda."));
   }
@@ -44,7 +44,7 @@ export function AgendaAdminPage() {
     setError("");
     setRegistrando(citaId);
     try {
-      await http.patch(`/admin/citas/${citaId}/asistencia`, { asistio });
+      await http.patch(`${api}/citas/${citaId}/asistencia`, { asistio });
       await cargarAgenda(fecha);
     } catch (err) {
       setError(err.response?.data?.message || "No fue posible registrar la asistencia.");

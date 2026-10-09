@@ -31,7 +31,9 @@ function Encabezado() {
           <div className="flex items-center gap-3 min-w-0">
             <span className="hidden sm:block text-right leading-tight min-w-0">
               <span className="block text-sm font-semibold text-ink-900 truncate max-w-[220px]">{usuario?.nombre}</span>
-              <span className="block text-xs text-accent font-semibold">{usuario?.rol}</span>
+              <span className="block text-xs text-accent font-semibold">
+                {{ Administrador: "Personal", SuperAdministrador: "Superadministrador" }[usuario?.rol] || usuario?.rol}
+              </span>
             </span>
             <span className="w-10 h-10 rounded-full bg-gold text-primary font-bold text-sm flex items-center justify-center shrink-0">
               {iniciales(usuario?.nombre)}
@@ -96,11 +98,17 @@ function Hero() {
             Corporación Universitaria Autónoma del Cauca
           </p>
           <p className="m-0 text-lg leading-relaxed text-[#D6DDEC] max-w-[540px]">
-            {usuario ? (
+            {usuario && habilitados.length > 0 ? (
               <>
-                Hola, <strong className="text-white">{nombre}</strong>. Tienes habilitado{" "}
-                <strong className="text-white">{listaNatural(habilitados)}</strong>. Los demás módulos aparecerán aquí a medida
-                que se activen.
+                Hola, <strong className="text-white">{nombre}</strong>.{" "}
+                {usuario.rol === "Estudiante" ? "Puedes entrar a " : "Tienes acceso al panel de "}
+                <strong className="text-white">{listaNatural(habilitados)}</strong>. Cada módulo es independiente: elige a cuál
+                quieres entrar.
+              </>
+            ) : usuario ? (
+              <>
+                Hola, <strong className="text-white">{nombre}</strong>. Todavía no tienes módulos asignados. Pide al superadministrador de
+                Conecta BU que asigne tu correo.
               </>
             ) : (
               <>
@@ -110,6 +118,15 @@ function Hero() {
             )}
           </p>
           <div className="flex gap-3 flex-wrap mt-1">
+            {usuario?.rol === "SuperAdministrador" && (
+              <Link
+                to="/super"
+                className="bg-white text-primary font-bold text-[15px] px-6 min-h-[50px] rounded-full inline-flex items-center gap-2 hover:bg-gold-soft"
+              >
+                <Icono nombre="escudo" size={18} strokeWidth={2.2} />
+                Panel de superadministrador
+              </Link>
+            )}
             {usuario && principal ? (
               <Link
                 to={rutaModulo(principal, usuario)}
@@ -118,7 +135,7 @@ function Hero() {
                 Entrar a {principal.corto}
                 <Icono nombre="flecha" size={18} strokeWidth={2.2} />
               </Link>
-            ) : (
+            ) : usuario ? null : (
               <Link
                 to="/login"
                 className="bg-gold text-primary font-bold text-[15px] px-6 min-h-[50px] rounded-full inline-flex items-center hover:brightness-95"
@@ -244,7 +261,7 @@ function TarjetaModulo({ modulo, destacada }) {
         )}
         <div className="mt-auto pt-1">
           {disponible && !ruta ? (
-            <span className="text-[13px] font-semibold text-ink-500">Disponible para estudiantes y para el equipo del módulo</span>
+            <span className="text-[13px] font-semibold text-ink-500">Solo para el personal asignado a este módulo</span>
           ) : disponible ? (
             <Link
               to={ruta}

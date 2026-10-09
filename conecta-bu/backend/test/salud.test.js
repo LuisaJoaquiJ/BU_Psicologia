@@ -60,11 +60,17 @@ async function crearPersona(datos = {}) {
 }
 
 describe("Salud integral: acceso", () => {
-  test("solo el personal de salud entra al modulo", async () => {
+  test("solo el personal con acceso a Salud (o el superadministrador) entra al modulo", async () => {
     const est = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
     const admin = crearUsuario("Administrador", "a@uniautonoma.edu.co");
+    const superadmin = crearUsuario("SuperAdministrador", "s@uniautonoma.edu.co");
     expect((await api("get", "/catalogos", est.token)).status).toBe(403);
-    expect((await api("get", "/catalogos", admin.token)).status).toBe(403);
+    const sinAcceso = await api("get", "/catalogos", admin.token);
+    expect(sinAcceso.status).toBe(403);
+    expect(sinAcceso.body.codigo).toBe("SIN_ACCESO_MODULO");
+    expect((await api("get", "/catalogos", superadmin.token)).status).toBe(200);
+    // Y el personal de Salud no entra al panel de Desarrollo humano.
+    expect((await request(app).get("/api/v1/admin/estadisticas").set(auth(salud.token))).status).toBe(403);
     const ok = await api("get", "/catalogos");
     expect(ok.status).toBe(200);
     expect(ok.body.programas.length).toBeGreaterThan(10);
@@ -396,7 +402,7 @@ describe("Citas por modulo (Desarrollo humano y Salud)", () => {
     const horarios = await request(app).get("/api/v1/citas/horarios-disponibles?modulo=salud").set(auth(est.token));
     expect(horarios.body.horarios).toHaveLength(1);
 
-    const comoSalud = await request(app).get("/api/v1/admin/horarios").set(auth(salud.token));
+    const comoSalud = await request(app).get("/api/v1/salud/horarios").set(auth(salud.token));
     expect(comoSalud.body.horarios.every((h) => h.servicio.modulo === "salud")).toBe(true);
     const admin = crearUsuario("Administrador", "a@uniautonoma.edu.co");
     const comoAdmin = await request(app).get("/api/v1/admin/horarios").set(auth(admin.token));
@@ -407,10 +413,15 @@ describe("Citas por modulo (Desarrollo humano y Salud)", () => {
     const { servicio } = horarioSalud();
     const admin = crearUsuario("Administrador", "a@uniautonoma.edu.co");
     const datos = { servicioId: servicio.id, fecha: diasDesdeHoy(6).toISOString().slice(0, 10), horaInicio: "10:00", horaFin: "10:30" };
+    // El personal de Desarrollo humano no entra a la agenda de Salud...
+    expect((await request(app).post("/api/v1/salud/horarios").set(auth(admin.token)).send(datos)).status).toBe(403);
+    // ...ni puede publicar un servicio de Salud desde su propio modulo.
     expect((await request(app).post("/api/v1/admin/horarios").set(auth(admin.token)).send(datos)).status).toBe(403);
-    expect((await request(app).post("/api/v1/admin/horarios").set(auth(salud.token)).send(datos)).status).toBe(201);
+    expect((await request(app).post("/api/v1/salud/horarios").set(auth(salud.token)).send(datos)).status).toBe(201);
+    // Y el personal de Salud no entra a la agenda de Desarrollo humano.
     const dh = { ...datos, servicioId: "servicio-1" };
     expect((await request(app).post("/api/v1/admin/horarios").set(auth(salud.token)).send(dh)).status).toBe(403);
+    expect((await request(app).post("/api/v1/salud/horarios").set(auth(salud.token)).send(dh)).status).toBe(403);
   });
 
   test("RN-004 por modulo: una cita de orientacion y una de salud a la vez", async () => {
@@ -423,7 +434,7 @@ describe("Citas por modulo (Desarrollo humano y Salud)", () => {
     expect((await request(app).post("/api/v1/citas").set(auth(est.token)).send({ horarioId: otro.id })).status).toBe(409);
 
     // La agenda de Salud solo muestra citas de Salud.
-    const agenda = await request(app).get("/api/v1/admin/citas").set(auth(salud.token));
+    const agenda = await request(app).get("/api/v1/salud/citas").set(auth(salud.token));
     expect(agenda.body.citas).toHaveLength(1);
     expect(agenda.body.citas[0].horario.servicio.modulo).toBe("salud");
   });

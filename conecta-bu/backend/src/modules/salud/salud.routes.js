@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const multer = require("multer");
 const { authMiddleware } = require("../../common/middlewares/auth.middleware");
-const { requireRole } = require("../../common/middlewares/roles.middleware");
+const { requireModulo } = require("../../common/middlewares/roles.middleware");
 const { AppError } = require("../../common/utils/AppError");
 const catalogos = require("./catalogos");
 const personas = require("./personas.service");
@@ -14,7 +14,7 @@ const { importarExcel } = require("./importador.service");
 // Modulo Salud integral (/api/v1/salud). Todo es exclusivo del rol "Salud"
 // (personal de la Unidad de Salud): maneja datos personales y de salud.
 const router = Router();
-router.use(authMiddleware, requireRole("Salud"));
+router.use(authMiddleware, requireModulo("salud"));
 
 const manejar = (fn) => async (req, res, next) => {
   try {
