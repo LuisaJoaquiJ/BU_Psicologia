@@ -2,3 +2,7 @@ node_modules/
 .env
 dist/
 coverage/
+.claude/
+
+# Material de trabajo (capturas, informes de ejemplo), no es codigo del proyecto
+Claude outputs/

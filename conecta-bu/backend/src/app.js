@@ -6,6 +6,8 @@ const morgan = require("morgan");
 const { config } = require("./config/env");
 const authRoutes = require("./modules/auth/auth.routes");
 const adminRoutes = require("./modules/admin/admin.routes");
+const serviciosRoutes = require("./modules/servicios/servicios.routes");
+const citasRoutes = require("./modules/citas/citas.routes");
 const { notFoundHandler, errorHandler } = require("./common/middlewares/error.middleware");
 
 const app = express();
@@ -21,6 +23,8 @@ app.get("/api/v1/health", (req, res) => {
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/servicios", serviciosRoutes);
+app.use("/api/v1/citas", citasRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
