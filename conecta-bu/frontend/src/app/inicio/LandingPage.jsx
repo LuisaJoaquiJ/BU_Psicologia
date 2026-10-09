@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
+import { useAuth } from "../../lib/auth/AuthContext";
 import { formatearHora } from "../../lib/format";
 import { IMAGENES } from "../../lib/imagenes";
 import { Logo } from "../../components/Logo";
@@ -171,19 +172,28 @@ function Carrusel() {
 }
 
 export function ProximosEventos() {
+  const { estaAutenticado } = useAuth();
   const [eventos, setEventos] = useState(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     http
       .get("/eventos/publicos")
       .then((res) => setEventos(res.data.eventos.slice(0, 3)))
-      .catch(() => setEventos([]));
+      .catch(() => {
+        setError(true);
+        setEventos([]);
+      });
   }, []);
 
   if (eventos && eventos.length === 0) {
     return (
       <p className="text-ink-500 bg-white border border-gray-200 rounded-2xl p-6">
-        Pronto publicaremos nuevos eventos. Inicia sesión para recibir la agenda del campus.
+        {error
+          ? "No pudimos cargar la agenda en este momento. Intenta de nuevo en unos minutos."
+          : estaAutenticado
+          ? "Pronto publicaremos nuevos eventos."
+          : "Pronto publicaremos nuevos eventos. Inicia sesión para recibir la agenda del campus."}
       </p>
     );
   }
@@ -198,7 +208,7 @@ export function ProximosEventos() {
                 i % 2 ? "bg-gold text-primary" : "bg-primary text-white"
               }`}
             >
-              <span className="font-display text-3xl font-semibold leading-none">
+              <span className="font-display text-3xl font-semibold leading-none tabular-nums">
                 {new Date(evento.fecha).getUTCDate().toString().padStart(2, "0")}
               </span>
               <span className={`text-xs font-bold tracking-widest ${i % 2 ? "" : "text-gold"}`}>
@@ -218,7 +228,7 @@ export function ProximosEventos() {
                     style={{ width: `${Math.round(((evento.cupos - evento.cuposDisponibles) / evento.cupos) * 100)}%` }}
                   />
                 </div>
-                <span className="text-[13px] font-bold text-primary">{evento.cuposDisponibles} cupos</span>
+                <span className="text-[13px] font-bold text-primary tabular-nums">{evento.cuposDisponibles} cupos</span>
               </div>
             </div>
           </article>

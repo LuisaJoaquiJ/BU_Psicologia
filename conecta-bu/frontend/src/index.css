@@ -13,6 +13,18 @@
   h2 {
     @apply font-display tracking-tight text-primary;
   }
+  /* Superficies del navegador con la paleta: seleccion y foco de teclado.
+     El anillo doble (dorado por fuera del borde, azul encima) se ve tanto
+     sobre el marfil como sobre los fondos azules. */
+  ::selection {
+    background: #f7df9e;
+    color: #0b2a5b;
+  }
+  :focus-visible {
+    outline: 2px solid #0b2a5b;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px #e8b23a;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
