@@ -277,6 +277,12 @@ function TarjetaModulo({ modulo, destacada }) {
           ) : (
             <span className="text-[13px] font-semibold text-ink-500">En construcción por el equipo del módulo</span>
           )}
+          {disponible && modulo.extra && (
+            <Link to={modulo.extra.to} className="mt-3 flex items-center gap-1.5 text-sm font-bold text-primary-soft hover:underline w-fit">
+              <Icono nombre="bus" size={17} strokeWidth={2} />
+              {modulo.extra.label}
+            </Link>
+          )}
         </div>
       </div>
     </article>

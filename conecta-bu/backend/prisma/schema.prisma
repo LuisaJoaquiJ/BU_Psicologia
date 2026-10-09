@@ -37,6 +37,7 @@ model Usuario {
   historial                    HistorialEstado[]
   atencionesSaludRegistradas   AtencionSalud[]    @relation("atencionSaludRegistradaPor")
   evidenciasSaludSubidas       EvidenciaSalud[]   @relation("evidenciaSaludSubidaPor")
+  reportesSst                  ReporteSST[]       @relation("reporteSstReportadoPor")
 
   @@map("usuarios")
 }
@@ -359,4 +360,119 @@ model AccesoModulo {
   @@unique([email, modulo])
   @@index([email])
   @@map("accesos_modulo")
+}
+
+// ---------------------------------------------------------------------------
+// Salidas institucionales y reportes SST (Salud integral). Reemplaza el
+// formulario de Google "0 SALUD INTEGRAL": salidas con estudiantes (local,
+// regional, nacional, internacional), salidas en representacion de la
+// Institucion, traslados de docentes de posgrados y condiciones inseguras.
+// Lo diligencia cualquier persona de la Institucion y lo revisa el personal
+// de Salud (verificacion de documentos, reporte a la ARL o ASIST CARD).
+// ---------------------------------------------------------------------------
+
+enum TipoReporteSST {
+  SalidaEstudiantesLocal
+  SalidaEstudiantesRegional
+  SalidaEstudiantesNacional
+  SalidaEstudiantesInternacional
+  RepresentacionNacional
+  RepresentacionInternacional
+  TrasladoPosgrados
+  CondicionInsegura
+}
+
+enum EstadoReporteSST {
+  Recibido
+  Verificado
+  RequiereAjustes
+  Cerrado
+}
+
+enum MedioTransporteSST {
+  Publico
+  Particular
+  Institucional
+  Aereo
+  Caminando
+}
+
+model ReporteSST {
+  id                   String              @id @default(uuid())
+  consecutivo          Int                 @unique @default(autoincrement())
+  tipo                 TipoReporteSST
+  estado               EstadoReporteSST    @default(Recibido)
+  reportadoPorId       String
+  reportadoPor         Usuario             @relation("reporteSstReportadoPor", fields: [reportadoPorId], references: [id])
+  // Datos de quien reporta.
+  correo               String              @db.VarChar(120)
+  nombreReporta        String              @db.VarChar(200)
+  celular              String              @db.VarChar(30)
+  area                 String              @db.VarChar(120)
+  // Quien viaja o el docente a cargo, y los demas (colaboradores o docentes).
+  responsableNombre    String?             @db.VarChar(200)
+  responsableTipoDoc   String?             @db.VarChar(5)
+  responsableDocumento String?             @db.VarChar(30)
+  acompanantes         Json?
+  numeroEstudiantes    Int?
+  // La salida o el traslado.
+  evento               String?             @db.VarChar(200)
+  motivo               String?             @db.Text
+  pais                 String?             @db.VarChar(80)
+  ciudadOrigen         String?             @db.VarChar(120)
+  destino              String?             @db.VarChar(200)
+  lugarDestino         String?             @db.VarChar(200)
+  fechaSalida          DateTime?           @db.Date
+  fechaRegreso         DateTime?           @db.Date
+  horaSalida           String?             @db.VarChar(5)
+  horaRegreso          String?             @db.VarChar(5)
+  medioTransporte      MedioTransporteSST?
+  transporteEmpresa    String?             @db.VarChar(200)
+  conductor            String?             @db.VarChar(200)
+  placa                String?             @db.VarChar(15)
+  // Condicion insegura.
+  lugarEvento          String?             @db.VarChar(200)
+  fechaEvento          DateTime?           @db.Date
+  horaEvento           String?             @db.VarChar(5)
+  afectado             String?             @db.VarChar(200)
+  cargo                String?             @db.VarChar(120)
+  descripcion          String?             @db.Text
+  clasificacion        String?             @db.VarChar(30)
+  potencial            String?             @db.VarChar(10)
+  medidaControl        String?             @db.Text
+  // Anticipacion con la que se reporto la salida (3 o 5 dias segun el tipo).
+  diasAnticipacion     Int?
+  fueraDeTiempo        Boolean             @default(false)
+  consentimientoDatos  Boolean             @default(false)
+  // Revision del personal de Salud.
+  gestionExterna       Boolean             @default(false)
+  observacionRevision  String?             @db.Text
+  revisadoPor          String?             @db.VarChar(120)
+  fechaRevision        DateTime?
+  fechaCreacion        DateTime            @default(now())
+  fechaActualizacion   DateTime            @updatedAt
+
+  adjuntos AdjuntoReporteSST[]
+
+  @@index([estado])
+  @@index([fechaSalida])
+  @@index([reportadoPorId])
+  @@map("sst_reportes")
+}
+
+model AdjuntoReporteSST {
+  id            String     @id @default(uuid())
+  reporteId     String
+  reporte       ReporteSST @relation(fields: [reporteId], references: [id], onDelete: Cascade)
+  // Licencia, TarjetaPropiedad, Tecnomecanica, Soat, Vuelo, Movilidad, Poliza, Listado, Evidencia.
+  tipo          String     @db.VarChar(40)
+  nombreArchivo String     @db.VarChar(255)
+  ruta          String     @db.VarChar(400)
+  tipoMime      String     @db.VarChar(100)
+  tamanoBytes   Int
+  subidoPorId   String?
+  fechaSubida   DateTime   @default(now())
+
+  @@index([reporteId])
+  @@map("sst_adjuntos")
 }

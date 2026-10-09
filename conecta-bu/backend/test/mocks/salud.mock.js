@@ -70,7 +70,8 @@ function errorUnico(campos) {
 }
 
 function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
-  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [] };
+  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [] };
+  let consecutivoSst = 0;
 
   const usuarioPorId = (id) => {
     const u = obtenerUsuarios().find((x) => x.id === id);
@@ -92,6 +93,13 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       registradoPor: (r, o) => (r.registradoPorId ? seleccionar(usuarioPorId(r.registradoPorId), o?.select) : null),
     },
     accesos: {},
+    reportesSst: {
+      adjuntos: (r, o) => listar("adjuntosSst", { ...(o === true ? {} : o), where: { ...(o?.where || {}), reporteId: r.id } }),
+      reportadoPor: (r, o) => seleccionar(usuarioPorId(r.reportadoPorId), o?.select),
+    },
+    adjuntosSst: {
+      reporte: (r) => clonar(tablas.reportesSst.find((x) => x.id === r.reporteId)),
+    },
     evidencias: {
       actividad: (r) => clonar(tablas.actividades.find((a) => a.id === r.actividadId)),
       subidoPor: (r, o) => (r.subidoPorId ? seleccionar(usuarioPorId(r.subidoPorId), o?.select) : null),
@@ -104,6 +112,8 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     atenciones: [],
     evidencias: [],
     accesos: [["email", "modulo"]],
+    reportesSst: [["consecutivo"]],
+    adjuntosSst: [],
   };
 
   const defaults = {
@@ -152,6 +162,24 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     }),
     evidencias: () => ({ descripcion: null, subidoPorId: null, fechaSubida: new Date() }),
     accesos: () => ({ asignadoPor: null, fechaAsignacion: new Date() }),
+    reportesSst: () => ({
+      consecutivo: ++consecutivoSst,
+      estado: "Recibido",
+      acompanantes: null,
+      gestionExterna: false,
+      observacionRevision: null,
+      revisadoPor: null,
+      fechaRevision: null,
+      fueraDeTiempo: false,
+      fechaCreacion: new Date(),
+      fechaActualizacion: new Date(),
+    }),
+    adjuntosSst: () => ({ subidoPorId: null, fechaSubida: new Date() }),
+  };
+
+  // Relaciones creadas en el mismo create ({ adjuntos: { create: [...] } }).
+  const anidados = {
+    reportesSst: { adjuntos: { tabla: "adjuntosSst", prefijo: "adjunto-sst", llave: "reporteId" } },
   };
 
   function clonar(r) {
@@ -198,9 +226,19 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       findMany: async (args = {}) => listar(tabla, args),
       count: async ({ where } = {}) => tablas[tabla].filter((r) => cumpleWhere(r, where)).length,
       create: async ({ data, include }) => {
-        const registro = { id: `${prefijo}-${siguienteId()}`, ...defaults[tabla](), ...data };
+        const hijos = [];
+        const propios = { ...data };
+        for (const [rel, def] of Object.entries(anidados[tabla] || {})) {
+          if (propios[rel]?.create) hijos.push([def, [].concat(propios[rel].create)]);
+          delete propios[rel];
+        }
+        for (const k of Object.keys(propios)) if (propios[k] === undefined) delete propios[k];
+        const registro = { id: `${prefijo}-${siguienteId()}`, ...defaults[tabla](), ...propios };
         verificarUnicos(tabla, registro);
         tablas[tabla].push(registro);
+        for (const [def, lista] of hijos) {
+          for (const h of lista) tablas[def.tabla].push({ id: `${def.prefijo}-${siguienteId()}`, ...defaults[def.tabla](), ...h, [def.llave]: registro.id });
+        }
         return conIncludes(tabla, registro, include);
       },
       createMany: async ({ data, skipDuplicates }) => {
@@ -225,7 +263,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
           err.code = "P2025";
           throw err;
         }
-        const nuevo = { ...registro, ...data, ...(tabla === "personas" ? { fechaActualizacion: new Date() } : {}) };
+        const nuevo = { ...registro, ...data, ...(["personas", "reportesSst"].includes(tabla) ? { fechaActualizacion: new Date() } : {}) };
         verificarUnicos(tabla, nuevo, registro.id);
         Object.assign(registro, nuevo);
         return conIncludes(tabla, registro, include);
@@ -250,6 +288,8 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       atencionSalud: modelo("atenciones", "atencion"),
       evidenciaSalud: modelo("evidencias", "evidencia"),
       accesoModulo: modelo("accesos", "acceso"),
+      reporteSST: modelo("reportesSst", "reporte-sst"),
+      adjuntoReporteSST: modelo("adjuntosSst", "adjunto-sst"),
     },
     reset() {
       tablas.personas = [];
@@ -257,6 +297,9 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       tablas.atenciones = [];
       tablas.evidencias = [];
       tablas.accesos = [];
+      tablas.reportesSst = [];
+      tablas.adjuntosSst = [];
+      consecutivoSst = 0;
     },
     tablas,
   };

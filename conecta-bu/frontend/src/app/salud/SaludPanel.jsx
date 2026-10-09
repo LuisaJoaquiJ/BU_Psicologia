@@ -8,6 +8,7 @@ import { ActividadesPage } from "./ActividadesPage";
 import { ActividadDetallePage } from "./ActividadDetallePage";
 import { PersonasPage, PersonaDetallePage } from "./PersonasPage";
 import { ReportesPage } from "./ReportesPage";
+import { SalidasPage, SalidaDetallePage } from "./SalidasPage";
 
 // Panel del personal de la Unidad de Salud Integral: solo entran los correos
 // asignados a Salud por el superadministrador. Horarios y agenda usan las
@@ -18,6 +19,7 @@ const MENU_SALUD = [
   { to: "/salud/registrar", label: "Registrar", icono: "check" },
   { to: "/salud/actividades", label: "Actividades", icono: "estrella" },
   { to: "/salud/personas", label: "Personas", icono: "usuarios" },
+  { to: "/salud/salidas", label: "Salidas y reportes", icono: "bus" },
   { to: "/salud/horarios", label: "Horarios de citas", icono: "reloj" },
   { to: "/salud/citas", label: "Agenda de citas", icono: "calendario" },
   { to: "/salud/reportes", label: "Reportes", icono: "grafica" },
@@ -36,6 +38,8 @@ export function SaludPanel() {
         <Route path="horarios" element={<GestionHorariosPage api="/salud" modulo="salud" />} />
         <Route path="citas" element={<AgendaAdminPage api="/salud" />} />
         <Route path="reportes" element={<ReportesPage />} />
+        <Route path="salidas" element={<SalidasPage />} />
+        <Route path="salidas/:id" element={<SalidaDetallePage />} />
       </Routes>
     </PanelLayout>
   );

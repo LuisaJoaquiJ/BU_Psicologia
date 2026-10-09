@@ -5,6 +5,7 @@ import { PortalPage } from "./app/portal/PortalPage";
 import { SaludPanel } from "./app/salud/SaludPanel";
 import { SuperPanel } from "./app/super/SuperPanel";
 import { SaludEstudiantePanel } from "./app/estudiante/SaludEstudiantePanel";
+import { ReportesSstPanel } from "./app/sst/ReportesSstPanel";
 import { EstudiantePanel } from "./app/estudiante/EstudiantePanel";
 import { AdminPanel } from "./app/admin/AdminPanel";
 import { ProtectedRoute } from "./lib/auth/ProtectedRoute";
@@ -67,6 +68,16 @@ export default function App() {
         element={
           <ProtectedRoute rolesPermitidos={["Estudiante"]}>
             <SaludEstudiantePanel />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Salidas institucionales y reportes SST: cualquier persona con sesion. */}
+      <Route
+        path="/reportes-sst/*"
+        element={
+          <ProtectedRoute>
+            <ReportesSstPanel />
           </ProtectedRoute>
         }
       />

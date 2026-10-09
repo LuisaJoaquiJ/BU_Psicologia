@@ -235,7 +235,7 @@ function FormularioClinico({ clinico, setClinico, actividad, catalogos }) {
   );
 }
 
-// Registro rapido (reemplaza el formulario de Forms): cedula o codigo ->
+// Registro rapido de atenciones: cedula o codigo ->
 // Enter -> queda registrado. Funciona con lector de codigo de barras.
 export function RegistrarPage() {
   const catalogos = useCatalogos();

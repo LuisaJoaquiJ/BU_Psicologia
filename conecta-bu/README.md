@@ -296,7 +296,8 @@ medicamento tomo?" (debe negarse y orientarte a una cita).
 
 Reemplaza los Excel de la Unidad de Salud (registro general SPADIEZ,
 formulario de atención de enfermería, reporte SNIES e informe de gestión
-INFBI-002) y el formulario de asistencia.
+INFBI-002) y el formulario de Google de salidas institucionales
+("0 SALUD INTEGRAL", ver *Salidas institucionales y reportes SST*).
 
 **Acceso:** solo entra al panel `/salud` el personal cuyo correo fue asignado
 al módulo Salud por el superadministrador (ver *Módulos independientes y
@@ -339,6 +340,40 @@ SALUD_MAX_EVIDENCIA_MB=10
 
 Las evidencias se guardan en `backend/uploads/` (ignorada por git). En el
 despliegue hay que apuntar `SALUD_UPLOADS_DIR` a un volumen persistente.
+
+### Salidas institucionales y reportes SST
+
+Reemplaza el formulario de Google **"0 SALUD INTEGRAL"** con las mismas
+secciones:
+
+| Tipo | Anticipación | Documentos obligatorios |
+|------|--------------|-------------------------|
+| Salida con estudiantes · local / regional / nacional | — | Formato de la póliza estudiantil |
+| Salida con estudiantes · internacional | 5 días (ASIST CARD) | Certificado de movilidad internacional |
+| Representación institucional · local / regional / nacional | 3 días (ARL) | — |
+| Representación institucional · internacional | 5 días (ASIST CARD) | Certificado de movilidad internacional |
+| Traslado de docentes de posgrados | 3 días (ARL) | — |
+| Condición insegura, acto inseguro o incidente | — | Evidencias fotográficas (opcionales) |
+
+Además, según el transporte: **particular** → licencia, tarjeta de propiedad,
+revisión técnico-mecánica y SOAT; **aéreo** → información del vuelo;
+**público** → medio y empresa; **institucional** → conductor y placa. Los
+demás participantes (colaboradores o docentes) se escriben en una lista con
+su cédula o se adjunta el listado.
+
+- **Quién reporta:** cualquier persona de la Institución con su cuenta
+  (`/reportes-sst`; también desde la tarjeta de Salud en el portal). Ve el
+  estado de sus reportes y puede completar o reemplazar documentos mientras
+  no estén verificados.
+- **Quién revisa:** el personal de Salud en `/salud/salidas`: bandeja por
+  estado (*Recibido → Verificado / Requiere ajustes → Cerrado*), detalle con
+  los documentos, marca de "reportada a la ARL" o "ASIST CARD gestionada",
+  observación para quien reporta y exportación a Excel (resumen, salidas y
+  condiciones inseguras). No se puede verificar una salida con documentos
+  faltantes; las reportadas con menos anticipación quedan marcadas *fuera de
+  tiempo*.
+- Migración `20261006090000_reportes_sst` (tablas `sst_reportes` y
+  `sst_adjuntos`). Los documentos se guardan en `SALUD_UPLOADS_DIR/sst/`.
 
 ## Módulos independientes y superadministrador
 

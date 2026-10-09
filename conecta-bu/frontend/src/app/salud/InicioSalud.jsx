@@ -47,12 +47,17 @@ export function InicioSalud() {
   const [resumen, setResumen] = useState(null);
   const [error, setError] = useState("");
   const [documento, setDocumento] = useState("");
+  const [salidas, setSalidas] = useState(null);
 
   useEffect(() => {
     http
       .get("/salud/resumen")
       .then((res) => setResumen(res.data))
       .catch(() => setError("No fue posible cargar el resumen."));
+    http
+      .get("/salud/reportes-sst/resumen")
+      .then((res) => setSalidas(res.data))
+      .catch(() => setSalidas(null));
   }, []);
 
   function irARegistrar(e) {
@@ -109,6 +114,18 @@ export function InicioSalud() {
         <Kpi titulo="Personas registradas" valor={resumen ? resumen.personasRegistradas.toLocaleString("es-CO") : "…"} detalle="se buscan solo con el documento" />
       </div>
 
+      {salidas && (salidas.pendientes > 0 || salidas.riesgosAbiertos > 0) && (
+        <Aviso tono="azul">
+          <strong>
+            {salidas.pendientes} reporte(s) de salidas o condiciones inseguras por revisar
+            {salidas.riesgosAbiertos > 0 ? ` · ${salidas.riesgosAbiertos} condición(es) insegura(s) abiertas` : ""}.
+          </strong>{" "}
+          <Link to="/salud/salidas" className="underline font-semibold">
+            Ir a la bandeja
+          </Link>
+        </Aviso>
+      )}
+
       {resumen && (resumen.actividadesSinEvidencia.length > 0 || resumen.sinConsentimiento > 0) && (
         <div className="flex flex-col gap-2.5">
           {resumen.actividadesSinEvidencia.length > 0 && (
@@ -149,6 +166,46 @@ export function InicioSalud() {
           )}
         </Tarjeta>
       </div>
+
+      {salidas?.proximas?.length > 0 && (
+        <Tarjeta
+          titulo="Próximas salidas institucionales"
+          subtitulo="Los siguientes 15 días"
+          acciones={
+            <Link to="/salud/salidas" className="text-sm font-bold text-primary-soft">
+              Ver todas →
+            </Link>
+          }
+        >
+          <ul className="list-none m-0 p-0 grid gap-2.5 sm:grid-cols-2">
+            {salidas.proximas.map((r) => (
+              <li key={r.id}>
+                <Link to={`/salud/salidas/${r.id}`} className="flex items-center gap-3 border border-gray-200 rounded-xl px-3.5 py-3 hover:bg-gray-50">
+                  <span className="w-12 shrink-0 text-center leading-none">
+                    <span className="block font-display text-2xl font-semibold text-primary">{String(r.fechaSalida).slice(8, 10)}</span>
+                    <span className="block text-[11px] font-bold uppercase text-ink-500 mt-1">
+                      {new Date(`${String(r.fechaSalida).slice(0, 10)}T12:00:00Z`).toLocaleDateString("es-CO", { month: "short", timeZone: "UTC" })}
+                    </span>
+                  </span>
+                  <span className="min-w-0 flex-1 leading-tight">
+                    <span className="block font-semibold text-ink-900 truncate">{r.evento || r.motivo}</span>
+                    <span className="block text-xs text-ink-500 truncate">
+                      {r.destino} · {r.responsableNombre}
+                    </span>
+                  </span>
+                  {r.estado === "Verificado" ? (
+                    <span className="text-[#0B6B61]" title="Verificada">
+                      <Icono nombre="check" size={18} strokeWidth={2.6} />
+                    </span>
+                  ) : (
+                    <span className="text-xs font-bold text-[#B45309] whitespace-nowrap">Por revisar</span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Tarjeta>
+      )}
 
       <div className="grid gap-5 lg:grid-cols-3">
         <Tarjeta titulo="Actividades con más atenciones">

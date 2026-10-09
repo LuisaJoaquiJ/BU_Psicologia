@@ -28,6 +28,18 @@ const MODULOS_ESTUDIANTE = {
       { to: "/mi-salud", label: "Agendar cita", end: true },
       { to: "/mi-salud/mis-citas", label: "Mis citas" },
       { to: "/mi-salud/participaciones", label: "Mis participaciones" },
+      { to: "/reportes-sst", label: "Salidas y reportes" },
+    ],
+  },
+  // Salidas institucionales y reportes SST (cualquier persona de la Institucion).
+  sst: {
+    nombre: "Salud integral · Salidas y reportes",
+    icono: "pulso",
+    color: "bg-[#0d9488] text-white",
+    inicio: "/reportes-sst",
+    menu: [
+      { to: "/reportes-sst", label: "Mis reportes", end: true },
+      { to: "/reportes-sst/nuevo", label: "Nuevo reporte" },
     ],
   },
 };

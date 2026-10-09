@@ -10,6 +10,7 @@ const atenciones = require("./atenciones.service");
 const evidencias = require("./evidencias.service");
 const reportes = require("./reportes.service");
 const { importarExcel } = require("./importador.service");
+const { routerPersonal: reportesSst } = require("./sst.routes");
 
 // Modulo Salud integral (/api/v1/salud). Todo es exclusivo del rol "Salud"
 // (personal de la Unidad de Salud): maneja datos personales y de salud.
@@ -115,6 +116,9 @@ router.get(
   })
 );
 router.get("/reportes/registro", manejar(async (req, res) => enviarExcel(res, await reportes.registroGeneral(req.query))));
+
+// ---- Salidas institucionales y reportes SST (revision) ----------------------
+router.use("/reportes-sst", reportesSst);
 
 // ---- Importar Excel existentes ---------------------------------------------
 const subirExcel = multer({

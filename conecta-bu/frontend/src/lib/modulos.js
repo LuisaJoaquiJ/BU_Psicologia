@@ -50,7 +50,9 @@ export const MODULOS = [
     imagen: IMAGENES.salud,
     estado: "disponible",
     panel: { Estudiante: "/mi-salud", personal: "/salud" },
-    servicios: ["Citas de enfermería y médicas", "Jornadas y campañas", "Registro con la cédula"],
+    servicios: ["Citas de enfermería y médicas", "Jornadas y campañas", "Salidas institucionales", "Registro con la cédula"],
+    // Abierto a toda la Institucion (docentes, administrativos, estudiantes).
+    extra: { to: "/reportes-sst", label: "Reportar salida institucional" },
   },
   {
     id: "cultura",
