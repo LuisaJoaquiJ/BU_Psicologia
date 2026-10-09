@@ -17,7 +17,7 @@ export function Encabezado({ kicker, titulo, descripcion, acciones }) {
   return (
     <div className="flex justify-between items-end gap-4 flex-wrap mb-7">
       <div className="min-w-0">
-        {kicker && <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">{kicker}</p>}
+        {kicker && <p className="m-0 mb-1.5 text-sm font-semibold text-ink-500">{kicker}</p>}
         <h1 className="m-0 text-3xl sm:text-[34px] font-extrabold">{titulo}</h1>
         {descripcion && <p className="mt-1.5 mb-0 text-ink-500 max-w-[680px]">{descripcion}</p>}
       </div>
@@ -134,4 +134,50 @@ export function textoEstado(estado) {
 export function Estado({ estado }) {
   const e = ESTADOS[estado] || { texto: estado, tono: "gris" };
   return <Insignia tono={e.tono}>{e.texto}</Insignia>;
+}
+
+// Banda de bienvenida a todo el ancho (diseño A). Va fuera del <main> de la
+// página, justo debajo de la barra. "aside" es una tarjeta blanca a la
+// derecha (próxima cita, resumen…); "lado" pone contenido libre a la derecha; "imagen" pone una foto de fondo tenue.
+export function BandaInicio({ titulo, fecha, texto, acciones, aside, lado, imagen, children }) {
+  return (
+    <section className="relative overflow-hidden bg-primary-dark text-white">
+      {imagen && (
+        <>
+          <img src={imagen} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover opacity-25" />
+          <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,#0B2347_35%,rgba(11,35,71,0.6))]" />
+        </>
+      )}
+      <svg viewBox="0 0 400 400" width="520" height="520" aria-hidden="true" className="absolute -right-28 -top-40 pointer-events-none">
+        <circle cx="200" cy="200" r="190" fill="none" stroke="rgba(127,232,255,0.30)" strokeWidth="1.5" />
+        <circle cx="200" cy="200" r="130" fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="1.5" />
+      </svg>
+      <div className="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-12 flex gap-8 lg:gap-14 flex-wrap items-center">
+        <div className="flex-[999_1_480px] min-w-0 flex flex-col gap-3">
+          <h1 className="m-0 text-[36px] sm:text-[48px] leading-[1.05] font-extrabold text-white">{titulo}</h1>
+          {fecha && <p className="m-0 text-[15px] font-semibold text-[#B9C7DE]">{fecha}</p>}
+          {texto && <p className="m-0 text-[17px] leading-relaxed text-[#D6DDEC] max-w-[560px]">{texto}</p>}
+          {children}
+          {acciones && <div className="flex gap-3 flex-wrap mt-2">{acciones}</div>}
+        </div>
+        {aside && (
+          <div className="flex-[1_1_340px] max-w-[460px] min-w-0 bg-white text-ink-900 rounded-[24px] p-6 sm:p-7 flex flex-col gap-4 shadow-[0_20px_50px_rgba(0,0,0,0.25)]">
+            {aside}
+          </div>
+        )}
+        {lado && <div className="relative shrink-0 mx-auto lg:mx-0">{lado}</div>}
+      </div>
+    </section>
+  );
+}
+
+// Botones para usar dentro de la banda (fondo azul oscuro).
+export const botonBandaPrincipal =
+  "bg-cyan text-primary-dark font-extrabold text-[15px] px-6 min-h-[48px] rounded-full inline-flex items-center gap-2 hover:brightness-95 disabled:opacity-60";
+export const botonBandaSecundario =
+  "border-[1.5px] border-white/45 text-white font-semibold text-[15px] px-6 min-h-[48px] rounded-full inline-flex items-center gap-2 hover:bg-white/10";
+
+export function hoyLargo() {
+  const texto = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
 }

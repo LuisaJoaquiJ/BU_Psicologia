@@ -88,7 +88,7 @@ function Carrusel() {
     >
       <div className="flex flex-wrap items-stretch min-h-[480px]">
         <div className="flex-[1_1_460px] px-8 py-12 sm:px-14 sm:py-16 flex flex-col justify-center gap-5" aria-live="polite">
-          <span className="inline-flex items-center gap-2.5 text-[13px] font-bold tracking-[0.14em] uppercase text-gold">
+          <span className="inline-flex items-center gap-2.5 text-sm font-semibold text-[#B9C7DE]">
             <span className="w-7 h-0.5 bg-gold" />
             {s.kicker}
           </span>
@@ -244,7 +244,7 @@ function Encabezado({ kicker, titulo, enlace }) {
   return (
     <div className="flex justify-between items-end gap-6 flex-wrap mb-8">
       <div className="max-w-[580px]">
-        <p className="m-0 mb-2.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">{kicker}</p>
+        <p className="m-0 mb-2.5 text-sm font-semibold text-ink-500">{kicker}</p>
         <h2 className="m-0 text-[34px] sm:text-[40px] leading-tight font-extrabold">{titulo}</h2>
       </div>
       {enlace}
@@ -345,7 +345,7 @@ export function LandingPage() {
 
         <section id="como" className="pt-24">
           <div className="bg-white border border-gray-200 rounded-[28px] p-8 sm:p-14">
-            <p className="m-0 mb-2.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Cómo funciona</p>
+            <p className="m-0 mb-2.5 text-sm font-semibold text-ink-500">Cómo funciona</p>
             <h2 className="m-0 mb-10 text-[34px] sm:text-[40px] leading-tight font-extrabold">Tu cita en tres pasos</h2>
             <ol className="list-none m-0 p-0 grid gap-8 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
               {[

@@ -245,7 +245,7 @@ export function ActividadDetallePage() {
         </Link>
         <div className="flex justify-between items-end gap-4 flex-wrap mt-3">
           <div className="min-w-0">
-            <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">
+            <p className="m-0 mb-1.5 text-sm font-semibold text-ink-500">
               {catalogos?.categorias?.[actividad.categoria]} · Cód. SNIES {actividad.codigo} · {actividad.periodo}
             </p>
             <h1 className="m-0 text-3xl sm:text-[34px] font-extrabold">{actividad.nombre}</h1>

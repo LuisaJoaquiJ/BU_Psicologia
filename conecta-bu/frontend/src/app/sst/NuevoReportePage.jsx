@@ -276,7 +276,7 @@ export function NuevoReportePage({ catalogo }) {
 
   return (
     <main className="max-w-[1100px] mx-auto px-5 sm:px-8 pt-9 pb-16" ref={arriba}>
-      <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Salud integral · Prioriza tu salud y seguridad</p>
+      <p className="m-0 mb-1.5 text-sm font-semibold text-ink-500">Salud integral · Prioriza tu salud y seguridad</p>
       <h1 className="m-0 text-3xl sm:text-[36px] font-extrabold">{def ? def.nombre : "¿Qué vas a reportar?"}</h1>
       {!def && (
         <p className="mt-2 mb-8 text-ink-500 max-w-[680px]">

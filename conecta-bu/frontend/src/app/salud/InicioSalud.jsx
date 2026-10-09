@@ -4,7 +4,8 @@ import { http } from "../../lib/api/http";
 import { useAuth } from "../../lib/auth/AuthContext";
 import { Icono } from "../../components/Iconos";
 import { COLOR_POBLACION, POBLACION_TEXTO, fechaCorta, nombreCompleto } from "../../lib/salud";
-import { Aviso, BarrasHorizontales, Kpi, Tarjeta, Vacio, botonDorado, claseCampo } from "./ui";
+import { Aviso, BarrasHorizontales, Kpi, Tarjeta, Vacio, claseCampo } from "./ui";
+import { BandaInicio, botonBandaPrincipal, hoyLargo } from "../../components/ui";
 
 function saludo() {
   const hora = new Date().getHours();
@@ -68,22 +69,36 @@ export function InicioSalud() {
   const total = resumen?.totalPeriodo || 0;
 
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
-      <section className="relative overflow-hidden bg-primary rounded-[28px] px-6 py-8 sm:px-10 sm:py-10 text-white">
-        <svg aria-hidden="true" viewBox="0 0 400 400" className="absolute -right-24 -top-28 w-[360px] h-[360px]">
-          <circle cx="200" cy="200" r="180" fill="none" stroke="rgba(232,178,58,0.35)" strokeWidth="1.5" />
-          <circle cx="200" cy="200" r="120" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" />
-        </svg>
-        <p className="relative m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-gold">
-          Salud integral · {resumen?.periodo || "…"}
-        </p>
-        <h1 className="relative m-0 text-white text-[32px] sm:text-[40px] font-extrabold">
-          {saludo()}, {usuario?.nombre?.split(" ")[0]}
-        </h1>
-        <p className="relative mt-2 mb-6 text-[#D6DDEC] max-w-[560px]">
-          Escribe la cédula o el código estudiantil para registrar una atención o una asistencia.
-        </p>
-        <form onSubmit={irARegistrar} className="relative flex gap-2.5 flex-wrap max-w-[620px]">
+    <>
+      <BandaInicio
+        titulo={
+          <>
+            {saludo()}, <span className="text-cyan">{usuario?.nombre?.split(" ")[0]}.</span>
+          </>
+        }
+        fecha={`${hoyLargo()}${resumen?.periodo ? ` · Periodo ${resumen.periodo}` : ""}`}
+        texto="Escribe la cédula o el código estudiantil para registrar una atención o una asistencia."
+        aside={
+          <>
+            <h2 className="m-0 font-sans text-lg font-bold text-primary">Tu día</h2>
+            <div className="flex gap-4 items-center">
+              <span className="shrink-0 w-[76px] h-[68px] rounded-2xl bg-primary-light text-primary font-extrabold flex items-center justify-center tabular-nums text-[28px]">
+                {resumen ? resumen.hoy : "…"}
+              </span>
+              <span className="min-w-0 text-ink-600">
+                <strong className="block text-[17px] text-primary">{resumen?.hoy === 1 ? "Atención registrada hoy" : "Atenciones registradas hoy"}</strong>
+                {salidas && salidas.pendientes > 0
+                  ? `${salidas.pendientes} ${salidas.pendientes === 1 ? "reporte espera" : "reportes esperan"} revisión`
+                  : "Sin reportes de salidas pendientes"}
+              </span>
+            </div>
+            <Link to={salidas && salidas.pendientes > 0 ? "/salud/salidas" : "/salud/actividades"} className="self-start font-bold text-sm px-4 min-h-[44px] inline-flex items-center rounded-full bg-primary-light text-primary hover:bg-[#E2E9F6]">
+              {salidas && salidas.pendientes > 0 ? "Ir a la bandeja" : "Ver actividades"}
+            </Link>
+          </>
+        }
+      >
+        <form onSubmit={irARegistrar} className="flex gap-2.5 flex-wrap max-w-[620px] mt-3">
           <label className="sr-only" htmlFor="doc-inicio">Cédula o código estudiantil</label>
           <div className="relative flex-[1_1_280px]">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-500">
@@ -95,16 +110,16 @@ export function InicioSalud() {
               onChange={(e) => setDocumento(e.target.value)}
               inputMode="numeric"
               placeholder="Cédula o código estudiantil"
-              className={`${claseCampo} pl-12 min-h-[52px] text-base`}
+              className={`${claseCampo} pl-12 min-h-[52px] text-base text-ink-900`}
             />
           </div>
-          <button type="submit" className={`${botonDorado} min-h-[52px]`}>
+          <button type="submit" className={`${botonBandaPrincipal} min-h-[52px]`}>
             Registrar
             <Icono nombre="flecha" size={18} strokeWidth={2.2} />
           </button>
         </form>
-      </section>
-
+      </BandaInicio>
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
       {error && <Aviso>{error}</Aviso>}
 
       <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
@@ -245,5 +260,6 @@ export function InicioSalud() {
         </Tarjeta>
       </div>
     </main>
+    </>
   );
 }

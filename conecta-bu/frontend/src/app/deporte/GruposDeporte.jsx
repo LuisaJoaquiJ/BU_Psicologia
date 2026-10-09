@@ -380,7 +380,7 @@ export function GrupoDetallePage() {
       <div className="flex items-start gap-4 flex-wrap">
         <IconoDisciplina nombre={grupo.disciplina?.nombre} tamano={56} />
         <div className="flex-1 min-w-0">
-          <p className="m-0 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">
+          <p className="m-0 text-sm font-semibold text-ink-500">
             {grupo.disciplina?.nombre} · {grupo.periodo}
           </p>
           <h1 className="m-0 mt-1 text-[30px] font-extrabold">{grupo.nombre}</h1>

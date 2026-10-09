@@ -8,6 +8,7 @@ import { mensajeError } from "../../lib/salud";
 import { Aviso, Insignia, Tarjeta, Vacio, botonDorado, botonPrimario } from "../salud/ui";
 import { DetalleReporte, EncabezadoReporte, SelectorDocumento } from "./DetalleReporte";
 import { NuevoReportePage } from "./NuevoReportePage";
+import { BandaInicio, botonBandaPrincipal, hoyLargo } from "../../components/ui";
 
 // Salidas institucionales y reportes SST (/reportes-sst). Lo usa cualquier
 // persona de la Institucion con su cuenta: reemplaza el formulario de Google
@@ -57,21 +58,32 @@ function MisReportesPage({ catalogo }) {
   const ajustes = reportes?.filter((r) => r.estado === "RequiereAjustes") || [];
 
   return (
+    <>
+      <BandaInicio
+        titulo="Salidas institucionales y reportes de seguridad"
+        fecha={`${hoyLargo()} · ¡Cuidarnos es responsabilidad de todos!`}
+        texto="Reporta tus salidas con estudiantes o en representación de la Institución, los traslados de posgrados y las condiciones inseguras."
+        acciones={
+          <Link to="/reportes-sst/nuevo" className={botonBandaPrincipal}>
+            <Icono nombre="mas" size={18} strokeWidth={2.4} /> Nuevo reporte
+          </Link>
+        }
+        aside={
+          <>
+            <h2 className="m-0 font-sans text-lg font-bold text-primary">Tus reportes</h2>
+            <div className="flex gap-4 items-center">
+              <span className="shrink-0 w-[76px] h-[68px] rounded-2xl bg-primary-light text-primary font-extrabold flex items-center justify-center tabular-nums text-[28px]">
+                {reportes ? reportes.length : "…"}
+              </span>
+              <span className="min-w-0 text-ink-600">
+                <strong className="block text-[17px] text-primary">{reportes?.length === 1 ? "Reporte enviado" : "Reportes enviados"}</strong>
+                {ajustes.length > 0 ? `${ajustes.length} ${ajustes.length === 1 ? "necesita" : "necesitan"} ajustes` : "Ninguno necesita ajustes"}
+              </span>
+            </div>
+          </>
+        }
+      />
     <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
-      <section className="relative overflow-hidden bg-primary rounded-[28px] px-6 py-8 sm:px-10 sm:py-10 text-white">
-        <svg aria-hidden="true" viewBox="0 0 400 400" className="absolute -right-24 -top-28 w-[360px] h-[360px]">
-          <circle cx="200" cy="200" r="180" fill="none" stroke="rgba(232,178,58,0.35)" strokeWidth="1.5" />
-          <circle cx="200" cy="200" r="120" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" />
-        </svg>
-        <p className="relative m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-gold">Salud integral · ¡Cuidarnos es responsabilidad de todos!</p>
-        <h1 className="relative m-0 text-white text-[30px] sm:text-[38px] font-extrabold max-w-[640px] leading-tight">Salidas institucionales y reportes de seguridad</h1>
-        <p className="relative mt-2 mb-6 text-[#D6DDEC] max-w-[600px]">
-          Reporta tus salidas con estudiantes o en representación de la Institución, los traslados de posgrados y las condiciones inseguras.
-        </p>
-        <Link to="/reportes-sst/nuevo" className={`relative ${botonDorado} min-h-[52px]`}>
-          <Icono nombre="mas" size={18} strokeWidth={2.4} /> Nuevo reporte
-        </Link>
-      </section>
 
       {error && <Aviso>{error}</Aviso>}
       {ajustes.length > 0 && (
@@ -89,6 +101,7 @@ function MisReportesPage({ catalogo }) {
         </ul>
       </Tarjeta>
     </main>
+    </>
   );
 }
 

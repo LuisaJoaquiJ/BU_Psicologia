@@ -593,7 +593,7 @@ export function InformeGestionPage() {
     <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-28">
       <div className="flex justify-between items-end gap-4 flex-wrap mb-6">
         <div className="min-w-0">
-          <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Salud integral · Formato INFBI-002</p>
+          <p className="m-0 mb-1.5 text-sm font-semibold text-ink-500">Salud integral · Formato INFBI-002</p>
           <h1 className="m-0 text-3xl sm:text-[34px] font-extrabold">Informe de gestión</h1>
           <p className="mt-1.5 mb-0 text-ink-500 max-w-[640px]">
             Proyecto, evaluación, relación de atendidos, estadísticas con gráficas y registro fotográfico. Se envía al superadministrador, que lo descarga

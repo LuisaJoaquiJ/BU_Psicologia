@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { useAuth } from "../../lib/auth/AuthContext";
 import { formatearHora } from "../../lib/format";
+import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo } from "../../components/ui";
 
 const ESTADO_ESTILOS = {
   Agendada: "bg-primary-light text-primary-soft",
@@ -64,24 +65,53 @@ export function InicioAdmin() {
   const porRegistrar = (agenda || []).filter((c) => c.estado === "Agendada").length;
   const eventos = stats ? stats.eventosDetalle.slice(-3) : [];
 
-  return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-7">
-      <div className="flex justify-between items-end gap-4 flex-wrap">
-        <div>
-          <h1 className="m-0 text-[36px] sm:text-[38px] font-extrabold">
-            {saludo()}, {usuario?.nombre?.split(" ")[0]}
-          </h1>
-        </div>
-        <div className="flex gap-2.5 flex-wrap">
-          <Link to="/admin/horarios" className="border-[1.5px] border-gray-200 bg-white font-bold text-sm text-primary px-4 min-h-[44px] rounded-full inline-flex items-center">
-            Publicar horario
-          </Link>
-          <Link to="/admin/eventos?nuevo=1" className="bg-primary text-white font-extrabold text-sm px-5 min-h-[44px] rounded-full inline-flex items-center hover:bg-primary-dark">
-            Nuevo evento
-          </Link>
-        </div>
-      </div>
+  const siguiente = (agenda || []).find((c) => c.estado === "Agendada");
 
+  return (
+    <>
+      <BandaInicio
+        titulo={
+          <>
+            {saludo()}, <span className="text-cyan">{usuario?.nombre?.split(" ")[0]}.</span>
+          </>
+        }
+        fecha={hoyLargo()}
+        texto={
+          agenda
+            ? agenda.length === 0
+              ? "Hoy no tienes citas. Puedes publicar más horarios o preparar el próximo taller."
+              : `Hoy tienes ${agenda.length} ${agenda.length === 1 ? "cita" : "citas"}${porRegistrar ? ` y ${porRegistrar} ${porRegistrar === 1 ? "espera" : "esperan"} registro de asistencia` : ""}.`
+            : "Cargando tu día…"
+        }
+        acciones={
+          <>
+            <Link to="/admin/eventos?nuevo=1" className={botonBandaPrincipal}>Nuevo evento</Link>
+            <Link to="/admin/horarios" className={botonBandaSecundario}>Publicar horario</Link>
+          </>
+        }
+        aside={
+          <>
+            <h2 className="m-0 font-sans text-lg font-bold text-primary">Siguiente cita de hoy</h2>
+            {!agenda && <p className="m-0 text-ink-500">Cargando…</p>}
+            {agenda && !siguiente && <p className="m-0 text-ink-600">No quedan citas pendientes por hoy.</p>}
+            {siguiente && (
+              <div className="flex gap-4 items-center">
+                <span className="shrink-0 w-[76px] h-[68px] rounded-2xl bg-primary-light text-primary font-extrabold flex items-center justify-center tabular-nums text-[17px]">
+                  {formatearHora(siguiente.horario?.horaInicio)}
+                </span>
+                <span className="min-w-0">
+                  <strong className="block text-[17px] leading-snug text-primary truncate">{siguiente.usuario?.nombre}</strong>
+                  <span className="text-sm text-ink-500">{siguiente.horario?.servicio?.nombre}</span>
+                </span>
+              </div>
+            )}
+            <Link to="/admin/citas" className="self-start font-bold text-sm px-4 min-h-[44px] inline-flex items-center rounded-full bg-primary-light text-primary hover:bg-[#E2E9F6]">
+              {siguiente ? "Registrar asistencia" : "Ver agenda"}
+            </Link>
+          </>
+        }
+      />
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-7">
       {stats === false && <p className="text-sm text-red-700 bg-red-50 rounded-xl p-3">No fue posible cargar los indicadores.</p>}
 
       <section aria-label="Indicadores" className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
@@ -174,5 +204,6 @@ export function InicioAdmin() {
         </section>
       </div>
     </main>
+    </>
   );
 }

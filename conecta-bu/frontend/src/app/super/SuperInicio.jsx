@@ -5,6 +5,7 @@ import { useAuth } from "../../lib/auth/AuthContext";
 import { Icono } from "../../components/Iconos";
 import { MODULOS } from "../../lib/modulos";
 import { Aviso, Kpi } from "../salud/ui";
+import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo } from "../../components/ui";
 
 const ESTILO = {
   "desarrollo-humano": { color: "bg-gold text-primary", panel: "/admin" },
@@ -29,23 +30,41 @@ export function SuperInicio() {
   const porRol = resumen?.usuarios.porRol || {};
 
   return (
+    <>
+      <BandaInicio
+        titulo={
+          <>
+            Hola, <span className="text-cyan">{usuario?.nombre?.split(" ")[0]}.</span>
+          </>
+        }
+        fecha={hoyLargo()}
+        texto="Cada módulo de Conecta BU es independiente. Desde aquí decides qué correos del personal entran a cada uno; los estudiantes entran con su cuenta institucional."
+        acciones={
+          <>
+            <Link to="/super/accesos" className={botonBandaPrincipal}>Accesos por módulo</Link>
+            <Link to="/super/usuarios" className={botonBandaSecundario}>Usuarios y roles</Link>
+          </>
+        }
+        aside={
+          <>
+            <h2 className="m-0 font-sans text-lg font-bold text-primary">Informes de gestión</h2>
+            <div className="flex gap-4 items-center">
+              <span className="shrink-0 w-[76px] h-[68px] rounded-2xl bg-primary-light text-primary font-extrabold flex items-center justify-center tabular-nums text-[28px]">
+                {resumen ? resumen.informesPorRevisar || 0 : "…"}
+              </span>
+              <span className="min-w-0 text-ink-600">
+                <strong className="block text-[17px] text-primary">Por revisar</strong>
+                {resumen?.informesPorRevisar ? "Los módulos enviaron informes nuevos." : "No hay informes pendientes."}
+              </span>
+            </div>
+            <Link to="/super/informes" className="self-start font-bold text-sm px-4 min-h-[44px] inline-flex items-center rounded-full bg-primary-light text-primary hover:bg-[#E2E9F6]">
+              Abrir informes
+            </Link>
+          </>
+        }
+      />
     <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
-      <div>
-        <h1 className="m-0 text-3xl sm:text-[34px] font-extrabold">Hola, {usuario?.nombre?.split(" ")[0]}</h1>
-        <p className="mt-1.5 mb-0 text-ink-500 max-w-[680px]">
-          Cada módulo de Conecta BU es independiente. Desde aquí decides qué correos del personal entran a cada uno; los estudiantes
-          entran a los módulos disponibles con su cuenta institucional.
-        </p>
-      </div>
       {error && <Aviso>{error}</Aviso>}
-      {resumen?.informesPorRevisar > 0 && (
-        <Aviso tono="azul">
-          <strong>{resumen.informesPorRevisar} informe(s) de gestión por revisar.</strong>{" "}
-          <Link to="/super/informes" className="underline font-semibold">
-            Abrir informes
-          </Link>
-        </Aviso>
-      )}
 
       <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
         <Kpi destacado titulo="Usuarios registrados" valor={resumen ? resumen.usuarios.total : "…"} />
@@ -101,5 +120,6 @@ export function SuperInicio() {
         })}
       </div>
     </main>
+    </>
   );
 }

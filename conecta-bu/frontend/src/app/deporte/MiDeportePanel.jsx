@@ -8,6 +8,7 @@ import { DIAS, DIAS_CORTOS, diaHoy, estiloDisciplina, fechaCorta, horas } from "
 import { descargar, mensajeError } from "../../lib/salud";
 import { Aviso, Insignia, Tarjeta, Vacio, botonDorado, botonPrimario, botonSecundario } from "../salud/ui";
 import { AnilloHoras, BarrasDisciplina, IconoDisciplina } from "./Progreso";
+import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo } from "../../components/ui";
 
 // Area del estudiante en el modulo Deporte (/mi-deporte): su avance hacia
 // las horas requeridas, la oferta de disciplinas para inscribirse y el
@@ -68,35 +69,40 @@ function InicioDeporte() {
   const { usuario } = useAuth();
   const { datos, error } = useMisHoras();
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
-      <section className="relative overflow-hidden bg-primary rounded-[28px] px-6 py-8 sm:px-10 sm:py-10 text-white flex items-center gap-8 flex-wrap">
-        <svg aria-hidden="true" viewBox="0 0 400 400" className="absolute -right-24 -top-28 w-[360px] h-[360px]">
-          <circle cx="200" cy="200" r="180" fill="none" stroke="rgba(232,178,58,0.35)" strokeWidth="1.5" />
-          <circle cx="200" cy="200" r="120" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" />
-        </svg>
-        {datos ? <AnilloHoras total={datos.total} requeridas={datos.requeridas} /> : <div className="w-[168px] h-[168px] rounded-full bg-white/10 animate-pulse" />}
-        <div className="relative flex-1 min-w-[240px]">
-          <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-gold">Deporte · {datos?.periodo || "…"}</p>
-          <h1 className="m-0 text-white text-[30px] sm:text-[38px] font-extrabold leading-tight">
-            {datos?.cumplido ? `¡Completaste tus horas, ${usuario?.nombre?.split(" ")[0]}!` : `Hola, ${usuario?.nombre?.split(" ")[0] || ""}`}
-          </h1>
-          <p className="mt-2 mb-6 text-[#D6DDEC] max-w-[520px]">
-            {datos
-              ? datos.cumplido
-                ? `Registras ${horas(datos.total)} de práctica deportiva. Descarga tu constancia cuando la necesites.`
-                : `Te faltan ${horas(datos.faltan)} para completar las ${datos.requeridas} horas de deporte. Este periodo llevas ${horas(datos.horasPeriodo)}.`
-              : "Cargando tu avance…"}
-          </p>
-          <div className="flex gap-2.5 flex-wrap">
-            <Link to="/mi-deporte/oferta" className={`${botonDorado} min-h-[50px]`}>
+    <>
+      <BandaInicio
+        titulo={
+          datos?.cumplido ? (
+            <>
+              ¡Completaste tus horas, <span className="text-cyan">{usuario?.nombre?.split(" ")[0]}!</span>
+            </>
+          ) : (
+            <>
+              Hola, <span className="text-cyan">{usuario?.nombre?.split(" ")[0]}.</span>
+            </>
+          )
+        }
+        fecha={`${hoyLargo()}${datos?.periodo ? ` · Periodo ${datos.periodo}` : ""}`}
+        texto={
+          datos
+            ? datos.cumplido
+              ? `Registras ${horas(datos.total)} de práctica deportiva. Descarga tu constancia cuando la necesites.`
+              : `Te faltan ${horas(datos.faltan)} para completar las ${datos.requeridas} horas de deporte. Este periodo llevas ${horas(datos.horasPeriodo)}.`
+            : "Cargando tu avance…"
+        }
+        acciones={
+          <>
+            <Link to="/mi-deporte/oferta" className={botonBandaPrincipal}>
               <Icono nombre="balon" size={18} /> Ver disciplinas e inscribirme
             </Link>
-            <button type="button" onClick={descargarConstancia} className="inline-flex items-center gap-2 border-[1.5px] border-white/30 text-white font-bold text-sm px-5 min-h-[50px] rounded-full hover:bg-white/10">
+            <button type="button" onClick={descargarConstancia} className={botonBandaSecundario}>
               <Icono nombre="descarga" size={17} /> Constancia
             </button>
-          </div>
-        </div>
-      </section>
+          </>
+        }
+        lado={datos ? <AnilloHoras total={datos.total} requeridas={datos.requeridas} /> : <div className="w-[168px] h-[168px] rounded-full bg-white/10 animate-pulse" />}
+      />
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
 
       {error && <Aviso>{error}</Aviso>}
 
@@ -144,6 +150,7 @@ function InicioDeporte() {
         </Tarjeta>
       </div>
     </main>
+    </>
   );
 }
 
@@ -250,7 +257,7 @@ function OfertaPage() {
     <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16">
       <div className="flex justify-between items-end gap-4 flex-wrap mb-6">
         <div>
-          <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Deporte · periodo {oferta?.periodo || "…"}</p>
+          <p className="m-0 mb-1.5 text-sm font-semibold text-ink-500">Deporte · periodo {oferta?.periodo || "…"}</p>
           <h1 className="m-0 text-3xl sm:text-[36px] font-extrabold">Disciplinas e inscripciones</h1>
           <p className="mt-1.5 mb-0 text-ink-500 max-w-[640px]">
             Elige el grupo que mejor se ajuste a tu horario. Puedes inscribirte hasta en {oferta?.maxGruposPorPeriodo || 2} grupo(s) por periodo
@@ -326,7 +333,7 @@ function MisHorasPage() {
     <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
       <div className="flex justify-between items-end gap-4 flex-wrap">
         <div>
-          <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Deporte</p>
+          <p className="m-0 mb-1.5 text-sm font-semibold text-ink-500">Deporte</p>
           <h1 className="m-0 text-3xl sm:text-[36px] font-extrabold">Mis horas</h1>
         </div>
         <button type="button" onClick={descargarConstancia} className={botonPrimario}>

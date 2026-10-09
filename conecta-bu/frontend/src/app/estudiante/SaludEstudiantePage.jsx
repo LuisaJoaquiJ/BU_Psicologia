@@ -4,6 +4,7 @@ import { http } from "../../lib/api/http";
 import { formatearFecha, formatearHora, fechaLarga } from "../../lib/format";
 import { IMAGENES } from "../../lib/imagenes";
 import { Icono } from "../../components/Iconos";
+import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo } from "../../components/ui";
 
 // Salud integral para el estudiante (/mi-salud): horarios para agendar una
 // cita de salud y servicios de la Unidad de Salud.
@@ -46,23 +47,40 @@ export function SaludEstudiantePage() {
   const visibles = (horarios || []).filter((h) => !servicioId || h.servicioId === servicioId).slice(0, 24);
 
   return (
+    <>
+      <BandaInicio
+        imagen={IMAGENES.salud.src}
+        titulo={
+          <>
+            Tu salud también es parte de <span className="text-cyan">tu carrera.</span>
+          </>
+        }
+        fecha={hoyLargo()}
+        texto="Agenda una consulta de enfermería o médica en la Unidad de Salud Integral."
+        acciones={
+          <>
+            <a href="#horarios" className={botonBandaPrincipal}>Ver horarios disponibles</a>
+            <Link to="/mi-salud/mis-citas" className={botonBandaSecundario}>Mis citas</Link>
+          </>
+        }
+        aside={
+          <>
+            <h2 className="m-0 font-sans text-lg font-bold text-primary">¿Es una emergencia?</h2>
+            <div className="flex gap-4 items-center">
+              <span className="shrink-0 w-[76px] h-[68px] rounded-2xl bg-[#FDECEC] text-[#9B1C1C] font-extrabold flex items-center justify-center tabular-nums text-[28px]">123</span>
+              <span className="min-w-0 text-ink-600">
+                <strong className="block text-[17px] text-primary">Llama a la línea 123</strong>
+                No esperes una cita: la línea atiende las 24 horas.
+              </span>
+            </div>
+          </>
+        }
+      />
     <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 pb-16 flex flex-col gap-8">
-      <section className="relative overflow-hidden rounded-[28px] bg-primary text-white isolate">
-        <img src={IMAGENES.salud.src} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover -z-10 opacity-40" />
-        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[linear-gradient(100deg,rgba(7,29,64,0.96)_0%,rgba(11,42,91,0.85)_55%,rgba(11,42,91,0.5)_100%)]" />
-        <div className="px-7 py-10 sm:px-12 sm:py-12 max-w-[640px]">
-          <p className="m-0 mb-2 text-[13px] font-bold tracking-[0.14em] uppercase text-gold">Salud integral</p>
-          <h1 className="m-0 text-white text-[34px] sm:text-[44px] leading-tight font-extrabold">Tu salud también es parte de tu carrera</h1>
-          <p className="mt-3 mb-0 text-[#D6DDEC] text-lg">
-            Agenda una consulta de enfermería o médica en la Unidad de Salud Integral. En una emergencia llama a la línea 123.
-          </p>
-        </div>
-      </section>
 
-      <section>
+      <section id="horarios" className="scroll-mt-6">
         <div className="flex justify-between items-end gap-4 flex-wrap mb-5">
           <div>
-            <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Agenda tu cita</p>
             <h2 className="m-0 text-[28px] font-extrabold">Horarios disponibles</h2>
           </div>
           <Link to="/mi-salud/mis-citas" className="text-sm font-bold text-primary-soft">
@@ -130,6 +148,7 @@ export function SaludEstudiantePage() {
         </ul>
       </section>
     </main>
+    </>
   );
 }
 
@@ -145,7 +164,7 @@ export function SaludParticipacionesPage() {
   }, []);
   return (
     <main className="max-w-[900px] mx-auto px-5 sm:px-8 pt-8 pb-16">
-      <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Salud integral</p>
+      <p className="m-0 mb-1.5 text-sm font-semibold text-ink-500">Salud integral</p>
       <h1 className="m-0 text-3xl font-extrabold">Mis participaciones</h1>
       <p className="mt-1.5 mb-6 text-ink-500">Jornadas, campañas y atenciones registradas con tu correo institucional.</p>
       {!datos && <div className="h-32 bg-white/60 border border-gray-200 rounded-[22px] animate-pulse" />}

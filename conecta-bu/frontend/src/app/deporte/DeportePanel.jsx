@@ -9,6 +9,7 @@ import { descargar, mensajeError } from "../../lib/salud";
 import { Aviso, Campo, Encabezado, Insignia, Kpi, Tarjeta, Vacio, botonDorado, botonPrimario, botonSecundario, claseCampo, claseCampoCorto } from "../salud/ui";
 import { GruposPage, GrupoDetallePage, useCatalogosDeporte } from "./GruposDeporte";
 import { BarrasDisciplina, IconoDisciplina } from "./Progreso";
+import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo } from "../../components/ui";
 
 // Panel del personal del modulo Deporte (/deporte): solo entran los correos
 // que el superadministrador asigno a Deporte.
@@ -39,28 +40,51 @@ function InicioPersonal() {
       .catch(() => setError("No fue posible cargar el resumen."));
   }, []);
   return (
+    <>
+      <BandaInicio
+        titulo={
+          <>
+            {saludo()}, <span className="text-cyan">{usuario?.nombre?.split(" ")[0]}.</span>
+          </>
+        }
+        fecha={`${hoyLargo()}${r?.periodo ? ` · Periodo ${r.periodo}` : ""}`}
+        texto={`Toma asistencia de las clases de hoy: cada estudiante presente suma las horas de la sesión para completar sus ${r?.requeridas || 40} horas.`}
+        acciones={
+          <>
+            <Link to="/deporte/grupos" className={botonBandaPrincipal}>
+              <Icono nombre="calendario" size={18} /> Ver grupos
+            </Link>
+            <button type="button" onClick={() => descargarReporte(r?.periodo)} className={botonBandaSecundario}>
+              <Icono nombre="descarga" size={17} /> Reporte en Excel
+            </button>
+          </>
+        }
+        aside={
+          <>
+            <h2 className="m-0 font-sans text-lg font-bold text-primary">Clases de hoy</h2>
+            {!r && <p className="m-0 text-ink-500">Cargando…</p>}
+            {r && r.clasesHoy.length === 0 && <p className="m-0 text-ink-600">Hoy no hay clases en el horario de los grupos.</p>}
+            {r && r.clasesHoy.length > 0 && (
+              <div className="flex gap-4 items-center">
+                <span className="shrink-0 w-[76px] h-[68px] rounded-2xl bg-primary-light text-primary font-extrabold flex items-center justify-center tabular-nums text-[28px]">
+                  {r.clasesHoy.length}
+                </span>
+                <span className="min-w-0 text-ink-600">
+                  <strong className="block text-[17px] text-primary">{r.clasesHoy.length === 1 ? "Clase hoy" : "Clases hoy"}</strong>
+                  {(() => {
+                    const pendientes = r.clasesHoy.filter((c) => !c.asistenciaTomada).length;
+                    return pendientes ? `${pendientes} sin asistencia tomada` : "Asistencia tomada en todas";
+                  })()}
+                </span>
+              </div>
+            )}
+            <Link to="/deporte/grupos" className="self-start font-bold text-sm px-4 min-h-[44px] inline-flex items-center rounded-full bg-primary-light text-primary hover:bg-[#E2E9F6]">
+              Tomar asistencia
+            </Link>
+          </>
+        }
+      />
     <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
-      <section className="relative overflow-hidden bg-primary rounded-[28px] px-6 py-8 sm:px-10 sm:py-10 text-white">
-        <svg aria-hidden="true" viewBox="0 0 400 400" className="absolute -right-24 -top-28 w-[360px] h-[360px]">
-          <circle cx="200" cy="200" r="180" fill="none" stroke="rgba(232,178,58,0.35)" strokeWidth="1.5" />
-          <circle cx="200" cy="200" r="120" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" />
-        </svg>
-        <p className="relative m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-gold">Deporte · {r?.periodo || "…"}</p>
-        <h1 className="relative m-0 text-white text-[32px] sm:text-[40px] font-extrabold">
-          {saludo()}, {usuario?.nombre?.split(" ")[0]}
-        </h1>
-        <p className="relative mt-2 mb-6 text-[#D6DDEC] max-w-[560px]">
-          Toma asistencia de las clases de hoy: cada estudiante presente suma las horas de la sesión para completar sus {r?.requeridas || 40} horas.
-        </p>
-        <div className="relative flex gap-2.5 flex-wrap">
-          <Link to="/deporte/grupos" className={`${botonDorado} min-h-[50px]`}>
-            <Icono nombre="calendario" size={18} /> Ver grupos
-          </Link>
-          <button type="button" onClick={() => descargarReporte(r?.periodo)} className="inline-flex items-center gap-2 border-[1.5px] border-white/30 text-white font-bold text-sm px-5 min-h-[50px] rounded-full hover:bg-white/10">
-            <Icono nombre="descarga" size={17} /> Reporte en Excel
-          </button>
-        </div>
-      </section>
       {error && <Aviso>{error}</Aviso>}
       <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(190px,1fr))]">
         <Kpi destacado titulo="Estudiantes inscritos" valor={r ? r.inscritos : "…"} detalle={r ? `en ${r.gruposActivos} grupos activos` : null} />
@@ -110,6 +134,7 @@ function InicioPersonal() {
         </div>
       </div>
     </main>
+    </>
   );
 }
 
