@@ -90,6 +90,32 @@ describe("Superadministrador: accesos por modulo", () => {
     }
   });
 
+  test("SUPERADMIN_EMAIL se aplica tambien con la sesion ya abierta (sin volver a iniciar sesion)", async () => {
+    process.env.SUPERADMIN_EMAIL = '"luisa.super@uniautonoma.edu.co"';
+    try {
+      const persona = crearUsuario("Administrador", "luisa.super@uniautonoma.edu.co");
+      const me = await request(app).get("/api/v1/auth/me").set(auth(persona.token));
+      expect(me.status).toBe(200);
+      expect(me.body.usuario.rol).toBe("SuperAdministrador");
+      expect((await request(app).get("/api/v1/super/resumen").set(auth(persona.token))).status).toBe(200);
+    } finally {
+      delete process.env.SUPERADMIN_EMAIL;
+    }
+  });
+
+  test("si la base de datos no tiene el rol SuperAdministrador, se crea al entrar", async () => {
+    process.env.SUPERADMIN_EMAIL = "nuevo.super@uniautonoma.edu.co";
+    try {
+      const persona = crearUsuario("Estudiante", "nuevo.super@uniautonoma.edu.co");
+      prisma.rol.__quitar("SuperAdministrador");
+      const me = await request(app).get("/api/v1/auth/me").set(auth(persona.token));
+      expect(me.body.usuario.rol).toBe("SuperAdministrador");
+      expect(await prisma.rol.findUnique({ where: { nombre: "SuperAdministrador" } })).not.toBeNull();
+    } finally {
+      delete process.env.SUPERADMIN_EMAIL;
+    }
+  });
+
   test("un administrador sin modulos asignados no entra a ningun panel", async () => {
     const sinNada = crearUsuario("Estudiante", "x@uniautonoma.edu.co");
     await prisma.usuario.update({ where: { id: sinNada.usuario.id }, data: { rolId: "rol-administrador" } });

@@ -7,9 +7,9 @@ const MODULOS_CON_CITAS = ["desarrollo-humano", "salud"];
 
 // Modulos con personal asignado (accesos por correo).
 const MODULOS = {
-  "desarrollo-humano": "Desarrollo humano y orientación",
-  salud: "Salud integral",
-  deporte: "Deporte",
+  "desarrollo-humano": "Desarrollo Humano",
+  salud: "Salud Integral",
+  deporte: "Deporte y Recreación",
 };
 
 // Modulo por defecto de cada rol cuando no se indica (compatibilidad).

@@ -166,6 +166,14 @@ const prisma = {
   rol: {
     findUnique: async ({ where }) => roles.find((r) => r.id === where.id || r.nombre === where.nombre) || null,
     findMany: async () => roles.map(clone),
+    create: async ({ data }) => {
+      const rol = { id: `rol-${++contador}`, ...data };
+      roles.push(rol);
+      return clone(rol);
+    },
+    __quitar: (nombre) => {
+      roles = roles.filter((r) => r.nombre !== nombre);
+    },
   },
   usuario: {
     findMany: async ({ where, include } = {}) =>

@@ -4,6 +4,7 @@ const { prisma } = require("../../config/prisma");
 const { signToken } = require("../../common/utils/jwt");
 const { AppError } = require("../../common/utils/AppError");
 const { modulosDeUsuario } = require("../../common/utils/modulos");
+const { asegurarSuperadmin, correoSuperadmin } = require("../../common/utils/superadmin");
 
 const client = new OAuth2Client(config.googleClientId);
 
@@ -45,7 +46,7 @@ async function buscarOCrearUsuario(payload) {
   });
 
   if (existente) {
-    if (!existente.habilitado) {
+    if (!existente.habilitado && existente.emailInstitucional.toLowerCase() !== correoSuperadmin()) {
       throw new AppError(401, "Tu usuario esta deshabilitado. Contacta al administrador del modulo.");
     }
     return existente;
@@ -81,15 +82,8 @@ function serializarUsuario(usuario) {
 // Quien tiene un acceso asignado a algun modulo entra como personal
 // (Administrador) aunque haya iniciado sesion antes como estudiante.
 async function aplicarAccesos(usuario) {
-  // El correo de SUPERADMIN_EMAIL (.env) siempre entra como superadministrador,
-  // aunque el seed no se haya vuelto a correr o ya tuviera otro rol.
-  const correoSuper = String(process.env.SUPERADMIN_EMAIL || "").trim().toLowerCase();
-  if (correoSuper && usuario.emailInstitucional.toLowerCase() === correoSuper && usuario.rol.nombre !== "SuperAdministrador") {
-    const rolSuper = await prisma.rol.findUnique({ where: { nombre: "SuperAdministrador" } });
-    if (rolSuper) {
-      usuario = await prisma.usuario.update({ where: { id: usuario.id }, data: { rolId: rolSuper.id }, include: { rol: true } });
-    }
-  }
+  // El correo de SUPERADMIN_EMAIL (.env) siempre entra como superadministrador.
+  usuario = await asegurarSuperadmin(usuario);
   const accesos = await prisma.accesoModulo.findMany({ where: { email: usuario.emailInstitucional.toLowerCase() } });
   usuario.modulos = accesos.map((a) => a.modulo);
   if (accesos.length && usuario.rol.nombre === "Estudiante") {

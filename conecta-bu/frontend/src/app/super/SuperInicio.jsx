@@ -31,7 +31,6 @@ export function SuperInicio() {
   return (
     <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-9 pb-16 flex flex-col gap-6">
       <div>
-        <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Superadministrador</p>
         <h1 className="m-0 text-3xl sm:text-[34px] font-extrabold">Hola, {usuario?.nombre?.split(" ")[0]}</h1>
         <p className="mt-1.5 mb-0 text-ink-500 max-w-[680px]">
           Cada módulo de Conecta BU es independiente. Desde aquí decides qué correos del personal entran a cada uno; los estudiantes
