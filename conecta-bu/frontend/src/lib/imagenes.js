@@ -34,3 +34,14 @@ export function imagenDeEvento(evento = {}) {
   if (evento.imagenUrl) return { src: urlDelServidor(evento.imagenUrl), alt: evento.nombre ? `Foto de ${evento.nombre}` : "" };
   return imagenParaEvento(evento.id);
 }
+
+// Si la foto subida no carga (servidor apagado, archivo borrado...), se
+// cambia una sola vez por la foto institucional del evento.
+export function respaldoDeFoto(evento = {}) {
+  return (e) => {
+    const img = e.currentTarget;
+    if (img.dataset.respaldo) return;
+    img.dataset.respaldo = "1";
+    img.src = imagenParaEvento(evento.id).src;
+  };
+}

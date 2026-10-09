@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { fechaInputUTC, fechaLarga, formatearHora, horaInputUTC } from "../../lib/format";
-import { imagenDeEvento, imagenParaEvento, urlDelServidor } from "../../lib/imagenes";
+import { imagenDeEvento, respaldoDeFoto, imagenParaEvento, urlDelServidor } from "../../lib/imagenes";
 import { Aviso, Estado, Vacio, botonPrimario, botonSecundario, claseCampo } from "../../components/ui";
 import { Icono } from "../../components/Iconos";
 import { BotonFlotante, Ventana } from "../../components/Ventana";
@@ -402,7 +402,7 @@ function FilaEvento({ evento, ocupado, onEstado, onEditar, onDuplicar, onElimina
   const porcentaje = Math.min(100, Math.round((inscritos / Math.max(1, evento.cupos)) * 100));
   return (
     <li className="px-5 py-4 flex items-center justify-between flex-wrap gap-x-6 gap-y-3">
-      <img src={imagenDeEvento(evento).src} alt="" className="hidden sm:block w-[88px] h-[64px] object-cover rounded-xl shrink-0" />
+      <img src={imagenDeEvento(evento).src} alt="" onError={respaldoDeFoto(evento)} className="hidden sm:block w-[88px] h-[64px] object-cover rounded-xl shrink-0" />
       <div className="min-w-0 flex-[1_1_320px]">
         <div className="flex items-center gap-2 flex-wrap">
           <strong className="text-ink-900">{evento.nombre}</strong>

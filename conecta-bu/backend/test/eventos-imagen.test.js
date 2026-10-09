@@ -41,6 +41,8 @@ describe("Imagen de talleres y eventos", () => {
     const archivo = await request(app).get(`/api/v1/eventos/${evento.id}/imagen`);
     expect(archivo.status).toBe(200);
     expect(archivo.headers["content-type"]).toMatch(/image\/png/);
+    // Se puede mostrar desde el frontend en otro puerto (helmet lo bloquearia).
+    expect(archivo.headers["cross-origin-resource-policy"]).toBe("cross-origin");
   });
 
   test("reemplazar borra la anterior y quitar la deja sin imagen", async () => {

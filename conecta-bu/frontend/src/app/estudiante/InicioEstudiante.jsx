@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { useAuth } from "../../lib/auth/AuthContext";
 import { formatearFecha, formatearHora, fechaLarga } from "../../lib/format";
-import { imagenDeEvento } from "../../lib/imagenes";
+import { imagenDeEvento, respaldoDeFoto } from "../../lib/imagenes";
 import { Icono } from "../../components/Iconos";
 
 const MESES = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
@@ -195,7 +195,7 @@ export function InicioEstudiante() {
             return (
               <article key={evento.id} className="bg-white border border-gray-200 rounded-3xl overflow-hidden flex flex-col">
                 <div className="relative h-[190px] p-4 flex justify-between items-start bg-primary-soft">
-                  <img src={imagen.src} alt={imagen.alt} className="absolute inset-0 w-full h-full object-cover" />
+                  <img src={imagen.src} alt={imagen.alt} onError={respaldoDeFoto(evento)} className="absolute inset-0 w-full h-full object-cover" />
                   <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,42,91,0)_40%,rgba(11,42,91,0.55)_100%)]" />
                   <span className="relative bg-white text-primary rounded-[14px] px-3 py-2 text-center leading-none">
                     <strong className="block font-display text-[22px]">{dia}</strong>

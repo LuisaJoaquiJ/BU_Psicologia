@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { http } from "../../lib/api/http";
 import { formatearFecha, formatearHora, fechaLarga } from "../../lib/format";
-import { imagenDeEvento } from "../../lib/imagenes";
+import { imagenDeEvento, respaldoDeFoto } from "../../lib/imagenes";
 
 const ESTADO_INSCRIPCION = {
   Confirmada: "bg-emerald-50 text-emerald-700",
@@ -85,7 +85,7 @@ export function EventosPage() {
         {eventos?.map((evento) => (
           <article key={evento.id} className="bg-white rounded-3xl border border-gray-200 overflow-hidden flex flex-col">
             <div className="relative h-[170px] bg-primary-soft">
-              <img src={imagenDeEvento(evento).src} alt={imagenDeEvento(evento).alt} className="absolute inset-0 w-full h-full object-cover" />
+              <img src={imagenDeEvento(evento).src} alt={imagenDeEvento(evento).alt} onError={respaldoDeFoto(evento)} className="absolute inset-0 w-full h-full object-cover" />
             </div>
             <div className="p-6 flex flex-col gap-3 flex-1">
             <div className="flex items-start justify-between gap-3">

@@ -23,6 +23,10 @@ router.get("/:id/imagen", async (req, res, next) => {
     const evento = await prisma.evento.findUnique({ where: { id: req.params.id } });
     const ruta = rutaDe(evento?.imagen);
     if (!ruta) return res.status(404).json({ message: "El evento no tiene imagen." });
+    // helmet pone "Cross-Origin-Resource-Policy: same-origin": si el frontend
+    // corre en otro puerto (VITE_API_URL=http://localhost:4000/...), el
+    // navegador bloquearia la foto. Es una imagen publica, se permite.
+    res.set("Cross-Origin-Resource-Policy", "cross-origin");
     res.set("Cache-Control", "public, max-age=86400");
     res.sendFile(ruta, (err) => {
       if (err && !res.headersSent) res.status(404).json({ message: "No se encontró la imagen." });
