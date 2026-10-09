@@ -9,6 +9,7 @@ import { Aviso, Kpi } from "../salud/ui";
 const ESTILO = {
   "desarrollo-humano": { color: "bg-gold text-primary", panel: "/admin" },
   salud: { color: "bg-[#14B8A6] text-primary", panel: "/salud" },
+  deporte: { color: "bg-[#F97316] text-white", panel: "/deporte" },
 };
 
 // Vista general de Conecta BU: cada modulo con su personal asignado y sus
@@ -57,7 +58,7 @@ export function SuperInicio() {
       <div className="grid gap-5 md:grid-cols-2">
         {(resumen?.modulos || []).map((m) => {
           const info = MODULOS.find((x) => x.id === m.id);
-          const estilo = ESTILO[m.id];
+          const estilo = ESTILO[m.id] || { color: "bg-white text-primary", panel: "/super" };
           return (
             <section key={m.id} className="bg-white border border-gray-200 rounded-[24px] overflow-hidden flex flex-col">
               <div className="relative h-[120px] bg-primary">
