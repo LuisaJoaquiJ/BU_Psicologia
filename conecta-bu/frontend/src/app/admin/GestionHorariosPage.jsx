@@ -7,7 +7,7 @@ import { Aviso, Vacio, botonPrimario, botonSecundario, claseCampo } from "../../
 import { PublicarSemana } from "./PublicarSemana";
 import { BotonFlotante, Ventana } from "../../components/Ventana";
 import { CalendarioMes, SelectorVista } from "../../components/CalendarioMes";
-import { FormularioNoDisponible, textoBloqueo } from "./NoDisponible";
+import { ElegirDias, FormularioNoDisponible, textoBloqueo } from "./NoDisponible";
 
 const FORM_VACIO = { servicioId: "", fecha: "", horaInicio: "", horaFin: "", cupo: 1 };
 
@@ -80,6 +80,10 @@ export function GestionHorariosPage({ api = "/admin", modulo = "desarrollo-human
   async function crearHorario(e) {
     e.preventDefault();
     setError("");
+    if (!form.fecha) {
+      setError("Toca en el calendario el día del horario.");
+      return;
+    }
     setEnviando(true);
     try {
       await http.post(`${api}/horarios`, form);
@@ -479,17 +483,13 @@ export function GestionHorariosPage({ api = "/admin", modulo = "desarrollo-human
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-1.5 text-sm font-bold text-ink-600 sm:col-span-2">
+              <div className="flex flex-col gap-1.5 text-sm font-bold text-ink-600 sm:col-span-2">
                 Fecha
-                <input
-                  required
-                  type="date"
-                  min={hoyStr}
-                  value={form.fecha}
-                  onChange={(e) => setForm({ ...form, fecha: e.target.value })}
-                  className={campoChico}
-                />
-              </label>
+                <ElegirDias desde={form.fecha || null} onCambiar={(dia) => setForm({ ...form, fecha: dia })} unDia />
+                <span className="text-base font-bold text-primary-dark" aria-live="polite">
+                  {form.fecha ? fechaLarga(`${form.fecha}T12:00:00Z`) : "Toca un día en el calendario"}
+                </span>
+              </div>
               <label className="flex flex-col gap-1.5 text-sm font-bold text-ink-600">
                 Empieza
                 <input required type="time" value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} className={campoChico} />

@@ -38,7 +38,7 @@ export function textoBloqueo(b) {
 
 // Calendario pequeño para elegir un dia o varios dias seguidos: se toca el
 // primero y, si son varios, el ultimo.
-function ElegirDias({ desde, hasta, abierto, onCambiar }) {
+export function ElegirDias({ desde, hasta, abierto, onCambiar, unDia = false }) {
   const hoy = hoyISO();
   const base = new Date(`${desde || hoy}T12:00:00`);
   const [mes, setMes] = useState(new Date(base.getFullYear(), base.getMonth(), 1));
@@ -51,7 +51,8 @@ function ElegirDias({ desde, hasta, abierto, onCambiar }) {
 
   function tocar(dia) {
     // "abierto": ya se toco el primer dia y falta (si se quiere) el ultimo.
-    if (abierto && dia > desde) onCambiar(desde, dia, false);
+    if (unDia) onCambiar(dia, null, false);
+    else if (abierto && dia > desde) onCambiar(desde, dia, false);
     else onCambiar(dia, null, true);
   }
   const mover = (n) => setMes(new Date(mes.getFullYear(), mes.getMonth() + n, 1));
