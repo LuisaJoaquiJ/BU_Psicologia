@@ -86,7 +86,7 @@ export function InicioAdmin() {
         acciones={
           <>
             <Link to="/admin/eventos?nuevo=1" className={botonBandaPrincipal}>Nuevo evento</Link>
-            <Link to="/admin/horarios" className={botonBandaSecundario}>Publicar horario</Link>
+            <Link to="/admin/horarios?agregar=1" className={botonBandaSecundario}>Publicar horario</Link>
           </>
         }
         aside={

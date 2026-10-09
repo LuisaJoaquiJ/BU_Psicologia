@@ -73,7 +73,7 @@ function tramitesDe(usuario) {
   if (puedeAdministrar(usuario, "desarrollo-humano")) {
     lista.push(
       { to: "/admin/citas", texto: "Ver la agenda de citas de hoy" },
-      { to: "/admin/horarios", texto: "Publicar mis horarios de atención" },
+      { to: "/admin/horarios?agregar=1", texto: "Publicar mis horarios de atención" },
       { to: "/admin/eventos", texto: "Crear un taller o evento" }
     );
   }

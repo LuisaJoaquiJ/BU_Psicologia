@@ -308,7 +308,7 @@ export function PublicarSemana({ api, servicios, horarios, alPublicar }) {
           </div>
         </div>
         <p className="mt-3.5 mb-0 text-sm text-ink-500">
-          Cada casilla es la hora en que empiezan las citas. Para quitar un horario ya publicado, usa la lista de abajo.
+          Cada casilla es la hora en que empiezan las citas. Para cerrar un horario ya publicado, hazlo desde la lista de «Mis horarios de atención».
         </p>
       </div>
     </section>
