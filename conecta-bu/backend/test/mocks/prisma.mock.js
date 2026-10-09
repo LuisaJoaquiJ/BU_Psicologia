@@ -204,8 +204,7 @@ const prisma = {
     findMany: async ({ where } = {}) => {
       let resultado = horarios;
       if (where?.ocupado !== undefined) resultado = resultado.filter((h) => h.ocupado === where.ocupado);
-      if (where?.fecha?.gte) resultado = resultado.filter((h) => h.fecha >= where.fecha.gte);
-      if (where?.fecha && !where.fecha.gte) resultado = resultado.filter((h) => mismaFecha(h.fecha, where.fecha));
+      if (where?.fecha) resultado = resultado.filter((h) => cumpleFiltroFecha(h.fecha, where.fecha));
       if (where?.servicioId) resultado = resultado.filter((h) => h.servicioId === where.servicioId);
       return resultado.map(attachServicio);
     },

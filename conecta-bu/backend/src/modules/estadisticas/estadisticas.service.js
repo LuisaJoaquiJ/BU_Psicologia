@@ -1,6 +1,7 @@
 const { prisma } = require("../../config/prisma");
 const { AppError } = require("../../common/utils/AppError");
 const { aFechaUTC } = require("../../common/utils/fechas");
+const analitica = require("./analitica");
 
 // Porcentaje con un decimal; null cuando no hay base para calcularlo
 // (el frontend muestra "sin datos" en lugar de un 0% enganoso).
@@ -95,7 +96,7 @@ function calcularIndicadoresEventos(eventos) {
 async function obtenerEstadisticas({ desde, hasta } = {}) {
   const fecha = rangoFechas({ desde, hasta });
 
-  const [citas, eventos, estudiantes] = await Promise.all([
+  const [citas, eventos, estudiantes, horarios] = await Promise.all([
     prisma.cita.findMany({
       where: fecha ? { horario: { fecha } } : {},
       include: { horario: { include: { servicio: true } } },
@@ -108,6 +109,7 @@ async function obtenerEstadisticas({ desde, hasta } = {}) {
       orderBy: { fecha: "asc" },
     }),
     prisma.usuario.count({ where: { rol: { nombre: "Estudiante" } } }),
+    prisma.horario.findMany({ where: fecha ? { fecha } : {} }),
   ]);
 
   const indicadoresCitas = calcularIndicadoresCitas(citas);
@@ -121,6 +123,12 @@ async function obtenerEstadisticas({ desde, hasta } = {}) {
     citasPorServicio: indicadoresCitas.porServicio,
     eventos: indicadoresEventos.resumen,
     eventosDetalle: indicadoresEventos.porEvento,
+    // Ampliacion del dashboard: tendencia, demanda, probabilidades y participacion.
+    tendenciaSemanal: analitica.tendenciaSemanal(citas, { desde, hasta }),
+    mapaDemanda: analitica.mapaDemanda(citas),
+    probabilidades: analitica.calcularProbabilidades(citas, eventos),
+    participacion: analitica.calcularParticipacion(citas, eventos, estudiantes),
+    ocupacionHorarios: analitica.calcularOcupacionHorarios(horarios),
   };
 }
 

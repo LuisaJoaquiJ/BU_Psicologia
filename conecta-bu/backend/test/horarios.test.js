@@ -311,7 +311,12 @@ describe("RF-008 / HU-16: registro de asistencia", () => {
   test("no permite registrar asistencia de una cita cancelada (409)", async () => {
     const { token: tokenAdmin } = crearAdmin();
     const { token: tokenEstudiante } = crearEstudiante();
-    const horario = prisma.__seedHorario({ fecha: manana() });
+    // A 3 dias, para que la cancelacion cumpla la regla de 24 horas (HU-12).
+    const enTresDias = new Date(manana().getTime() + 2 * 24 * 60 * 60 * 1000);
+    const horario = prisma.__seedHorario({
+      fecha: enTresDias,
+      horaInicio: new Date(Date.UTC(1970, 0, 1, 9, 0, 0)),
+    });
     const agendada = await request(app)
       .post("/api/v1/citas")
       .set("Authorization", `Bearer ${tokenEstudiante}`)
