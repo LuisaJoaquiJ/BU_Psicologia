@@ -29,7 +29,7 @@ const MODULOS_ESTUDIANTE = {
       { to: "/mi-salud", label: "Agendar cita", end: true },
       { to: "/mi-salud/mis-citas", label: "Mis citas" },
       { to: "/mi-salud/participaciones", label: "Mis participaciones" },
-      { to: "/reportes-sst", label: "Salidas y reportes" },
+      { to: "/mi-salud/salidas", label: "Salidas" },
     ],
   },
   deporte: {

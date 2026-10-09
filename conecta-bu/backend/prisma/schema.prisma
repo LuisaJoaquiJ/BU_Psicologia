@@ -41,6 +41,7 @@ model Usuario {
   inscripcionesDeporte         InscripcionDeporte[]
   asistenciasDeporte           AsistenciaDeporte[]
   horasDeporteManuales         HoraDeporteManual[]
+  inscripcionesSalida          InscripcionSalida[]
 
   @@map("usuarios")
 }
@@ -660,4 +661,66 @@ model ConfigDeporte {
   maxGruposPorPeriodo Int @default(2)
 
   @@map("deporte_config")
+}
+
+// ---- Salud integral: salidas con inscripcion de estudiantes ------------------
+// El personal de Salud publica la salida (visita tecnica, practica...) y los
+// estudiantes se inscriben con sus datos, EPS y, si se pide, el comprobante de
+// pago. Con los inscritos aprobados se arma el listado para la ARL o el seguro.
+model SalidaConvocatoria {
+  id                     String    @id @default(uuid())
+  nombre                 String    @db.VarChar(200)
+  descripcion            String?   @db.Text
+  destino                String    @db.VarChar(200)
+  programa               String?   @db.VarChar(150)
+  responsable            String?   @db.VarChar(200)
+  lugarEncuentro         String?   @db.VarChar(200)
+  fechaSalida            DateTime  @db.Date
+  fechaRegreso           DateTime  @db.Date
+  horaSalida             String?   @db.VarChar(5)
+  horaRegreso            String?   @db.VarChar(5)
+  cupos                  Int
+  costo                  Int?
+  infoPago               String?   @db.Text
+  pideComprobante        Boolean   @default(false)
+  fechaLimiteInscripcion DateTime  @db.Date
+  estado                 String    @default("Borrador") @db.VarChar(15)
+  creadaPor              String?   @db.VarChar(120)
+  fechaCreacion          DateTime  @default(now())
+  fechaActualizacion     DateTime  @updatedAt
+
+  inscripciones InscripcionSalida[]
+
+  @@index([estado, fechaSalida])
+  @@map("salud_salidas")
+}
+
+model InscripcionSalida {
+  id                 String             @id @default(uuid())
+  salidaId           String
+  salida             SalidaConvocatoria @relation(fields: [salidaId], references: [id])
+  usuarioId          String
+  usuario            Usuario            @relation(fields: [usuarioId], references: [id])
+  nombre             String             @db.VarChar(200)
+  correo             String             @db.VarChar(120)
+  tipoDocumento      String             @default("CC") @db.VarChar(5)
+  documento          String             @db.VarChar(30)
+  programa           String             @db.VarChar(150)
+  celular            String             @db.VarChar(30)
+  eps                String             @db.VarChar(120)
+  contactoEmergencia String?            @db.VarChar(200)
+  telefonoEmergencia String?            @db.VarChar(30)
+  comprobante        String?            @db.VarChar(120)
+  comprobanteNombre  String?            @db.VarChar(200)
+  estado             String             @default("Pendiente") @db.VarChar(15)
+  observacion        String?            @db.Text
+  consentimiento     Boolean            @default(false)
+  revisadoPor        String?            @db.VarChar(120)
+  fechaRevision      DateTime?
+  fechaInscripcion   DateTime           @default(now())
+  fechaActualizacion DateTime           @updatedAt
+
+  @@unique([salidaId, usuarioId])
+  @@index([usuarioId])
+  @@map("salud_salidas_inscripciones")
 }

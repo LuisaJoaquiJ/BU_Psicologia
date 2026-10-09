@@ -12,6 +12,7 @@ const reportes = require("./reportes.service");
 const { importarExcel } = require("./importador.service");
 const { routerPersonal: reportesSst } = require("./sst.routes");
 const informes = require("./informe.service");
+const salidas = require("./salidas.service");
 
 // Modulo Salud integral (/api/v1/salud). Todo es exclusivo del rol "Salud"
 // (personal de la Unidad de Salud): maneja datos personales y de salud.
@@ -88,6 +89,40 @@ router.post(
     res.status(201).json({ evidencias: await evidencias.guardarEvidencias(req.params.id, req.files, req.body, req.usuario.id) })
   )
 );
+// ---- Salidas con inscripcion de estudiantes ----------------------------------
+router.get("/salidas-inscripcion", manejar(async (req, res) => res.json({ salidas: await salidas.listarSalidas() })));
+router.post("/salidas-inscripcion", manejar(async (req, res) => res.status(201).json({ salida: await salidas.crearSalida(req.body, req.usuario) })));
+router.get("/salidas-inscripcion/:id", manejar(async (req, res) => res.json({ salida: await salidas.obtenerSalida(req.params.id) })));
+router.patch("/salidas-inscripcion/:id", manejar(async (req, res) => res.json({ salida: await salidas.actualizarSalida(req.params.id, req.body) })));
+router.patch(
+  "/salidas-inscripcion/:id/estado",
+  manejar(async (req, res) => res.json({ salida: await salidas.cambiarEstadoSalida(req.params.id, req.body.estado) }))
+);
+router.delete("/salidas-inscripcion/:id", manejar(async (req, res) => res.json(await salidas.eliminarSalida(req.params.id))));
+router.get(
+  "/salidas-inscripcion/:id/inscripciones",
+  manejar(async (req, res) => res.json({ inscripciones: await salidas.listarInscripciones(req.params.id) }))
+);
+router.patch(
+  "/salidas-inscripcion/:id/inscripciones/:inscripcionId",
+  manejar(async (req, res) => res.json({ inscripcion: await salidas.revisarInscripcion(req.params.id, req.params.inscripcionId, req.body, req.usuario) }))
+);
+router.get(
+  "/salidas-inscripcion/:id/inscripciones/:inscripcionId/comprobante",
+  manejar(async (req, res) => {
+    const { ruta, nombre } = await salidas.comprobanteDe(req.params.id, req.params.inscripcionId);
+    res.set("Content-Disposition", `inline; filename="${encodeURIComponent(nombre)}"`);
+    res.set("Cache-Control", "no-store");
+    res.sendFile(ruta, (err) => {
+      if (err && !res.headersSent) res.status(404).json({ statusCode: 404, message: "Archivo no disponible.", error: "Not Found" });
+    });
+  })
+);
+router.get(
+  "/salidas-inscripcion/:id/listado",
+  manejar(async (req, res) => enviarExcel(res, await salidas.listadoExcel(req.params.id, { todos: req.query.todos === "1" })))
+);
+
 router.get(
   "/evidencias/:id/archivo",
   manejar(async (req, res) => {

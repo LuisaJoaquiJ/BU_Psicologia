@@ -9,6 +9,7 @@ import { ActividadDetallePage } from "./ActividadDetallePage";
 import { PersonasPage, PersonaDetallePage } from "./PersonasPage";
 import { ReportesPage } from "./ReportesPage";
 import { SalidasPage, SalidaDetallePage } from "./SalidasPage";
+import { SalidasInscripcionPage, SalidaInscritosPage } from "./SalidasInscripcionPage";
 import { InformeGestionPage } from "./InformeGestionPage";
 
 // Panel del personal de la Unidad de Salud Integral: solo entran los correos
@@ -20,7 +21,8 @@ const MENU_SALUD = [
   { to: "/salud/registrar", label: "Registrar", icono: "check" },
   { to: "/salud/actividades", label: "Actividades", icono: "estrella" },
   { to: "/salud/personas", label: "Personas", icono: "usuarios" },
-  { to: "/salud/salidas", label: "Salidas y reportes", icono: "bus" },
+  { to: "/salud/salidas-estudiantes", label: "Salidas", icono: "bus" },
+  { to: "/salud/salidas", label: "Reportes SST", icono: "alerta" },
   { to: "/salud/horarios", label: "Horarios de citas", icono: "reloj" },
   { to: "/salud/citas", label: "Agenda de citas", icono: "calendario" },
   { to: "/salud/informe", label: "Informe de gestión", icono: "archivo" },
@@ -43,6 +45,8 @@ export function SaludPanel() {
         <Route path="informe" element={<InformeGestionPage />} />
         <Route path="salidas" element={<SalidasPage />} />
         <Route path="salidas/:id" element={<SalidaDetallePage />} />
+        <Route path="salidas-estudiantes" element={<SalidasInscripcionPage />} />
+        <Route path="salidas-estudiantes/:id" element={<SalidaInscritosPage />} />
       </Routes>
     </PanelLayout>
   );

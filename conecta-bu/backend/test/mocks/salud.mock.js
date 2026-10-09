@@ -70,7 +70,7 @@ function errorUnico(campos) {
 }
 
 function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
-  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [] };
+  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [], salidas: [], inscripcionesSalida: [] };
   let consecutivoSst = 0;
 
   const usuarioPorId = (id) => {
@@ -106,6 +106,8 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     asistenciasDeporte: {},
     horasDeporte: {},
     configDeporte: {},
+    salidas: {},
+    inscripcionesSalida: {},
     adjuntosSst: {
       reporte: (r) => clonar(tablas.reportesSst.find((x) => x.id === r.reporteId)),
     },
@@ -131,6 +133,8 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     asistenciasDeporte: [["sesionId", "usuarioId"]],
     horasDeporte: [],
     configDeporte: [["id"]],
+    salidas: [],
+    inscripcionesSalida: [["salidaId", "usuarioId"]],
     adjuntosSst: [],
   };
 
@@ -194,6 +198,35 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       fechaActualizacion: new Date(),
     }),
     adjuntosSst: () => ({ subidoPorId: null, fechaSubida: new Date() }),
+    salidas: () => ({
+      descripcion: null,
+      programa: null,
+      responsable: null,
+      lugarEncuentro: null,
+      horaSalida: null,
+      horaRegreso: null,
+      costo: null,
+      infoPago: null,
+      pideComprobante: false,
+      estado: "Borrador",
+      creadaPor: null,
+      fechaCreacion: new Date(),
+      fechaActualizacion: new Date(),
+    }),
+    inscripcionesSalida: () => ({
+      tipoDocumento: "CC",
+      contactoEmergencia: null,
+      telefonoEmergencia: null,
+      comprobante: null,
+      comprobanteNombre: null,
+      estado: "Pendiente",
+      observacion: null,
+      consentimiento: false,
+      revisadoPor: null,
+      fechaRevision: null,
+      fechaInscripcion: new Date(),
+      fechaActualizacion: new Date(),
+    }),
     informes: () => ({
       modulo: "salud",
       fechaPresentacion: null,
@@ -316,7 +349,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
           err.code = "P2025";
           throw err;
         }
-        const nuevo = { ...registro, ...data, ...(["personas", "reportesSst", "informes"].includes(tabla) ? { fechaActualizacion: new Date() } : {}) };
+        const nuevo = { ...registro, ...data, ...(["personas", "reportesSst", "informes", "salidas", "inscripcionesSalida"].includes(tabla) ? { fechaActualizacion: new Date() } : {}) };
         verificarUnicos(tabla, nuevo, registro.id);
         Object.assign(registro, nuevo);
         return conIncludes(tabla, registro, include);
@@ -352,6 +385,8 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       asistenciaDeporte: modelo("asistenciasDeporte", "asis"),
       horaDeporteManual: modelo("horasDeporte", "hora"),
       configDeporte: modelo("configDeporte", "config"),
+      salidaConvocatoria: modelo("salidas", "salida"),
+      inscripcionSalida: modelo("inscripcionesSalida", "insal"),
     },
     reset() {
       tablas.personas = [];
@@ -370,6 +405,8 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       tablas.asistenciasDeporte = [];
       tablas.horasDeporte = [];
       tablas.configDeporte = [];
+      tablas.salidas = [];
+      tablas.inscripcionesSalida = [];
       consecutivoSst = 0;
     },
     tablas,
