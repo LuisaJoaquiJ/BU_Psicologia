@@ -33,6 +33,16 @@ export default {
           50: "#F7F2E7",
           100: "#F3EDE0",
           200: "#EDE5D3",
+          // Los tonos de texto siguen la tinta de la marca (azul grisáceo) en
+          // lugar del gris frío por defecto de Tailwind: mejor contraste sobre
+          // el marfil y el mismo tono en todas las pantallas.
+          300: "#D5CCBA",
+          400: "#6B7385",
+          500: "#5B6478",
+          600: "#3D4659",
+          700: "#2D3547",
+          800: "#1D2434",
+          900: "#0E1726",
         },
       },
       fontFamily: {

@@ -84,8 +84,8 @@ export function Navbar({ modulo = "desarrollo-humano" }) {
               <Icono nombre={datos.icono} size={22} strokeWidth={2} />
             </span>
             <span className="flex flex-col leading-tight min-w-0">
-              <span className="text-[11px] font-bold tracking-[0.12em] uppercase text-ink-500">Conecta BU</span>
-              <span className="font-bold text-primary truncate">{datos.nombre}</span>
+              <span className="font-bold text-primary text-sm sm:text-base leading-tight line-clamp-2">{datos.nombre}</span>
+              <span className="text-xs text-ink-500">Conecta BU</span>
             </span>
           </Link>
         </div>

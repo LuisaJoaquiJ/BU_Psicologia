@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
-import { formatearFecha, formatearHora, fechaInputUTC, horaInputUTC } from "../../lib/format";
+import { formatearFecha, formatearHora, fechaInputUTC, horaInputUTC, fechaLarga } from "../../lib/format";
 
 const FORM_VACIO = {
   nombre: "",
@@ -253,8 +253,8 @@ export function GestionEventosPage() {
                       {evento.estado}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 capitalize">
-                    {formatearFecha(evento.fecha)} · {formatearHora(evento.horaInicio)} –{" "}
+                  <p className="text-sm text-gray-500">
+                    {fechaLarga(evento.fecha)} · {formatearHora(evento.horaInicio)} –{" "}
                     {formatearHora(evento.horaFin)}
                     {evento.lugar ? ` · ${evento.lugar}` : ""}
                   </p>

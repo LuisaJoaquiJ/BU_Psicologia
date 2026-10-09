@@ -5,7 +5,8 @@ import { Icono } from "./Iconos";
 import { iniciales } from "./Navbar";
 
 // Layout del rol Administrador (rediseño): menú lateral azul y contenido a
-// la derecha. En pantallas pequeñas el menú se apila arriba (RNF-005).
+// la derecha. En pantallas pequeñas queda una barra compacta arriba: una
+// fila con el módulo y la persona, y el menú desplazable (RNF-005).
 const MENU_ADMIN = [
   { to: "/admin", label: "Inicio", icono: "tablero", end: true },
   { to: "/admin/horarios", label: "Horarios", icono: "reloj" },
@@ -37,20 +38,39 @@ export function PanelLayout({ menu, panel, children }) {
 
   return (
     <div className="min-h-screen bg-cream lg:flex overflow-x-hidden">
-      <aside className="bg-primary text-white lg:w-[260px] lg:shrink-0 lg:min-h-screen px-4 py-5 lg:py-7 flex flex-col gap-5 lg:gap-7">
-        <div className="px-2 flex flex-col gap-4">
+      <aside className="bg-primary text-white lg:w-[260px] lg:shrink-0 lg:min-h-screen px-4 py-3 lg:py-7 flex flex-col gap-2 lg:gap-7">
+        {/* Celular: una sola fila con el modulo, la persona y Salir */}
+        <div className="lg:hidden flex items-center gap-3 min-h-[48px]">
+          <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${datos.color}`}>
+            <Icono nombre={datos.icono} size={18} strokeWidth={2.2} />
+          </span>
+          <span className="flex-1 min-w-0 text-sm font-bold leading-tight line-clamp-2">{datos.nombre}</span>
+          <span
+            title={usuario?.nombre}
+            className="w-9 h-9 rounded-full bg-gold text-primary text-sm font-bold flex items-center justify-center shrink-0"
+          >
+            {iniciales(usuario?.nombre)}
+          </span>
+          <button onClick={cerrarSesion} className="text-[13px] font-semibold text-[#D6DDEC] hover:text-white px-2 min-h-[44px]">
+            Salir
+          </button>
+        </div>
+        <div className="hidden px-2 lg:flex flex-col gap-4">
           <Logo to="/" subtitulo="Bienestar Universitario" invertido />
           <div className="flex items-center gap-3 rounded-2xl bg-white/[0.07] border border-white/10 p-3">
             <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${datos.color}`}>
               <Icono nombre={datos.icono} size={18} strokeWidth={2.2} />
             </span>
             <span className="leading-tight min-w-0">
-              <span className="block text-[10px] font-bold tracking-[0.14em] uppercase text-white/60">{panel === "super" ? "Panel" : "Módulo"}</span>
               <span className="block text-sm font-bold text-white">{datos.nombre}</span>
+              <span className="block text-xs text-[#C9D3E6]">{panel === "super" ? "Panel" : "Módulo"}</span>
             </span>
           </div>
         </div>
-        <nav aria-label="Administración" className="min-w-0 flex lg:flex-col gap-1 text-[15px] font-semibold overflow-x-auto">
+        <nav
+          aria-label="Administración"
+          className="min-w-0 -mx-4 px-4 lg:mx-0 lg:px-0 flex lg:flex-col gap-1 text-[15px] font-semibold overflow-x-auto [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_88%,transparent)] lg:[mask-image:none]"
+        >
           {menu.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={claseEnlace}>
               <Icono nombre={item.icono} size={18} strokeWidth={2} />
@@ -68,7 +88,7 @@ export function PanelLayout({ menu, panel, children }) {
             </NavLink>
           )}
         </nav>
-        <div className="lg:mt-auto flex items-center gap-3 p-3.5 rounded-2xl bg-white/5">
+        <div className="hidden lg:mt-auto lg:flex items-center gap-3 p-3.5 rounded-2xl bg-white/5">
           <span className="w-10 h-10 rounded-full bg-gold text-primary font-bold flex items-center justify-center shrink-0">
             {iniciales(usuario?.nombre)}
           </span>

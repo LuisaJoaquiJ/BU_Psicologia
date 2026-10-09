@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
 import { http } from "../../lib/api/http";
-import { formatearFecha, formatearHora } from "../../lib/format";
+import { Icono } from "../../components/Iconos";
+import { fechaLarga, formatearHora } from "../../lib/format";
+import { Aviso, Campo, Estado, Vacio, botonPrimario, botonSecundario, claseCampoCorto } from "../../components/ui";
 
-const ESTADO_ESTILOS = {
-  Agendada: "bg-emerald-50 text-emerald-700",
-  Cancelada: "bg-gray-100 text-gray-500",
-  Atendida: "bg-sky-50 text-sky-700",
-  NoAsistio: "bg-amber-50 text-amber-700",
-};
-
+// Fecha de hoy en la hora local del navegador (Bogota). toISOString() da la
+// fecha UTC, que despues de las 7 p. m. ya es la de manana.
 function hoyISO() {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 // RF-008 · HU-15, HU-16: agenda administrativa del dia (con filtro por
@@ -54,24 +52,15 @@ export function AgendaAdminPage({ api = "/admin" }) {
   }
 
   return (
-    <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-3xl font-semibold text-primary mb-1">Agenda de citas</h1>
-      <p className="text-gray-500 mb-6">Consulta las citas agendadas y registra la asistencia de cada estudiante.</p>
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 lg:py-10">
+      <h1 className="m-0 text-3xl sm:text-[34px] font-semibold">Agenda de citas</h1>
+      <p className="mt-1.5 mb-7 text-ink-500">Consulta las citas agendadas y registra la asistencia de cada estudiante.</p>
 
-      <form onSubmit={buscar} className="flex items-end gap-3 mb-8 flex-wrap">
-        <label className="flex flex-col gap-1 text-sm text-gray-600">
-          Fecha
-          <input
-            type="date"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-ink-900"
-          />
-        </label>
-        <button
-          type="submit"
-          className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors"
-        >
+      <form onSubmit={buscar} className="flex items-end gap-2.5 mb-8 flex-wrap">
+        <Campo etiqueta="Fecha">
+          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={claseCampoCorto} />
+        </Campo>
+        <button type="submit" className={botonPrimario}>
           Buscar
         </button>
         <button
@@ -81,64 +70,68 @@ export function AgendaAdminPage({ api = "/admin" }) {
             setError("");
             cargarAgenda("");
           }}
-          className="text-sm border border-gray-200 rounded-full px-4 py-2 text-gray-600 hover:bg-gray-50 transition-colors"
+          className={botonSecundario}
         >
           Ver todas
         </button>
       </form>
 
-      {error && <p className="text-sm text-red-600 bg-red-50 rounded-md p-3 mb-6">{error}</p>}
+      {error && (
+        <div className="mb-6">
+          <Aviso>{error}</Aviso>
+        </div>
+      )}
 
-      {!citas && !error && <p className="text-gray-500">Cargando agenda...</p>}
-      {citas && citas.length === 0 && <p className="text-gray-500">No hay citas para este filtro.</p>}
+      {!citas && !error && <p className="text-ink-500">Cargando agenda…</p>}
+      {citas && citas.length === 0 && <Vacio>No hay citas para este filtro.</Vacio>}
 
-      <div className="flex flex-col gap-4">
-        {citas?.map((cita) => (
-          <div
-            key={cita.id}
-            className="bg-white rounded-2xl border border-gray-200 p-6 flex items-center justify-between flex-wrap gap-4"
-          >
-            <div>
-              <p className="text-xs font-semibold text-accent uppercase tracking-wide">
-                {cita.horario?.servicio?.nombre}
-              </p>
-              <p className="font-semibold text-ink-900">{cita.usuario?.nombre}</p>
-              <p className="text-xs text-gray-500 mb-1">{cita.usuario?.emailInstitucional}</p>
-              <p className="text-sm text-gray-500 capitalize">
-                {formatearFecha(cita.horario?.fecha)} · {formatearHora(cita.horario?.horaInicio)} –{" "}
-                {formatearHora(cita.horario?.horaFin)}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span
-                className={`text-xs font-medium rounded-full px-3 py-1 ${
-                  ESTADO_ESTILOS[cita.estado] || "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {cita.estado}
-              </span>
-              {cita.estado === "Agendada" && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => registrarAsistencia(cita.id, true)}
-                    disabled={registrando === cita.id}
-                    className="text-sm font-medium bg-emerald-50 text-emerald-700 rounded-full px-4 py-1.5 hover:bg-emerald-100 transition-colors disabled:opacity-60"
-                  >
-                    Asistió
-                  </button>
-                  <button
-                    onClick={() => registrarAsistencia(cita.id, false)}
-                    disabled={registrando === cita.id}
-                    className="text-sm font-medium bg-amber-50 text-amber-700 rounded-full px-4 py-1.5 hover:bg-amber-100 transition-colors disabled:opacity-60"
-                  >
-                    No asistió
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+      {citas && citas.length > 0 && (
+        <ul className="list-none m-0 p-0 bg-white border border-gray-200 rounded-[22px] divide-y divide-gray-200">
+          {citas.map((cita) => (
+            <li
+              key={cita.id}
+              className="p-4 sm:px-6 sm:py-4 grid gap-x-6 gap-y-2 items-center grid-cols-1 md:grid-cols-[230px_minmax(0,1fr)_auto]"
+            >
+              <div className="tabular-nums">
+                <p className="m-0 font-bold text-ink-900 whitespace-nowrap">
+                  {formatearHora(cita.horario?.horaInicio)} – {formatearHora(cita.horario?.horaFin)}
+                </p>
+                {!fecha && <p className="m-0 text-[13px] text-ink-500">{fechaLarga(cita.horario?.fecha)}</p>}
+              </div>
+              <div className="min-w-0">
+                <p className="m-0 font-semibold text-ink-900 truncate">{cita.usuario?.nombre}</p>
+                <p className="m-0 text-[13px] text-ink-500 truncate">
+                  {cita.horario?.servicio?.nombre}
+                  {cita.usuario?.emailInstitucional ? ` · ${cita.usuario.emailInstitucional}` : ""}
+                </p>
+              </div>
+              <div className="flex items-center gap-2.5 flex-wrap md:justify-end">
+                {cita.estado === "Agendada" ? (
+                  <>
+                    <button
+                      onClick={() => registrarAsistencia(cita.id, true)}
+                      disabled={registrando === cita.id}
+                      className={botonPrimario}
+                    >
+                      <Icono nombre="check" size={17} strokeWidth={2.2} />
+                      Asistió
+                    </button>
+                    <button
+                      onClick={() => registrarAsistencia(cita.id, false)}
+                      disabled={registrando === cita.id}
+                      className={botonSecundario}
+                    >
+                      No asistió
+                    </button>
+                  </>
+                ) : (
+                  <Estado estado={cita.estado} />
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }

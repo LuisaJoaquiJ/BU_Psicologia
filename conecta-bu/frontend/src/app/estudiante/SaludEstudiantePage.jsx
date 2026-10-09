@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
-import { formatearFecha, formatearHora } from "../../lib/format";
+import { formatearFecha, formatearHora, fechaLarga } from "../../lib/format";
 import { IMAGENES } from "../../lib/imagenes";
 import { Icono } from "../../components/Iconos";
 
@@ -96,7 +96,7 @@ export function SaludEstudiantePage() {
           {visibles.map((h) => (
             <article key={h.id} className="bg-white border border-gray-200 rounded-[20px] p-5 flex flex-col gap-2">
               <p className="m-0 text-xs font-bold uppercase tracking-wide text-accent">{h.servicio?.nombre}</p>
-              <p className="m-0 font-bold text-ink-900 capitalize">{formatearFecha(h.fecha)}</p>
+              <p className="m-0 font-bold text-ink-900">{fechaLarga(h.fecha)}</p>
               <p className="m-0 text-sm text-ink-500">
                 {formatearHora(h.horaInicio)} – {formatearHora(h.horaFin)}
               </p>
@@ -165,7 +165,7 @@ export function SaludParticipacionesPage() {
                 <strong className="block text-ink-900">{p.actividad}</strong>
                 <span className="text-ink-500">{p.categoria}</span>
               </span>
-              <span className="text-ink-500 shrink-0 capitalize">{formatearFecha(p.fecha)}</span>
+              <span className="text-ink-500 shrink-0">{fechaLarga(p.fecha)}</span>
             </li>
           ))}
         </ul>

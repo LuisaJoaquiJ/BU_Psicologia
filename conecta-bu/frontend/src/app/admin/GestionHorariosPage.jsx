@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { http } from "../../lib/api/http";
-import { formatearFecha, formatearHora, fechaInputUTC, horaInputUTC } from "../../lib/format";
+import { formatearFecha, formatearHora, fechaInputUTC, horaInputUTC, fechaLarga } from "../../lib/format";
 
 const FORM_VACIO = { servicioId: "", fecha: "", horaInicio: "", horaFin: "", cupo: 1 };
 
@@ -235,10 +235,8 @@ export function GestionHorariosPage({ api = "/admin", modulo = "desarrollo-human
             ) : (
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
-                  <p className="text-xs font-semibold text-accent uppercase tracking-wide">
-                    {horario.servicio?.nombre}
-                  </p>
-                  <p className="font-semibold text-ink-900 capitalize mt-1">{formatearFecha(horario.fecha)}</p>
+                  <p className="m-0 font-semibold text-ink-900">{fechaLarga(horario.fecha)}</p>
+                  <p className="m-0 text-sm font-semibold text-accent">{horario.servicio?.nombre}</p>
                   <p className="text-sm text-gray-500">
                     {formatearHora(horario.horaInicio)} – {formatearHora(horario.horaFin)} · Cupo {horario.cupo}
                   </p>

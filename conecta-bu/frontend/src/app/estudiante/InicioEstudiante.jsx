@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { useAuth } from "../../lib/auth/AuthContext";
-import { formatearFecha, formatearHora } from "../../lib/format";
+import { formatearFecha, formatearHora, fechaLarga } from "../../lib/format";
 import { imagenParaEvento } from "../../lib/imagenes";
 import { Icono } from "../../components/Iconos";
 
@@ -15,7 +15,8 @@ function diaMes(fechaIso) {
 }
 
 function hoyLargo() {
-  return new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
+  const texto = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
 // Inicio del panel Estudiante (rediseño): saludo, proxima cita, carrusel de
@@ -73,7 +74,6 @@ export function InicioEstudiante() {
   const maxInicio = Math.max(0, total - POR_VISTA);
   const desde = Math.min(inicio, maxInicio);
   const visibles = (eventos || []).slice(desde, desde + POR_VISTA);
-  const inscritas = (eventos || []).filter((e) => e.miInscripcion?.estado === "Confirmada").length;
 
   return (
     <main className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-10 pb-20 flex flex-col gap-8">
@@ -84,10 +84,10 @@ export function InicioEstudiante() {
             <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(232,178,58,0.4)" strokeWidth="1.5" />
             <circle cx="150" cy="150" r="90" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
           </svg>
-          <p className="relative m-0 text-[13px] font-bold tracking-[0.14em] uppercase text-gold">{hoyLargo()}</p>
           <h1 className="relative m-0 text-[40px] sm:text-[44px] leading-[1.08] font-semibold text-white">
             Hola, <span className="inline-block bg-gold-soft text-primary px-3 pb-0.5 rounded-2xl -rotate-2">{primerNombre}.</span>
           </h1>
+          <p className="relative m-0 text-[15px] font-semibold text-gold">{hoyLargo()}</p>
           <p className="relative m-0 text-[17px] leading-relaxed text-[#D6DDEC] max-w-[460px]">
             ¿Cómo te podemos acompañar hoy? Agenda una cita, revisa tus eventos o pregúntale al asistente.
           </p>
@@ -102,13 +102,13 @@ export function InicioEstudiante() {
         </section>
 
         <section aria-label="Próxima cita" className="flex-[1_1_300px] min-w-0 bg-white border border-gray-200 rounded-[28px] p-8 flex flex-col gap-3.5">
-          <span className="text-[13px] font-bold tracking-[0.12em] uppercase text-ink-500">Tu próxima cita</span>
+          <h2 className="m-0 font-sans text-lg font-bold text-primary">Tu próxima cita</h2>
           {proximaCita === undefined && <p className="m-0 text-ink-500">Cargando...</p>}
           {proximaCita === null && (
             <>
               <p className="m-0 text-ink-600">No tienes citas agendadas.</p>
-              <Link to="/estudiante/agendar" className="mt-auto self-start font-bold text-sm px-4 py-2.5 rounded-full bg-primary-light text-primary">
-                Agendar ahora
+              <Link to="/estudiante/agendar" className="mt-auto self-start font-bold text-sm px-4 min-h-[44px] inline-flex items-center rounded-full bg-primary-light text-primary hover:bg-[#E2E9F6]">
+                Agendar una cita
               </Link>
             </>
           )}
@@ -121,13 +121,13 @@ export function InicioEstudiante() {
                 </div>
                 <div>
                   <strong className="block text-[17px] text-primary">{proximaCita.horario?.servicio?.nombre}</strong>
-                  <span className="text-sm text-ink-500 capitalize">
-                    {formatearFecha(proximaCita.horario?.fecha).split(",")[0]} · {formatearHora(proximaCita.horario?.horaInicio)} –{" "}
+                  <span className="text-sm text-ink-500">
+                    {fechaLarga(proximaCita.horario?.fecha).split(",")[0]} · {formatearHora(proximaCita.horario?.horaInicio)} –{" "}
                     {formatearHora(proximaCita.horario?.horaFin)}
                   </span>
                 </div>
               </div>
-              <Link to="/estudiante/mis-citas" className="mt-auto self-start font-bold text-sm px-4 py-2.5 rounded-full bg-primary-light text-primary">
+              <Link to="/estudiante/mis-citas" className="mt-auto self-start font-bold text-sm px-4 min-h-[44px] inline-flex items-center rounded-full bg-primary-light text-primary hover:bg-[#E2E9F6]">
                 Ver mis citas
               </Link>
             </>
@@ -138,10 +138,7 @@ export function InicioEstudiante() {
       {/* Carrusel de eventos */}
       <section aria-label="Eventos para ti">
         <div className="flex justify-between items-end gap-4 flex-wrap mb-5">
-          <div>
-            <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Agenda del campus</p>
-            <h2 className="m-0 text-[32px] font-semibold">Eventos para ti</h2>
-          </div>
+          <h2 className="m-0 text-[32px] font-semibold">Eventos para ti</h2>
           {total > POR_VISTA && (
             <div className="flex gap-2.5 items-center">
               <span className="text-sm text-ink-500">
@@ -211,7 +208,7 @@ export function InicioEstudiante() {
                     type="button"
                     onClick={() => alternarInscripcion(evento)}
                     disabled={procesando === evento.id || bloqueado}
-                    className={`mt-auto min-h-[44px] rounded-full font-bold text-sm transition-colors disabled:opacity-50 ${
+                    className={`mt-auto min-h-[44px] rounded-full font-bold text-sm transition-colors disabled:bg-gray-100 disabled:text-ink-500 disabled:border-transparent ${
                       inscrito
                         ? "border-[1.5px] border-[#1D6B4A] bg-[#E7F4EE] text-[#1D6B4A]"
                         : "bg-primary text-white hover:bg-primary-dark"
@@ -232,26 +229,11 @@ export function InicioEstudiante() {
         </div>
       </section>
 
-      {/* Accesos rápidos + asistente */}
-      <div className="flex gap-5 flex-wrap">
-        <section aria-label="Accesos rápidos" className="flex-[999_1_520px] grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
-          {[
-            { to: "/estudiante/servicios", icono: "corazon", titulo: "Servicios", texto: "Conoce la oferta de Desarrollo Humano", tono: "bg-primary-light text-primary-soft" },
-            { to: "/estudiante/mis-citas", icono: "calendario", titulo: "Mis citas", texto: proximaCita ? "Tienes una cita agendada" : "Consulta tu historial", tono: "bg-gold-light text-accent" },
-            { to: "/estudiante/eventos", icono: "estrella", titulo: "Mis inscripciones", texto: inscritas === 1 ? "1 evento confirmado" : `${inscritas} eventos confirmados`, tono: "bg-primary-light text-primary-soft" },
-          ].map((a) => (
-            <Link key={a.to} to={a.to} className="bg-white border border-gray-200 rounded-[22px] p-6 flex flex-col gap-2.5 hover:shadow-md hover:border-primary/30 transition-all">
-              <span className={`w-11 h-11 rounded-xl flex items-center justify-center ${a.tono}`}>
-                <Icono nombre={a.icono} />
-              </span>
-              <strong className="text-base text-primary">{a.titulo}</strong>
-              <span className="text-sm text-ink-500 leading-normal">{a.texto}</span>
-            </Link>
-          ))}
-        </section>
+      {/* Asistente */}
+      <div className="flex">
         <Link
           to="/estudiante/asistente"
-          className="flex-[1_1_300px] min-w-0 bg-white border border-gray-200 rounded-[22px] p-6 flex flex-col gap-3 hover:shadow-md hover:border-primary/30 transition-all"
+          className="flex-1 min-w-0 bg-white border border-gray-200 rounded-[22px] p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 hover:shadow-md hover:border-primary/30 transition-all"
         >
           <span className="flex gap-2.5 items-center">
             <span className="w-9 h-9 rounded-full bg-primary text-gold flex items-center justify-center">
@@ -259,10 +241,13 @@ export function InicioEstudiante() {
             </span>
             <strong className="text-base text-primary">Asistente de orientación</strong>
           </span>
-          <span className="bg-cream rounded-[16px_16px_16px_4px] px-3.5 py-3 text-sm leading-normal text-ink-900">
+          <span className="bg-cream rounded-[16px_16px_16px_4px] px-3.5 py-3 text-sm leading-normal text-ink-900 sm:max-w-[520px]">
             Hola, {primerNombre}. Puedo contarte qué servicios hay, cómo agendar o qué eventos se vienen.
           </span>
-          <span className="mt-auto font-bold text-sm text-primary-soft">Abrir el asistente →</span>
+          <span className="sm:ml-auto inline-flex items-center gap-1.5 font-bold text-sm text-primary-soft whitespace-nowrap">
+            Abrir el asistente
+            <Icono nombre="flecha" size={17} strokeWidth={2.2} />
+          </span>
         </Link>
       </div>
     </main>

@@ -1,14 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
-import { formatearFecha, formatearHora } from "../../lib/format";
-
-const ESTADO_ESTILOS = {
-  Agendada: "bg-emerald-50 text-emerald-700",
-  Cancelada: "bg-gray-100 text-gray-500",
-  Atendida: "bg-sky-50 text-sky-700",
-  NoAsistio: "bg-amber-50 text-amber-700",
-};
+import { fechaLarga, formatearHora } from "../../lib/format";
+import { Aviso, Estado, Vacio, botonPrimario, botonSecundario } from "../../components/ui";
 
 // HU-12: solo se cancela con al menos 24 horas de anticipacion (el backend
 // lo valida; aqui se avisa antes para no ofrecer un boton que va a fallar).
@@ -60,76 +54,105 @@ export function MisCitasPage({ modulo = "desarrollo-humano" }) {
     }
   }
 
+  const agendar = modulo === "salud" ? "/mi-salud" : "/estudiante/agendar";
+  const proximas = (citas || []).filter((c) => c.estado === "Agendada");
+  // Historial: lo mas reciente primero.
+  const historial = (citas || [])
+    .filter((c) => c.estado !== "Agendada")
+    .sort((a, b) => (b.horario?.fecha || "").localeCompare(a.horario?.fecha || ""));
+
+  function Fila({ cita }) {
+    const cancelable = cita.estado === "Agendada" && horasHastaLaCita(cita.horario) >= HORAS_MINIMAS_CANCELACION;
+    return (
+      <li className="p-4 sm:p-5 flex items-center justify-between flex-wrap gap-x-6 gap-y-3">
+        <div className="min-w-0">
+          <p className="m-0 font-bold text-ink-900">{fechaLarga(cita.horario?.fecha)}</p>
+          <p className="m-0 mt-0.5 text-sm text-ink-500">
+            <span className="tabular-nums">
+              {formatearHora(cita.horario?.horaInicio)} – {formatearHora(cita.horario?.horaFin)}
+            </span>
+            {cita.horario?.servicio?.nombre ? ` · ${cita.horario.servicio.nombre}` : ""}
+          </p>
+        </div>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Estado estado={cita.estado} />
+          {cita.estado === "Agendada" &&
+            (cancelable ? (
+              <button onClick={() => cancelar(cita.id)} disabled={cancelando === cita.id} className={botonSecundario}>
+                {cancelando === cita.id ? "Cancelando…" : "Cancelar cita"}
+              </button>
+            ) : (
+              <span className="text-[13px] text-ink-500 max-w-[240px]">
+                Faltan menos de 24 horas: para cancelar, comunícate con Bienestar.
+              </span>
+            ))}
+        </div>
+      </li>
+    );
+  }
+
   return (
-    <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <div className="flex items-center justify-between mb-1 flex-wrap gap-3">
-        <h1 className="text-3xl font-semibold text-primary">Mis citas</h1>
-        <Link
-          to={modulo === "salud" ? "/mi-salud" : "/estudiante/agendar"}
-          className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors"
-        >
-          Agendar nueva cita
+    <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 lg:py-10">
+      <div className="flex items-end justify-between gap-4 flex-wrap mb-7">
+        <div>
+          <h1 className="m-0 text-3xl sm:text-[34px] font-semibold">Mis citas</h1>
+          <p className="mt-1.5 mb-0 text-ink-500">
+            {modulo === "salud" ? "Tus citas de salud." : "Tus citas de orientación."} Puedes cancelar hasta 24 horas antes.
+          </p>
+        </div>
+        <Link to={agendar} className={botonPrimario}>
+          Agendar una cita
         </Link>
       </div>
-      <p className="text-gray-500 mb-8">{modulo === "salud" ? "Consulta o cancela tus citas de salud (hasta 24 horas antes)." : "Consulta o cancela tus citas de orientación (hasta 24 horas antes)."}</p>
 
-      {error && <p className="text-sm text-red-600 bg-red-50 rounded-md p-3 mb-6">{error}</p>}
+      {error && (
+        <div className="mb-6">
+          <Aviso>{error}</Aviso>
+        </div>
+      )}
 
-      {!citas && !error && <p className="text-gray-500">Cargando tus citas...</p>}
+      {!citas && !error && <p className="text-ink-500">Cargando tus citas…</p>}
 
       {citas && citas.length === 0 && (
-        <p className="text-gray-500">
-          Todavía no tienes citas registradas.{" "}
-          <Link to={modulo === "salud" ? "/mi-salud" : "/estudiante/agendar"} className="text-primary font-medium hover:underline">
+        <Vacio>
+          Todavía no tienes citas.{" "}
+          <Link to={agendar} className="font-bold text-primary-soft underline underline-offset-4">
             Agenda la primera
           </Link>
           .
-        </p>
+        </Vacio>
       )}
 
-      <div className="flex flex-col gap-4">
-        {citas?.map((cita) => (
-          <div
-            key={cita.id}
-            className="bg-white rounded-2xl border border-gray-200 p-6 flex items-center justify-between flex-wrap gap-4"
-          >
-            <div>
-              <p className="text-xs font-semibold text-accent uppercase tracking-wide">
-                {cita.horario?.servicio?.nombre}
-              </p>
-              <p className="font-semibold text-ink-900 capitalize mt-1">
-                {formatearFecha(cita.horario?.fecha)}
-              </p>
-              <p className="text-sm text-gray-500">
-                {formatearHora(cita.horario?.horaInicio)} – {formatearHora(cita.horario?.horaFin)}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span
-                className={`text-xs font-medium rounded-full px-3 py-1 ${
-                  ESTADO_ESTILOS[cita.estado] || "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {cita.estado}
-              </span>
-              {cita.estado === "Agendada" &&
-                (horasHastaLaCita(cita.horario) >= HORAS_MINIMAS_CANCELACION ? (
-                  <button
-                    onClick={() => cancelar(cita.id)}
-                    disabled={cancelando === cita.id}
-                    className="text-sm font-medium border border-gray-200 rounded-full px-4 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-60"
-                  >
-                    {cancelando === cita.id ? "Cancelando..." : "Cancelar"}
-                  </button>
-                ) : (
-                  <span className="text-xs text-ink-500 max-w-[220px]">
-                    Faltan menos de 24 h: para cancelar, comunícate con Bienestar.
-                  </span>
+      {citas && citas.length > 0 && (
+        <div className="flex flex-col gap-9">
+          <section aria-labelledby="proximas">
+            <h2 id="proximas" className="m-0 mb-3 font-sans text-lg font-bold text-primary">
+              Próximas
+            </h2>
+            {proximas.length ? (
+              <ul className="list-none m-0 p-0 bg-white border border-gray-200 rounded-[22px] divide-y divide-gray-200">
+                {proximas.map((c) => (
+                  <Fila key={c.id} cita={c} />
                 ))}
-            </div>
-          </div>
-        ))}
-      </div>
+              </ul>
+            ) : (
+              <Vacio>No tienes citas próximas.</Vacio>
+            )}
+          </section>
+          {historial.length > 0 && (
+            <section aria-labelledby="historial">
+              <h2 id="historial" className="m-0 mb-3 font-sans text-lg font-bold text-primary">
+                Historial
+              </h2>
+              <ul className="list-none m-0 p-0 bg-white border border-gray-200 rounded-[22px] divide-y divide-gray-200">
+                {historial.map((c) => (
+                  <Fila key={c.id} cita={c} />
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+      )}
     </main>
   );
 }

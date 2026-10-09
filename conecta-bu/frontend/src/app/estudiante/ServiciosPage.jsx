@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
+import { Aviso, Vacio } from "../../components/ui";
+import { Icono } from "../../components/Iconos";
 
 // RF-003 / HU-06: consulta de servicios de Desarrollo Humano / Orientación.
 export function ServiciosPage() {
@@ -14,28 +17,43 @@ export function ServiciosPage() {
   }, []);
 
   return (
-    <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-3xl font-semibold text-primary mb-1">Servicios de Desarrollo Humano</h1>
-      <p className="text-gray-500 mb-8">
+    <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 lg:py-10">
+      <h1 className="m-0 text-3xl sm:text-[34px] font-semibold">Servicios de Desarrollo Humano</h1>
+      <p className="mt-1.5 mb-7 text-ink-500 max-w-[620px]">
         Consulta la oferta de orientación disponible para la comunidad institucional.
       </p>
 
-      {error && <p className="text-sm text-red-600 bg-red-50 rounded-md p-3 mb-6">{error}</p>}
-
-      {!servicios && !error && <p className="text-gray-500">Cargando servicios...</p>}
-
-      {servicios && servicios.length === 0 && (
-        <p className="text-gray-500">Por ahora no hay servicios publicados.</p>
+      {error && (
+        <div className="mb-6">
+          <Aviso>{error}</Aviso>
+        </div>
       )}
 
-      <div className="grid sm:grid-cols-2 gap-5">
-        {servicios?.map((servicio) => (
-          <div key={servicio.id} className="bg-white rounded-2xl border border-gray-200 p-6">
-            <h2 className="font-semibold text-ink-900">{servicio.nombre}</h2>
-            <p className="text-sm text-gray-500 mt-2">{servicio.descripcion}</p>
-          </div>
-        ))}
-      </div>
+      {!servicios && !error && <p className="text-ink-500">Cargando servicios…</p>}
+
+      {servicios && servicios.length === 0 && <Vacio>Por ahora no hay servicios publicados.</Vacio>}
+
+      {servicios?.length > 0 && (
+        <ul className="list-none m-0 p-0 bg-white border border-gray-200 rounded-[22px] divide-y divide-gray-200">
+          {servicios.map((servicio) => (
+            <li key={servicio.id} className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-8">
+              <div className="flex-1 min-w-0">
+                <h2 className="m-0 font-sans text-lg font-bold text-primary">{servicio.nombre}</h2>
+                {servicio.descripcion && (
+                  <p className="mt-1 mb-0 text-[15px] leading-relaxed text-ink-600 max-w-[60ch]">{servicio.descripcion}</p>
+                )}
+              </div>
+              <Link
+                to={`/estudiante/agendar?servicio=${servicio.id}`}
+                className="self-start sm:self-center inline-flex items-center gap-1.5 min-h-[44px] px-4 rounded-full bg-primary-light text-primary font-bold text-sm whitespace-nowrap hover:bg-[#E2E9F6]"
+              >
+                Ver horarios
+                <Icono nombre="flecha" size={17} strokeWidth={2.2} />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }

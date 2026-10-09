@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Icono } from "../../components/Iconos";
 import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { useAuth } from "../../lib/auth/AuthContext";
@@ -63,10 +64,20 @@ export function AsistentePage() {
 
   return (
     <main className="max-w-3xl mx-auto p-6 lg:p-10 flex flex-col" style={{ minHeight: "calc(100vh - 72px)" }}>
-      <h1 className="text-3xl font-semibold text-primary mb-1">Asistente de orientación</h1>
-      <p className="text-sm text-gray-500 mb-6">
+      <h1 className="m-0 text-3xl sm:text-[34px] font-semibold">Asistente de orientación</h1>
+      <p className="mt-1.5 mb-4 text-ink-500">
         Información general sobre Bienestar y el uso de Conecta BU. No reemplaza la atención de un profesional ni
-        realiza diagnósticos. Si estás en peligro, llama a la línea de emergencias 123.
+        realiza diagnósticos.
+      </p>
+      <p className="m-0 mb-5 flex items-center gap-2.5 text-sm font-semibold text-[#5C4206] bg-gold-light border border-[#F3E2B5] rounded-xl px-4 py-3">
+        <Icono nombre="telefono" size={18} strokeWidth={2} className="shrink-0" />
+        <span>
+          Si estás en peligro, llama a la línea de emergencias{" "}
+          <a href="tel:123" className="underline underline-offset-4">
+            123
+          </a>
+          .
+        </span>
       </p>
 
       <div className="flex-1 bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 flex flex-col gap-4 overflow-y-auto">
@@ -90,7 +101,7 @@ export function AsistentePage() {
                     <Link
                       key={s.ruta}
                       to={s.ruta}
-                      className="text-xs font-medium bg-white text-primary border border-primary/30 rounded-full px-3 py-1 hover:bg-primary-light transition-colors"
+                      className="inline-flex items-center min-h-[40px] text-[13px] font-bold bg-white text-primary border border-primary/30 rounded-full px-3.5 hover:bg-primary-light transition-colors"
                     >
                       {s.texto}
                     </Link>
@@ -102,7 +113,7 @@ export function AsistentePage() {
         ))}
         {enviando && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 text-gray-500 rounded-2xl rounded-bl-md px-4 py-3 text-sm">Escribiendo…</div>
+            <div className="bg-gray-100 text-ink-500 rounded-2xl rounded-bl-md px-4 py-3 text-sm">Escribiendo…</div>
           </div>
         )}
         <div ref={finRef} />

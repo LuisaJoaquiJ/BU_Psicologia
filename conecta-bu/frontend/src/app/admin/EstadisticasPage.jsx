@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { http } from "../../lib/api/http";
-import { formatearFecha } from "../../lib/format";
+import { formatearFecha, fechaLarga } from "../../lib/format";
 import { Icono } from "../../components/Iconos";
 import {
   COLORES_ESTADO,
@@ -160,7 +160,6 @@ export function EstadisticasPage() {
     <main className="max-w-[1180px] mx-auto px-5 sm:px-8 pt-9 pb-16">
       <div className="flex justify-between items-end gap-4 flex-wrap mb-6">
         <div>
-          <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">Dashboard · RF-015</p>
           <h1 className="m-0 text-3xl font-semibold">Estadísticas</h1>
           <p className="mt-1.5 mb-0 text-ink-500">Participación, asistencia y demanda de Bienestar Universitario.</p>
         </div>
@@ -352,7 +351,7 @@ export function EstadisticasPage() {
                   <div key={e.id}>
                     <div className="flex justify-between gap-3 text-sm mb-1.5">
                       <strong className="truncate">{e.nombre}</strong>
-                      <span className="text-ink-500 shrink-0 capitalize">{formatearFecha(e.fecha).split(",")[0]} · {e.inscritos}/{e.cupos}</span>
+                      <span className="text-ink-500 shrink-0">{fechaLarga(e.fecha).split(",")[0]} · {e.inscritos}/{e.cupos}</span>
                     </div>
                     <BarraApilada
                       etiqueta={e.nombre}
@@ -418,7 +417,7 @@ export function EstadisticasPage() {
                         a.estado === "exitosa" ? "bg-[#E7F4EE] text-[#1D6B4A]" : a.estado === "fallida" ? "bg-red-50 text-red-700" : "bg-gray-100 text-ink-600"
                       }`}
                     >
-                      {a.estado === "exitosa" ? "✓ Exitosa" : a.estado === "fallida" ? "✕ Fallida" : "– Omitida"}
+                      {a.estado === "exitosa" ? "Exitosa" : a.estado === "fallida" ? "Fallida" : "Omitida"}
                     </span>
                   </li>
                 ))}

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { Icono } from "../../components/Iconos";
 import { Link, useParams } from "react-router-dom";
 import { http } from "../../lib/api/http";
-import { formatearFecha, formatearHora } from "../../lib/format";
+import { formatearFecha, formatearHora, fechaLarga } from "../../lib/format";
 
 // RF-011 / RN-010: el administrador ve los estudiantes inscritos en un evento
 // y registra si asistieron. Solo aparecen inscripciones confirmadas, asi que
@@ -45,8 +46,9 @@ export function EventoInscritosPage() {
 
   return (
     <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <Link to="/admin/eventos" className="text-sm text-primary font-medium hover:underline">
-        ← Volver a eventos
+      <Link to="/admin/eventos" className="inline-flex items-center gap-1.5 min-h-[44px] text-sm text-primary font-bold hover:underline underline-offset-4">
+        <Icono nombre="izquierda" size={17} strokeWidth={2.2} />
+        Volver a eventos
       </Link>
 
       {error && <p className="text-sm text-red-600 bg-red-50 rounded-md p-3 my-6">{error}</p>}
@@ -55,8 +57,8 @@ export function EventoInscritosPage() {
       {evento && (
         <>
           <h1 className="text-3xl font-semibold text-primary mt-4 mb-1">{evento.nombre}</h1>
-          <p className="text-gray-500 capitalize mb-6">
-            {formatearFecha(evento.fecha)} · {formatearHora(evento.horaInicio)} – {formatearHora(evento.horaFin)}
+          <p className="text-gray-500 mb-6">
+            {fechaLarga(evento.fecha)} · {formatearHora(evento.horaInicio)} – {formatearHora(evento.horaFin)}
             {evento.lugar ? ` · ${evento.lugar}` : ""} · {evento.estado}
           </p>
 

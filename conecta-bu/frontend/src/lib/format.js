@@ -14,6 +14,14 @@ export function formatearFecha(fechaIso) {
   });
 }
 
+// Igual que formatearFecha pero con mayúscula inicial, para cuando la fecha
+// abre una línea ("Martes, 6 de octubre"). No usar la clase CSS "capitalize":
+// pone en mayúscula cada palabra ("6 De Octubre").
+export function fechaLarga(fechaIso) {
+  const texto = formatearFecha(fechaIso);
+  return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : "";
+}
+
 export function formatearHora(horaIso) {
   if (!horaIso) return "";
   return new Date(horaIso).toLocaleTimeString("es-CO", {

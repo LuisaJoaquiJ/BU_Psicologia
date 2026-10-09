@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { http } from "../../lib/api/http";
-import { formatearFecha, formatearHora } from "../../lib/format";
+import { formatearFecha, formatearHora, fechaLarga } from "../../lib/format";
 import { imagenParaEvento } from "../../lib/imagenes";
 
 const ESTADO_INSCRIPCION = {
@@ -97,7 +97,7 @@ export function EventosPage() {
               )}
             </div>
             <div className="text-sm text-gray-500">
-              <p className="capitalize">{formatearFecha(evento.fecha)}</p>
+              <p>{fechaLarga(evento.fecha)}</p>
               <p>
                 {formatearHora(evento.horaInicio)} – {formatearHora(evento.horaFin)}
                 {evento.lugar ? ` · ${evento.lugar}` : ""}
@@ -119,7 +119,7 @@ export function EventosPage() {
             <div className="mt-auto pt-2 flex items-center justify-between gap-3 flex-wrap">
               <p className="text-xs text-gray-500">
                 <strong className="text-ink-900">{evento.cuposDisponibles}</strong> de {evento.cupos} cupos ·
-                inscripciones hasta el <span className="capitalize">{formatearFecha(evento.fechaLimiteInscripcion)}</span>
+                inscripciones hasta el {formatearFecha(evento.fechaLimiteInscripcion)}
               </p>
               {inscritoEn(evento) ? (
                 <button
@@ -162,8 +162,8 @@ export function EventosPage() {
             >
               <div>
                 <p className="font-medium text-ink-900">{inscripcion.evento?.nombre}</p>
-                <p className="text-sm text-gray-500 capitalize">
-                  {formatearFecha(inscripcion.evento?.fecha)} · {formatearHora(inscripcion.evento?.horaInicio)}
+                <p className="text-sm text-gray-500">
+                  {fechaLarga(inscripcion.evento?.fecha)} · {formatearHora(inscripcion.evento?.horaInicio)}
                 </p>
               </div>
               <div className="flex items-center gap-2">

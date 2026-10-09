@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Icono } from "../../components/Iconos";
 import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { useAuth } from "../../lib/auth/AuthContext";
@@ -35,9 +36,9 @@ function formatoTasa(valor) {
 
 function Indicador({ titulo, valor, detalle, destacado = false }) {
   return (
-    <div className={`rounded-[20px] p-5 ${destacado ? "bg-primary text-white" : "bg-white border border-gray-200"}`}>
+    <div className={`rounded-[20px] p-4 sm:p-5 min-w-0 ${destacado ? "bg-primary text-white" : "bg-white border border-gray-200"}`}>
       <p className={`m-0 text-[13px] ${destacado ? "text-white/75" : "text-ink-500"}`}>{titulo}</p>
-      <p className={`mt-1.5 mb-0 font-display text-[38px] font-semibold tabular-nums ${destacado ? "text-gold" : "text-primary"}`}>
+      <p className={`mt-1.5 mb-0 font-display text-[30px] sm:text-[38px] leading-tight font-semibold tabular-nums ${destacado ? "text-gold" : "text-primary"}`}>
         {valor}
       </p>
       {detalle && <p className={`mt-1 mb-0 text-[13px] ${destacado ? "text-white/75" : "text-ink-500"}`}>{detalle}</p>}
@@ -67,9 +68,6 @@ export function InicioAdmin() {
     <main className="max-w-[1100px] mx-auto px-5 sm:px-10 pt-9 pb-16 flex flex-col gap-7">
       <div className="flex justify-between items-end gap-4 flex-wrap">
         <div>
-          <p className="m-0 mb-1.5 text-[13px] font-bold tracking-[0.14em] uppercase text-accent">
-            {new Date().toLocaleDateString("es-CO", { month: "long", year: "numeric" })}
-          </p>
           <h1 className="m-0 text-[36px] sm:text-[38px] font-semibold">
             {saludo()}, {usuario?.nombre?.split(" ")[0]}
           </h1>
@@ -79,14 +77,14 @@ export function InicioAdmin() {
             Publicar horario
           </Link>
           <Link to="/admin/eventos" className="bg-gold text-primary font-bold text-sm px-4 min-h-[44px] rounded-full inline-flex items-center">
-            + Nuevo evento
+            Nuevo evento
           </Link>
         </div>
       </div>
 
       {stats === false && <p className="text-sm text-red-700 bg-red-50 rounded-xl p-3">No fue posible cargar los indicadores.</p>}
 
-      <section aria-label="Indicadores" className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
+      <section aria-label="Indicadores" className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <Indicador
           titulo="Citas de hoy"
           valor={agenda ? agenda.length : "…"}
@@ -109,14 +107,14 @@ export function InicioAdmin() {
         <section aria-label="Agenda de hoy" className="flex-[1_1_300px] min-w-0 bg-white border border-gray-200 rounded-[22px] p-6">
           <div className="flex justify-between items-center mb-3.5">
             <h2 className="m-0 text-lg font-sans font-bold">Agenda de hoy</h2>
-            <Link to="/admin/citas" className="text-sm font-bold text-primary-soft">Ver agenda →</Link>
+            <Link to="/admin/citas" className="inline-flex items-center gap-1.5 py-2 text-sm font-bold text-primary-soft">Ver agenda<Icono nombre="flecha" size={16} strokeWidth={2.2} /></Link>
           </div>
           {!agenda && <p className="m-0 text-sm text-ink-500">Cargando...</p>}
           {agenda && agenda.length === 0 && <p className="m-0 text-sm text-ink-500">No hay citas para hoy.</p>}
           <ul className="list-none m-0 p-0 flex flex-col">
             {(agenda || []).slice(0, 6).map((cita) => (
               <li key={cita.id} className="flex items-center gap-3.5 py-3 border-t border-gray-100">
-                <span className="shrink-0 w-16 font-bold text-sm text-primary">{formatearHora(cita.horario?.horaInicio)}</span>
+                <span className="shrink-0 w-20 whitespace-nowrap tabular-nums font-bold text-sm text-primary">{formatearHora(cita.horario?.horaInicio)}</span>
                 <span className="flex-1 min-w-0 text-sm">
                   <strong className="block truncate">{cita.usuario?.nombre}</strong>
                   <span className="text-ink-500">{cita.horario?.servicio?.nombre}</span>
@@ -132,7 +130,7 @@ export function InicioAdmin() {
         <section aria-label="Asistencia por evento" className="flex-[1_1_300px] min-w-0 bg-white border border-gray-200 rounded-[22px] p-6">
           <div className="flex justify-between items-center mb-1.5">
             <h2 className="m-0 text-lg font-sans font-bold">Asistencia por evento</h2>
-            <Link to="/admin/estadisticas" className="text-sm font-bold text-primary-soft">Estadísticas →</Link>
+            <Link to="/admin/estadisticas" className="inline-flex items-center gap-1.5 py-2 text-sm font-bold text-primary-soft">Estadísticas<Icono nombre="flecha" size={16} strokeWidth={2.2} /></Link>
           </div>
           <div className="flex gap-4 text-xs text-ink-600 mb-3.5 flex-wrap">
             {[
