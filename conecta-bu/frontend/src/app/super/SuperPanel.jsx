@@ -11,9 +11,9 @@ import { EstadisticasSuperPage } from "./EstadisticasSuperPage";
 const MENU_SUPER = [
   { to: "/super", label: "Inicio", icono: "tablero", end: true },
   { to: "/super/estadisticas", label: "Estadísticas", icono: "grafica" },
-  { to: "/super/informes", label: "Informes de gestión", icono: "archivo" },
-  { to: "/super/accesos", label: "Accesos por módulo", icono: "escudo" },
-  { to: "/super/usuarios", label: "Usuarios y roles", icono: "usuarios" },
+  { to: "/super/informes", label: "Informes", icono: "archivo" },
+  { to: "/super/accesos", label: "Accesos", icono: "escudo" },
+  { to: "/super/usuarios", label: "Usuarios", icono: "usuarios" },
 ];
 
 export function SuperPanel() {

@@ -2,6 +2,7 @@ import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../lib/auth/AuthContext";
 import { Icono } from "./Iconos";
 import { iniciales } from "./Navbar";
+import { MODULOS_DISPONIBLES } from "../lib/modulos";
 
 // Panel del personal de Desarrollo Humano.
 const MENU_ADMIN = [
@@ -50,9 +51,9 @@ export function PanelLayout({ menu, panel, children }) {
           </Link>
           <div className="flex items-center gap-2 shrink-0">
             {usuario?.rol === "SuperAdministrador" && panel !== "super" && (
-              <Link to="/super" className="hidden xl:inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-full text-sm font-bold text-[#D9E2F2] hover:bg-white/10">
+              <Link to="/super" title="Volver al panel del superadministrador" className="inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-full text-sm font-bold bg-white/10 text-white hover:bg-white/20">
                 <Icono nombre="escudo" size={16} strokeWidth={2} />
-                Superadministrador
+                <span className="hidden md:inline">Volver a Superadministrador</span>
               </Link>
             )}
             <Link to="/" className="hidden sm:inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-full text-sm font-bold text-[#D9E2F2] hover:bg-white/10">
@@ -72,16 +73,40 @@ export function PanelLayout({ menu, panel, children }) {
         </div>
         <nav
           aria-label="Menú del panel"
-          className="max-w-[1440px] mx-auto px-3 sm:px-5 lg:px-9 pb-2.5 flex gap-1 overflow-x-auto text-sm sm:text-[15px] font-bold [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_90%,transparent)] lg:[mask-image:none] lg:flex-wrap"
+          className="max-w-[1440px] mx-auto px-3 sm:px-5 lg:px-9 pb-2.5 flex gap-1 overflow-x-auto text-sm sm:text-[15px] font-bold [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_90%,transparent)] xl:[mask-image:none] xl:flex-wrap"
         >
-          {menu.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end} className={clasePildora}>
-              {item.label}
-            </NavLink>
-          ))}
-          <NavLink to="/" end className={(e) => `${clasePildora(e)} sm:hidden`}>
-            Otras dimensiones
-          </NavLink>
+          {panel === "super" ? (
+            <>
+              {/* El superadministrador entra a cada modulo desde aqui, por su nombre. */}
+              <NavLink to={menu[0].to} end className={clasePildora}>
+                {menu[0].label}
+              </NavLink>
+              <span aria-hidden="true" className="self-center mx-1.5 h-6 w-px bg-white/25 shrink-0" />
+              {MODULOS_DISPONIBLES.map((m) => (
+                <NavLink key={m.id} to={m.panel.personal} className={clasePildora} title={`Entrar al panel de ${m.nombre}`}>
+                  <Icono nombre={m.icono} size={16} strokeWidth={2} />
+                  {m.corto}
+                </NavLink>
+              ))}
+              <span aria-hidden="true" className="self-center mx-1.5 h-6 w-px bg-white/25 shrink-0" />
+              {menu.slice(1).map((item) => (
+                <NavLink key={item.to} to={item.to} end={item.end} className={clasePildora}>
+                  {item.label}
+                </NavLink>
+              ))}
+            </>
+          ) : (
+            <>
+              {menu.map((item) => (
+                <NavLink key={item.to} to={item.to} end={item.end} className={clasePildora}>
+                  {item.label}
+                </NavLink>
+              ))}
+              <NavLink to="/" end className={(e) => `${clasePildora(e)} sm:hidden`}>
+                Otras dimensiones
+              </NavLink>
+            </>
+          )}
         </nav>
       </header>
       <div className="min-w-0">{children}</div>
