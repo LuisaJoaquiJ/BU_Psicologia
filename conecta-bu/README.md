@@ -1,5 +1,7 @@
 # Conecta BU
 
+Manual de uso, bitácora de desarrollo y bitácora de pruebas: carpeta [`docs/`](docs/MANUAL-DE-USUARIO.md).
+
 > **Avance por sprint** (rama `Luisa`)
 >
 > | Sprint | Qué incluye | Requisitos |
