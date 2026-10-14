@@ -28,6 +28,8 @@ Eso comprueba la API. No comprueba la prueba piloto de usabilidad ni la carga de
 
 Además, el 13 de octubre de 2026 se abrió la aplicación en el navegador con la cuenta `carlos.torres.c@uniautonoma.edu.co`. Google aceptó el ingreso (`POST /api/v1/auth/google` respondió 200) y cargaron eventos, citas y horas de deporte.
 
+El texto de cada historia (incluida la de la IA, HU-012) está en `docs/HISTORIAS-DE-USUARIO.md`.
+
 ## 3. Matriz de trazabilidad del F-02
 
 | Requisito | Historia | Componente | Caso | Resultado |
@@ -37,10 +39,10 @@ Además, el 13 de octubre de 2026 se abrió la aplicación en el navegador con l
 | RF-003 Horarios disponibles | HU-003 | `citas` + agendar | CP-004 | Aprobado |
 | RF-004 Agendamiento | HU-004 | `citas` | CP-005 | Aprobado |
 | RF-005 Mis citas y cancelación | HU-005 | `citas` + Mis citas | CP-006 | Aprobado |
-| RF-006 Asistencia a citas | (incluida en HU-004) | agenda del personal | CP-007 | Aprobado |
+| RF-006 Asistencia a citas | HU-009 | agenda del personal | CP-007 | Aprobado |
 | RF-007 Gestión de eventos | HU-006 | `eventos` admin | CP-008 | Aprobado |
 | RF-008 Inscripción a eventos | HU-007 | `eventos` estudiante | CP-009 | Aprobado |
-| RF-009 Asistencia a eventos | (incluida en HU-006) | inscritos del evento | CP-010 | Aprobado |
+| RF-009 Asistencia a eventos | HU-010 | inscritos del evento | CP-010 | Aprobado |
 | RF-010 Usuarios y horarios | HU-008 | horarios y usuarios | CP-011, CP-012 | Aprobado |
 
 ## 4. Casos del alcance del F-02

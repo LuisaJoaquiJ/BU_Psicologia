@@ -59,7 +59,7 @@ En **Talleres y eventos** aparecen los publicados, con fecha, lugar y cupos. Pul
 
 ### Asistente
 
-El **Asistente** responde dudas sobre cómo usar Bienestar: cómo pedir una cita, qué talleres hay y en qué horario. No hace diagnóstico, no recomienda medicamentos ni reemplaza una cita.
+El **Asistente** responde dudas sobre cómo usar Bienestar: cómo pedir una cita, qué talleres hay y en qué horario. También se abre con el botón flotante, en cualquier pantalla menos en el ingreso. Si hay clave de Gemini, la respuesta sale de ese modelo; si no responde, sale de la base local. No hace diagnóstico, no recomienda medicamentos ni reemplaza una cita. La historia es la HU-012.
 
 Si el mensaje habla de una emergencia, el asistente indica llamar a la línea 123 y a la 192 opción 4, y acercarse a Bienestar. Ese tipo de mensaje no se envía a un modelo de inteligencia artificial.
 
@@ -168,4 +168,5 @@ Ve todos los módulos. Su menú tiene **Inicio**, **Estadísticas**, **Informes*
 |---|---|
 | Bitácora de desarrollo | `docs/BITACORA-DE-DESARROLLO.md` |
 | Bitácora de pruebas | `docs/BITACORA-DE-PRUEBAS.md` |
+| Historias de usuario que se cumplen | `docs/HISTORIAS-DE-USUARIO.md` |
 | Pruebas automáticas de la API | `backend/test/` |
