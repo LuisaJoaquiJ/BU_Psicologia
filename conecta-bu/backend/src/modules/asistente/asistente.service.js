@@ -7,10 +7,12 @@ const { hoyUTC } = require("../../common/utils/fechas");
 // RF-014: asistente de orientacion. Flujo:
 //   1. Filtros de seguridad locales (RN-011) ANTES de cualquier IA: crisis y
 //      solicitudes clinicas nunca se envian al modelo.
-//   2. Si N8N_AGENTE_URL esta configurada, la consulta va al flujo autorizado
-//      de n8n (que puede usar Gemini u otro modelo) con contexto del modulo.
-//   3. Si n8n no esta configurado o falla, responde una base de conocimiento
-//      local construida con los datos reales (servicios, horarios, eventos).
+//   2. Si GEMINI_API_KEY esta definida, la pregunta va a Gemini Flash con el
+//      contexto publico del modulo (servicios, horarios y eventos). No viaja
+//      el correo.
+//   3. Si Gemini no esta o falla, y N8N_AGENTE_URL esta configurada, se intenta
+//      el flujo de n8n.
+//   4. Si nada de eso responde, se usa la base de conocimiento local.
 
 const MAX_LONGITUD = 500;
 
@@ -152,6 +154,64 @@ function responderLocal(textoNormalizado, contexto, nombre) {
   };
 }
 
+const REGLAS_GEMINI =
+  "Eres el asistente de Conecta BU, de Bienestar Institucional de la Uniautónoma del Cauca. " +
+  "Responde en español, breve y amable, solo sobre cómo usar la plataforma y sobre los servicios, " +
+  "horarios y eventos que vienen en el contexto. No inventes fechas, cupos ni servicios que no estén ahí. " +
+  "No hagas diagnósticos, no recomiendes medicamentos ni tratamientos y no tomes decisiones clínicas. " +
+  "Si la persona necesita hablar con alguien, invítala a agendar una cita de orientación.";
+
+function claveGemini() {
+  return String(process.env.GEMINI_API_KEY || "").trim();
+}
+
+function armarConsulta(pregunta, contexto, usuario) {
+  const primerNombre = usuario.nombre?.split(" ")[0] || "Estudiante";
+  const servicios = contexto.servicios.length
+    ? contexto.servicios.map((s) => (s.descripcion ? `${s.nombre}: ${s.descripcion}` : s.nombre)).join("\n")
+    : "No hay servicios activos publicados.";
+  const eventos = contexto.eventos.length
+    ? contexto.eventos.map((e) => `${e.nombre} (${e.fecha}${e.lugar ? `, ${e.lugar}` : ""})`).join("\n")
+    : "No hay eventos publicados.";
+  return (
+    `Persona: ${primerNombre}\n` +
+    `Horarios disponibles ahora: ${contexto.horariosDisponibles}\n` +
+    `Servicios:\n${servicios}\n` +
+    `Próximos eventos:\n${eventos}\n\n` +
+    `Pregunta: ${pregunta}`
+  );
+}
+
+async function consultarGemini(pregunta, contexto, usuario) {
+  const modelo = String(process.env.GEMINI_MODEL || "gemini-flash-latest").trim();
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${claveGemini()}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Number(process.env.GEMINI_TIMEOUT_MS || 20000));
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: REGLAS_GEMINI }] },
+        contents: [{ role: "user", parts: [{ text: armarConsulta(pregunta, contexto, usuario) }] }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    const texto = data?.candidates?.[0]?.content?.parts
+      ?.map((parte) => parte.text || "")
+      .join("")
+      .trim();
+    if (!res.ok || !texto) {
+      throw new Error(data?.error?.message || "Gemini no devolvio texto.");
+    }
+    return texto.slice(0, 2000);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function consultarN8n(pregunta, contexto, usuario) {
   const resultado = await postJson(
     config.n8nAgenteUrl,
@@ -190,6 +250,15 @@ async function responderConsulta(usuario, preguntaCruda) {
   const contexto = await obtenerContexto();
   const primerNombre = usuario.nombre?.split(" ")[0];
   const local = responderLocal(textoNormalizado, contexto, primerNombre);
+
+  if (claveGemini()) {
+    try {
+      const respuesta = await consultarGemini(pregunta, contexto, usuario);
+      return { origen: "gemini", respuesta, sugerencias: local.sugerencias };
+    } catch (err) {
+      console.error(`[asistente] Gemini no respondio: ${err.message}`);
+    }
+  }
 
   if (config.n8nAgenteUrl) {
     try {

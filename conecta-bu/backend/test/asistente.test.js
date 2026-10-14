@@ -14,7 +14,13 @@ const { prisma } = require("./mocks/prisma.mock");
 const { listarEjecuciones, limpiarEjecuciones } = require("../src/integrations/n8n.client");
 
 function respuestaJson(cuerpo, status = 200) {
-  return Promise.resolve({ ok: status < 400, status, text: () => Promise.resolve(JSON.stringify(cuerpo)) });
+  const raw = JSON.stringify(cuerpo);
+  return Promise.resolve({
+    ok: status < 400,
+    status,
+    text: () => Promise.resolve(raw),
+    json: () => Promise.resolve(cuerpo),
+  });
 }
 
 const esperar = () => new Promise((resolve) => setImmediate(resolve));
@@ -87,6 +93,50 @@ describe("RF-014: asistente de orientacion", () => {
     const cuerpo = JSON.parse(opciones.body);
     expect(cuerpo.pregunta).toBe("¿Cómo agendo una cita?");
     expect(cuerpo.contexto.servicios[0].nombre).toBe("Orientación psicológica individual");
+  });
+
+  test("consulta a Gemini cuando hay clave y no envia el correo", async () => {
+    process.env.GEMINI_API_KEY = "clave-de-prueba";
+    global.fetch.mockReturnValueOnce(
+      respuestaJson({ candidates: [{ content: { parts: [{ text: "Entra a Pedir una cita y elige un horario." }] } }] })
+    );
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co", "Ana Pérez");
+
+    try {
+      const res = await request(app)
+        .post("/api/v1/asistente/consultas")
+        .set(auth(token))
+        .send({ pregunta: "¿Cómo agendo una cita?" });
+
+      expect(res.status).toBe(200);
+      expect(res.body.origen).toBe("gemini");
+      expect(res.body.respuesta).toMatch(/Pedir una cita/);
+      const [url, opciones] = global.fetch.mock.calls[0];
+      expect(url).toContain("generativelanguage.googleapis.com");
+      expect(url).toContain("gemini-flash-latest");
+      const cuerpo = JSON.parse(opciones.body);
+      expect(cuerpo.contents[0].parts[0].text).toContain("Ana");
+      expect(cuerpo.contents[0].parts[0].text).not.toContain("@");
+    } finally {
+      delete process.env.GEMINI_API_KEY;
+    }
+  });
+
+  test("si Gemini falla, sigue con la base local", async () => {
+    process.env.GEMINI_API_KEY = "clave-de-prueba";
+    global.fetch.mockRejectedValue(new Error("ECONNREFUSED"));
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
+
+    try {
+      const res = await request(app)
+        .post("/api/v1/asistente/consultas")
+        .set(auth(token))
+        .send({ pregunta: "¿Cómo agendo una cita?" });
+      expect(res.body.origen).toBe("local");
+      expect(res.body.respuesta).toMatch(/horario/);
+    } finally {
+      delete process.env.GEMINI_API_KEY;
+    }
   });
 
   test("si n8n falla, responde con la base de conocimiento local", async () => {

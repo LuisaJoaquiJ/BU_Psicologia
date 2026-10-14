@@ -13,6 +13,7 @@ import { AdminPanel } from "./app/admin/AdminPanel";
 import { ProtectedRoute } from "./lib/auth/ProtectedRoute";
 import { useAuth } from "./lib/auth/AuthContext";
 import { AyudaOrtografia } from "./components/AyudaOrtografia";
+import { AsistenteFlotante } from "./components/AsistenteFlotante";
 
 // "/" es el portal de Conecta BU con los cinco modulos de Bienestar.
 // "/desarrollo-humano" es la pagina publica de este modulo; a quien ya tiene
@@ -35,6 +36,7 @@ export default function App() {
   return (
     <>
       <AyudaOrtografia />
+      <AsistenteFlotante />
       <Routes>
         <Route path="/" element={<PortalInicio />} />
         <Route path="/desarrollo-humano" element={<DesarrolloHumano />} />
