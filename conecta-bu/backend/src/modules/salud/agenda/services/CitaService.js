@@ -29,6 +29,10 @@ class CitaService {
       const r = reposCon(tx);
       const horario = await r.horarios.buscarPorId(horarioId);
       if (!horario) throw new AppError(404, "El horario seleccionado no existe.");
+      // La lista de disponibles ya filtra esto, pero el horarioId llega del cliente.
+      if (horario.sinCita || inicioDeCita(horario) <= new Date() || (await this.bloqueos.queCruza(horario.fecha, horario.horaInicio, horario.horaFin))) {
+        throw new AppError(409, "Ese horario ya no esta disponible. Elige otro.");
+      }
       if ((await r.citas.activasDeUsuario(usuarioId)).length) {
         throw new AppError(409, "Ya tienes una cita activa. Cancelala antes de agendar otra.");
       }

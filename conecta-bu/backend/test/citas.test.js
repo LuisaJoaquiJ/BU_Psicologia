@@ -135,6 +135,19 @@ describe("RF-005 / HU-08, HU-09, HU-10: agendamiento de citas", () => {
     expect(segunda.status).toBe(409);
   });
 
+  test("no agenda un horario pasado, sin cita o en un tiempo no disponible (409)", async () => {
+    const { token } = crearEstudiante();
+    const pasado = prisma.__seedHorario({ fecha: enDias(-1) });
+    const sinCita = prisma.__seedHorario({ fecha: manana(), sinCita: true });
+    const bloqueado = prisma.__seedHorario({ fecha: enDias(2) });
+    await prisma.bloqueoDesarrollo.create({ data: { fechaInicio: enDias(2), fechaFin: enDias(2), motivo: "Incapacidad" } });
+
+    for (const horario of [pasado, sinCita, bloqueado]) {
+      const res = await request(app).post("/api/v1/citas").set("Authorization", `Bearer ${token}`).send({ horarioId: horario.id });
+      expect(res.status).toBe(409);
+    }
+  });
+
   test("sin horarioId en el body, responde 400", async () => {
     const { token } = crearEstudiante();
     const res = await request(app).post("/api/v1/citas").set("Authorization", `Bearer ${token}`).send({});

@@ -8,7 +8,7 @@ const DOC_CORTO = { CC: "C.C.", CE: "C.E.", TI: "T.I." };
 // personas conocidas (docentes y administrativos de Salud, o quienes ya
 // viajaron) y al elegir una se llena su cedula. Si no aparece, se escribe
 // a mano como siempre.
-export function CampoPersona({ id, valor = "", onCambio, onElegir, placeholder = "Escribe el nombre o la cédula", required, ariaLabel }) {
+export function CampoPersona({ id, valor = "", onCambio, onElegir, placeholder = "Escribe el nombre", required, ariaLabel }) {
   const [sugerencias, setSugerencias] = useState([]);
   const [abierto, setAbierto] = useState(false);
   const [activo, setActivo] = useState(-1);
@@ -18,7 +18,7 @@ export function CampoPersona({ id, valor = "", onCambio, onElegir, placeholder =
 
   useEffect(() => {
     const q = valor.trim();
-    if (q.length < 2 || q === ultimaElegida.current) {
+    if (q.length < 3 || q === ultimaElegida.current) {
       setSugerencias([]);
       setBuscando(false);
       return undefined;
@@ -92,7 +92,7 @@ export function CampoPersona({ id, valor = "", onCambio, onElegir, placeholder =
         onKeyDown={teclas}
         className={claseCampo}
       />
-      {buscando && abierto && valor.trim().length >= 2 && !sugerencias.length && (
+      {buscando && abierto && valor.trim().length >= 3 && !sugerencias.length && (
         <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-ink-500">Buscando…</span>
       )}
       {mostrar && (
@@ -103,7 +103,7 @@ export function CampoPersona({ id, valor = "", onCambio, onElegir, placeholder =
         >
           {sugerencias.map((p, i) => (
             <li
-              key={p.documento}
+              key={p.documentoRef}
               id={`${listaId}-${i}`}
               role="option"
               aria-selected={i === activo}

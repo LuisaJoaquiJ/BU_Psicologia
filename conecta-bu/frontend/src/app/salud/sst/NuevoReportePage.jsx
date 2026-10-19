@@ -124,7 +124,7 @@ function ListaPersonas({ etiqueta, valor = [], onCambio }) {
                 valor={f.nombre}
                 required
                 onCambio={(v) => cambiar(i, "nombre", v)}
-                onElegir={(p) => onCambio(filas.map((x, j) => (j === i ? { nombre: p.nombre, documento: p.documento } : x)))}
+                onElegir={(p) => onCambio(filas.map((x, j) => (j === i ? { nombre: p.nombre, documento: p.documento, documentoRef: p.documentoRef } : x)))}
               />
               <input
                 aria-label={`Cédula de la persona ${i + 1}`}
@@ -353,6 +353,7 @@ export function NuevoReportePage({ catalogo }) {
                               ...d,
                               responsableNombre: p.nombre,
                               responsableDocumento: p.documento,
+                              responsableDocumentoRef: p.documentoRef,
                               responsableTipoDoc: opciones.includes(p.tipoDocumento) ? p.tipoDocumento : d.responsableTipoDoc,
                             }));
                           }}

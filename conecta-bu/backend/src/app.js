@@ -13,6 +13,10 @@ const { notFoundHandler, errorHandler } = require("./common/middlewares/error.mi
 
 const app = express();
 
+// Detras de un proxy (Nginx, Render...) para que req.ip sea la del usuario y
+// el limite de peticiones no junte a todos en una sola IP. Ej.: TRUST_PROXY=1
+if (process.env.TRUST_PROXY) app.set("trust proxy", /^\d+$/.test(process.env.TRUST_PROXY) ? Number(process.env.TRUST_PROXY) : process.env.TRUST_PROXY);
+
 app.use(helmet());
 app.use(
   cors({
