@@ -14,3 +14,5 @@ export * from "./Barras";
 export * from "./Kpi";
 export * from "./Circulares";
 export * from "./Actividad";
+export * from "./Area";
+export * from "./Radar";

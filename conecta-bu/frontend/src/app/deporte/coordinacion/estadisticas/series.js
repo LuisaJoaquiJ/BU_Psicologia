@@ -27,6 +27,12 @@ export const AVANCE = [
   { clave: "Iniciando", etiqueta: "Menos del 25 %", color: "#86b6ef" },
 ];
 
+// Perfil de cada disciplina, las dos medidas en porcentaje (radar).
+export const PERFIL_DISCIPLINA = [
+  { clave: "ocupacion", etiqueta: "Cupos ocupados", color: "#2a78d6" },
+  { clave: "asistencia", etiqueta: "Asistencia a clases", color: "#eb6834" },
+];
+
 export const OCUPACION = [
   { clave: "inscritos", etiqueta: "Inscritos", color: "#eb6834" },
   { clave: "libres", etiqueta: "Cupos libres", color: "#E5E9F0" },

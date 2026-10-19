@@ -15,6 +15,12 @@ export const NOMBRE_MODULO = {
 };
 export const SERIES_MODULOS = Object.keys(COLOR_MODULO).map((clave) => ({ clave, etiqueta: NOMBRE_MODULO[clave], color: COLOR_MODULO[clave] }));
 
+// Paleta categorica en orden fijo (validada para daltonismo entre vecinos).
+// Se asigna siempre en este orden, nunca ciclando: si hay mas de 6 partes, se
+// agrupan en "Otros". Los tres tonos claros (aqua, amarillo, rosado) tienen
+// poco contraste sobre blanco: van siempre con leyenda y "Ver los datos".
+export const PALETA = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300"];
+
 // Escala ordinal azul (de menos a mas): nunca mas clara que el paso 250.
 export const AZUL_ORDINAL = ["#86b6ef", "#3987e5", "#1c5cab", "#0d366b"];
 

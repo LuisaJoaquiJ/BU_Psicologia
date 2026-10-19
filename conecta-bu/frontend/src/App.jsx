@@ -13,6 +13,10 @@ import { ProtectedRoute } from "./lib/auth/ProtectedRoute";
 import { useAuth } from "./lib/auth/AuthContext";
 import { AyudaOrtografia } from "./components/AyudaOrtografia";
 import { inicioDirecto } from "./lib/modulos";
+import { lazy, Suspense } from "react";
+
+// Galeria de graficas con datos de ejemplo: solo existe en desarrollo (no entra al build).
+const GaleriaGraficas = import.meta.env.DEV ? lazy(() => import("./components/graficas/Galeria")) : null;
 
 // "/" es el portal de Conecta BU con los cinco modulos de Bienestar. El
 // personal de un solo modulo y el superadministrador no lo ven: entran
@@ -42,6 +46,16 @@ export default function App() {
         <Route path="/" element={<PortalInicio />} />
         <Route path="/desarrollo-humano" element={<DesarrolloHumano />} />
         <Route path="/login" element={<LoginPage />} />
+        {GaleriaGraficas && (
+          <Route
+            path="/dev/graficas"
+            element={
+              <Suspense fallback={null}>
+                <GaleriaGraficas />
+              </Suspense>
+            }
+          />
+        )}
 
         <Route
           path="/estudiante/*"

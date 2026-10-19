@@ -60,7 +60,8 @@ describe("Tablero de Deporte", () => {
     expect(kpi("activos").valor).toBe(2);
     expect(r.origen).toEqual({ Clases: 6, Eventos: 0, Reconocidas: 40 });
     expect(r.avance).toMatchObject({ Completaron: 1, Iniciando: 1, total: 2 });
-    expect(r.ocupacion[0]).toMatchObject({ nombre: "Natación", inscritos: 2, cupo: 10 });
+    // La clase del periodo anterior no cuenta: 3 presentes de 4 en el actual.
+    expect(r.ocupacion[0]).toMatchObject({ nombre: "Natación", inscritos: 2, cupo: 10, asistencia: 75 });
     expect(r.asistenciaGrupos[0]).toMatchObject({ nombre: "Natación · Grupo 1", asistencia: 75, sesiones: 2 });
     expect(r.serie.reduce((s, x) => s + x.Presentes, 0)).toBe(3);
     expect(r.actividad.length).toBeGreaterThan(0);

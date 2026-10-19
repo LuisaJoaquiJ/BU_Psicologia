@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { Aviso } from "../comunes/componentes/ui";
-import { COLORES_ESTADO, ETIQUETA_ESTADO } from "../comunes/componentes/graficas/Graficas";
+import { COLORES_ESTADO, ETIQUETA_ESTADO } from "../../../components/graficas/Graficas";
 import {
   ActividadReciente,
-  BarrasH,
+  BarrasAgrupadas,
   CalendarioActividad,
   ColumnasApiladas,
   Dona,
@@ -13,10 +13,15 @@ import {
   SelectorPeriodo,
   TarjetaKpi,
   VerDatos,
-} from "../comunes/componentes/graficas/Tablero";
+} from "../../../components/graficas/Tablero";
 
 const ESTADOS = ["Atendida", "NoAsistio", "Agendada", "Cancelada"];
 const PARTES = ESTADOS.map((e) => ({ clave: e, etiqueta: ETIQUETA_ESTADO[e], color: COLORES_ESTADO[e] }));
+// Citas pedidas frente a atendidas, por servicio.
+const SERIES_SERVICIO = [
+  { clave: "total", etiqueta: "Citas pedidas", color: "#2a78d6" },
+  { clave: "atendidas", etiqueta: "Atendidas", color: COLORES_ESTADO.Atendida },
+];
 const ICONOS = {
   citas: ["calendario", "azul"],
   asistencia: ["check", "verde"],
@@ -112,6 +117,7 @@ export function TableroDH({ alVerDetalle }) {
                   partes={PARTES.map((p) => ({ ...p, valor: d.estados[p.clave] }))}
                   centro={d.estados.tasaAsistencia === null ? "—" : `${Math.round(d.estados.tasaAsistencia)} %`}
                   etiquetaCentro="asistieron a su cita"
+                  porcentajes
                 />
               </div>
             </Panel>
@@ -180,7 +186,7 @@ export function TableroDH({ alVerDetalle }) {
 
           <Panel
             titulo="Servicios más pedidos"
-            subtitulo={`Citas por servicio en ${d.texto}`}
+            subtitulo={`Citas pedidas y atendidas por servicio en ${d.texto}`}
             accion={
               alVerDetalle && (
                 <button type="button" onClick={alVerDetalle} className="text-sm font-bold text-primary-soft whitespace-nowrap py-2">
@@ -189,9 +195,12 @@ export function TableroDH({ alVerDetalle }) {
               )
             }
           >
-            <BarrasH
-              color="#2a78d6"
-              filas={d.servicios.map((s) => ({ id: s.nombre, nombre: s.nombre, total: s.total }))}
+            <div className="mb-3">
+              <Leyenda series={SERIES_SERVICIO} />
+            </div>
+            <BarrasAgrupadas
+              series={SERIES_SERVICIO}
+              filas={d.servicios.map((s) => ({ id: s.nombre, nombre: s.nombre, total: s.total, atendidas: s.atendidas }))}
               vacio="No hubo citas en este periodo."
             />
             <VerDatos columnas={["Servicio", "Citas", "Atendidas"]} filas={d.servicios.map((s) => [s.nombre, s.total, s.atendidas])} />

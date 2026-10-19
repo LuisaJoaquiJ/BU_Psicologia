@@ -3,11 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { Panel } from "../../comunes/Panel";
 import { Aviso } from "../../comunes/componentes/ui";
 import { Icono } from "../../comunes/componentes/Iconos";
-import { ActividadReciente, BarrasH, CalendarioActividad, ColumnasApiladas, Dona, FilasApiladas, Leyenda, SelectorPeriodo, TarjetaKpi, VerDatos } from "../../comunes/componentes/graficas/Tablero";
+import { ActividadReciente, BarrasAgrupadas, BarrasH, CalendarioActividad, ColumnasApiladas, Dona, FilasApiladas, Leyenda, RadarComparado, SelectorPeriodo, TarjetaKpi, VerDatos } from "../../../../components/graficas/Tablero";
 import { http } from "../../../../lib/api/http";
 import { horas } from "../../comunes/lib/deporte";
 import { descargar } from "../../comunes/lib/salud";
-import { ASISTENCIA, AVANCE, ICONOS, MESES, OCUPACION, ORIGEN, fmt } from "./series";
+import { ASISTENCIA, AVANCE, ICONOS, MESES, OCUPACION, ORIGEN, PERFIL_DISCIPLINA, fmt } from "./series";
 
 // Estadísticas de Deporte: indicadores del periodo y gráficas (Recharts).
 
@@ -92,6 +92,7 @@ export function TableroDeporte() {
                   partes={ORIGEN.map((p) => ({ ...p, valor: d.origen[p.clave] }))}
                   centro={horas(d.kpis.find((k) => k.id === "horas").valor)}
                   etiquetaCentro="horas otorgadas"
+                  porcentajes
                 />
               </div>
             </Panel>
@@ -139,6 +140,8 @@ export function TableroDeporte() {
               <VerDatos columnas={["Disciplina", "Inscritos", "Cupos", "Grupos", `Horas en ${d.texto}`]} filas={d.ocupacion.map((o) => [o.nombre, o.inscritos, o.cupo, o.grupos, o.horas])} />
             </Panel>
           </div>
+
+          <PerfilDisciplinas ocupacion={d.ocupacion} />
 
           <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
             <Panel titulo="Horas por disciplina" subtitulo={`Otorgadas en ${d.texto}`}>
@@ -275,5 +278,26 @@ export function TableroDeporte() {
         </div>
       )}
     </main>
+  );
+}
+
+// Ocupacion de cupos y asistencia a clases de cada disciplina (en %). Con 3
+// o mas disciplinas se ve como radar; con menos, como barras agrupadas.
+function PerfilDisciplinas({ ocupacion }) {
+  if (!ocupacion.length) return null;
+  const filas = ocupacion.map((o) => ({ id: o.id, nombre: o.nombre, ocupacion: o.cupo ? Math.round((o.inscritos / o.cupo) * 100) : 0, asistencia: o.asistencia }));
+  const pct = (v) => (v === null || v === undefined ? "—" : `${v} %`);
+  return (
+    <Panel titulo="Perfil de las disciplinas" subtitulo="Porcentaje de cupos ocupados y de estudiantes presentes en clase, por disciplina">
+      <div className="mb-3">
+        <Leyenda series={PERFIL_DISCIPLINA} forma={filas.length >= 3 ? "linea" : "barra"} />
+      </div>
+      {filas.length >= 3 ? (
+        <RadarComparado ejes={filas} series={PERFIL_DISCIPLINA} etiqueta="Cupos ocupados y asistencia por disciplina" />
+      ) : (
+        <BarrasAgrupadas series={PERFIL_DISCIPLINA} filas={filas} unidad=" %" />
+      )}
+      <VerDatos columnas={["Disciplina", "Cupos ocupados", "Asistencia a clases"]} filas={filas.map((f) => [f.nombre, pct(f.ocupacion), pct(f.asistencia)])} />
+    </Panel>
   );
 }

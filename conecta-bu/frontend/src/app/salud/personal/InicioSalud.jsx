@@ -5,8 +5,8 @@ import { useAuth } from "../../../lib/auth/AuthContext";
 import { Icono } from "../comunes/componentes/Iconos";
 import { COLOR_POBLACION, POBLACION_TEXTO, fechaCorta, nombreCompleto } from "../comunes/lib/salud";
 import { Aviso, BarrasHorizontales, Kpi, Tarjeta, Vacio, claseCampo } from "../comunes/componentes/ui";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { CajaTip, EJE, GUIA, LINEA_EJE } from "../comunes/componentes/graficas/Base";
+import { AreaTiempo } from "../../../components/graficas/Area";
+import { Pastel } from "../../../components/graficas/Circulares";
 import { BandaInicio, botonBandaPrincipal, hoyLargo } from "../comunes/componentes/ui";
 
 function saludo() {
@@ -20,19 +20,7 @@ function saludo() {
 // Atenciones por dia de los ultimos 30 dias (Recharts).
 function Ultimos30({ datos }) {
   const filas = datos.map((d) => ({ ...d, etiqueta: fechaCorta(d.fecha) }));
-  return (
-    <div style={{ height: 160 }} role="img" aria-label="Atenciones por día en los últimos 30 días">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={filas} margin={{ top: 6, right: 4, left: 0, bottom: 0 }} barCategoryGap={2}>
-          <CartesianGrid vertical={false} stroke={GUIA} />
-          <XAxis dataKey="etiqueta" tick={EJE} tickLine={false} axisLine={LINEA_EJE} interval="preserveStartEnd" minTickGap={24} />
-          <YAxis tick={EJE} tickLine={false} axisLine={false} width={28} allowDecimals={false} />
-          <Tooltip content={<CajaTip formato={(v) => v} unidad=" atenciones" />} cursor={{ fill: "#F3F5F9" }} />
-          <Bar dataKey="total" name="" fill="#1F4E94" radius={[4, 4, 0, 0]} maxBarSize={18} minPointSize={2} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
+  return <AreaTiempo datos={filas} series={[{ clave: "total", etiqueta: "atenciones", color: "#1F4E94" }]} alto={180} etiqueta="Atenciones por día en los últimos 30 días" />;
 }
 
 // Inicio del personal de salud: busqueda rapida, indicadores del periodo y
@@ -167,11 +155,11 @@ export function InicioSalud() {
         </Tarjeta>
         <Tarjeta titulo="Población atendida" subtitulo={`Periodo ${resumen?.periodo || ""}`}>
           {resumen && (
-            <BarrasHorizontales
-              datos={resumen.porPoblacion
-                .filter((p) => p.total > 0)
-                .map((p) => ({ nombre: POBLACION_TEXTO[p.nombre], total: p.total, color: COLOR_POBLACION[p.nombre] }))}
-              formato={(v) => `${v} · ${total ? Math.round((v / total) * 100) : 0} %`}
+            <Pastel
+              titulo="Población atendida"
+              tamano={200}
+              partes={resumen.porPoblacion.map((p) => ({ clave: p.nombre, etiqueta: POBLACION_TEXTO[p.nombre], valor: p.total, color: COLOR_POBLACION[p.nombre] }))}
+              vacio="Todavía no hay atenciones en este periodo."
             />
           )}
         </Tarjeta>

@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { Aviso, Encabezado } from "./comunes/componentes/ui";
-import { COLORES_ESTADO, ETIQUETA_ESTADO } from "./comunes/componentes/graficas/Graficas";
+import { COLORES_ESTADO, ETIQUETA_ESTADO } from "../../components/graficas/Graficas";
 import {
   ActividadReciente,
+  AreaTiempo,
   AZUL_ORDINAL,
   BarrasH,
   CalendarioActividad,
@@ -14,12 +15,13 @@ import {
   FilasApiladas,
   Leyenda,
   LineasMensuales,
+  Pastel,
   NOMBRE_MODULO,
   SERIES_MODULOS,
   SelectorPeriodo,
   TarjetaKpi,
   VerDatos,
-} from "./comunes/componentes/graficas/Tablero";
+} from "../../components/graficas/Tablero";
 
 const ESTADOS_CITA = ["Atendida", "NoAsistio", "Agendada", "Cancelada"];
 const PARTES_CITA = ESTADOS_CITA.map((e) => ({ clave: e, etiqueta: ETIQUETA_ESTADO[e], color: COLORES_ESTADO[e] }));
@@ -159,6 +161,7 @@ export function EstadisticasSuperPage() {
                   opciones={[
                     ["columnas", "Columnas"],
                     ["lineas", "Líneas"],
+                    ["area", "Área"],
                   ]}
                   valor={vista}
                   onCambio={setVista}
@@ -170,6 +173,8 @@ export function EstadisticasSuperPage() {
               </div>
               {vista === "lineas" ? (
                 <LineasMensuales datos={d.tendencia} series={SERIES_MODULOS} />
+              ) : vista === "area" ? (
+                <AreaTiempo datos={d.tendencia} series={SERIES_MODULOS} apilada etiqueta="Participaciones por fecha, sumadas por módulo" />
               ) : (
                 <ColumnasApiladas datos={d.tendencia} partes={SERIES_MODULOS} />
               )}
@@ -306,7 +311,7 @@ export function EstadisticasSuperPage() {
           {/* Salud */}
           <div className="grid gap-5 lg:grid-cols-2">
             <Panel titulo="Atenciones de salud por población" subtitulo={`${fmt(d.salud.atenciones)} atenciones · ${fmt(d.salud.remisiones)} remisiones`}>
-              <BarrasH color="#1baf7a" filas={d.salud.porPoblacion.map((f) => ({ ...f, nombre: POBLACION[f.id] || f.nombre }))} />
+              <Pastel titulo="Atenciones por población" partes={d.salud.porPoblacion.map((f) => ({ clave: f.id, etiqueta: POBLACION[f.id] || f.nombre, valor: f.total }))} vacio="No hubo atenciones en este rango." />
               <VerDatos columnas={["Población", "Atenciones"]} filas={d.salud.porPoblacion.map((f) => [POBLACION[f.id] || f.nombre, f.total])} />
             </Panel>
             <Panel titulo="Atenciones por tipo de actividad" subtitulo="Según el catálogo de actividades de Salud Integral">

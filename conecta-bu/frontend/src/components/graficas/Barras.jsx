@@ -67,6 +67,40 @@ export function BarrasH({ filas, color = "#2a78d6", colores, formato = fmt, unid
   );
 }
 
+// Barras agrupadas horizontales (Recharts): por cada fila, una barra por
+// serie lado a lado, en la misma escala, con el valor en la punta.
+//   filas: [{ id, nombre, [serie.clave]: numero }]   series: [{ clave, etiqueta, color }]
+export function BarrasAgrupadas({ filas, series, formato = fmt, unidad = "", vacio = "Sin datos en este rango." }) {
+  const [ref, ancho] = useAncho();
+  if (!filas.length || filas.every((f) => series.every((s) => !f[s.clave]))) return <p className="m-0 text-sm text-ink-500">{vacio}</p>;
+  const anchoEje = Math.round(Math.min(200, Math.max(96, ancho * 0.4)));
+  const grosor = 12;
+  return (
+    <div ref={ref} style={{ height: filas.length * (series.length * (grosor + 2) + 22) + 8 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={filas} layout="vertical" margin={{ top: 4, right: 56, left: 0, bottom: 4 }} barGap={2} barCategoryGap={11}>
+          <XAxis type="number" hide domain={[0, "dataMax"]} />
+          <YAxis
+            type="category"
+            dataKey="nombre"
+            width={anchoEje}
+            tickLine={false}
+            axisLine={false}
+            tick={{ fontSize: 12, fill: "#3D4659" }}
+            tickFormatter={(v) => cortar(v, Math.floor(anchoEje / 6.6))}
+          />
+          <Tooltip content={<CajaTip formato={formato} unidad={unidad} />} cursor={{ fill: "#F3F5F9" }} />
+          {series.map((s) => (
+            <Bar key={s.clave} dataKey={s.clave} name={s.etiqueta} fill={s.color} radius={[0, 4, 4, 0]} barSize={grosor} minPointSize={2}>
+              <LabelList dataKey={s.clave} position="right" formatter={(v) => `${formato(v)}${unidad}`.replace(/ /g, " ")} style={{ fontSize: 11, fontWeight: 700, fill: "#0E1726" }} />
+            </Bar>
+          ))}
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 // Una barra apilada por fila (Recharts, barras apiladas con stackId), en la
 // misma escala para poder comparar filas. El detalle va bajo el nombre.
 export function FilasApiladas({ filas, partes }) {

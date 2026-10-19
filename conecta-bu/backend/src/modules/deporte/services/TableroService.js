@@ -30,7 +30,7 @@ class TableroService {
       serie,
       origen: Object.fromEntries(Object.entries(origen).map(([k, v]) => [k, u.redondear(v)])),
       avance: this.avance(d),
-      ocupacion: this.ocupacion(d, horasDisciplina),
+      ocupacion: this.ocupacion(d, horasDisciplina, p),
       horasPorDisciplina: [...horasDisciplina.entries()].map(([nombre, h]) => ({ nombre, horas: u.redondear(h) })).sort((a, b) => b.horas - a.horas),
       asistenciaGrupos: this.asistenciaPorGrupo(p, d),
       docentes: this.clasesPorDocente(p, d),
@@ -145,8 +145,9 @@ class TableroService {
   }
 
   // Cupos e inscritos por disciplina en el periodo academico en curso.
-  ocupacion(d, horasDisciplina) {
+  ocupacion(d, horasDisciplina, p) {
     const periodo = u.periodoActual();
+    const asistencia = this.asistenciaPorDisciplina(p, d);
     const activas = u.contarPor(d.inscripciones.filter((i) => i.estado === "Activa"), "grupoId");
     const disciplinaPorId = u.porId(d.disciplinas);
     const porDisciplina = new Map();
@@ -157,7 +158,26 @@ class TableroService {
       r.grupos += 1;
       porDisciplina.set(g.disciplinaId, r);
     }
-    return [...porDisciplina.values()].map((r) => ({ ...r, horas: u.redondear(horasDisciplina.get(r.nombre) || 0) })).sort((a, b) => b.inscritos - a.inscritos);
+    return [...porDisciplina.values()]
+      .map((r) => ({ ...r, horas: u.redondear(horasDisciplina.get(r.nombre) || 0), asistencia: asistencia.get(r.id) ?? null }))
+      .sort((a, b) => b.inscritos - a.inscritos);
+  }
+
+  // Porcentaje de presentes en las clases del periodo, por disciplina (null si no se tomo asistencia).
+  asistenciaPorDisciplina(p, d) {
+    const sesionPorId = u.porId(d.sesiones);
+    const grupoPorId = u.porId(d.grupos);
+    const conteo = new Map();
+    for (const a of d.asistencias) {
+      const s = sesionPorId.get(a.sesionId);
+      const disciplinaId = s && p.enActual(s.fecha) ? grupoPorId.get(s.grupoId)?.disciplinaId : null;
+      if (!disciplinaId) continue;
+      const r = conteo.get(disciplinaId) || { presentes: 0, total: 0 };
+      r.total += 1;
+      if (a.presente) r.presentes += 1;
+      conteo.set(disciplinaId, r);
+    }
+    return new Map([...conteo].map(([id, r]) => [id, u.porcentaje(r.presentes, r.total)]));
   }
 
   asistenciaPorGrupo(p, d) {

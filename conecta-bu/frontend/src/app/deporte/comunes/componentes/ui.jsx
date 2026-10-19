@@ -1,4 +1,4 @@
-import { BarrasH } from "./graficas/Barras";
+import { BarrasH } from "../../../../components/graficas/Barras";
 // Piezas de interfaz compartidas por las pantallas de Salud integral.
 
 export const claseCampo =
