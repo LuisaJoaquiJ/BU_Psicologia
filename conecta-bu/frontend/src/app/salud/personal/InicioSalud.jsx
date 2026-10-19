@@ -5,8 +5,8 @@ import { useAuth } from "../../../lib/auth/AuthContext";
 import { Icono } from "../comunes/componentes/Iconos";
 import { COLOR_POBLACION, POBLACION_TEXTO, fechaCorta, nombreCompleto } from "../comunes/lib/salud";
 import { Aviso, BarrasHorizontales, Kpi, Tarjeta, Vacio, claseCampo } from "../comunes/componentes/ui";
-import { AreaTiempo } from "../../../components/graficas/Area";
-import { Pastel } from "../../../components/graficas/Circulares";
+import { AreaTiempo } from "../comunes/componentes/graficas/Area";
+import { Pastel } from "../comunes/componentes/graficas/Circulares";
 import { BandaInicio, botonBandaPrincipal, hoyLargo } from "../comunes/componentes/ui";
 
 function saludo() {

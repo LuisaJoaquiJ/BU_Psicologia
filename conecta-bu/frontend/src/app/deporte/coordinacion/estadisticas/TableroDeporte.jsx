@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Panel } from "../../comunes/Panel";
 import { Aviso } from "../../comunes/componentes/ui";
 import { Icono } from "../../comunes/componentes/Iconos";
-import { ActividadReciente, BarrasAgrupadas, BarrasH, CalendarioActividad, ColumnasApiladas, Dona, FilasApiladas, Leyenda, RadarComparado, SelectorPeriodo, TarjetaKpi, VerDatos } from "../../../../components/graficas/Tablero";
+import { ActividadReciente, BarrasAgrupadas, BarrasH, CalendarioActividad, ColumnasApiladas, Dona, FilasApiladas, Leyenda, RadarComparado, SelectorPeriodo, TarjetaKpi, VerDatos } from "../../comunes/componentes/graficas/Tablero";
 import { http } from "../../../../lib/api/http";
 import { horas } from "../../comunes/lib/deporte";
 import { descargar } from "../../comunes/lib/salud";

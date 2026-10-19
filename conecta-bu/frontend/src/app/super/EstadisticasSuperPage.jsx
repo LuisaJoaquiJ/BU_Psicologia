@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { Aviso, Encabezado } from "./comunes/componentes/ui";
-import { COLORES_ESTADO, ETIQUETA_ESTADO } from "../../components/graficas/Graficas";
+import { COLORES_ESTADO, ETIQUETA_ESTADO } from "./comunes/componentes/graficas/Graficas";
 import {
   ActividadReciente,
   AreaTiempo,
@@ -21,7 +21,7 @@ import {
   SelectorPeriodo,
   TarjetaKpi,
   VerDatos,
-} from "../../components/graficas/Tablero";
+} from "./comunes/componentes/graficas/Tablero";
 
 const ESTADOS_CITA = ["Atendida", "NoAsistio", "Agendada", "Cancelada"];
 const PARTES_CITA = ESTADOS_CITA.map((e) => ({ clave: e, etiqueta: ETIQUETA_ESTADO[e], color: COLORES_ESTADO[e] }));

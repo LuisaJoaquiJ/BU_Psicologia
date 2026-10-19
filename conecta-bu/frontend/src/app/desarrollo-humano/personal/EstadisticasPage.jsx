@@ -14,7 +14,7 @@ import {
   PuntosConIntervalo,
   Sparkline,
   formatoPct,
-} from "../../../components/graficas/Graficas";
+} from "../comunes/componentes/graficas/Graficas";
 
 const campo = "border border-gray-200 rounded-lg px-3 py-2 text-sm text-ink-900 bg-white";
 const ESTADOS_SEMANA = ["Atendida", "NoAsistio", "Agendada", "Cancelada"];

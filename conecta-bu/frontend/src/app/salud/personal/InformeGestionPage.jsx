@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { CajaTip, EJE, GUIA, LINEA_EJE } from "../../../components/graficas/Base";
+import { CajaTip, EJE, GUIA, LINEA_EJE } from "../comunes/componentes/graficas/Base";
 import { http } from "../../../lib/api/http";
 import { Icono } from "../comunes/componentes/Iconos";
 import { COLOR_POBLACION, descargar, mensajeError, useCatalogos } from "../comunes/lib/salud";

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { Aviso } from "../comunes/componentes/ui";
-import { COLORES_ESTADO, ETIQUETA_ESTADO } from "../../../components/graficas/Graficas";
+import { COLORES_ESTADO, ETIQUETA_ESTADO } from "../comunes/componentes/graficas/Graficas";
 import {
   ActividadReciente,
   BarrasAgrupadas,
@@ -13,7 +13,7 @@ import {
   SelectorPeriodo,
   TarjetaKpi,
   VerDatos,
-} from "../../../components/graficas/Tablero";
+} from "../comunes/componentes/graficas/Tablero";
 
 const ESTADOS = ["Atendida", "NoAsistio", "Agendada", "Cancelada"];
 const PARTES = ESTADOS.map((e) => ({ clave: e, etiqueta: ETIQUETA_ESTADO[e], color: COLORES_ESTADO[e] }));

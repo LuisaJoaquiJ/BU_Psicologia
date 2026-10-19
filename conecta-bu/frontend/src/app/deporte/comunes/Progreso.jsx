@@ -1,5 +1,5 @@
 import { Icono } from "./componentes/Iconos";
-import { Anillo, BarrasH } from "../../../components/graficas/Tablero";
+import { Anillo, BarrasH } from "./componentes/graficas/Tablero";
 import { estiloDisciplina, horas } from "./lib/deporte";
 import { urlDelServidor } from "./lib/imagenes";
 

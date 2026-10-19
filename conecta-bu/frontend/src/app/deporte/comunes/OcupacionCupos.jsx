@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tarjeta, Vacio } from "./componentes/ui";
 import { Icono } from "./componentes/Iconos";
-import { Anillo } from "../../../components/graficas/Tablero";
+import { Anillo } from "./componentes/graficas/Tablero";
 import { Pastillas } from "./Pastillas";
 
 // Ocupación de cupos (RF-012): anillo total y barras por disciplina o grupo.
