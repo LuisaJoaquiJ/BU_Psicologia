@@ -4,8 +4,8 @@ import { http } from "../../lib/api/http";
 import { useAuth } from "../../lib/auth/AuthContext";
 import { Icono } from "./comunes/componentes/Iconos";
 import { MODULOS } from "../../lib/modulos";
-import { Aviso, Kpi } from "./comunes/componentes/ui";
-import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo } from "./comunes/componentes/ui";
+import { Aviso, hoyLargo } from "./comunes/componentes/ui";
+import { BandaAurora, CifraVidrio, ENTRA, IndicadoresAurora, KpiAurora, PanelVidrio, botonAuroraPrincipal, botonAuroraSecundario, botonVidrio, retraso } from "./comunes/componentes/Aurora";
 
 const ESTILO = {
   "desarrollo-humano": { color: "bg-cyan text-primary-dark" },
@@ -31,42 +31,45 @@ export function SuperInicio() {
 
   return (
     <>
-      <BandaInicio
-        titulo={
-          <>
-            Hola, <span className="text-cyan">{usuario?.nombre?.split(" ")[0]}.</span>
-          </>
-        }
+      <BandaAurora
+        tono="super"
+        titulo={`Hola, ${usuario?.nombre?.split(" ")[0] || ""}`}
         fecha={hoyLargo()}
         texto="Cada módulo de Conecta BU es independiente. Desde aquí decides qué correos del personal entran a cada uno; los estudiantes entran con su cuenta institucional."
         acciones={
           <>
-            <Link to="/super/estadisticas" className={botonBandaPrincipal}>Ver estadísticas</Link>
-            <Link to="/super/accesos" className={botonBandaSecundario}>Accesos por módulo</Link>
-          </>
-        }
-        aside={
-          <>
-            <h2 className="m-0 font-sans text-lg font-bold text-primary">Informes de gestión</h2>
-            <div className="flex gap-4 items-center">
-              <span className="shrink-0 w-[76px] h-[68px] rounded-2xl bg-primary-light text-primary font-extrabold flex items-center justify-center tabular-nums text-[28px]">
-                {resumen ? resumen.informesPorRevisar || 0 : "…"}
-              </span>
-              <span className="min-w-0 text-ink-600">
-                <strong className="block text-[17px] text-primary">Por revisar</strong>
-                {resumen?.informesPorRevisar ? "Los módulos enviaron informes nuevos." : "No hay informes pendientes."}
-              </span>
-            </div>
-            <Link to="/super/informes" className="self-start font-bold text-sm px-4 min-h-[44px] inline-flex items-center rounded-full bg-primary-light text-primary hover:bg-[#E2E9F6]">
-              Abrir informes
+            <Link to="/super/estadisticas" className={botonAuroraPrincipal("super")}>
+              Ver estadísticas
+            </Link>
+            <Link to="/super/accesos" className={botonAuroraSecundario}>
+              Accesos por módulo
             </Link>
           </>
         }
+        lado={
+          <PanelVidrio titulo="Informes de gestión">
+            <CifraVidrio
+              valor={resumen ? resumen.informesPorRevisar || 0 : "…"}
+              texto="Por revisar"
+              detalle={resumen?.informesPorRevisar ? "Los módulos enviaron informes nuevos." : "No hay informes pendientes."}
+            />
+            <Link to="/super/informes" className={botonVidrio}>
+              Abrir informes
+            </Link>
+          </PanelVidrio>
+        }
       />
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
+    <main className="relative max-w-[1440px] mx-auto -mt-[72px] px-4 sm:px-6 lg:px-10 pb-16 flex flex-col gap-8">
       {error && <Aviso>{error}</Aviso>}
 
-      <section aria-labelledby="titulo-modulos">
+      <IndicadoresAurora>
+        <KpiAurora titulo="Usuarios registrados" valor={resumen ? resumen.usuarios.total : "…"} />
+        <KpiAurora titulo="Estudiantes" valor={resumen ? porRol.Estudiante || 0 : "…"} />
+        <KpiAurora titulo="Personal de módulos" valor={resumen ? porRol.Administrador || 0 : "…"} />
+        <KpiAurora titulo="Superadministradores" valor={resumen ? porRol.SuperAdministrador || 0 : "…"} />
+      </IndicadoresAurora>
+
+      <section aria-labelledby="titulo-modulos" style={retraso(300)} className={ENTRA}>
         <div className="flex justify-between items-end gap-4 flex-wrap mb-4">
           <div>
             <h2 id="titulo-modulos" className="m-0 text-[28px] font-extrabold">Módulos de Bienestar</h2>
@@ -130,16 +133,6 @@ export function SuperInicio() {
             ))}
           </p>
         )}
-      </section>
-
-      <section aria-labelledby="titulo-usuarios">
-        <h2 id="titulo-usuarios" className="m-0 mb-4 text-[22px] font-extrabold">Usuarios</h2>
-        <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
-          <Kpi destacado titulo="Usuarios registrados" valor={resumen ? resumen.usuarios.total : "…"} />
-          <Kpi titulo="Estudiantes" valor={resumen ? porRol.Estudiante || 0 : "…"} />
-          <Kpi titulo="Personal de módulos" valor={resumen ? porRol.Administrador || 0 : "…"} />
-          <Kpi titulo="Superadministradores" valor={resumen ? porRol.SuperAdministrador || 0 : "…"} />
-        </div>
       </section>
     </main>
     </>

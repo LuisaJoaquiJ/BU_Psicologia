@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Aviso, Insignia, Kpi, Tarjeta, Vacio } from "../../comunes/componentes/ui";
+import { Aviso, Insignia, Tarjeta, Vacio, hoyLargo } from "../../comunes/componentes/ui";
 import { Icono } from "../../comunes/componentes/Iconos";
-import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo } from "../../comunes/componentes/ui";
+import { BandaAurora, CifraVidrio, ENTRA, IndicadoresAurora, KpiAurora, PanelVidrio, botonAuroraPrincipal, botonAuroraSecundario, botonVidrio, retraso } from "../../comunes/componentes/Aurora";
 import { http } from "../../../../lib/api/http";
 import { useAuth } from "../../../../lib/auth/AuthContext";
 import { horas } from "../../comunes/lib/deporte";
@@ -45,61 +45,53 @@ export function InicioPersonal() {
   }, [cargar]);
   return (
     <>
-      <BandaInicio
-        titulo={
-          <>
-            {saludo()}, <span className="text-cyan">{usuario?.nombre?.split(" ")[0]}.</span>
-          </>
-        }
+      <BandaAurora
+        tono="deporte"
+        titulo={`${saludo()}, ${usuario?.nombre?.split(" ")[0] || ""}`}
         fecha={`${hoyLargo()}${r?.periodo ? ` · Periodo ${r.periodo}` : ""}`}
         texto={`Toma asistencia de las clases de hoy: cada estudiante presente suma las horas de la sesión para completar sus ${r?.requeridas || 40} horas.`}
         acciones={
           <>
-            <Link to="/deporte/grupos" className={botonBandaPrincipal}>
+            <Link to="/deporte/grupos" className={botonAuroraPrincipal("deporte")}>
               <Icono nombre="calendario" size={18} /> Ver grupos
             </Link>
-            <Link to="/deporte/estadisticas" className={botonBandaSecundario}>
+            <Link to="/deporte/estadisticas" className={botonAuroraSecundario}>
               <Icono nombre="grafica" size={17} /> Ver estadísticas
             </Link>
-            <button type="button" onClick={() => descargarReporte(r?.periodo)} className={botonBandaSecundario}>
+            <button type="button" onClick={() => descargarReporte(r?.periodo)} className={botonAuroraSecundario}>
               <Icono nombre="descarga" size={17} /> Reporte en Excel
             </button>
           </>
         }
-        aside={
-          <>
-            <h2 className="m-0 font-sans text-lg font-bold text-primary">Clases de hoy</h2>
-            {!r && <p className="m-0 text-ink-500">Cargando…</p>}
-            {r && r.clasesHoy.length === 0 && <p className="m-0 text-ink-600">Hoy no hay clases en el horario de los grupos.</p>}
+        lado={
+          <PanelVidrio titulo="Clases de hoy">
+            {!r && <p className="m-0 text-white/75">Cargando…</p>}
+            {r && r.clasesHoy.length === 0 && <p className="m-0 text-white/85">Hoy no hay clases en el horario de los grupos.</p>}
             {r && r.clasesHoy.length > 0 && (
-              <div className="flex gap-4 items-center">
-                <span className="shrink-0 w-[76px] h-[68px] rounded-2xl bg-primary-light text-primary font-extrabold flex items-center justify-center tabular-nums text-[28px]">
-                  {r.clasesHoy.length}
-                </span>
-                <span className="min-w-0 text-ink-600">
-                  <strong className="block text-[17px] text-primary">{r.clasesHoy.length === 1 ? "Clase hoy" : "Clases hoy"}</strong>
-                  {(() => {
-                    const pendientes = r.clasesHoy.filter((c) => !c.asistenciaTomada).length;
-                    return pendientes ? `${pendientes} sin asistencia tomada` : "Asistencia tomada en todas";
-                  })()}
-                </span>
-              </div>
+              <CifraVidrio
+                valor={r.clasesHoy.length}
+                texto={r.clasesHoy.length === 1 ? "Clase hoy" : "Clases hoy"}
+                detalle={(() => {
+                  const pendientes = r.clasesHoy.filter((c) => !c.asistenciaTomada).length;
+                  return pendientes ? `${pendientes} sin asistencia tomada` : "Asistencia tomada en todas";
+                })()}
+              />
             )}
-            <Link to="/deporte/grupos" className="self-start font-bold text-sm px-4 min-h-[44px] inline-flex items-center rounded-full bg-primary-light text-primary hover:bg-[#E2E9F6]">
+            <Link to="/deporte/grupos" className={botonVidrio}>
               Tomar asistencia
             </Link>
-          </>
+          </PanelVidrio>
         }
       />
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
+    <main className="relative max-w-[1440px] mx-auto -mt-[72px] px-4 sm:px-6 lg:px-10 pb-16 flex flex-col gap-6">
       {error && <Aviso>{error}</Aviso>}
-      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(190px,1fr))]">
-        <Kpi destacado titulo="Estudiantes inscritos" valor={r ? r.inscritos : "…"} detalle={r ? `en ${r.gruposActivos} grupos activos` : null} />
-        <Kpi titulo="Sesiones del periodo" valor={r ? r.sesiones : "…"} detalle={r?.asistenciaPromedio !== null && r ? `${r.asistenciaPromedio} % de asistencia` : null} />
-        <Kpi titulo="Horas otorgadas" valor={r ? horas(r.horasOtorgadas) : "…"} detalle="en el periodo" />
-        <Kpi titulo="Completaron sus horas" valor={r ? r.cumplieron : "…"} detalle={r ? `${r.requeridas} horas requeridas` : null} />
-      </div>
-      <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
+      <IndicadoresAurora>
+        <KpiAurora titulo="Estudiantes inscritos" valor={r ? r.inscritos : "…"} detalle={r ? `en ${r.gruposActivos} grupos activos` : null} />
+        <KpiAurora titulo="Sesiones del periodo" valor={r ? r.sesiones : "…"} detalle={r?.asistenciaPromedio !== null && r ? `${r.asistenciaPromedio} % de asistencia` : null} />
+        <KpiAurora titulo="Horas otorgadas" valor={r ? horas(r.horasOtorgadas) : "…"} detalle="en el periodo" />
+        <KpiAurora titulo="Completaron sus horas" valor={r ? r.cumplieron : "…"} detalle={r ? `${r.requeridas} horas requeridas` : null} />
+      </IndicadoresAurora>
+      <div style={retraso(300)} className={`grid gap-5 lg:grid-cols-[1.3fr_1fr] ${ENTRA}`}>
         <Tarjeta titulo="Clases de hoy" subtitulo={new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" })}>
           {r && r.clasesHoy.length === 0 && <Vacio>Hoy no hay clases en el horario de los grupos.</Vacio>}
           <ul className="list-none m-0 p-0 flex flex-col gap-2.5">

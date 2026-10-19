@@ -4,10 +4,10 @@ import { http } from "../../../lib/api/http";
 import { useAuth } from "../../../lib/auth/AuthContext";
 import { Icono } from "../comunes/componentes/Iconos";
 import { COLOR_POBLACION, POBLACION_TEXTO, fechaCorta, nombreCompleto } from "../comunes/lib/salud";
-import { Aviso, BarrasHorizontales, Kpi, Tarjeta, Vacio, claseCampo } from "../comunes/componentes/ui";
+import { Aviso, BarrasHorizontales, Tarjeta, Vacio, claseCampo, hoyLargo } from "../comunes/componentes/ui";
 import { AreaTiempo } from "../comunes/componentes/graficas/Area";
 import { Pastel } from "../comunes/componentes/graficas/Circulares";
-import { BandaInicio, botonBandaPrincipal, hoyLargo } from "../comunes/componentes/ui";
+import { BandaAurora, CifraVidrio, ENTRA, IndicadoresAurora, KpiAurora, PanelVidrio, botonAuroraPrincipal, botonVidrio, retraso } from "../comunes/componentes/Aurora";
 
 function saludo() {
   const hora = new Date().getHours();
@@ -53,32 +53,26 @@ export function InicioSalud() {
 
   return (
     <>
-      <BandaInicio
-        titulo={
-          <>
-            {saludo()}, <span className="text-cyan">{usuario?.nombre?.split(" ")[0]}.</span>
-          </>
-        }
+      <BandaAurora
+        tono="salud"
+        titulo={`${saludo()}, ${usuario?.nombre?.split(" ")[0] || ""}`}
         fecha={`${hoyLargo()}${resumen?.periodo ? ` · Periodo ${resumen.periodo}` : ""}`}
         texto="Escribe la cédula o el código estudiantil para registrar una atención o una asistencia."
-        aside={
-          <>
-            <h2 className="m-0 font-sans text-lg font-bold text-primary">Tu día</h2>
-            <div className="flex gap-4 items-center">
-              <span className="shrink-0 w-[76px] h-[68px] rounded-2xl bg-primary-light text-primary font-extrabold flex items-center justify-center tabular-nums text-[28px]">
-                {resumen ? resumen.hoy : "…"}
-              </span>
-              <span className="min-w-0 text-ink-600">
-                <strong className="block text-[17px] text-primary">{resumen?.hoy === 1 ? "Atención registrada hoy" : "Atenciones registradas hoy"}</strong>
-                {salidas && salidas.pendientes > 0
+        lado={
+          <PanelVidrio titulo="Tu día">
+            <CifraVidrio
+              valor={resumen ? resumen.hoy : "…"}
+              texto={resumen?.hoy === 1 ? "Atención registrada hoy" : "Atenciones registradas hoy"}
+              detalle={
+                salidas && salidas.pendientes > 0
                   ? `${salidas.pendientes} ${salidas.pendientes === 1 ? "reporte espera" : "reportes esperan"} revisión`
-                  : "Sin reportes de salidas pendientes"}
-              </span>
-            </div>
-            <Link to={salidas && salidas.pendientes > 0 ? "/salud/salidas" : "/salud/actividades"} className="self-start font-bold text-sm px-4 min-h-[44px] inline-flex items-center rounded-full bg-primary-light text-primary hover:bg-[#E2E9F6]">
+                  : "Sin reportes de salidas pendientes"
+              }
+            />
+            <Link to={salidas && salidas.pendientes > 0 ? "/salud/salidas" : "/salud/actividades"} className={botonVidrio}>
               {salidas && salidas.pendientes > 0 ? "Ir a la bandeja" : "Ver actividades"}
             </Link>
-          </>
+          </PanelVidrio>
         }
       >
         <form onSubmit={irARegistrar} className="flex gap-2.5 flex-wrap max-w-[620px] mt-3">
@@ -96,21 +90,21 @@ export function InicioSalud() {
               className={`${claseCampo} pl-12 min-h-[52px] text-base text-ink-900`}
             />
           </div>
-          <button type="submit" className={`${botonBandaPrincipal} min-h-[52px]`}>
+          <button type="submit" className={`${botonAuroraPrincipal("salud")} min-h-[52px]`}>
             Registrar
             <Icono nombre="flecha" size={18} strokeWidth={2.2} />
           </button>
         </form>
-      </BandaInicio>
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
+      </BandaAurora>
+    <main className="relative max-w-[1440px] mx-auto -mt-[72px] px-4 sm:px-6 lg:px-10 pb-16 flex flex-col gap-6">
       {error && <Aviso>{error}</Aviso>}
 
-      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
-        <Kpi destacado titulo="Atenciones hoy" valor={resumen ? resumen.hoy : "…"} detalle={resumen ? `${resumen.semana} en los últimos 7 días` : null} />
-        <Kpi titulo="Atenciones del periodo" valor={resumen ? total.toLocaleString("es-CO") : "…"} detalle={resumen ? `${resumen.remisiones} remisiones` : null} />
-        <Kpi titulo="Personas atendidas" valor={resumen ? resumen.personasPeriodo.toLocaleString("es-CO") : "…"} detalle="distintas en el periodo" />
-        <Kpi titulo="Personas registradas" valor={resumen ? resumen.personasRegistradas.toLocaleString("es-CO") : "…"} detalle="se buscan solo con el documento" />
-      </div>
+      <IndicadoresAurora>
+        <KpiAurora titulo="Atenciones hoy" valor={resumen ? resumen.hoy : "…"} detalle={resumen ? `${resumen.semana} en los últimos 7 días` : null} />
+        <KpiAurora titulo="Atenciones del periodo" valor={resumen ? total.toLocaleString("es-CO") : "…"} detalle={resumen ? `${resumen.remisiones} remisiones` : null} />
+        <KpiAurora titulo="Personas atendidas" valor={resumen ? resumen.personasPeriodo.toLocaleString("es-CO") : "…"} detalle="distintas en el periodo" />
+        <KpiAurora titulo="Personas registradas" valor={resumen ? resumen.personasRegistradas.toLocaleString("es-CO") : "…"} detalle="se buscan solo con el documento" />
+      </IndicadoresAurora>
 
       {salidas && (salidas.pendientes > 0 || salidas.riesgosAbiertos > 0) && (
         <Aviso tono="azul">
@@ -149,7 +143,7 @@ export function InicioSalud() {
         </div>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
+      <div style={retraso(280)} className={`grid gap-5 lg:grid-cols-[1.4fr_1fr] ${ENTRA}`}>
         <Tarjeta titulo="Atenciones de los últimos 30 días" subtitulo="Todas las actividades">
           {resumen ? <Ultimos30 datos={resumen.porDia} /> : <div className="h-[140px] bg-gray-50 rounded-xl animate-pulse" />}
         </Tarjeta>
@@ -205,7 +199,7 @@ export function InicioSalud() {
         </Tarjeta>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div style={retraso(380)} className={`grid gap-5 lg:grid-cols-3 ${ENTRA}`}>
         <Tarjeta titulo="Actividades con más atenciones">
           {resumen && <BarrasHorizontales datos={resumen.topActividades} color="#0d9488" />}
         </Tarjeta>
