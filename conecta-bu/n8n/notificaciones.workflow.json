@@ -50,7 +50,13 @@
       "position": [
         520,
         0
-      ]
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "CbuSmtpCorreo01",
+          "name": "Correo Conecta BU"
+        }
+      }
     }
   ],
   "connections": {

@@ -30,7 +30,8 @@ export const MODULOS = [
     icono: "balon",
     imagen: IMAGENES.deportes,
     estado: "disponible",
-    panel: { Estudiante: "/mi-deporte", personal: "/deporte" },
+    // docente: entrenadores asignados a grupos (acceso "deporte-docente").
+    panel: { Estudiante: "/mi-deporte", personal: "/deporte", docente: { acceso: "deporte-docente", ruta: "/deporte-docente" } },
     servicios: ["Inscripción a grupos por disciplina", "Control de tus horas de deporte", "Constancia de horas"],
   },
   {
@@ -83,7 +84,6 @@ export function moduloPorId(id) {
 // Ruta de entrada de un modulo: el panel del rol si hay sesion, o su pagina publica.
 // ¿Puede el usuario entrar al panel del personal de este modulo?
 export function puedeAdministrar(usuario, idModulo) {
-  if (usuario?.rol === "SuperAdministrador") return true;
   return usuario?.rol === "Administrador" && Boolean(usuario.modulos?.includes(idModulo));
 }
 
@@ -92,5 +92,20 @@ export function rutaModulo(modulo, usuario) {
   if (modulo.estado !== "disponible") return null;
   if (!usuario) return modulo.publica || "/login";
   if (usuario.rol === "Estudiante") return modulo.panel?.Estudiante || null;
-  return puedeAdministrar(usuario, modulo.id) ? modulo.panel?.personal || null : null;
+  if (puedeAdministrar(usuario, modulo.id)) return modulo.panel?.personal || null;
+  // Docente de Deporte: entra a su panel (solo sus grupos).
+  if (modulo.panel?.docente && puedeAdministrar(usuario, modulo.panel.docente.acceso)) return modulo.panel.docente.ruta;
+  return null;
+}
+
+// Pagina a la que entra de una vez quien tiene la sesion, sin pasar por el
+// portal de las dimensiones: el superadministrador a su panel y el personal
+// que tiene un solo modulo asignado (p. ej. Desarrollo Humano) a ese modulo.
+// null = mostrar el portal (estudiantes y personal con varios modulos).
+export function inicioDirecto(usuario) {
+  if (!usuario) return null;
+  if (usuario.rol === "SuperAdministrador") return "/super";
+  if (usuario.rol !== "Administrador") return null;
+  const propios = MODULOS_DISPONIBLES.map((m) => rutaModulo(m, usuario)).filter(Boolean);
+  return propios.length === 1 ? propios[0] : null;
 }

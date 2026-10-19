@@ -70,7 +70,7 @@ function errorUnico(campos) {
 }
 
 function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
-  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [], salidas: [], inscripcionesSalida: [], bloqueos: [] };
+  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [], docentesDeporte: [], eventosDeporte: [], inscripcionesEventoDeporte: [], alertasDeporte: [], implementos: [], prestamos: [], movimientosInv: [], salidas: [], inscripcionesSalida: [], bloqueos: [] };
   let consecutivoSst = 0;
 
   const usuarioPorId = (id) => {
@@ -106,6 +106,13 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     asistenciasDeporte: {},
     horasDeporte: {},
     configDeporte: {},
+    docentesDeporte: {},
+    eventosDeporte: {},
+    inscripcionesEventoDeporte: {},
+    alertasDeporte: {},
+    implementos: {},
+    prestamos: {},
+    movimientosInv: {},
     salidas: {},
     inscripcionesSalida: {},
     bloqueos: {},
@@ -134,6 +141,13 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     asistenciasDeporte: [["sesionId", "usuarioId"]],
     horasDeporte: [],
     configDeporte: [["id"]],
+    docentesDeporte: [["email"]],
+    eventosDeporte: [],
+    inscripcionesEventoDeporte: [["eventoId", "usuarioId"]],
+    alertasDeporte: [],
+    implementos: [["codigo"]],
+    prestamos: [],
+    movimientosInv: [],
     salidas: [],
     inscripcionesSalida: [["salidaId", "usuarioId"]],
     bloqueos: [],
@@ -255,8 +269,15 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       fechaCreacion: new Date(),
       fechaActualizacion: new Date(),
     }),
-    disciplinas: () => ({ descripcion: null, tipo: "Individual", activa: true, fechaCreacion: new Date() }),
-    gruposDeporte: () => ({ instructor: null, lugar: null, cupo: 25, inscripcionesAbiertas: true, activo: true, fechaCreacion: new Date() }),
+    disciplinas: () => ({ descripcion: null, tipo: "Individual", categorias: [], activa: true, fechaCreacion: new Date() }),
+    docentesDeporte: () => ({ telefono: null, especialidad: null, activo: true, fechaCreacion: new Date() }),
+    eventosDeporte: () => ({ tipo: "Torneo", descripcion: null, disciplinaId: null, lugar: null, cupo: null, fechaLimite: null, horasReconocidas: null, categorias: [], estado: "Publicado", creadoPor: null, fechaCreacion: new Date() }),
+    inscripcionesEventoDeporte: () => ({ estado: "Activa", asistio: null, fechaInscripcion: new Date() }),
+    implementos: () => ({ codigo: null, descripcion: null, disciplinaId: null, ubicacion: null, cantidadTotal: 0, cantidadDanada: 0, stockMinimo: 0, activo: true, fechaCreacion: new Date() }),
+    prestamos: () => ({ responsableEmail: null, grupoId: null, fechaPrestamo: new Date(), fechaDevolucion: null, devueltosBien: null, devueltosDanados: null, perdidos: null, observacion: null, registradoPor: null }),
+    movimientosInv: () => ({ motivo: null, registradoPor: null, fecha: new Date() }),
+    alertasDeporte: () => ({ prioridad: "Informativa", alcance: "Todos", disciplinaId: null, grupoId: null, autor: null, autorEmail: null, vigenteHasta: null, fecha: new Date() }),
+    gruposDeporte: () => ({ instructor: null, docenteId: null, lugar: null, cupo: 25, inscripcionesAbiertas: true, activo: true, fechaCreacion: new Date() }),
     inscripcionesDeporte: () => ({ estado: "Activa", fechaInscripcion: new Date(), fechaRetiro: null }),
     sesionesDeporte: () => ({ tema: null, registradaPor: null, fechaRegistro: new Date() }),
     asistenciasDeporte: () => ({ presente: true }),
@@ -388,9 +409,15 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       asistenciaDeporte: modelo("asistenciasDeporte", "asis"),
       horaDeporteManual: modelo("horasDeporte", "hora"),
       configDeporte: modelo("configDeporte", "config"),
+      docenteDeporte: modelo("docentesDeporte", "docente"),
+      eventoDeporte: modelo("eventosDeporte", "evdep"),
+      inscripcionEventoDeporte: modelo("inscripcionesEventoDeporte", "inevd"),
+      alertaDeporte: modelo("alertasDeporte", "alerta-dep"),
+      implementoDeporte: modelo("implementos", "impl"),
+      prestamoImplemento: modelo("prestamos", "prest"),
+      movimientoInventario: modelo("movimientosInv", "mov"),
       salidaConvocatoria: modelo("salidas", "salida"),
       inscripcionSalida: modelo("inscripcionesSalida", "insal"),
-      bloqueoAgenda: modelo("bloqueos", "bloqueo"),
     },
     reset() {
       tablas.personas = [];
@@ -409,6 +436,13 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       tablas.asistenciasDeporte = [];
       tablas.horasDeporte = [];
       tablas.configDeporte = [];
+      tablas.docentesDeporte = [];
+      tablas.eventosDeporte = [];
+      tablas.inscripcionesEventoDeporte = [];
+      tablas.alertasDeporte = [];
+      tablas.implementos = [];
+      tablas.prestamos = [];
+      tablas.movimientosInv = [];
       tablas.salidas = [];
       tablas.inscripcionesSalida = [];
       tablas.bloqueos = [];

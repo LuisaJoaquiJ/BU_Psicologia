@@ -66,7 +66,7 @@ describe("Tiempo no disponible", () => {
 
   test("si hay citas agendadas pide confirmar y al confirmar las cancela", async () => {
     const h = prisma.__seedHorario({ servicioId: servicio.id, fecha: diasDesdeHoy(3), horaInicio: hora(9), horaFin: hora(10), ocupado: true });
-    const cita = await prisma.cita.create({ data: { usuarioId: estudiante.usuario.id, horarioId: h.id, estado: "Agendada" } });
+    const cita = await prisma.citaDesarrollo.create({ data: { usuarioId: estudiante.usuario.id, horarioId: h.id, estado: "Agendada" } });
     const cuerpo = { motivo: "Permiso laboral", fechaInicio: iso(diasDesdeHoy(3)) };
 
     const afectadas = await request(app).post("/api/v1/admin/horarios/bloqueos/citas-afectadas").set(auth(admin.token)).send(cuerpo);
@@ -82,7 +82,7 @@ describe("Tiempo no disponible", () => {
       .send({ ...cuerpo, confirmar: true });
     expect(ok.status).toBe(201);
     expect(ok.body.citasCanceladas).toBe(1);
-    expect((await prisma.cita.findUnique({ where: { id: cita.id } })).estado).toBe("Cancelada");
+    expect((await prisma.citaDesarrollo.findUnique({ where: { id: cita.id } })).estado).toBe("Cancelada");
   });
 
   test("solo el personal del módulo", async () => {

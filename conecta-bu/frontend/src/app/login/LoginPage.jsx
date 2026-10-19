@@ -6,6 +6,7 @@ import { useAuth } from "../../lib/auth/AuthContext";
 import { IMAGENES } from "../../lib/imagenes";
 import { Logo } from "../../components/Logo";
 import { Icono } from "../../components/Iconos";
+import { inicioDirecto } from "../../lib/modulos";
 
 // RF-001 y HU-01/HU-02: pantalla de inicio de sesion institucional
 // (rediseño: panel con la sede de la universidad + tarjeta de acceso).
@@ -22,8 +23,9 @@ export function LoginPage() {
       const idToken = credentialResponse.credential;
       const { data } = await http.post("/auth/google", { idToken });
       iniciarSesion(data.token, data.usuario);
-      // Tras iniciar sesion se llega al portal con los modulos habilitados.
-      navigate("/");
+      // Tras iniciar sesion: el personal de un solo modulo (y el
+      // superadministrador) entra directo a su panel; los demas, al portal.
+      navigate(inicioDirecto(data.usuario) || "/", { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "No fue posible iniciar sesion. Intenta nuevamente.");
     } finally {
@@ -75,7 +77,7 @@ export function LoginPage() {
 
       {/* Tarjeta de acceso */}
       <section className="flex-[1_1_480px] flex items-center justify-center px-6 py-14">
-        <div className="w-full max-w-[420px] bg-white border border-gray-200 rounded-[28px] px-8 sm:px-10 py-11 flex flex-col gap-6 shadow-[0_20px_50px_rgba(11,42,91,0.06)]">
+        <div className="w-full max-w-[420px] bg-white border border-gray-200 rounded-xl px-8 sm:px-10 py-11 flex flex-col gap-6 shadow-[0_20px_50px_rgba(11,42,91,0.06)]">
           <div>
             <h2 className="m-0 text-[32px] font-extrabold">Inicia sesión</h2>
             <p className="mt-2.5 mb-0 text-[15px] leading-relaxed text-ink-500">
@@ -97,10 +99,10 @@ export function LoginPage() {
           {cargando && <p className="m-0 text-sm text-ink-500 text-center">Verificando tu cuenta...</p>}
           {error && <p className="m-0 text-sm text-red-700 bg-red-50 rounded-xl p-3">{error}</p>}
 
-          <div className="flex gap-3 items-start bg-gold-light rounded-[14px] px-4 py-3.5 text-sm leading-normal text-[#5C4206]">
+          <div className="flex gap-3 items-start bg-gold-light rounded-xl px-4 py-3.5 text-sm leading-normal text-[#5C4206]">
             <Icono nombre="alerta" size={20} strokeWidth={2} className="shrink-0 mt-px" />
             <span>
-              Solo se permiten cuentas <strong>@uniautonoma.edu.co</strong>.
+              Solo se permiten cuentas <strong>@uniautonoma.edu.co</strong> (y los docentes de Deporte registrados por la coordinación).
             </span>
           </div>
 

@@ -78,6 +78,13 @@ describe("RN-001 / HU-02: rechazo de cuentas no institucionales", () => {
     expect(res.status).toBe(403);
     expect(res.body.message).toMatch(/institucional/i);
   });
+
+  test("una cuenta externa registrada como docente de Deporte sí entra, como personal", async () => {
+    prisma.__darAcceso("persona@gmail.com", "deporte-docente");
+    const res = await request(app).post("/api/v1/auth/google").send({ idToken: "token-cuenta-externa" });
+    expect(res.status).toBe(200);
+    expect(res.body.usuario).toMatchObject({ email: "persona@gmail.com", rol: "Administrador", modulos: ["deporte-docente"] });
+  });
 });
 
 describe("RF-002 / HU-03 y HU-04: sesion, roles y /me", () => {

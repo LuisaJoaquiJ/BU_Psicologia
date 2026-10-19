@@ -15,7 +15,7 @@ beforeEach(() => {
 
 async function sembrarCita(usuarioId, estado, fecha = diasDesdeHoy(1)) {
   const horario = prisma.__seedHorario({ fecha, ocupado: true });
-  return prisma.cita.create({ data: { usuarioId, horarioId: horario.id, estado } });
+  return prisma.citaDesarrollo.create({ data: { usuarioId, horarioId: horario.id, estado } });
 }
 
 describe("RF-015: dashboard administrativo", () => {

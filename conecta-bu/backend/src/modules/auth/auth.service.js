@@ -103,9 +103,18 @@ async function aplicarAccesos(usuario) {
 
 // RF-001 completo: valida el token de Google, aplica la regla de dominio,
 // resuelve el usuario interno y emite el JWT propio de Conecta BU.
+// Excepcion a la regla de dominio: los docentes externos de Deporte que la
+// coordinacion registro con un correo no institucional (p. ej. Gmail). Solo
+// entran a su panel docente; nunca se crean como estudiantes.
+async function esDocenteExterno(payload) {
+  const email = String(payload.email || "").toLowerCase();
+  if (payload.email_verified === false || !email || email.split("@")[1] === config.allowedGoogleDomain) return false;
+  return Boolean(await prisma.accesoModulo.findFirst({ where: { email, modulo: "deporte-docente" } }));
+}
+
 async function loginConGoogle(idToken) {
   const payload = await verifyGoogleIdToken(idToken);
-  verificarDominioInstitucional(payload);
+  if (!(await esDocenteExterno(payload))) verificarDominioInstitucional(payload);
   const usuario = await aplicarAccesos(await buscarOCrearUsuario(payload));
 
   const token = signToken({ sub: usuario.id, rol: usuario.rol.nombre });

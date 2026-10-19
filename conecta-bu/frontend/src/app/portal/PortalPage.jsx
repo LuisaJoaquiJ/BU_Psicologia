@@ -102,7 +102,7 @@ function Portada() {
             : "Orientación, salud, deporte, cultura y permanencia: los servicios de Bienestar Institucional de la Uniautónoma, con tu correo institucional."}
         </p>
 
-        <div id="tramites" className="scroll-mt-6 mt-4 bg-white text-ink-900 rounded-[18px] p-5 sm:p-6 shadow-[0_24px_60px_rgba(4,16,38,0.35)] max-w-[980px]">
+        <div id="tramites" className="scroll-mt-6 mt-4 bg-white text-ink-900 rounded-xl p-5 sm:p-6 shadow-[0_24px_60px_rgba(4,16,38,0.35)] max-w-[980px]">
           <h2 className="m-0 mb-3.5 text-xl font-extrabold">¿Qué necesitas hacer hoy?</h2>
           <ul className="list-none m-0 p-0 grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
             {tramites.map((t) => (
@@ -175,7 +175,7 @@ function Dimensiones() {
           role="tabpanel"
           id="panel-dimension"
           aria-labelledby={`tab-${modulo.id}`}
-          className="flex-[999_1_560px] min-w-0 flex gap-7 flex-wrap bg-cream rounded-[18px] p-5 sm:p-7"
+          className="flex-[999_1_560px] min-w-0 flex gap-7 flex-wrap bg-cream rounded-xl p-5 sm:p-7"
         >
           <img
             src={modulo.imagen.src}
@@ -256,7 +256,7 @@ function Agenda() {
           {(eventos || [null, null, null]).map((e, i) =>
             e ? (
               <article key={e.id} className="flex flex-col gap-3">
-                <img src={imagenDeEvento(e).src} alt="" onError={respaldoDeFoto(e)} className="w-full h-[200px] object-cover rounded-[14px]" />
+                <img src={imagenDeEvento(e).src} alt="" onError={respaldoDeFoto(e)} className="w-full h-[200px] object-cover rounded-xl" />
                 <p className="m-0 text-sm font-bold text-primary tabular-nums">
                   {fechaLarga(e.fecha)} · {formatearHora(e.horaInicio)}
                 </p>
@@ -273,7 +273,7 @@ function Agenda() {
                 </Link>
               </article>
             ) : (
-              <div key={i} className="h-[340px] rounded-[14px] bg-white/70 animate-pulse" />
+              <div key={i} className="h-[340px] rounded-xl bg-white/70 animate-pulse" />
             )
           )}
         </div>
@@ -296,7 +296,7 @@ export function PortalPage() {
       <Agenda />
 
       <section id="ayuda" className="scroll-mt-6 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-16">
-        <div className="flex gap-8 flex-wrap items-center justify-between p-7 sm:p-10 border-[1.5px] border-gray-200 rounded-[18px]">
+        <div className="flex gap-8 flex-wrap items-center justify-between p-7 sm:p-10 border-[1.5px] border-gray-200 rounded-xl">
           <div className="flex-[1_1_460px] min-w-0">
             <h2 className="m-0 mb-2 text-[28px] sm:text-[30px] font-extrabold">¿Necesitas hablar con alguien ahora?</h2>
             <p className="m-0 text-ink-600 max-w-[40em]">

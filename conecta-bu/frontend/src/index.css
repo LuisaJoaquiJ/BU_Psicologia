@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,24 +8,31 @@
 @layer base {
   body {
     @apply bg-cream text-ink-900 font-sans antialiased;
+    font-size: 15px;
   }
-  /* Titulares: Plus Jakarta Sans muy gruesa y con letras juntas (propuesta B). */
+  /* Titulares: General Sans en negrita con letras juntas; el cuerpo en DM Sans. */
   h1,
-  h2 {
+  h2,
+  h3 {
     @apply font-display text-primary-dark;
     letter-spacing: -0.03em;
+  }
+  code,
+  kbd {
+    @apply font-mono;
   }
   /* Superficies del navegador con la paleta: seleccion y foco de teclado.
      El anillo doble (dorado por fuera del borde, azul encima) se ve tanto
      sobre el marfil como sobre los fondos azules. */
   ::selection {
-    background: #7fe8ff;
+    background: #ebf1fa;
     color: #0b2347;
   }
+  /* Foco de teclado: borde azul del escudo con un halo suave. */
   :focus-visible {
-    outline: 2px solid #0b2347;
+    outline: 2px solid #1d4e9e;
     outline-offset: 2px;
-    box-shadow: 0 0 0 4px #7fe8ff;
+    box-shadow: 0 0 0 5px rgba(29, 78, 158, 0.18);
   }
 }
 

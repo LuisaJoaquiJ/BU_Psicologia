@@ -35,7 +35,7 @@ describe("Atención sin cita", () => {
     expect(res.body.cita).toMatchObject({ estado: "Atendida", usuarioId: estudiante.usuario.id, observaciones: "Llegó por orientación vocacional" });
     expect(res.body.cita.horario).toMatchObject({ sinCita: true, ocupado: true });
     expect(res.body.cita.horario.horaFin).toContain("11:00");
-    expect(await prisma.asistenciaCita.findUnique({ where: { citaId: res.body.cita.id } })).toMatchObject({ asistio: true, registradoPorId: admin.usuario.id });
+    expect(await prisma.asistenciaCitaDesarrollo.findUnique({ where: { citaId: res.body.cita.id } })).toMatchObject({ asistio: true, registradoPorId: admin.usuario.id });
 
     const agenda = await request(app).get("/api/v1/admin/citas").set(auth(admin.token));
     expect(agenda.body.citas.map((c) => c.id)).toContain(res.body.cita.id);
@@ -63,12 +63,13 @@ describe("Atención sin cita", () => {
   });
 
   test("valida servicio del módulo, fecha futura y acceso", async () => {
+    // Un servicio de Salud no existe en la agenda de Desarrollo Humano.
     const salud = prisma.__seedServicio({ nombre: "Enfermería", modulo: "salud" });
     const otro = await request(app)
       .post("/api/v1/admin/citas/sin-cita")
       .set(auth(admin.token))
       .send({ usuarioId: estudiante.usuario.id, servicioId: salud.id });
-    expect(otro.status).toBe(403);
+    expect(otro.status).toBe(400);
 
     const futura = await request(app)
       .post("/api/v1/admin/citas/sin-cita")

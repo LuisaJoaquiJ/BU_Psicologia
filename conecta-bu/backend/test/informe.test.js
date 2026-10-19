@@ -28,7 +28,7 @@ async function sembrarDatos() {
       horaInicio: new Date(Date.UTC(1970, 0, 1, hora, 0, 0)),
       ocupado: true,
     });
-    return prisma.cita.create({ data: { usuarioId, horarioId: horario.id, estado } });
+    return prisma.citaDesarrollo.create({ data: { usuarioId, horarioId: horario.id, estado } });
   };
   await cita(a.usuario.id, "Atendida", -3);
   await cita(a.usuario.id, "Atendida", -2, 10);

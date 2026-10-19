@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { http } from "../../lib/api/http";
-import { Icono } from "../../components/Iconos";
+import { Icono } from "./comunes/componentes/Iconos";
 import { moduloPorId } from "../../lib/modulos";
-import { descargar, mensajeError } from "../../lib/salud";
-import { Aviso, Encabezado, Insignia, Vacio, botonPrimario, botonSecundario, claseCampo } from "../salud/ui";
+import { descargar, mensajeError } from "./comunes/lib/salud";
+import { Aviso, Encabezado, Insignia, Vacio, botonPrimario, botonSecundario, claseCampo } from "./comunes/componentes/ui";
 
 // Informes de gestion que envian los modulos (por ahora, Salud integral con
 // el formato INFBI-002). El superadministrador los descarga en PDF o Excel y
@@ -44,7 +44,7 @@ function TarjetaInforme({ informe, alCambiar }) {
 
   const r = informe.resumen || {};
   return (
-    <article className="bg-white border border-gray-200 rounded-[24px] p-5 sm:p-6 flex flex-col gap-4">
+    <article className="bg-white border border-gray-200 rounded-xl p-5 sm:p-6 flex flex-col gap-4">
       <div className="flex items-start gap-4 flex-wrap">
         <span className="w-12 h-12 rounded-2xl bg-[#0d9488] text-white flex items-center justify-center shrink-0">
           <Icono nombre={modulo?.icono || "archivo"} size={24} strokeWidth={2} />

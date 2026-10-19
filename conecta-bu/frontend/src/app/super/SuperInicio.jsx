@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { useAuth } from "../../lib/auth/AuthContext";
-import { Icono } from "../../components/Iconos";
+import { Icono } from "./comunes/componentes/Iconos";
 import { MODULOS } from "../../lib/modulos";
-import { Aviso, Kpi } from "../salud/ui";
-import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo } from "../../components/ui";
+import { Aviso, Kpi } from "./comunes/componentes/ui";
+import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo } from "./comunes/componentes/ui";
 
 const ESTILO = {
   "desarrollo-humano": { color: "bg-cyan text-primary-dark" },
@@ -70,7 +70,7 @@ export function SuperInicio() {
         <div className="flex justify-between items-end gap-4 flex-wrap mb-4">
           <div>
             <h2 id="titulo-modulos" className="m-0 text-[28px] font-extrabold">Módulos de Bienestar</h2>
-            <p className="mt-1 mb-0 text-ink-500">Elige un módulo para entrar a su panel con todos los permisos.</p>
+            <p className="mt-1 mb-0 text-ink-500">Resumen de cada módulo. El trabajo diario lo hace su personal; desde aquí asignas quién entra a cada uno.</p>
           </div>
         </div>
         <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]">
@@ -79,7 +79,7 @@ export function SuperInicio() {
             const estilo = ESTILO[info.id] || { color: "bg-white/15 text-white" };
             const cifras = m ? [{ nombre: m.personal === 1 ? "persona del equipo" : "personas del equipo", valor: m.personal }, ...m.indicadores.slice(0, 2)] : [];
             return (
-              <article key={info.id} className="bg-white border border-gray-200 rounded-[24px] overflow-hidden flex flex-col">
+              <article key={info.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden flex flex-col">
                 <div className="relative h-[112px] bg-primary-dark">
                   {info.imagen && <img src={info.imagen.src} alt="" className="absolute inset-0 w-full h-full object-cover opacity-45" />}
                   <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,35,71,0.95),rgba(11,35,71,0.45))]" />
@@ -103,12 +103,15 @@ export function SuperInicio() {
                     </dl>
                   )}
                   <div className="mt-auto flex flex-col gap-1.5">
-                    <Link to={info.panel.personal} className="w-full inline-flex items-center justify-between gap-2 bg-primary text-white font-extrabold text-[15px] px-5 min-h-[50px] rounded-full hover:bg-primary-dark">
-                      Entrar a {info.nombre}
+                    <Link
+                      to={`/super/accesos?modulo=${info.id}`}
+                      className="w-full inline-flex items-center justify-between gap-2 bg-primary text-white font-extrabold text-[15px] px-5 min-h-[50px] rounded-full hover:bg-primary-dark"
+                    >
+                      Personal del módulo
                       <Icono nombre="flecha" size={18} strokeWidth={2.2} />
                     </Link>
-                    <Link to={`/super/accesos?modulo=${info.id}`} className="self-center inline-flex items-center min-h-[44px] px-3 text-sm font-bold text-primary-soft hover:underline">
-                      Gestionar el personal del módulo
+                    <Link to="/super/estadisticas" className="self-center inline-flex items-center min-h-[44px] px-3 text-sm font-bold text-primary-soft hover:underline">
+                      Ver sus estadísticas
                     </Link>
                   </div>
                 </div>

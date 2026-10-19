@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
-import { Aviso, Encabezado } from "../salud/ui";
-import { COLORES_ESTADO, ETIQUETA_ESTADO } from "../../components/graficas/Graficas";
+import { Aviso, Encabezado } from "./comunes/componentes/ui";
+import { COLORES_ESTADO, ETIQUETA_ESTADO } from "./comunes/componentes/graficas/Graficas";
 import {
   ActividadReciente,
   AZUL_ORDINAL,
@@ -19,7 +19,7 @@ import {
   SelectorPeriodo,
   TarjetaKpi,
   VerDatos,
-} from "../../components/graficas/Tablero";
+} from "./comunes/componentes/graficas/Tablero";
 
 const ESTADOS_CITA = ["Atendida", "NoAsistio", "Agendada", "Cancelada"];
 const PARTES_CITA = ESTADOS_CITA.map((e) => ({ clave: e, etiqueta: ETIQUETA_ESTADO[e], color: COLORES_ESTADO[e] }));
@@ -39,7 +39,7 @@ const pct = (n) => (n === null || n === undefined ? "—" : `${n.toLocaleString(
 
 function Panel({ titulo, subtitulo, accion, children, className = "" }) {
   return (
-    <section className={`bg-white border border-gray-200 rounded-[22px] p-5 sm:p-6 min-w-0 flex flex-col ${className}`}>
+    <section className={`bg-white border border-gray-200 rounded-xl p-5 sm:p-6 min-w-0 flex flex-col ${className}`}>
       <div className="flex justify-between items-start gap-3 flex-wrap">
         <div className="min-w-0">
           <h2 className="m-0 text-lg font-sans font-bold text-ink-900">{titulo}</h2>
