@@ -74,9 +74,57 @@ export default {
           "0%, 100%": { transform: "translateY(0) rotate(-6deg)" },
           "50%": { transform: "translateY(-8px) rotate(-6deg)" },
         },
+        // Aurora del inicio: manchas de luz que se desplazan despacio.
+        "deriva-a": {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "50%": { transform: "translate(90px, 40px) scale(1.15)" },
+        },
+        "deriva-b": {
+          "0%, 100%": { transform: "translate(0, 0) scale(1.1)" },
+          "50%": { transform: "translate(-120px, 60px) scale(0.9)" },
+        },
+        "deriva-c": {
+          "0%, 100%": { transform: "translate(0, 0)" },
+          "50%": { transform: "translate(60px, -50px)" },
+        },
+        brillo: {
+          "0%, 100%": { opacity: "0.55" },
+          "50%": { opacity: "0.9" },
+        },
+        // Entrada del inicio: cada bloque aparece y sube 8 px (con reducir
+        // movimiento, solo el fundido).
+        aparecer: {
+          from: { opacity: "0", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "none" },
+        },
+        "aparecer-suave": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        // Barras que crecen desde la izquierda hasta su valor.
+        "crecer-x": {
+          from: { transform: "scaleX(0)" },
+          to: { transform: "scaleX(1)" },
+        },
+        // Trazo de un anillo SVG: desde --desde (oculto) hasta su valor.
+        trazo: {
+          from: { strokeDashoffset: "var(--desde)" },
+          to: { strokeDashoffset: "0" },
+        },
+      },
+      transitionTimingFunction: {
+        salida: "cubic-bezier(0.23, 1, 0.32, 1)",
       },
       animation: {
         flota: "flota 4s ease-in-out infinite",
+        "deriva-a": "deriva-a 18s ease-in-out infinite",
+        "deriva-b": "deriva-b 22s ease-in-out infinite",
+        "deriva-c": "deriva-c 16s ease-in-out infinite",
+        brillo: "brillo 6s ease-in-out infinite",
+        aparecer: "aparecer 260ms cubic-bezier(0.23, 1, 0.32, 1) both",
+        "aparecer-suave": "aparecer-suave 200ms ease both",
+        "crecer-x": "crecer-x 450ms cubic-bezier(0.23, 1, 0.32, 1) both",
+        trazo: "trazo 600ms cubic-bezier(0.23, 1, 0.32, 1) both",
       },
     },
   },
