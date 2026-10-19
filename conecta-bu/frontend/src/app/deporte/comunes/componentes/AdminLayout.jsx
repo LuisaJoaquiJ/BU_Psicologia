@@ -26,10 +26,10 @@ function leerPlegado() {
 // Enlace del menu lateral: el activo lleva fondo azul claro, texto azul y
 // una marca a la izquierda (no depende solo del color). Plegado, solo el icono.
 const claseEnlace = (plegado) => ({ isActive }) =>
-  `relative flex items-center gap-3 rounded-md px-3 min-h-[40px] text-sm font-medium transition-colors ${plegado ? "lg:justify-center lg:px-0" : ""} ${
+  `relative flex items-center gap-3 rounded-2xl px-3 min-h-[44px] text-sm font-medium transition-colors ${plegado ? "lg:justify-center lg:px-0" : ""} ${
     isActive
-      ? "bg-primary-light text-primary before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-primary"
-      : "text-ink-600 hover:bg-gray-100 hover:text-ink-900"
+      ? "boton-liquido font-semibold"
+      : "text-ink-600 hover:bg-white/80 hover:text-ink-900"
   }`;
 
 // Panel del personal con menu lateral fijo que se puede plegar (queda solo la
@@ -62,7 +62,7 @@ export function PanelLayout({ menu, panel, children }) {
   // vale 0 y las ventanas ocupan toda la pantalla, por encima del menu.
   useEffect(() => {
     const raiz = document.documentElement.style;
-    raiz.setProperty("--menu", plegado ? "0px" : "16rem");
+    raiz.setProperty("--menu", plegado ? "0px" : "17rem");
     return () => raiz.removeProperty("--menu");
   }, [plegado]);
   useEffect(() => {
@@ -73,8 +73,8 @@ export function PanelLayout({ menu, panel, children }) {
   }, [abierto]);
 
   return (
-    <div className={`min-h-screen bg-cream overflow-x-hidden transition-[padding] duration-200 ${plegado ? "lg:pl-[72px]" : "lg:pl-64"}`}>
-      <header className="lg:hidden sticky top-0 z-30 h-14 px-4 flex items-center justify-between gap-3 bg-white/85 backdrop-blur border-b border-gray-200">
+    <div className={`min-h-screen fondo-panel panel-moderno overflow-x-hidden transition-[padding] duration-200 ${plegado ? "lg:pl-[96px]" : "lg:pl-[284px]"}`}>
+      <header className="lg:hidden sticky top-0 z-30 h-14 px-4 flex items-center justify-between gap-3 vidrio-panel !border-x-0 !border-t-0">
         <button
           type="button"
           onClick={() => setAbierto(true)}
@@ -92,23 +92,28 @@ export function PanelLayout({ menu, panel, children }) {
 
       <aside
         aria-label="Menú del panel"
-        className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-white border-r border-gray-200 transition-[transform,width] duration-200 lg:translate-x-0 ${plegado ? "lg:w-[72px]" : ""} ${
+        className={`fixed inset-y-0 left-0 lg:inset-y-3 lg:left-3 z-50 w-64 flex flex-col vidrio-panel lg:rounded-[28px] transition-[transform,width] duration-200 lg:translate-x-0 ${plegado ? "lg:w-[72px]" : ""} ${
           abierto ? "translate-x-0 shadow-lg" : "-translate-x-full"
         }`}
       >
-        <button
-          type="button"
-          onClick={alternar}
-          aria-label={plegado ? "Desplegar el menú" : "Plegar el menú"}
-          aria-expanded={!plegado}
-          title={plegado ? "Desplegar el menú" : "Plegar el menú"}
-          className="hidden lg:flex absolute -right-3 top-8 z-10 w-6 h-6 rounded-full bg-white border border-gray-200 items-center justify-center text-ink-500 hover:text-primary hover:border-primary transition-colors"
-        >
-          <Icono nombre={plegado ? "derecha" : "izquierda"} size={14} strokeWidth={2.2} />
-        </button>
 
         <div className={`px-5 pt-5 pb-4 flex items-start justify-between gap-2 ${plegado ? "lg:px-0 lg:justify-center" : ""}`}>
-          <Link to={directo || "/"} className="flex items-center gap-2.5 min-w-0 no-underline">
+          {/* En pantallas grandes el logo pliega y despliega el menu; en el celular lleva al inicio. */}
+          <button
+            type="button"
+            onClick={alternar}
+            aria-label={plegado ? "Desplegar el menú" : "Plegar el menú"}
+            aria-expanded={!plegado}
+            title={plegado ? "Desplegar el menú" : "Plegar el menú"}
+            className="hidden lg:flex items-center gap-2.5 min-w-0 -m-1.5 p-1.5 rounded-2xl text-left transition-colors hover:bg-white/70"
+          >
+            <img src="/img/logo-uniautonoma-marca.png" alt="" className={`w-auto shrink-0 ${plegado ? "lg:h-8" : ""} h-10`} />
+            <span className={`flex flex-col leading-tight min-w-0 ${oculto}`}>
+              <span className="font-display font-semibold text-[15px] tracking-tight text-ink-900">Conecta BU</span>
+              <span className="text-xs text-ink-500">Bienestar Universitario</span>
+            </span>
+          </button>
+          <Link to={directo || "/"} className="lg:hidden flex items-center gap-2.5 min-w-0 no-underline">
             <img src="/img/logo-uniautonoma-marca.png" alt="Uniautónoma del Cauca" className={`w-auto shrink-0 ${plegado ? "lg:h-8" : ""} h-10`} />
             <span className={`flex flex-col leading-tight min-w-0 ${oculto}`}>
               <span className="font-display font-semibold text-[15px] tracking-tight text-ink-900">Conecta BU</span>
@@ -120,7 +125,7 @@ export function PanelLayout({ menu, panel, children }) {
           </button>
         </div>
 
-        <div title={plegado ? datos.nombre : undefined} className={`mx-4 mb-4 rounded-lg border border-gray-200 px-3 py-2.5 flex items-center gap-2.5 ${plegado ? "lg:mx-auto lg:border-0 lg:p-0" : ""}`}>
+        <div title={plegado ? datos.nombre : undefined} className={`mx-4 mb-4 rounded-2xl burbuja px-3 py-2.5 flex items-center gap-2.5 ${plegado ? "lg:mx-auto lg:border-0 lg:p-0" : ""}`}>
           <span className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${datos.color}`}>
             <Icono nombre={datos.icono} size={16} strokeWidth={2} />
           </span>
@@ -140,7 +145,7 @@ export function PanelLayout({ menu, panel, children }) {
           ))}
         </nav>
 
-        <div className="border-t border-gray-200 p-3 flex flex-col gap-1">
+        <div className="border-t border-white/80 p-3 flex flex-col gap-1">
           {!directo && (
             <Link
               to="/"

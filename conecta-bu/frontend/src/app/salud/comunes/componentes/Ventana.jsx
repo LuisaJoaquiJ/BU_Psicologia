@@ -56,9 +56,9 @@ export function BotonFlotante({ onClick, children, icono = "mas" }) {
     <button
       type="button"
       onClick={onClick}
-      className="fixed z-30 bottom-5 right-4 sm:bottom-8 sm:right-8 inline-flex items-center gap-2.5 min-h-[56px] pl-3 pr-6 rounded-full bg-cyan text-primary-dark font-extrabold text-[15px] shadow-[0_12px_30px_rgba(11,35,71,0.30)] hover:brightness-95 active:scale-[0.98] transition"
+      className="fixed z-30 bottom-5 right-4 sm:bottom-8 sm:right-8 inline-flex items-center gap-2.5 min-h-[56px] pl-3 pr-6 rounded-full boton-liquido font-extrabold text-[15px] transition-transform duration-200 ease-salida hover:-translate-y-0.5 active:scale-[0.97] motion-reduce:transform-none"
     >
-      <span className="w-9 h-9 rounded-full bg-primary-dark text-white flex items-center justify-center">
+      <span className="w-9 h-9 rounded-full bg-white/20 ring-1 ring-white/40 text-white flex items-center justify-center">
         <Icono nombre={icono} size={18} strokeWidth={2.6} />
       </span>
       {children}

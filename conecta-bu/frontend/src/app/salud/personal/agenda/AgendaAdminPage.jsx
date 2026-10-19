@@ -75,7 +75,7 @@ function FilaCita({ cita, hoy, registrando, onRegistrar }) {
             type="button"
             disabled={registrando}
             onClick={() => onRegistrar(cita, true)}
-            className="min-h-[44px] px-4 rounded-full bg-primary text-white text-sm font-extrabold hover:bg-primary-dark disabled:opacity-60"
+            className="min-h-[44px] px-4 rounded-full boton-liquido text-sm font-extrabold disabled:opacity-60"
           >
             Sí
           </button>
@@ -83,7 +83,7 @@ function FilaCita({ cita, hoy, registrando, onRegistrar }) {
             type="button"
             disabled={registrando}
             onClick={() => onRegistrar(cita, false)}
-            className="min-h-[44px] px-4 rounded-full border-[1.5px] border-primary text-primary text-sm font-extrabold hover:bg-primary-light disabled:opacity-60"
+            className="min-h-[44px] px-4 rounded-full burbuja text-primary text-sm font-extrabold hover:bg-white disabled:opacity-60"
           >
             No
           </button>
@@ -377,13 +377,13 @@ export function AgendaAdminPage({ api = "/salud" }) {
           />
           <section aria-label={fechaLarga(`${diaSel}T12:00:00Z`)} className="bg-white rounded-xl border border-gray-200 overflow-hidden xl:sticky xl:top-4">
             <h2
-              className={`m-0 px-5 py-3 text-base font-extrabold flex items-center justify-between gap-3 ${diaSel === hoy ? "bg-primary-dark text-white" : "bg-gray-50 text-ink-900"}`}
+              className={`m-0 px-5 py-3.5 text-base font-extrabold flex items-center justify-between gap-3 border-b border-white/80 ${diaSel === hoy ? "bg-white/70 text-ink-900" : "bg-white/40 text-ink-900"}`}
             >
               <span>
                 {fechaLarga(`${diaSel}T12:00:00Z`)}
-                {diaSel === hoy && <span className="ml-2 text-cyan">· Hoy</span>}
+                {diaSel === hoy && <span className="ml-2 align-middle inline-flex items-center rounded-full bg-[#1E9E9A] text-white text-xs font-bold px-2.5 py-0.5">Hoy</span>}
               </span>
-              <span className={`text-sm font-semibold tabular-nums ${diaSel === hoy ? "text-[#B9C7DE]" : "text-ink-500"}`}>
+              <span className={`text-sm font-semibold tabular-nums text-ink-500`}>
                 {citasDelDia.length} {citasDelDia.length === 1 ? "cita" : "citas"}
               </span>
             </h2>
@@ -434,7 +434,7 @@ export function AgendaAdminPage({ api = "/salud" }) {
                   setServicio("");
                   setBuscar("");
                 }}
-                className="mt-1 min-h-[44px] px-5 rounded-full bg-primary text-white font-bold hover:bg-primary-dark"
+                className="mt-1 min-h-[44px] px-5 rounded-full boton-liquido font-bold"
               >
                 Ver todas las citas
               </button>

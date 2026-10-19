@@ -470,7 +470,7 @@ export function EstadisticasPage() {
           <h1 className="m-0 text-3xl sm:text-[34px] font-extrabold">Estadísticas</h1>
           <p className="mt-1.5 mb-0 text-ink-500">Cómo va Desarrollo Humano: citas, asistencia y eventos.</p>
         </div>
-        <div role="tablist" aria-label="Vista" className="inline-flex border-b-2 border-gray-200">
+        <div role="tablist" aria-label="Vista" className="inline-flex vidrio-panel rounded-full p-1 gap-1">
           {PESTANAS.map((p) => (
             <button
               key={p.id}
@@ -478,8 +478,8 @@ export function EstadisticasPage() {
               type="button"
               aria-selected={pestana === p.id}
               onClick={() => setPestana(p.id)}
-              className={`-mb-[2px] px-4 min-h-[44px] text-[15px] font-bold border-b-2 ${
-                pestana === p.id ? "border-primary-dark text-primary-dark" : "border-transparent text-ink-500 hover:text-primary"
+              className={`px-4 min-h-[40px] rounded-full text-[15px] font-bold transition-colors ${
+                pestana === p.id ? "boton-liquido" : "text-primary hover:bg-white/80"
               }`}
             >
               {p.texto}

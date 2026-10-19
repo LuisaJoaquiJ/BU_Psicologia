@@ -179,7 +179,7 @@ export function AsistentePage() {
                           type="button"
                           onClick={() => agendar(o, i)}
                           disabled={enviando || mensaje.opcionesUsadas}
-                          className="inline-flex items-center gap-1.5 min-h-[40px] text-[13px] font-bold bg-primary text-white rounded-full px-4 hover:bg-primary-dark transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 min-h-[40px] text-[13px] font-bold boton-liquido rounded-full px-4 disabled:opacity-50"
                         >
                           <Icono nombre="calendario" size={16} strokeWidth={2} />
                           {elegida ? (mensaje.agendada ? "Agendada" : "Agendando…") : "Agendar"}
@@ -198,7 +198,7 @@ export function AsistentePage() {
                     <Link
                       key={s.ruta}
                       to={s.ruta}
-                      className="inline-flex items-center min-h-[40px] text-[13px] font-bold bg-white text-primary border border-primary/30 rounded-full px-3.5 hover:bg-primary-light transition-colors"
+                      className="inline-flex items-center min-h-[40px] text-[13px] font-bold burbuja text-primary rounded-full px-3.5 hover:bg-white"
                     >
                       {s.texto}
                     </Link>
@@ -248,7 +248,7 @@ export function AsistentePage() {
         <button
           type="submit"
           disabled={enviando || !pregunta.trim()}
-          className="text-sm font-semibold bg-primary text-white rounded-full px-5 py-2.5 hover:bg-primary-dark transition-colors disabled:opacity-50"
+          className="text-sm font-semibold boton-liquido rounded-full px-5 py-2.5 disabled:opacity-50"
         >
           Enviar
         </button>

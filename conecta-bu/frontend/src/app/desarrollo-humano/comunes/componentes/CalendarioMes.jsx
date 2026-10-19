@@ -42,8 +42,8 @@ export function CalendarioMes({ marcas = {}, seleccionado, onSeleccionar, leyend
   const mover = (n) => setMes(new Date(mes.getFullYear(), mes.getMonth() + n, 1));
 
   return (
-    <section className="bg-white rounded-xl border border-gray-200 overflow-hidden" aria-label="Calendario">
-      <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b border-gray-100">
+    <section className="vidrio-panel rounded-[24px] p-2 sm:p-3" aria-label="Calendario">
+      <div className="flex items-center justify-between gap-3 px-2 sm:px-3 pt-1 pb-3">
         <h2 className="m-0 text-lg font-extrabold first-letter:uppercase">{titulo}</h2>
         <div className="flex items-center gap-1">
           <button
@@ -53,7 +53,7 @@ export function CalendarioMes({ marcas = {}, seleccionado, onSeleccionar, leyend
               setMes(new Date(h.getFullYear(), h.getMonth(), 1));
               onSeleccionar?.(hoy);
             }}
-            className="min-h-[40px] px-3.5 rounded-full text-sm font-bold text-primary hover:bg-primary-light"
+            className="min-h-[40px] px-4 rounded-full text-sm font-bold text-primary burbuja hover:bg-white"
           >
             Hoy
           </button>
@@ -61,7 +61,7 @@ export function CalendarioMes({ marcas = {}, seleccionado, onSeleccionar, leyend
             type="button"
             aria-label="Mes anterior"
             onClick={() => mover(-1)}
-            className="w-10 h-10 rounded-full grid place-items-center text-primary hover:bg-primary-light"
+            className="w-10 h-10 rounded-full grid place-items-center text-primary burbuja hover:bg-white"
           >
             <Icono nombre="izquierda" size={18} strokeWidth={2.2} />
           </button>
@@ -69,14 +69,14 @@ export function CalendarioMes({ marcas = {}, seleccionado, onSeleccionar, leyend
             type="button"
             aria-label="Mes siguiente"
             onClick={() => mover(1)}
-            className="w-10 h-10 rounded-full grid place-items-center text-primary hover:bg-primary-light"
+            className="w-10 h-10 rounded-full grid place-items-center text-primary burbuja hover:bg-white"
           >
             <Icono nombre="derecha" size={18} strokeWidth={2.2} />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 text-center text-xs font-bold text-ink-500 bg-gray-50 border-b border-gray-100">
+      <div className="grid grid-cols-7 gap-1.5 sm:gap-2 px-1 text-center text-xs font-bold text-ink-500">
         {DIAS.map((d) => (
           <div key={d} className="py-2">
             {d}
@@ -84,9 +84,9 @@ export function CalendarioMes({ marcas = {}, seleccionado, onSeleccionar, leyend
         ))}
       </div>
 
-      <div className="grid grid-cols-7">
+      <div className="grid grid-cols-7 gap-1.5 sm:gap-2 p-1">
         {celdas.map((d, i) => {
-          if (!d) return <div key={`v${i}`} className="min-h-[56px] sm:min-h-[104px] border-b border-r border-gray-100 bg-gray-50/60" />;
+          if (!d) return <div key={`v${i}`} className="min-h-[56px] sm:min-h-[104px]" />;
           const dia = isoDia(d);
           const lista = marcas[dia] || [];
           const elegido = dia === seleccionado;
@@ -99,13 +99,15 @@ export function CalendarioMes({ marcas = {}, seleccionado, onSeleccionar, leyend
               onClick={() => onSeleccionar?.(dia)}
               aria-pressed={elegido}
               aria-label={`${d.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" })}${lista.length ? `: ${lista.map((m) => m.etiqueta || m.texto).join(", ")}` : ""}`}
-              className={`min-h-[56px] sm:min-h-[104px] border-b border-r border-gray-100 p-1 sm:p-2 text-left flex flex-col gap-1 align-top transition-colors ${
-                elegido ? "bg-primary-light ring-2 ring-inset ring-primary" : "hover:bg-gray-50"
+              className={`min-h-[56px] sm:min-h-[104px] rounded-xl sm:rounded-2xl p-1 sm:p-2 text-left flex flex-col gap-1 align-top transition-[transform,background-color] duration-200 ease-salida ${
+                elegido
+                  ? "bg-white ring-2 ring-primary shadow-[0_8px_22px_rgba(29,78,158,0.18)]"
+                  : `${pasado ? "bg-white/35 border border-white/70" : "burbuja"} hover:bg-white motion-safe:hover:-translate-y-0.5`
               }`}
             >
               <span
                 className={`w-7 h-7 rounded-full grid place-items-center text-sm font-extrabold tabular-nums ${
-                  esHoy ? "bg-primary-dark text-white" : pasado ? "text-ink-500/60" : "text-ink-900"
+                  esHoy ? "bg-[#1E9E9A] text-white" : elegido ? "text-primary" : pasado ? "text-ink-500/60" : "text-ink-900"
                 }`}
               >
                 {d.getDate()}
@@ -130,7 +132,7 @@ export function CalendarioMes({ marcas = {}, seleccionado, onSeleccionar, leyend
       </div>
 
       {leyenda && (
-        <div className="flex flex-wrap gap-x-4 gap-y-1.5 px-4 sm:px-5 py-3 text-xs font-semibold text-ink-600 border-t border-gray-100">
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5 px-2 sm:px-3 pt-3 pb-1 text-xs font-semibold text-ink-600">
           {leyenda.map(([tono, texto]) => (
             <span key={texto} className="inline-flex items-center gap-1.5">
               <span className={`w-2.5 h-2.5 rounded-full ${PUNTOS[tono]}`} />
@@ -146,7 +148,7 @@ export function CalendarioMes({ marcas = {}, seleccionado, onSeleccionar, leyend
 // Selector "Calendario | Lista".
 export function SelectorVista({ vista, setVista }) {
   return (
-    <div role="tablist" aria-label="Forma de ver" className="inline-flex bg-white border border-gray-200 rounded-full p-1 gap-1">
+    <div role="tablist" aria-label="Forma de ver" className="inline-flex vidrio-panel rounded-full p-1 gap-1">
       {[
         ["calendario", "Calendario", "calendario"],
         ["lista", "Lista", "lista"],
@@ -157,7 +159,7 @@ export function SelectorVista({ vista, setVista }) {
           type="button"
           aria-selected={vista === id}
           onClick={() => setVista(id)}
-          className={`inline-flex items-center gap-2 min-h-[40px] px-4 rounded-full text-sm font-bold ${vista === id ? "bg-primary-dark text-white" : "text-primary hover:bg-primary-light"}`}
+          className={`inline-flex items-center gap-2 min-h-[40px] px-4 rounded-full text-sm font-bold ${vista === id ? "boton-liquido" : "text-primary hover:bg-white/80"}`}
         >
           <Icono nombre={icono} size={16} strokeWidth={2.2} />
           {texto}

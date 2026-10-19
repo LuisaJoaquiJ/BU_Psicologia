@@ -124,7 +124,7 @@ export function OfertaPage() {
               type="button"
               aria-pressed={filtro === v}
               onClick={() => setFiltro(v)}
-              className={`rounded-full px-4 min-h-[40px] text-sm font-bold ${filtro === v ? "bg-primary text-white" : "bg-white border border-gray-200 text-ink-600 hover:bg-gray-50"}`}
+              className={`rounded-full px-4 min-h-[40px] text-sm font-bold ${filtro === v ? "boton-liquido" : "burbuja text-ink-600 hover:bg-white"}`}
             >
               {t}
             </button>

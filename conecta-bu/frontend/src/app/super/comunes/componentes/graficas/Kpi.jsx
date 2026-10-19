@@ -16,7 +16,7 @@ export const PERIODOS = [
 
 export function SelectorPeriodo({ valor, onCambio }) {
   return (
-    <div role="group" aria-label="Periodo" className="inline-flex bg-white border border-gray-200 rounded-full p-1 gap-1">
+    <div role="group" aria-label="Periodo" className="inline-flex vidrio-panel rounded-full p-1 gap-1">
       {PERIODOS.map((p) => (
         <button
           key={p.id}
@@ -24,7 +24,7 @@ export function SelectorPeriodo({ valor, onCambio }) {
           aria-pressed={valor === p.id}
           onClick={() => onCambio(p.id)}
           className={`min-h-[40px] px-4 sm:px-5 rounded-full text-sm font-bold transition-colors ${
-            valor === p.id ? "bg-primary-dark text-white" : "text-primary hover:bg-primary-light"
+            valor === p.id ? "boton-liquido" : "text-primary hover:bg-white/80"
           }`}
         >
           {p.texto}

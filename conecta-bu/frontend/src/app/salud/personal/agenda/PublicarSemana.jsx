@@ -229,7 +229,7 @@ export function PublicarSemana({ api, servicios, horarios, alPublicar }) {
             type="button"
             onClick={publicar}
             disabled={!bloques || publicando}
-            className="w-full min-h-[52px] rounded-full bg-primary text-white font-extrabold hover:bg-primary-dark disabled:bg-gray-200 disabled:text-ink-500"
+            className="w-full min-h-[52px] rounded-full boton-liquido font-extrabold disabled:opacity-60"
           >
             {publicando ? "Publicando…" : bloques ? `Publicar ${total} citas` : "Publicar horarios"}
           </button>

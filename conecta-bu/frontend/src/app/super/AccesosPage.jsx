@@ -228,7 +228,7 @@ export function AccesosPage() {
                             type="button"
                             onClick={() => cambiarModulo(a)}
                             disabled={guardando || editando.modulo === a.modulo}
-                            className="min-h-[36px] px-4 rounded-full bg-primary text-white text-xs font-bold hover:bg-primary-dark disabled:opacity-50"
+                            className="min-h-[36px] px-4 rounded-full boton-liquido text-xs font-bold disabled:opacity-50"
                           >
                             {guardando ? "Guardando..." : "Guardar"}
                           </button>

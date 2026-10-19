@@ -202,7 +202,7 @@ export function AgendarCitaPage() {
                 type="button"
                 disabled={!servicioId}
                 onClick={() => setPaso(2)}
-                className="inline-flex items-center gap-2 min-h-[52px] px-7 rounded-full bg-primary text-white font-extrabold hover:bg-primary-dark disabled:bg-gray-200 disabled:text-ink-500"
+                className="inline-flex items-center gap-2 min-h-[52px] px-7 rounded-full boton-liquido font-extrabold disabled:opacity-60"
               >
                 Continuar
                 <Icono nombre="flecha" size={18} strokeWidth={2.2} />
@@ -321,7 +321,7 @@ export function AgendarCitaPage() {
                       <button
                         type="button"
                         onClick={() => setPaso(3)}
-                        className="w-full min-h-[52px] rounded-full bg-primary text-white font-extrabold hover:bg-primary-dark"
+                        className="w-full min-h-[52px] rounded-full boton-liquido font-extrabold"
                       >
                         Continuar a confirmar
                       </button>
@@ -368,7 +368,7 @@ export function AgendarCitaPage() {
               type="button"
               onClick={confirmar}
               disabled={enviando}
-              className="inline-flex items-center gap-2 min-h-[52px] px-7 rounded-full bg-primary text-white font-extrabold hover:bg-primary-dark disabled:opacity-70"
+              className="inline-flex items-center gap-2 min-h-[52px] px-7 rounded-full boton-liquido font-extrabold disabled:opacity-70"
             >
               <Icono nombre="check" size={18} strokeWidth={2.4} />
               {enviando ? "Agendando…" : "Confirmar cita"}

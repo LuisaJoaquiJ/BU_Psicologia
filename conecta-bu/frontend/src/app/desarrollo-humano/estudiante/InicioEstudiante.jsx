@@ -118,7 +118,7 @@ export function InicioEstudiante() {
             {proximaCita === null && (
               <>
                 <p className="m-0 text-ink-600">No tienes citas agendadas.</p>
-                <Link to="/estudiante/agendar" className="self-start font-bold text-sm px-4 min-h-[44px] inline-flex items-center rounded-full bg-primary-light text-primary hover:bg-[#E2E9F6]">
+                <Link to="/estudiante/agendar" className="self-start font-bold text-sm px-4 min-h-[44px] inline-flex items-center rounded-full burbuja text-primary hover:bg-white">
                   Agendar una cita
                 </Link>
               </>
@@ -138,7 +138,7 @@ export function InicioEstudiante() {
                     </span>
                   </div>
                 </div>
-                <Link to="/estudiante/mis-citas" className="self-start font-bold text-sm px-4 min-h-[44px] inline-flex items-center rounded-full bg-primary-light text-primary hover:bg-[#E2E9F6]">
+                <Link to="/estudiante/mis-citas" className="self-start font-bold text-sm px-4 min-h-[44px] inline-flex items-center rounded-full burbuja text-primary hover:bg-white">
                   Ver mis citas
                 </Link>
               </>

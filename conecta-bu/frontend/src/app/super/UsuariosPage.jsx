@@ -107,7 +107,7 @@ export function UsuariosPage() {
         </label>
         <button
           type="submit"
-          className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-2 hover:bg-primary-dark transition-colors"
+          className="text-sm font-semibold boton-liquido rounded-full px-4 py-2"
         >
           Filtrar
         </button>

@@ -444,7 +444,7 @@ export function RegistrarPage() {
             )}
           </Tarjeta>
 
-          <div className="flex gap-1.5 bg-white border border-gray-200 rounded-full p-1 self-start" role="tablist">
+          <div className="flex gap-1.5 vidrio-panel rounded-full p-1 self-start" role="tablist">
             {[
               ["una", "Una persona"],
               ["lista", "Lista de una jornada"],
@@ -455,7 +455,7 @@ export function RegistrarPage() {
                 role="tab"
                 aria-selected={modo === id}
                 onClick={() => setModo(id)}
-                className={`text-sm font-semibold rounded-full px-4 min-h-[38px] ${modo === id ? "bg-primary text-white" : "text-ink-600 hover:bg-gray-50"}`}
+                className={`text-sm font-semibold rounded-full px-4 min-h-[38px] ${modo === id ? "boton-liquido" : "text-ink-600 hover:bg-white/80"}`}
               >
                 {texto}
               </button>

@@ -266,7 +266,7 @@ export function LandingPage() {
           </nav>
           <Link
             to="/login"
-            className="bg-primary text-white font-bold text-[15px] px-5 min-h-[44px] rounded-full inline-flex items-center hover:bg-primary-dark"
+            className="boton-liquido font-bold text-[15px] px-5 min-h-[44px] rounded-full inline-flex items-center"
           >
             Iniciar sesión
           </Link>

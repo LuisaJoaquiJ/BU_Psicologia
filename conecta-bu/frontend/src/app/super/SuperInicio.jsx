@@ -108,7 +108,7 @@ export function SuperInicio() {
                   <div className="mt-auto flex flex-col gap-1.5">
                     <Link
                       to={`/super/accesos?modulo=${info.id}`}
-                      className="w-full inline-flex items-center justify-between gap-2 bg-primary text-white font-extrabold text-[15px] px-5 min-h-[50px] rounded-full hover:bg-primary-dark"
+                      className="w-full inline-flex items-center justify-between gap-2 boton-liquido font-extrabold text-[15px] px-5 min-h-[50px] rounded-full"
                     >
                       Personal del módulo
                       <Icono nombre="flecha" size={18} strokeWidth={2.2} />

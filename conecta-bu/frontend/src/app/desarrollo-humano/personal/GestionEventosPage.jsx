@@ -445,7 +445,7 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
             </p>
             <p className="m-0 text-ink-600 whitespace-pre-line">{v.descripcion.trim() || "Aquí aparecerá la descripción."}</p>
             {limite && <p className="mt-1 mb-0 text-sm text-ink-500">Inscripciones abiertas hasta el {fechaLarga(limite).toLowerCase()}.</p>}
-            <span className="mt-1.5 inline-flex justify-center items-center min-h-[46px] rounded-full bg-primary text-white font-extrabold">Inscribirme</span>
+            <span className="mt-1.5 inline-flex justify-center items-center min-h-[46px] rounded-full boton-liquido font-extrabold">Inscribirme</span>
           </div>
         </article>
       </aside>

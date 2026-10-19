@@ -122,7 +122,7 @@ export function SaludEstudiantePage() {
                 type="button"
                 onClick={() => agendar(h)}
                 disabled={enviando === h.id}
-                className="mt-2 text-sm font-bold bg-primary text-white rounded-full px-4 min-h-[42px] hover:bg-primary-dark disabled:opacity-60"
+                className="mt-2 text-sm font-bold boton-liquido rounded-full px-4 min-h-[42px] disabled:opacity-60"
               >
                 {enviando === h.id ? "Agendando..." : "Agendar"}
               </button>

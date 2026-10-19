@@ -45,7 +45,7 @@ export function ServiciosPage() {
               </div>
               <Link
                 to={`/estudiante/agendar?servicio=${servicio.id}`}
-                className="self-start sm:self-center inline-flex items-center gap-1.5 min-h-[44px] px-4 rounded-full bg-primary-light text-primary font-bold text-sm whitespace-nowrap hover:bg-[#E2E9F6]"
+                className="self-start sm:self-center inline-flex items-center gap-1.5 min-h-[44px] px-4 rounded-full burbuja text-primary font-bold text-sm whitespace-nowrap hover:bg-white"
               >
                 Ver horarios
                 <Icono nombre="flecha" size={17} strokeWidth={2.2} />

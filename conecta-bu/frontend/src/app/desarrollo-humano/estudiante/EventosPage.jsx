@@ -146,7 +146,7 @@ export function EventosPage() {
                   <button
                     onClick={() => inscribirse(evento)}
                     disabled={procesando === evento.id || !evento.inscripcionAbierta || evento.cuposDisponibles === 0}
-                    className="text-sm font-semibold bg-primary text-white rounded-full px-4 py-1.5 hover:bg-primary-dark transition-colors disabled:opacity-50"
+                    className="text-sm font-semibold boton-liquido rounded-full px-4 py-1.5 disabled:opacity-50"
                   >
                     {!evento.inscripcionAbierta
                       ? "Inscripciones cerradas"

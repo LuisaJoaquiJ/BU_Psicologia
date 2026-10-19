@@ -273,7 +273,7 @@ export function InicioAdmin() {
 
   return (
     <>
-      <section className="relative overflow-hidden bg-[#071A38] text-white">
+      <section className="relative overflow-hidden bg-[#071A38] text-white lg:mt-3 lg:mr-3 lg:rounded-[28px]">
         <Aurora />
         <div className="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-12 sm:pt-16 pb-28 flex flex-wrap gap-10 items-end">
           <div className="flex-[999_1_520px] min-w-0 flex flex-col gap-4">
@@ -408,7 +408,7 @@ export function InicioAdmin() {
                     {e.nombre}
                   </strong>
                   <span className="block text-sm font-semibold text-[#8A5A00]">{plural(e.sinRegistrar, "inscrito", "inscritos")} sin registrar</span>
-                  <Link to={`/admin/eventos/${e.id}/inscritos`} className="mt-2.5 min-h-[40px] inline-flex items-center px-3.5 rounded-full bg-primary-dark text-white font-bold text-[13px] no-underline hover:bg-primary">
+                  <Link to={`/admin/eventos/${e.id}/inscritos`} className="mt-2.5 min-h-[40px] inline-flex items-center px-3.5 rounded-full boton-liquido font-bold text-[13px] no-underline">
                     Registrar asistencia
                   </Link>
                 </div>

@@ -410,7 +410,7 @@ export function MisCitasPage() {
                 <h2 id="historial" className="m-0 font-sans text-lg font-bold text-primary">
                   Historial
                 </h2>
-                <div className="inline-flex rounded-full bg-white border border-gray-200 p-1" role="tablist" aria-label="Vista del historial">
+                <div className="inline-flex rounded-full vidrio-panel p-1" role="tablist" aria-label="Vista del historial">
                   {[
                     ["lista", "Lista", "lista"],
                     ["calendario", "Calendario", "calendario"],
@@ -422,7 +422,7 @@ export function MisCitasPage() {
                       aria-selected={vista === id}
                       onClick={() => setVista(id)}
                       className={`min-h-[38px] px-4 rounded-full text-sm font-bold inline-flex items-center gap-1.5 transition-colors ${
-                        vista === id ? "bg-primary text-white" : "text-ink-600 hover:bg-gray-50"
+                        vista === id ? "boton-liquido" : "text-ink-600 hover:bg-white/80"
                       }`}
                     >
                       <Icono nombre={icono} size={15} strokeWidth={2} />

@@ -47,7 +47,7 @@ export function CalendarioActividad({ mes, hoy, dias, cantidad, describir, alEle
               onClick={alElegir ? () => alElegir(clave) : undefined}
               className={`aspect-square min-h-[34px] rounded-xl flex flex-col items-center justify-center text-sm tabular-nums ${
                 oscuro ? "text-white font-bold" : "text-ink-900"
-              } ${esHoy ? "ring-2 ring-offset-2 ring-primary-dark font-extrabold" : ""} ${alElegir ? "hover:outline hover:outline-2 hover:outline-primary/40" : ""}`}
+              } ${esHoy ? "ring-2 ring-offset-2 ring-offset-white/0 ring-[#1E9E9A] font-extrabold" : ""} ${alElegir ? "hover:outline hover:outline-2 hover:outline-primary/40" : ""}`}
               style={{ background: fondo }}
             >
               {dia}

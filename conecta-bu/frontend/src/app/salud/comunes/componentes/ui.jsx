@@ -2,24 +2,24 @@ import { BarrasH } from "./graficas/Barras";
 // Piezas de interfaz compartidas por las pantallas de Salud integral.
 
 export const claseCampo =
-  "w-full border border-gray-200 rounded-md px-3.5 min-h-[44px] text-[15px] text-ink-900 bg-white placeholder:text-gray-400 transition-[border-color,box-shadow] focus:outline-none focus:border-primary focus:ring-[3px] focus:ring-primary/15";
+  "w-full border border-[#DCE3EE] rounded-xl px-3.5 min-h-[44px] text-[15px] text-ink-900 bg-white/90 shadow-[inset_0_1px_2px_rgba(11,35,71,0.05)] placeholder:text-gray-400 transition-[border-color,box-shadow] focus:outline-none focus:border-primary focus:ring-[3px] focus:ring-primary/15";
 
 // Igual que claseCampo pero con el ancho de su contenido (selectores en barras).
 export const claseCampoCorto = claseCampo.replace("w-full ", "w-auto max-w-full ");
 
 export const botonPrimario =
-  "inline-flex items-center justify-center gap-2 bg-primary text-white font-medium text-[15px] px-5 min-h-[44px] rounded-md transition-all duration-200 hover:bg-primary-hover hover:-translate-y-px hover:shadow-primario disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none";
+  "inline-flex items-center justify-center gap-2 boton-liquido font-semibold text-[15px] px-5 min-h-[44px] rounded-full transition-transform duration-200 ease-salida hover:-translate-y-px motion-reduce:hover:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0";
 export const botonDorado =
-  "inline-flex items-center justify-center gap-2 bg-gold text-primary-dark font-medium text-[15px] px-5 min-h-[44px] rounded-md transition-all duration-200 hover:brightness-95 hover:-translate-y-px disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 boton-liquido-dorado font-semibold text-[15px] px-5 min-h-[44px] rounded-full transition-transform duration-200 ease-salida hover:-translate-y-px motion-reduce:hover:translate-y-0 disabled:opacity-60";
 export const botonSecundario =
-  "inline-flex items-center justify-center gap-2 border border-gray-200 bg-white text-ink-900 font-medium text-sm px-4 min-h-[40px] rounded-md transition-all duration-200 hover:bg-gray-50 hover:border-gray-300 hover:-translate-y-px disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 burbuja text-primary-dark font-semibold text-sm px-4 min-h-[42px] rounded-full transition-[transform,background-color] duration-200 ease-salida hover:bg-white hover:-translate-y-px motion-reduce:hover:translate-y-0 disabled:opacity-60";
 
 export function Encabezado({ kicker, titulo, descripcion, acciones }) {
   return (
     <div className="flex justify-between items-end gap-4 flex-wrap mb-7">
       <div className="min-w-0">
         {kicker && <p className="m-0 mb-1.5 text-sm font-semibold text-ink-500">{kicker}</p>}
-        <h1 className="m-0 text-3xl sm:text-[32px] font-bold">{titulo}</h1>
+        <h1 className="m-0 font-sans text-[32px] sm:text-[40px] font-extrabold tracking-[-0.04em]">{titulo}</h1>
         {descripcion && <p className="mt-1.5 mb-0 text-ink-500 max-w-[680px]">{descripcion}</p>}
       </div>
       {acciones && <div className="flex gap-2.5 flex-wrap">{acciones}</div>}
@@ -29,7 +29,7 @@ export function Encabezado({ kicker, titulo, descripcion, acciones }) {
 
 export function Tarjeta({ titulo, subtitulo, acciones, children, className = "" }) {
   return (
-    <section className={`bg-white border border-gray-200 rounded-xl p-5 sm:p-6 min-w-0 ${className}`}>
+    <section className={`vidrio-panel rounded-[22px] p-5 sm:p-6 min-w-0 ${className}`}>
       {(titulo || acciones) && (
         <div className="flex justify-between items-start gap-3 mb-4 flex-wrap">
           <div className="min-w-0">
@@ -46,7 +46,7 @@ export function Tarjeta({ titulo, subtitulo, acciones, children, className = "" 
 
 export function Kpi({ titulo, valor, detalle, destacado }) {
   return (
-    <div className={`rounded-xl p-5 ${destacado ? "bg-primary text-white" : "bg-white border border-gray-200"}`}>
+    <div className={`rounded-[20px] p-5 ${destacado ? "bg-[linear-gradient(155deg,#2D67C6_0%,#1D4E9E_45%,#0B2347_100%)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_14px_36px_rgba(29,78,158,0.3)]" : "vidrio-panel"}`}>
       <p className={`m-0 text-[13px] ${destacado ? "text-white/75" : "text-ink-500"}`}>{titulo}</p>
       <p className={`mt-1.5 mb-0 font-display text-[36px] leading-none font-semibold tabular-nums ${destacado ? "text-gold-soft" : "text-ink-900"}`}>
         {valor}

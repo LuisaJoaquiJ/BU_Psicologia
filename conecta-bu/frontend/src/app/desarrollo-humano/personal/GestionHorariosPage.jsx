@@ -193,13 +193,13 @@ export function GestionHorariosPage({ api = "/admin" }) {
     return (
       <section key={grupo.dia} aria-label={fechaLarga(grupo.fecha)} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <h2
-          className={`m-0 px-5 py-3 text-base font-extrabold flex items-center justify-between gap-3 ${grupo.dia === hoyStr ? "bg-primary-dark text-white" : "bg-gray-50 text-ink-900"}`}
+          className={`m-0 px-5 py-3.5 text-base font-extrabold flex items-center justify-between gap-3 border-b border-white/80 ${grupo.dia === hoyStr ? "bg-white/70 text-ink-900" : "bg-white/40 text-ink-900"}`}
         >
           <span>
             {fechaLarga(grupo.fecha)}
-            {grupo.dia === hoyStr && <span className="ml-2 text-cyan">· Hoy</span>}
+            {grupo.dia === hoyStr && <span className="ml-2 align-middle inline-flex items-center rounded-full bg-[#1E9E9A] text-white text-xs font-bold px-2.5 py-0.5">Hoy</span>}
           </span>
-          <span className={`text-sm font-semibold tabular-nums ${grupo.dia === hoyStr ? "text-[#B9C7DE]" : "text-ink-500"}`}>
+          <span className={`text-sm font-semibold tabular-nums text-ink-500`}>
             {grupo.horarios.length} {grupo.horarios.length === 1 ? "horario" : "horarios"}
           </span>
         </h2>
@@ -428,7 +428,7 @@ export function GestionHorariosPage({ api = "/admin" }) {
 
       {panelAbierto && (
         <Ventana titulo="Agregar horario" alCerrar={cerrarPanel}>
-          <div role="tablist" aria-label="Forma de agregar" className="inline-flex flex-wrap bg-white border border-gray-200 rounded-xl p-1 gap-1 mb-5">
+          <div role="tablist" aria-label="Forma de agregar" className="inline-flex flex-wrap vidrio-panel rounded-full p-1 gap-1 mb-5">
             {[
               ["semana", "Varias horas"],
               ["una", "Una sola hora"],
@@ -440,7 +440,7 @@ export function GestionHorariosPage({ api = "/admin" }) {
                 type="button"
                 aria-selected={modoPanel === id}
                 onClick={() => setModoPanel(id)}
-                className={`min-h-[40px] px-4 rounded-full text-sm font-bold ${modoPanel === id ? "bg-primary-dark text-white" : "text-primary hover:bg-primary-light"}`}
+                className={`min-h-[40px] px-4 rounded-full text-sm font-bold ${modoPanel === id ? "boton-liquido" : "text-primary hover:bg-white/80"}`}
               >
                 {texto}
               </button>
