@@ -4,11 +4,11 @@ import { Icono } from "./Iconos";
 import { AsistenteConversacion } from "./AsistenteConversacion";
 import { useAuth } from "../lib/auth/AuthContext";
 
-// Botón flotante del asistente. Solo aparece con sesión iniciada, para no
-// tapar el ingreso con Google. La página completa de Asistente sigue en
-// /estudiante/asistente; aquí el mismo chat cabe en un panel.
+// Botón flotante del asistente. Solo para estudiantes con sesión (la
+// consulta y el agendamiento son del estudiante) y no en la página completa
+// del asistente (/estudiante/asistente), donde ya está el mismo chat.
 export function AsistenteFlotante() {
-  const { estaAutenticado } = useAuth();
+  const { estaAutenticado, usuario } = useAuth();
   const { pathname } = useLocation();
   const [abierto, setAbierto] = useState(false);
 
@@ -21,7 +21,7 @@ export function AsistenteFlotante() {
     return () => document.removeEventListener("keydown", alTeclear);
   }, [abierto]);
 
-  if (!estaAutenticado || pathname === "/login") return null;
+  if (!estaAutenticado || usuario?.rol !== "Estudiante" || pathname === "/login" || pathname.startsWith("/estudiante/asistente")) return null;
 
   return (
     <div className="fixed z-30 bottom-24 right-4 sm:bottom-28 sm:right-8 flex flex-col items-end gap-3">
@@ -29,9 +29,9 @@ export function AsistenteFlotante() {
         <section
           role="dialog"
           aria-label="Asistente de orientación"
-          className="w-[min(380px,calc(100vw-2rem))] h-[min(560px,calc(100vh-9rem))] bg-white border border-gray-200 rounded-3xl shadow-[0_16px_40px_rgba(11,35,71,0.22)] flex flex-col overflow-hidden"
+          className="w-[min(380px,calc(100vw-2rem))] h-[min(560px,calc(100vh-9rem))] vidrio-panel rounded-3xl shadow-[0_16px_40px_rgba(11,35,71,0.22)] flex flex-col overflow-hidden"
         >
-          <header className="flex items-start justify-between gap-3 px-4 py-3 border-b border-gray-200 bg-primary text-white">
+          <header className="flex items-start justify-between gap-3 px-4 py-3 boton-liquido rounded-none">
             <div>
               <p className="m-0 text-base font-extrabold">Asistente</p>
               <p className="m-0 mt-0.5 text-xs text-white/80">Orientación sobre Bienestar. No hace diagnósticos.</p>
@@ -56,7 +56,7 @@ export function AsistenteFlotante() {
         onClick={() => setAbierto((v) => !v)}
         aria-expanded={abierto}
         aria-label={abierto ? "Cerrar asistente" : "Abrir asistente"}
-        className="inline-flex items-center gap-2.5 min-h-[56px] pl-3 pr-5 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-[0_12px_30px_rgba(11,35,71,0.30)] hover:bg-primary-dark active:scale-[0.98] transition"
+        className="inline-flex items-center gap-2.5 min-h-[56px] pl-3 pr-5 rounded-full boton-liquido font-extrabold text-[15px] transition-transform duration-200 ease-salida hover:-translate-y-px active:scale-[0.98] motion-reduce:transform-none"
       >
         <span className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center">
           <Icono nombre={abierto ? "cerrar" : "chat"} size={18} strokeWidth={2.2} />

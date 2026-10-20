@@ -63,6 +63,35 @@ describe("Superadministrador: accesos por modulo", () => {
     expect(me.body.usuario).toMatchObject({ rol: "Estudiante", modulos: [] });
   });
 
+  test("cambiar el modulo de un acceso sin quitarlo ni volverlo a asignar", async () => {
+    const persona = crearUsuario("Estudiante", "c@uniautonoma.edu.co");
+    const a = (await api("post", "/accesos").send({ email: "c@uniautonoma.edu.co", modulo: "salud" })).body.acceso;
+    const res = await api("patch", `/accesos/${a.id}`).send({ modulo: "deporte" });
+    expect(res.status).toBe(200);
+    expect(res.body.acceso).toMatchObject({ id: a.id, email: "c@uniautonoma.edu.co", modulo: "deporte", asignadoPor: "super@uniautonoma.edu.co" });
+    const me = await request(app).get("/api/v1/auth/me").set(auth(persona.token));
+    expect(me.body.usuario).toMatchObject({ rol: "Administrador", modulos: ["deporte"] });
+
+    expect((await api("patch", `/accesos/${a.id}`).send({ modulo: "deporte" })).status).toBe(400);
+    expect((await api("patch", `/accesos/${a.id}`).send({ modulo: "nada" })).status).toBe(400);
+    expect((await api("patch", "/accesos/no-existe").send({ modulo: "salud" })).status).toBe(404);
+    const dh = crearUsuario("Administrador", "dh2@uniautonoma.edu.co");
+    expect((await api("patch", `/accesos/${a.id}`, dh.token).send({ modulo: "salud" })).status).toBe(403);
+  });
+
+  test("no deja duplicar un modulo ni tocar los accesos de docentes de Deporte", async () => {
+    const a1 = (await api("post", "/accesos").send({ email: "d@uniautonoma.edu.co", modulo: "salud" })).body.acceso;
+    await api("post", "/accesos").send({ email: "d@uniautonoma.edu.co", modulo: "deporte" });
+    const dup = await api("patch", `/accesos/${a1.id}`).send({ modulo: "deporte" });
+    expect(dup.status).toBe(409);
+    const aDocente = await api("patch", `/accesos/${a1.id}`).send({ modulo: "deporte-docente" });
+    expect(aDocente.status).toBe(409);
+    expect(aDocente.body.codigo).toBe("ACCESO_DOCENTE");
+    prisma.__darAcceso("externo@gmail.com", "deporte-docente");
+    const doc = (await api("get", "/accesos")).body.accesos.find((x) => x.email === "externo@gmail.com");
+    expect((await api("patch", `/accesos/${doc.id}`).send({ modulo: "salud" })).status).toBe(409);
+  });
+
   test("se puede asignar un correo antes de su primer ingreso", async () => {
     await api("post", "/accesos").send({ email: "nueva@uniautonoma.edu.co", modulo: "salud" });
     const { aplicarAccesos } = require("../src/modules/auth/auth.service");
@@ -81,7 +110,7 @@ describe("Superadministrador: accesos por modulo", () => {
       const conRol = await prisma.usuario.findUnique({ where: { id: persona.usuario.id }, include: { rol: true } });
       const resultado = await aplicarAccesos(conRol);
       expect(resultado.rol.nombre).toBe("SuperAdministrador");
-      expect(serializarUsuario(resultado).modulos).toEqual(["desarrollo-humano", "salud", "deporte"]);
+      expect(serializarUsuario(resultado).modulos).toEqual([]);
       const otro = crearUsuario("Administrador", "otra@uniautonoma.edu.co");
       const otroConRol = await prisma.usuario.findUnique({ where: { id: otro.usuario.id }, include: { rol: true } });
       expect((await aplicarAccesos(otroConRol)).rol.nombre).toBe("Administrador");
@@ -123,30 +152,17 @@ describe("Superadministrador: accesos por modulo", () => {
     expect((await request(app).get("/api/v1/salud/resumen").set(auth(sinNada.token))).status).toBe(403);
   });
 
-  test("el superadministrador entra a todos los modulos y ve el resumen", async () => {
-    expect((await request(app).get("/api/v1/admin/estadisticas").set(auth(superadmin.token))).status).toBe(200);
-    expect((await request(app).get("/api/v1/salud/resumen").set(auth(superadmin.token))).status).toBe(200);
+  test("el superadministrador no entra a los modulos: solo ve el resumen de todos desde su panel", async () => {
+    for (const ruta of ["/api/v1/admin/estadisticas", "/api/v1/salud/resumen", "/api/v1/admin/citas", "/api/v1/salud/horarios"]) {
+      const res = await request(app).get(ruta).set(auth(superadmin.token));
+      expect(res.status).toBe(403);
+      expect(res.body.codigo).toBe("SUPERADMIN_SIN_MODULOS");
+    }
     const me = await request(app).get("/api/v1/auth/me").set(auth(superadmin.token));
-    expect(me.body.usuario.modulos).toEqual(["desarrollo-humano", "salud", "deporte"]);
+    expect(me.body.usuario.modulos).toEqual([]);
     const res = await api("get", "/resumen");
     expect(res.status).toBe(200);
     expect(res.body.modulos.map((m) => m.id)).toEqual(["desarrollo-humano", "salud", "deporte"]);
-  });
-});
-
-describe("Mis citas separadas por modulo", () => {
-  test("cada modulo muestra solo sus citas", async () => {
-    const est = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
-    const servicioSalud = prisma.__seedServicio({ nombre: "Consulta de enfermería", modulo: "salud" });
-    const hDh = prisma.__seedHorario({ fecha: diasDesdeHoy(3), horaInicio: new Date(Date.UTC(1970, 0, 1, 8)), horaFin: new Date(Date.UTC(1970, 0, 1, 9)) });
-    const hSalud = prisma.__seedHorario({ servicioId: servicioSalud.id, fecha: diasDesdeHoy(3), horaInicio: new Date(Date.UTC(1970, 0, 1, 10)), horaFin: new Date(Date.UTC(1970, 0, 1, 11)) });
-    await request(app).post("/api/v1/citas").set(auth(est.token)).send({ horarioId: hDh.id });
-    await request(app).post("/api/v1/citas").set(auth(est.token)).send({ horarioId: hSalud.id });
-
-    const dh = await request(app).get("/api/v1/citas/mias?modulo=desarrollo-humano").set(auth(est.token));
-    expect(dh.body.citas.map((c) => c.horarioId)).toEqual([hDh.id]);
-    const sal = await request(app).get("/api/v1/citas/mias?modulo=salud").set(auth(est.token));
-    expect(sal.body.citas.map((c) => c.horarioId)).toEqual([hSalud.id]);
   });
 });
 
@@ -178,7 +194,8 @@ describe("Superadministrador: tablero de estadisticas de todos los modulos", () 
       [servicioSalud, "Agendada"],
     ]) {
       const horario = prisma.__seedHorario({ servicioId: servicio.id, fecha: hoy, ocupado: true });
-      await prisma.cita.create({ data: { usuarioId: est.usuario.id, horarioId: horario.id, estado } });
+      const tabla = servicio === servicioSalud ? prisma.citaSalud : prisma.citaDesarrollo;
+      await tabla.create({ data: { usuarioId: est.usuario.id, horarioId: horario.id, estado } });
     }
     const evento = prisma.__seedEvento({ fecha: hoy, fechaLimiteInscripcion: hoy, cupos: 4 });
     await prisma.inscripcion.create({ data: { usuarioId: est.usuario.id, eventoId: evento.id } });

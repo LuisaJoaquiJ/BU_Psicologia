@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { http } from "../../lib/api/http";
-import { Icono } from "../../components/Iconos";
+import { Icono } from "./comunes/componentes/Iconos";
 import { moduloPorId } from "../../lib/modulos";
-import { descargar, mensajeError } from "../../lib/salud";
-import { Aviso, Encabezado, Insignia, Vacio, botonPrimario, botonSecundario, claseCampo } from "../salud/ui";
+import { descargar, mensajeError } from "./comunes/lib/salud";
+import { Aviso, Encabezado, Insignia, Vacio, botonPrimario, botonSecundario, claseCampo } from "./comunes/componentes/ui";
 
 // Informes de gestion que envian los modulos (por ahora, Salud integral con
 // el formato INFBI-002). El superadministrador los descarga en PDF o Excel y
@@ -44,7 +44,7 @@ function TarjetaInforme({ informe, alCambiar }) {
 
   const r = informe.resumen || {};
   return (
-    <article className="bg-white border border-gray-200 rounded-[24px] p-5 sm:p-6 flex flex-col gap-4">
+    <article className="bg-white border border-gray-200 rounded-xl p-5 sm:p-6 flex flex-col gap-4">
       <div className="flex items-start gap-4 flex-wrap">
         <span className="w-12 h-12 rounded-2xl bg-[#0d9488] text-white flex items-center justify-center shrink-0">
           <Icono nombre={modulo?.icono || "archivo"} size={24} strokeWidth={2} />
@@ -79,7 +79,7 @@ function TarjetaInforme({ informe, alCambiar }) {
           ["Actividades", num(r.actividades)],
           ["Cumplimiento de metas", r.cumplimientoPromedio === null || r.cumplimientoPromedio === undefined ? "—" : `${num(r.cumplimientoPromedio)} %`],
         ].map(([t, v]) => (
-          <div key={t} className="bg-[#FBF7EE] rounded-2xl px-4 py-3">
+          <div key={t} className="burbuja rounded-2xl px-4 py-3">
             <dt className="text-xs text-ink-500">{t}</dt>
             <dd className="m-0 mt-0.5 font-display text-2xl font-semibold text-primary tabular-nums">{v}</dd>
           </div>
@@ -154,7 +154,7 @@ export function InformesPage() {
             aria-selected={estado === p.id}
             onClick={() => setEstado(p.id)}
             className={`whitespace-nowrap rounded-full px-4 min-h-[40px] text-sm font-bold ${
-              estado === p.id ? "bg-primary text-white" : "bg-white border border-gray-200 text-ink-600 hover:bg-gray-50"
+              estado === p.id ? "boton-liquido" : "burbuja text-ink-600 hover:bg-white"
             }`}
           >
             {p.label}

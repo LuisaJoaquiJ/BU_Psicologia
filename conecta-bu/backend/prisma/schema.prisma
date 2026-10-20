@@ -26,12 +26,16 @@ model Usuario {
   rolId              String
   rol                Rol       @relation(fields: [rolId], references: [id])
   habilitado         Boolean   @default(true)
+  // Pregrado, Posgrado o Egresado (RN-002 de Deporte). Vacio = Pregrado.
+  categoriaEstudiante String?  @db.VarChar(15)
   fechaCreacion      DateTime  @default(now())
   fechaActualizacion DateTime  @updatedAt
 
-  citas                        Cita[]
+  citasDesarrollo              CitaDesarrollo[]
+  citasSalud                   CitaSalud[]
   inscripciones                Inscripcion[]
-  asistenciasCitaRegistradas   AsistenciaCita[]   @relation("registradoPorCita")
+  asistenciasCitaRegistradas   AsistenciaCitaDesarrollo[] @relation("registradoPorCita")
+  asistenciasCitaSaludRegistradas AsistenciaCitaSalud[]   @relation("registradoPorCitaSalud")
   asistenciasEventoRegistradas AsistenciaEvento[] @relation("registradoPorEvento")
   alertas                      AlertaInApp[]
   historial                    HistorialEstado[]
@@ -42,47 +46,50 @@ model Usuario {
   asistenciasDeporte           AsistenciaDeporte[]
   horasDeporteManuales         HoraDeporteManual[]
   inscripcionesSalida          InscripcionSalida[]
+  inscripcionesEventoDeporte   InscripcionEventoDeporte[]
 
   @@map("usuarios")
 }
 
-model Servicio {
-  id            String    @id @default(uuid())
-  nombre        String    @db.VarChar(150)
-  descripcion   String?   @db.Text
-  activo        Boolean   @default(true)
-  // Modulo de Bienestar al que pertenece el servicio ("desarrollo-humano", "salud").
-  modulo        String    @default("desarrollo-humano") @db.VarChar(40)
-  fechaCreacion DateTime  @default(now())
-  horarios      Horario[]
+// ---------------------------------------------------------------------------
+// Agenda de citas de Desarrollo Humano (orientacion). Salud integral tiene
+// sus propias tablas (ServicioSalud, HorarioSalud, CitaSalud...): ningun
+// modulo comparte datos con otro.
+// ---------------------------------------------------------------------------
+model ServicioDesarrollo {
+  id            String               @id @default(uuid())
+  nombre        String               @db.VarChar(150)
+  descripcion   String?              @db.Text
+  activo        Boolean              @default(true)
+  fechaCreacion DateTime             @default(now())
+  horarios      HorarioDesarrollo[]
 
-  @@map("servicios")
+  @@map("servicios_desarrollo")
 }
 
-model Horario {
-  id            String   @id @default(uuid())
+model HorarioDesarrollo {
+  id            String             @id @default(uuid())
   servicioId    String
-  servicio      Servicio @relation(fields: [servicioId], references: [id])
-  fecha         DateTime @db.Date
-  horaInicio    DateTime @db.Time()
-  horaFin       DateTime @db.Time()
-  cupo          Int      @default(1)
-  ocupado       Boolean  @default(false)
+  servicio      ServicioDesarrollo @relation(fields: [servicioId], references: [id])
+  fecha         DateTime           @db.Date
+  horaInicio    DateTime           @db.Time()
+  horaFin       DateTime           @db.Time()
+  cupo          Int                @default(1)
+  ocupado       Boolean            @default(false)
   // Horario creado al registrar una atencion sin cita (el estudiante llego
   // sin agendar): no se muestra en la lista de horarios publicados.
-  sinCita       Boolean  @default(false)
-  fechaCreacion DateTime @default(now())
-  citas         Cita[]
+  sinCita       Boolean            @default(false)
+  fechaCreacion DateTime           @default(now())
+  citas         CitaDesarrollo[]
 
-  @@map("horarios")
+  @@map("horarios_desarrollo")
 }
 
-// Tiempo en que el personal de un modulo no atiende citas: compromiso
-// institucional, incapacidad, permiso laboral, salida institucional, etc.
-// Mientras dure, los horarios que se crucen no se ofrecen a los estudiantes.
-model BloqueoAgenda {
+// Tiempo en que el personal no atiende citas: compromiso institucional,
+// incapacidad, permiso laboral, salida institucional, etc. Mientras dure,
+// los horarios que se crucen no se ofrecen a los estudiantes.
+model BloqueoDesarrollo {
   id            String    @id @default(uuid())
-  modulo        String    @db.VarChar(40)
   fechaInicio   DateTime  @db.Date
   fechaFin      DateTime  @db.Date
   todoElDia     Boolean   @default(true)
@@ -93,8 +100,8 @@ model BloqueoAgenda {
   creadoPor     String?   @db.VarChar(200)
   fechaCreacion DateTime  @default(now())
 
-  @@index([modulo, fechaInicio])
-  @@map("bloqueos_agenda")
+  @@index([fechaInicio])
+  @@map("bloqueos_desarrollo")
 }
 
 enum EstadoCita {
@@ -104,21 +111,114 @@ enum EstadoCita {
   NoAsistio
 }
 
-model Cita {
-  id                 String     @id @default(uuid())
+model CitaDesarrollo {
+  id                 String            @id @default(uuid())
   usuarioId          String
-  usuario            Usuario    @relation(fields: [usuarioId], references: [id])
+  usuario            Usuario           @relation(fields: [usuarioId], references: [id])
   horarioId          String
-  horario            Horario    @relation(fields: [horarioId], references: [id])
-  estado             EstadoCita @default(Agendada)
-  fechaAgendamiento  DateTime   @default(now())
-  observaciones      String?    @db.Text
-  fechaActualizacion DateTime   @updatedAt
+  horario            HorarioDesarrollo @relation(fields: [horarioId], references: [id])
+  estado             EstadoCita        @default(Agendada)
+  fechaAgendamiento  DateTime          @default(now())
+  observaciones      String?           @db.Text
+  fechaActualizacion DateTime          @updatedAt
 
-  asistencia AsistenciaCita?
+  asistencia AsistenciaCitaDesarrollo?
   historial  HistorialEstado[]
 
-  @@map("citas")
+  @@map("citas_desarrollo")
+}
+
+model AsistenciaCitaDesarrollo {
+  id              String         @id @default(uuid())
+  citaId          String         @unique
+  cita            CitaDesarrollo @relation(fields: [citaId], references: [id])
+  asistio         Boolean
+  registradoPorId String
+  registradoPor   Usuario        @relation("registradoPorCita", fields: [registradoPorId], references: [id])
+  fechaRegistro   DateTime       @default(now())
+
+  @@map("asistencias_cita_desarrollo")
+}
+
+// ---------------------------------------------------------------------------
+// Agenda de citas de Salud integral (enfermeria, medicina...).
+// ---------------------------------------------------------------------------
+model ServicioSalud {
+  id            String         @id @default(uuid())
+  nombre        String         @db.VarChar(150)
+  descripcion   String?        @db.Text
+  activo        Boolean        @default(true)
+  fechaCreacion DateTime       @default(now())
+  horarios      HorarioSalud[]
+
+  @@map("servicios_salud")
+}
+
+model HorarioSalud {
+  id            String        @id @default(uuid())
+  servicioId    String
+  servicio      ServicioSalud @relation(fields: [servicioId], references: [id])
+  fecha         DateTime      @db.Date
+  horaInicio    DateTime      @db.Time()
+  horaFin       DateTime      @db.Time()
+  cupo          Int           @default(1)
+  ocupado       Boolean       @default(false)
+  sinCita       Boolean       @default(false)
+  fechaCreacion DateTime      @default(now())
+  citas         CitaSalud[]
+
+  @@map("horarios_salud")
+}
+
+model BloqueoSalud {
+  id            String    @id @default(uuid())
+  fechaInicio   DateTime  @db.Date
+  fechaFin      DateTime  @db.Date
+  todoElDia     Boolean   @default(true)
+  horaInicio    DateTime? @db.Time()
+  horaFin       DateTime? @db.Time()
+  motivo        String    @db.VarChar(60)
+  detalle       String?   @db.VarChar(300)
+  creadoPor     String?   @db.VarChar(200)
+  fechaCreacion DateTime  @default(now())
+
+  @@index([fechaInicio])
+  @@map("bloqueos_salud")
+}
+
+enum EstadoCitaSalud {
+  Agendada
+  Cancelada
+  Atendida
+  NoAsistio
+}
+
+model CitaSalud {
+  id                 String          @id @default(uuid())
+  usuarioId          String
+  usuario            Usuario         @relation(fields: [usuarioId], references: [id])
+  horarioId          String
+  horario            HorarioSalud    @relation(fields: [horarioId], references: [id])
+  estado             EstadoCitaSalud @default(Agendada)
+  fechaAgendamiento  DateTime        @default(now())
+  observaciones      String?         @db.Text
+  fechaActualizacion DateTime        @updatedAt
+
+  asistencia AsistenciaCitaSalud?
+
+  @@map("citas_salud")
+}
+
+model AsistenciaCitaSalud {
+  id              String    @id @default(uuid())
+  citaId          String    @unique
+  cita            CitaSalud @relation(fields: [citaId], references: [id])
+  asistio         Boolean
+  registradoPorId String
+  registradoPor   Usuario   @relation("registradoPorCitaSalud", fields: [registradoPorId], references: [id])
+  fechaRegistro   DateTime  @default(now())
+
+  @@map("asistencias_cita_salud")
 }
 
 enum EstadoEvento {
@@ -173,18 +273,6 @@ model Inscripcion {
   @@map("inscripciones")
 }
 
-model AsistenciaCita {
-  id              String   @id @default(uuid())
-  citaId          String   @unique
-  cita            Cita     @relation(fields: [citaId], references: [id])
-  asistio         Boolean
-  registradoPorId String
-  registradoPor   Usuario  @relation("registradoPorCita", fields: [registradoPorId], references: [id])
-  fechaRegistro   DateTime @default(now())
-
-  @@map("asistencias_cita")
-}
-
 model AsistenciaEvento {
   id              String      @id @default(uuid())
   inscripcionId   String      @unique
@@ -220,7 +308,7 @@ model AlertaInApp {
 model HistorialEstado {
   id             String   @id @default(uuid())
   citaId         String?
-  cita           Cita?    @relation(fields: [citaId], references: [id])
+  cita           CitaDesarrollo? @relation(fields: [citaId], references: [id])
   eventoId       String?
   evento         Evento?  @relation(fields: [eventoId], references: [id])
   estadoAnterior String   @db.VarChar(50)
@@ -284,6 +372,8 @@ model PersonaSalud {
   correo              String?        @db.VarChar(120)
   poblacion           PoblacionSalud @default(Estudiante)
   programa            String?        @db.VarChar(150)
+  // Esta en la ultima lista de estudiantes activos que subio Salud.
+  estudianteActivo    Boolean        @default(false)
   // Autorizacion de tratamiento de datos (Ley 1581 de 2012).
   consentimientoDatos Boolean        @default(false)
   fechaConsentimiento DateTime?
@@ -293,6 +383,7 @@ model PersonaSalud {
   atenciones AtencionSalud[]
 
   @@index([apellidos, nombres])
+  @@index([estudianteActivo])
   @@map("salud_personas")
 }
 
@@ -320,13 +411,40 @@ model ActividadSalud {
   pendientes           String?                 @db.Text
   observaciones        String?                 @db.Text
   activa               Boolean                 @default(true)
+  // Publicacion para los estudiantes (jornadas y campanas con inscripcion).
+  publicada            Boolean                 @default(false)
+  descripcion          String?                 @db.Text
+  lugar                String?                 @db.VarChar(200)
+  horaInicio           String?                 @db.VarChar(5)
+  horaFin              String?                 @db.VarChar(5)
+  // Vacio = sin limite de cupos.
+  cupos                Int?
   fechaCreacion        DateTime                @default(now())
 
-  atenciones AtencionSalud[]
-  evidencias EvidenciaSalud[]
+  atenciones    AtencionSalud[]
+  evidencias    EvidenciaSalud[]
+  inscripciones InscripcionActividadSalud[]
 
   @@unique([periodo, codigo])
   @@map("salud_actividades")
+}
+
+// Inscripcion de un estudiante a una jornada o campana publicada. Al marcar
+// la asistencia se registra la atencion (su participacion).
+model InscripcionActividadSalud {
+  id               String         @id @default(uuid())
+  actividadId      String
+  actividad        ActividadSalud @relation(fields: [actividadId], references: [id], onDelete: Cascade)
+  usuarioId        String
+  personaId        String
+  estado           String         @default("Inscrita") @db.VarChar(15)
+  asistio          Boolean        @default(false)
+  atencionId       String?
+  fechaInscripcion DateTime       @default(now())
+
+  @@unique([actividadId, usuarioId])
+  @@index([usuarioId])
+  @@map("salud_actividades_inscripciones")
 }
 
 model AtencionSalud {
@@ -486,7 +604,8 @@ model ReporteSST {
   fechaCreacion        DateTime            @default(now())
   fechaActualizacion   DateTime            @updatedAt
 
-  adjuntos AdjuntoReporteSST[]
+  adjuntos     AdjuntoReporteSST[]
+  convocatoria SalidaConvocatoria?
 
   @@index([estado])
   @@index([fechaSalida])
@@ -588,11 +707,18 @@ model DisciplinaDeportiva {
   nombre        String   @unique @db.VarChar(80)
   descripcion   String?  @db.Text
   tipo          String   @default("Individual") @db.VarChar(30)
+  // Categorias que pueden inscribirse (RN-002). Vacio = todas.
+  categorias    String[] @default([])
   activa        Boolean  @default(true)
+  // Foto de portada (nombre del archivo en uploads/deporte/disciplinas).
+  imagen        String?  @db.VarChar(120)
   fechaCreacion DateTime @default(now())
 
   grupos        GrupoDeporte[]
   horasManuales HoraDeporteManual[]
+  eventos       EventoDeporte[]
+  alertas       AlertaDeporte[]
+  implementos   ImplementoDeporte[]
 
   @@map("deporte_disciplinas")
 }
@@ -604,6 +730,9 @@ model GrupoDeporte {
   periodo               String              @db.VarChar(10)
   nombre                String              @db.VarChar(80)
   instructor            String?             @db.VarChar(150)
+  // Docente asignado (RF-007): solo el ve y registra la asistencia del grupo.
+  docenteId             String?
+  docente               DocenteDeporte?     @relation(fields: [docenteId], references: [id])
   lugar                 String?             @db.VarChar(150)
   cupo                  Int                 @default(25)
   // [{ dia: 1 (lunes) a 7 (domingo), inicio: "HH:mm", fin: "HH:mm" }]
@@ -614,8 +743,10 @@ model GrupoDeporte {
 
   inscripciones InscripcionDeporte[]
   sesiones      SesionDeporte[]
+  alertas       AlertaDeporte[]
 
   @@index([periodo])
+  @@index([docenteId])
   @@map("deporte_grupos")
 }
 
@@ -682,6 +813,147 @@ model HoraDeporteManual {
   @@map("deporte_horas_manuales")
 }
 
+// Docentes / entrenadores (RF-004). Su correo recibe el acceso
+// "deporte-docente": entran a su panel y solo ven sus grupos (RN-004).
+model DocenteDeporte {
+  id            String   @id @default(uuid())
+  email         String   @unique @db.VarChar(120)
+  nombre        String   @db.VarChar(150)
+  telefono      String?  @db.VarChar(30)
+  especialidad  String?  @db.VarChar(120)
+  activo        Boolean  @default(true)
+  fechaCreacion DateTime @default(now())
+
+  grupos GrupoDeporte[]
+
+  @@map("deporte_docentes")
+}
+
+// Eventos deportivos puntuales: torneos, masterclasses, jornadas (RF-002).
+model EventoDeporte {
+  id               String               @id @default(uuid())
+  nombre           String               @db.VarChar(150)
+  tipo             String               @default("Torneo") @db.VarChar(30)
+  descripcion      String?              @db.Text
+  disciplinaId     String?
+  disciplina       DisciplinaDeportiva? @relation(fields: [disciplinaId], references: [id])
+  fecha            DateTime             @db.Date
+  horaInicio       String               @db.VarChar(5)
+  horaFin          String               @db.VarChar(5)
+  lugar            String?              @db.VarChar(150)
+  cupo             Int?
+  fechaLimite      DateTime?            @db.Date
+  // Horas de deporte que se reconocen a quien asiste.
+  horasReconocidas Float?
+  categorias       String[]             @default([])
+  estado           String               @default("Publicado") @db.VarChar(15)
+  creadoPor        String?              @db.VarChar(120)
+  imagen           String?              @db.VarChar(120)
+  fechaCreacion    DateTime             @default(now())
+
+  inscripciones InscripcionEventoDeporte[]
+
+  @@index([fecha])
+  @@map("deporte_eventos")
+}
+
+model InscripcionEventoDeporte {
+  id               String        @id @default(uuid())
+  eventoId         String
+  evento           EventoDeporte @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  usuarioId        String
+  usuario          Usuario       @relation(fields: [usuarioId], references: [id])
+  estado           String        @default("Activa") @db.VarChar(15)
+  asistio          Boolean?
+  fechaInscripcion DateTime      @default(now())
+
+  @@unique([eventoId, usuarioId])
+  @@index([usuarioId])
+  @@map("deporte_eventos_inscripciones")
+}
+
+// Comunicados del area de Deportes (RF-011) a todos, a una disciplina o a un grupo.
+model AlertaDeporte {
+  id           String               @id @default(uuid())
+  titulo       String               @db.VarChar(120)
+  mensaje      String               @db.Text
+  prioridad    String               @default("Informativa") @db.VarChar(15)
+  alcance      String               @default("Todos") @db.VarChar(15)
+  disciplinaId String?
+  disciplina   DisciplinaDeportiva? @relation(fields: [disciplinaId], references: [id])
+  grupoId      String?
+  grupo        GrupoDeporte?        @relation(fields: [grupoId], references: [id])
+  autor        String?              @db.VarChar(150)
+  autorEmail   String?              @db.VarChar(120)
+  vigenteHasta DateTime?            @db.Date
+  imagen       String?              @db.VarChar(120)
+  fecha        DateTime             @default(now())
+
+  @@index([fecha])
+  @@map("deporte_alertas")
+}
+
+// Inventario de implementos deportivos: existencias, prestamos y movimientos.
+// Disponibles = cantidadTotal - cantidadDanada - prestados sin devolver.
+model ImplementoDeporte {
+  id             String               @id @default(uuid())
+  codigo         String?              @unique @db.VarChar(30)
+  nombre         String               @db.VarChar(120)
+  descripcion    String?              @db.Text
+  disciplinaId   String?
+  disciplina     DisciplinaDeportiva? @relation(fields: [disciplinaId], references: [id])
+  ubicacion      String?              @db.VarChar(120)
+  cantidadTotal  Int                  @default(0)
+  cantidadDanada Int                  @default(0)
+  stockMinimo    Int                  @default(0)
+  activo         Boolean              @default(true)
+  imagen         String?              @db.VarChar(120)
+  fechaCreacion  DateTime             @default(now())
+
+  prestamos   PrestamoImplemento[]
+  movimientos MovimientoInventario[]
+
+  @@map("deporte_implementos")
+}
+
+model PrestamoImplemento {
+  id                      String            @id @default(uuid())
+  implementoId            String
+  implemento              ImplementoDeporte @relation(fields: [implementoId], references: [id])
+  cantidad                Int
+  // Estudiante, Docente, Grupo u Otro.
+  tipoResponsable         String            @db.VarChar(15)
+  responsable             String            @db.VarChar(150)
+  responsableEmail        String?           @db.VarChar(120)
+  grupoId                 String?
+  fechaPrestamo           DateTime          @default(now())
+  fechaDevolucionEsperada DateTime          @db.Date
+  fechaDevolucion         DateTime?
+  devueltosBien           Int?
+  devueltosDanados        Int?
+  perdidos                Int?
+  observacion             String?           @db.VarChar(300)
+  registradoPor           String?           @db.VarChar(120)
+
+  @@index([implementoId])
+  @@map("deporte_prestamos")
+}
+
+model MovimientoInventario {
+  id            String            @id @default(uuid())
+  implementoId  String
+  implemento    ImplementoDeporte @relation(fields: [implementoId], references: [id])
+  // Ingreso, Baja, Ajuste, Prestamo, Devolucion, Reparacion.
+  tipo          String            @db.VarChar(15)
+  cantidad      Int
+  motivo        String?           @db.VarChar(300)
+  registradoPor String?           @db.VarChar(120)
+  fecha         DateTime          @default(now())
+
+  @@index([implementoId])
+  @@map("deporte_movimientos_inventario")
+}
+
 model ConfigDeporte {
   id                  Int @id @default(1)
   horasRequeridas     Int @default(40)
@@ -713,6 +985,9 @@ model SalidaConvocatoria {
   fechaLimiteInscripcion DateTime  @db.Date
   estado                 String    @default("Borrador") @db.VarChar(15)
   creadaPor              String?   @db.VarChar(120)
+  // Reporte SST de la salida de estudiantes de la que nacio la convocatoria.
+  reporteSstId           String?   @unique
+  reporteSst             ReporteSST? @relation(fields: [reporteSstId], references: [id], onDelete: SetNull)
   fechaCreacion          DateTime  @default(now())
   fechaActualizacion     DateTime  @updatedAt
 

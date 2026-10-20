@@ -6,7 +6,7 @@ const {
   calcularProbabilidades,
   calcularParticipacion,
   calcularOcupacionHorarios,
-} = require("../src/modules/estadisticas/analitica");
+} = require("../src/modules/desarrollo-humano/utils/analitica");
 
 const fecha = (iso) => new Date(`${iso}T00:00:00.000Z`);
 const hora = (h) => new Date(Date.UTC(1970, 0, 1, h, 0, 0));

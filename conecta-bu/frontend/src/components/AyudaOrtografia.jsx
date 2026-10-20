@@ -76,7 +76,7 @@ export function AyudaOrtografia() {
   return (
     <div
       role="status"
-      className="fixed z-[60] left-1/2 -translate-x-1/2 bottom-24 sm:bottom-8 w-[min(560px,calc(100vw-32px))] bg-primary-dark text-white rounded-2xl shadow-[0_16px_40px_rgba(11,35,71,0.35)] px-4 py-3 flex items-center gap-3 flex-wrap"
+      className="fixed z-[80] left-1/2 -translate-x-1/2 bottom-24 sm:bottom-8 w-[min(560px,calc(100vw-32px))] bg-primary-dark text-white rounded-2xl shadow-[0_16px_40px_rgba(11,35,71,0.35)] px-4 py-3 flex items-center gap-3 flex-wrap"
     >
       <p className="m-0 flex-1 min-w-[200px] text-sm">
         <strong className="text-cyan">Ortografía:</strong>{" "}

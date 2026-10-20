@@ -6,17 +6,17 @@
 
 let roles = [];
 let usuarios = [];
-let servicios = [];
-let horarios = [];
-let citas = [];
-let asistencias = [];
 let eventos = [];
 let inscripciones = [];
 let asistenciasEvento = [];
 let historial = [];
 let contador = 0;
 const { crearModelosSalud } = require("./salud.mock");
+const { crearAgenda, cumpleFiltroFecha, mismaFecha } = require("./agenda.mock");
 const salud = crearModelosSalud({ obtenerUsuarios: () => usuarios, siguienteId: () => ++contador });
+// Cada modulo con su propia agenda de citas (como en la base de datos).
+const agendaDH = crearAgenda({ sufijo: "Desarrollo", obtenerUsuarios: () => usuarios, siguienteId: () => ++contador });
+const agendaSalud = crearAgenda({ sufijo: "Salud", obtenerUsuarios: () => usuarios, siguienteId: () => ++contador });
 
 function seedRoles() {
   roles = [
@@ -26,24 +26,21 @@ function seedRoles() {
   ];
 }
 
-function seedServicios() {
-  servicios = [
-    {
-      id: "servicio-1",
-      nombre: "Orientación psicológica individual",
-      descripcion: "Acompañamiento personalizado.",
-      activo: true,
-    },
-  ];
-}
+// Servicio de Desarrollo Humano con el que arrancan las pruebas.
+const servicioInicial = () => [
+  {
+    id: "servicio-1",
+    nombre: "Orientación psicológica individual",
+    descripcion: "Acompañamiento personalizado.",
+    activo: true,
+  },
+];
 
 function reset() {
   seedRoles();
-  seedServicios();
   usuarios = [];
-  horarios = [];
-  citas = [];
-  asistencias = [];
+  agendaDH.reset(servicioInicial());
+  agendaSalud.reset();
   eventos = [];
   inscripciones = [];
   asistenciasEvento = [];
@@ -55,15 +52,6 @@ reset();
 
 function clone(obj) {
   return obj ? { ...obj } : obj;
-}
-
-// Soporta tanto igualdad exacta como rangos { gte, lte } sobre fechas.
-function cumpleFiltroFecha(valor, filtro) {
-  if (filtro === undefined) return true;
-  if (filtro instanceof Date || typeof filtro === "string") return mismaFecha(valor, filtro);
-  if (filtro.gte && !(new Date(valor) >= new Date(filtro.gte))) return false;
-  if (filtro.lte && !(new Date(valor) <= new Date(filtro.lte))) return false;
-  return true;
 }
 
 function nombreRol(usuario) {
@@ -93,27 +81,6 @@ function cumpleWhereUsuario(u, where = {}) {
 function conRol(usuario, include) {
   if (!usuario) return usuario;
   return include?.rol ? { ...usuario, rol: roles.find((r) => r.id === usuario.rolId) } : { ...usuario };
-}
-
-function mismaFecha(a, b) {
-  if (!a || !b) return false;
-  return new Date(a).getTime() === new Date(b).getTime();
-}
-
-function attachServicio(horario) {
-  if (!horario) return horario;
-  return { ...horario, servicio: clone(servicios.find((s) => s.id === horario.servicioId)) || null };
-}
-
-function attachRelacionesCita(cita) {
-  if (!cita) return cita;
-  const horario = horarios.find((h) => h.id === cita.horarioId);
-  const usuario = usuarios.find((u) => u.id === cita.usuarioId);
-  return {
-    ...cita,
-    horario: horario ? attachServicio(horario) : null,
-    usuario: usuario ? clone(usuario) : null,
-  };
 }
 
 function attachRelacionesInscripcion(inscripcion, include) {
@@ -211,110 +178,8 @@ const prisma = {
       return include?.rol ? { ...usuario, rol: roles.find((r) => r.id === usuario.rolId) } : usuario;
     },
   },
-  servicio: {
-    findMany: async ({ where } = {}) => {
-      let resultado = servicios;
-      if (where?.activo !== undefined) resultado = resultado.filter((s) => s.activo === where.activo);
-      return resultado.map(clone);
-    },
-    findUnique: async ({ where }) => clone(servicios.find((s) => s.id === where.id)) || null,
-  },
-  horario: {
-    findMany: async ({ where } = {}) => {
-      let resultado = horarios;
-      if (where?.ocupado !== undefined) resultado = resultado.filter((h) => h.ocupado === where.ocupado);
-      if (where?.fecha) resultado = resultado.filter((h) => cumpleFiltroFecha(h.fecha, where.fecha));
-      if (where?.servicioId) resultado = resultado.filter((h) => h.servicioId === where.servicioId);
-      return resultado.map(attachServicio);
-    },
-    findUnique: async ({ where }) => attachServicio(horarios.find((h) => h.id === where.id)) || null,
-    updateMany: async ({ where, data }) => {
-      let count = 0;
-      horarios = horarios.map((h) => {
-        if (h.id === where.id && (where.ocupado === undefined || h.ocupado === where.ocupado)) {
-          count += 1;
-          return { ...h, ...data };
-        }
-        return h;
-      });
-      return { count };
-    },
-    update: async ({ where, data }) => {
-      let actualizado = null;
-      horarios = horarios.map((h) => {
-        if (h.id === where.id) {
-          actualizado = { ...h, ...data };
-          return actualizado;
-        }
-        return h;
-      });
-      return attachServicio(actualizado);
-    },
-    create: async ({ data }) => {
-      contador += 1;
-      const horario = { id: `horario-${contador}`, cupo: 1, ocupado: false, fechaCreacion: new Date(), ...data };
-      horarios.push(horario);
-      return attachServicio(horario);
-    },
-  },
-  cita: {
-    findFirst: async ({ where }) => {
-      const encontrada = citas.find(
-        (c) =>
-          (!where.usuarioId || c.usuarioId === where.usuarioId) &&
-          (!where.estado || c.estado === where.estado) &&
-          (!where.horarioId || c.horarioId === where.horarioId)
-      );
-      return attachRelacionesCita(encontrada) || null;
-    },
-    findUnique: async ({ where }) => attachRelacionesCita(citas.find((c) => c.id === where.id)) || null,
-    findMany: async ({ where } = {}) => {
-      let resultado = citas;
-      if (where?.usuarioId) resultado = resultado.filter((c) => c.usuarioId === where.usuarioId);
-      if (where?.estado) resultado = resultado.filter((c) => c.estado === where.estado);
-      if (where?.horario) {
-        resultado = resultado.filter((c) => {
-          const horario = horarios.find((h) => h.id === c.horarioId);
-          if (!horario) return false;
-          if (where.horario.fecha && !cumpleFiltroFecha(horario.fecha, where.horario.fecha)) return false;
-          if (where.horario.servicioId && horario.servicioId !== where.horario.servicioId) return false;
-          return true;
-        });
-      }
-      return resultado.map(attachRelacionesCita);
-    },
-    create: async ({ data }) => {
-      contador += 1;
-      const cita = {
-        id: `cita-${contador}`,
-        fechaAgendamiento: new Date(),
-        fechaActualizacion: new Date(),
-        ...data,
-      };
-      citas.push(cita);
-      return attachRelacionesCita(cita);
-    },
-    update: async ({ where, data }) => {
-      let actualizada = null;
-      citas = citas.map((c) => {
-        if (c.id === where.id) {
-          actualizada = { ...c, ...data };
-          return actualizada;
-        }
-        return c;
-      });
-      return attachRelacionesCita(actualizada);
-    },
-  },
-  asistenciaCita: {
-    findUnique: async ({ where }) => clone(asistencias.find((a) => a.citaId === where.citaId)) || null,
-    create: async ({ data }) => {
-      contador += 1;
-      const asistencia = { id: `asistencia-${contador}`, fechaRegistro: new Date(), ...data };
-      asistencias.push(asistencia);
-      return clone(asistencia);
-    },
-  },
+  ...agendaDH.modelos,
+  ...agendaSalud.modelos,
   evento: {
     findMany: async ({ where, include } = {}) =>
       eventos.filter((e) => cumpleWhereEvento(e, where)).map((e) => attachRelacionesEvento(e, include)),
@@ -439,12 +304,8 @@ const prisma = {
   __reset: reset,
   __saludTablas: salud.tablas,
   __darAcceso: (email, modulo) => salud.tablas.accesos.push({ id: `acceso-${++contador}`, email: email.toLowerCase(), modulo, asignadoPor: null, fechaAsignacion: new Date() }),
-  __seedServicio: (data) => {
-    contador += 1;
-    const servicio = { id: `servicio-${contador}`, activo: true, descripcion: null, ...data };
-    servicios.push(servicio);
-    return servicio;
-  },
+  // Servicio de la agenda de Desarrollo Humano o, con modulo "salud", de Salud.
+  __seedServicio: ({ modulo, ...data }) => (modulo === "salud" ? agendaSalud : agendaDH).seedServicio(data),
   // "modulos": accesos del personal; por defecto un Administrador tiene
   // acceso a Desarrollo humano (como los administradores migrados).
   __seedUsuario: ({ modulos, ...data }) => {
@@ -462,18 +323,11 @@ const prisma = {
     }
     return usuario;
   },
+  // Horario en la agenda a la que pertenece su servicio (por defecto, el
+  // primer servicio de Desarrollo Humano).
   __seedHorario: (data) => {
-    contador += 1;
-    const horario = {
-      id: `horario-${contador}`,
-      servicioId: servicios[0]?.id,
-      cupo: 1,
-      ocupado: false,
-      fechaCreacion: new Date(),
-      ...data,
-    };
-    horarios.push(horario);
-    return horario;
+    const agenda = data.servicioId && agendaSalud.tieneServicio(data.servicioId) ? agendaSalud : agendaDH;
+    return agenda.seedHorario({ servicioId: agenda.primerServicio(), ...data });
   },
 };
 

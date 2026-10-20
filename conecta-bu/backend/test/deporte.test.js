@@ -6,12 +6,19 @@ jest.mock("../src/config/prisma", () => require("./mocks/prisma.mock"));
 const { configurarEntorno, crearUsuario, auth } = require("./helpers");
 configurarEntorno();
 
+// Reloj fijo a las 7:00 a. m. de hoy (hora de Bogota, en medio de las clases de 6 a 8) para que las reglas de hora
+// (la asistencia se activa a la hora de inicio) no dependan de cuando corran las pruebas.
+const ahoraReal = new Date(Date.now() - 5 * 3600e3);
+const MEDIODIA = Date.UTC(ahoraReal.getUTCFullYear(), ahoraReal.getUTCMonth(), ahoraReal.getUTCDate(), 12, 0);
+beforeAll(() => jest.useFakeTimers({ now: MEDIODIA, doNotFake: ["nextTick", "setImmediate", "clearImmediate", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "queueMicrotask", "hrtime", "performance"] }));
+afterAll(() => jest.useRealTimers());
+
 const request = require("supertest");
 const ExcelJS = require("exceljs");
 const { app } = require("../src/app");
 const { prisma } = require("./mocks/prisma.mock");
 const { hoyBogota } = require("../src/common/utils/fechas");
-const { diaSemana, periodoActual } = require("../src/modules/deporte/deporte.util");
+const { diaSemana, periodoActual } = require("../src/modules/deporte/utils");
 
 const binario = (res, cb) => {
   const partes = [];

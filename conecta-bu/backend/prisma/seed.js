@@ -71,13 +71,13 @@ async function main() {
 // poder probar "Servicios" y "Agendar cita" sin tener que crearlos a mano.
 // Solo se crean la primera vez (si ya existe al menos un servicio, se omite).
 async function seedServiciosYHorarios() {
-  const existentes = await prisma.servicio.count();
+  const existentes = await prisma.servicioDesarrollo.count();
   if (existentes > 0) {
     console.log("Ya existen servicios cargados: se omite el seed de servicios/horarios.");
     return;
   }
 
-  const orientacionIndividual = await prisma.servicio.create({
+  const orientacionIndividual = await prisma.servicioDesarrollo.create({
     data: {
       nombre: "Orientación psicológica individual",
       descripcion:
@@ -86,7 +86,7 @@ async function seedServiciosYHorarios() {
     },
   });
 
-  const tallerGrupal = await prisma.servicio.create({
+  const tallerGrupal = await prisma.servicioDesarrollo.create({
     data: {
       nombre: "Taller de manejo del estrés académico",
       descripcion: "Sesión grupal con herramientas prácticas para afrontar el estrés en época de parciales.",
@@ -120,7 +120,7 @@ async function seedServiciosYHorarios() {
 
   for (const fecha of dias) {
     for (const bloque of bloques) {
-      await prisma.horario.create({
+      await prisma.horarioDesarrollo.create({
         data: {
           servicioId: bloque.servicioId,
           fecha,
@@ -195,29 +195,26 @@ async function seedEventos() {
 // horarios y el catalogo de actividades del periodo actual (tomado del
 // reporte SNIES). Cada parte se crea solo si todavia no existe.
 async function seedSalud() {
-  const { ACTIVIDADES_BASE, periodoDeFecha, rangoDePeriodo } = require("../src/modules/salud/catalogos");
+  const { ACTIVIDADES_BASE, periodoDeFecha, rangoDePeriodo } = require("../src/modules/salud/utils/catalogos");
 
-  const serviciosSalud = await prisma.servicio.count({ where: { modulo: "salud" } });
+  const serviciosSalud = await prisma.servicioSalud.count();
   if (serviciosSalud === 0) {
-    const enfermeria = await prisma.servicio.create({
+    const enfermeria = await prisma.servicioSalud.create({
       data: {
         nombre: "Consulta de enfermería",
         descripcion: "Valoración básica, toma de signos vitales, curaciones y orientación en salud.",
-        modulo: "salud",
       },
     });
-    const medica = await prisma.servicio.create({
+    const medica = await prisma.servicioSalud.create({
       data: {
         nombre: "Atención médica",
         descripcion: "Consulta médica general en la Unidad de Salud Integral.",
-        modulo: "salud",
       },
     });
-    await prisma.servicio.create({
+    await prisma.servicioSalud.create({
       data: {
         nombre: "Telemedicina",
         descripcion: "Atención básica a distancia por videollamada.",
-        modulo: "salud",
       },
     });
 
@@ -229,7 +226,7 @@ async function seedSalud() {
       cursor.setUTCDate(cursor.getUTCDate() + 1);
       if ([0, 6].includes(cursor.getUTCDay())) continue;
       for (const [servicio, hora] of [[enfermeria, 8], [enfermeria, 9], [medica, 14]]) {
-        await prisma.horario.create({
+        await prisma.horarioSalud.create({
           data: { servicioId: servicio.id, fecha: new Date(cursor), horaInicio: horaUTC(hora), horaFin: horaUTC(hora, 30) },
         });
         creados += 1;

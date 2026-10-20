@@ -40,6 +40,7 @@ const MODULOS_ESTUDIANTE = {
     menu: [
       { to: "/mi-deporte", label: "Mi avance", end: true },
       { to: "/mi-deporte/oferta", label: "Disciplinas e inscripción" },
+      { to: "/mi-deporte/eventos", label: "Eventos" },
       { to: "/mi-deporte/horas", label: "Mis horas" },
     ],
   },

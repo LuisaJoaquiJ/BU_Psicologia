@@ -29,8 +29,8 @@ let salud;
 let orientacion;
 beforeEach(() => {
   prisma.__reset();
-  docente = crearUsuario("Estudiante", "docente.viajero@uniautonoma.edu.co", "Docente Viajero");
-  otro = crearUsuario("Estudiante", "otra.persona@uniautonoma.edu.co");
+  docente = crearUsuario("Administrador", "docente.viajero@uniautonoma.edu.co", "Docente Viajero");
+  otro = crearUsuario("Administrador", "otra.persona@uniautonoma.edu.co");
   salud = crearUsuario("Salud", "sst@uniautonoma.edu.co");
   orientacion = crearUsuario("Administrador", "psicologia@uniautonoma.edu.co");
 });
@@ -69,7 +69,13 @@ function enviar(datos, archivos = {}, token = docente.token) {
   return req;
 }
 
-describe("Reportar una salida (cualquier persona de la Institución)", () => {
+describe("Reportar una salida (personal de la Institución)", () => {
+  test("los estudiantes no hacen reportes SST", async () => {
+    const est = crearUsuario("Estudiante", "estudiante.sst@uniautonoma.edu.co");
+    expect((await request(app).get("/api/v1/reportes-sst/mios").set(auth(est.token))).status).toBe(403);
+    expect((await request(app).post("/api/v1/reportes-sst").set(auth(est.token)).send({})).status).toBe(403);
+  });
+
   it("entrega el catálogo con los tipos del formulario", async () => {
     const res = await request(app).get("/api/v1/reportes-sst/catalogos").set(auth(docente.token));
     expect(res.status).toBe(200);
@@ -93,7 +99,10 @@ describe("Reportar una salida (cualquier persona de la Institución)", () => {
     expect(r.estado).toBe("Recibido");
     expect(r.horaSalida).toBe("07:30");
     expect(r.placa).toBe("ABC123");
-    expect(r.responsableDocumento).toBe("1061700111");
+    // Quien reporta ve la cedula enmascarada; el personal de Salud, completa.
+    expect(r.responsableDocumento).toBe("****0111");
+    const paraSalud = await request(app).get(`/api/v1/reportes-sst/${r.id}`).set(auth(salud.token));
+    expect(paraSalud.body.reporte.responsableDocumento).toBe("1061700111");
     expect(r.correo).toBe("docente.viajero@uniautonoma.edu.co");
     expect(r.nombreReporta).toBe("Docente Viajero");
     expect(r.adjuntos).toHaveLength(1);
@@ -178,7 +187,7 @@ describe("Reportar una salida (cualquier persona de la Institución)", () => {
     expect(res.body.reporte.diasAnticipacion).toBe(3);
     expect(res.body.reporte.fueraDeTiempo).toBe(true);
     expect(res.body.reporte.gestion).toBe("ASIST CARD");
-    expect(res.body.reporte.acompanantes).toEqual([{ nombre: "Ana Gómez", documento: "34555666" }]);
+    expect(res.body.reporte.acompanantes).toEqual([{ nombre: "Ana Gómez", documento: "****5666" }]);
 
     const aTiempo = await enviar({ ...datos, fechaSalida: diasDesdeHoy(6) }, { Movilidad: 1 });
     expect(aTiempo.body.reporte.fueraDeTiempo).toBe(false);
@@ -260,21 +269,51 @@ describe("Sugerencias de personas al escribir el nombre de quien viaja", () => {
     await prisma.personaSalud.create({ data: { numeroDocumento: "1061999888", nombres: "Jorge", apellidos: "Estudiante", poblacion: "Estudiante" } });
   });
 
-  it("sugiere docentes y administrativos con su cédula, sin datos de salud", async () => {
+  it("sugiere docentes y administrativos con la cédula enmascarada, sin datos de salud", async () => {
     const res = await buscar("jorge paz");
     expect(res.status).toBe(200);
-    expect(res.body.personas).toEqual([{ nombre: "Jorge Iván Paz Muñoz", tipoDocumento: "CC", documento: "10541234", detalle: "Docente" }]);
-    const porCedula = await buscar("3456");
-    expect(porCedula.body.personas[0]).toMatchObject({ nombre: "Diana Ruiz", tipoDocumento: "CE", documento: "34567123" });
-    expect((await buscar("j")).body.personas).toEqual([]);
+    expect(res.body.personas).toEqual([{ nombre: "Jorge Iván Paz Muñoz", tipoDocumento: "CC", documento: "****1234", documentoRef: expect.any(String), detalle: "Docente" }]);
+    expect(JSON.stringify(res.body)).not.toContain("10541234");
+    expect((await buscar("jo")).body.personas).toEqual([]);
     // Sin tildes ni mayusculas tambien encuentra.
-    expect((await buscar("ivan munoz")).body.personas[0].documento).toBe("10541234");
+    expect((await buscar("ivan munoz")).body.personas[0].documento).toBe("****1234");
+  });
+
+  it("no busca por número de cédula", async () => {
+    expect((await buscar("3456")).body.personas).toEqual([]);
+    expect((await buscar("10541234")).body.personas).toEqual([]);
+  });
+
+  it("al guardar, la sugerencia elegida queda con la cédula real", async () => {
+    const [jorge] = (await buscar("jorge paz")).body.personas;
+    const res = await enviar(
+      salidaLocal({
+        responsableNombre: jorge.nombre,
+        responsableDocumento: jorge.documento,
+        responsableDocumentoRef: jorge.documentoRef,
+        acompanantes: [{ nombre: jorge.nombre, documento: jorge.documento, documentoRef: jorge.documentoRef }],
+      }),
+      { Poliza: 1 }
+    );
+    expect(res.status).toBe(201);
+    const guardado = prisma.__saludTablas.reportesSst[0];
+    expect(guardado.responsableDocumento).toBe("10541234");
+    expect(guardado.acompanantes).toEqual([{ nombre: jorge.nombre, documento: "10541234" }]);
+    expect(guardado.responsableDocumentoRef).toBeUndefined();
+    // Quien reporta no recupera la cedula completa al ver su reporte.
+    expect(res.body.reporte.responsableDocumento).toBe("****1234");
+  });
+
+  it("rechaza una cédula enmascarada sin referencia válida", async () => {
+    const res = await enviar(salidaLocal({ responsableDocumento: "****1234", responsableDocumentoRef: "referencia-falsa" }), { Poliza: 1 });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/documento/i);
   });
 
   it("también sugiere a quienes ya viajaron en reportes anteriores", async () => {
     await enviar(salidaLocal({ acompanantes: [{ nombre: "Camilo Andrés Ortega", documento: "76.111.222" }] }), { Poliza: 1 });
     const res = await buscar("ortega", otro.token);
-    expect(res.body.personas).toEqual([{ nombre: "Camilo Andrés Ortega", tipoDocumento: "CC", documento: "76111222", detalle: "Reporte anterior" }]);
+    expect(res.body.personas).toEqual([{ nombre: "Camilo Andrés Ortega", tipoDocumento: "CC", documento: "****1222", documentoRef: expect.any(String), detalle: "Reporte anterior" }]);
   });
 
   it("exige iniciar sesión", async () => {

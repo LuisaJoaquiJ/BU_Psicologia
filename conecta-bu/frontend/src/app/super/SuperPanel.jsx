@@ -1,10 +1,11 @@
 import { Routes, Route } from "react-router-dom";
-import { PanelLayout } from "../../components/AdminLayout";
-import { UsuariosPage } from "../admin/UsuariosPage";
+import { PanelLayout } from "./comunes/componentes/AdminLayout";
+import { UsuariosPage } from "./UsuariosPage";
 import { SuperInicio } from "./SuperInicio";
 import { AccesosPage } from "./AccesosPage";
 import { InformesPage } from "./InformesPage";
 import { EstadisticasSuperPage } from "./EstadisticasSuperPage";
+import { ConfirmarProvider } from "./comunes/componentes/Confirmar";
 
 // Panel del superadministrador (/super): ve todos los modulos de Conecta BU,
 // asigna por correo el personal de cada uno y administra usuarios y roles.
@@ -18,14 +19,16 @@ const MENU_SUPER = [
 
 export function SuperPanel() {
   return (
-    <PanelLayout menu={MENU_SUPER} panel="super">
-      <Routes>
-        <Route index element={<SuperInicio />} />
-        <Route path="estadisticas" element={<EstadisticasSuperPage />} />
-        <Route path="informes" element={<InformesPage />} />
-        <Route path="accesos" element={<AccesosPage />} />
-        <Route path="usuarios" element={<UsuariosPage />} />
-      </Routes>
-    </PanelLayout>
+    <ConfirmarProvider>
+      <PanelLayout menu={MENU_SUPER} panel="super">
+        <Routes>
+          <Route index element={<SuperInicio />} />
+          <Route path="estadisticas" element={<EstadisticasSuperPage />} />
+          <Route path="informes" element={<InformesPage />} />
+          <Route path="accesos" element={<AccesosPage />} />
+          <Route path="usuarios" element={<UsuariosPage />} />
+        </Routes>
+      </PanelLayout>
+    </ConfirmarProvider>
   );
 }

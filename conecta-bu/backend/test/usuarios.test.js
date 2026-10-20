@@ -117,8 +117,8 @@ describe("RF-012: cambio de rol y estado", () => {
 
     // Simula que el unico admin habilitado restante intenta ser degradado por
     // otro admin (deshabilitado no puede, asi que se prueba via servicio).
-    const { cambiarRolUsuario } = require("../src/modules/usuarios/usuarios.service");
-    await expect(cambiarRolUsuario(otroAdmin.usuario.id, admin.usuario.id, "Estudiante")).rejects.toMatchObject({
+    const { usuarioService } = require("../src/modules/super/services/UsuarioService");
+    await expect(usuarioService.cambiarRol(otroAdmin.usuario.id, admin.usuario.id, "Estudiante")).rejects.toMatchObject({
       statusCode: 409,
     });
   });

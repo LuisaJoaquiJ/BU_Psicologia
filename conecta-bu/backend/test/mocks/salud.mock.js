@@ -26,6 +26,7 @@ function cumpleCampo(valor, filtro) {
   const txt = (v) => (insensible ? String(v ?? "").toLowerCase() : String(v ?? ""));
   if (filtro.equals !== undefined && !igual(valor, filtro.equals)) return false;
   if (filtro.in && !filtro.in.some((v) => igual(valor, v))) return false;
+  if (filtro.notIn && filtro.notIn.some((v) => igual(valor, v))) return false;
   if (filtro.not !== undefined && igual(valor, filtro.not)) return false;
   if (filtro.contains !== undefined && !txt(valor).includes(txt(filtro.contains))) return false;
   if (filtro.startsWith !== undefined && !txt(valor).startsWith(txt(filtro.startsWith))) return false;
@@ -70,7 +71,7 @@ function errorUnico(campos) {
 }
 
 function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
-  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [], salidas: [], inscripcionesSalida: [], bloqueos: [] };
+  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [], docentesDeporte: [], eventosDeporte: [], inscripcionesEventoDeporte: [], alertasDeporte: [], implementos: [], prestamos: [], movimientosInv: [], salidas: [], inscripcionesSalida: [], bloqueos: [], inscripcionesActividad: [] };
   let consecutivoSst = 0;
 
   const usuarioPorId = (id) => {
@@ -96,6 +97,10 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     reportesSst: {
       adjuntos: (r, o) => listar("adjuntosSst", { ...(o === true ? {} : o), where: { ...(o?.where || {}), reporteId: r.id } }),
       reportadoPor: (r, o) => seleccionar(usuarioPorId(r.reportadoPorId), o?.select),
+      convocatoria: (r, o) => {
+        const s = tablas.salidas.find((x) => x.reporteSstId === r.id);
+        return s ? seleccionar(s, o?.select) : null;
+      },
     },
     informes: {},
     historicos: {},
@@ -106,8 +111,16 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     asistenciasDeporte: {},
     horasDeporte: {},
     configDeporte: {},
+    docentesDeporte: {},
+    eventosDeporte: {},
+    inscripcionesEventoDeporte: {},
+    alertasDeporte: {},
+    implementos: {},
+    prestamos: {},
+    movimientosInv: {},
     salidas: {},
     inscripcionesSalida: {},
+    inscripcionesActividad: {},
     bloqueos: {},
     adjuntosSst: {
       reporte: (r) => clonar(tablas.reportesSst.find((x) => x.id === r.reporteId)),
@@ -134,8 +147,16 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     asistenciasDeporte: [["sesionId", "usuarioId"]],
     horasDeporte: [],
     configDeporte: [["id"]],
-    salidas: [],
+    docentesDeporte: [["email"]],
+    eventosDeporte: [],
+    inscripcionesEventoDeporte: [["eventoId", "usuarioId"]],
+    alertasDeporte: [],
+    implementos: [["codigo"]],
+    prestamos: [],
+    movimientosInv: [],
+    salidas: [["reporteSstId"]],
     inscripcionesSalida: [["salidaId", "usuarioId"]],
+    inscripcionesActividad: [["actividadId", "usuarioId"]],
     bloqueos: [],
     adjuntosSst: [],
   };
@@ -149,6 +170,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       correo: null,
       poblacion: "Estudiante",
       programa: null,
+      estudianteActivo: false,
       consentimientoDatos: false,
       fechaConsentimiento: null,
       fechaCreacion: new Date(),
@@ -168,8 +190,15 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       pendientes: null,
       observaciones: null,
       activa: true,
+      publicada: false,
+      descripcion: null,
+      lugar: null,
+      horaInicio: null,
+      horaFin: null,
+      cupos: null,
       fechaCreacion: new Date(),
     }),
+    inscripcionesActividad: () => ({ estado: "Inscrita", asistio: false, atencionId: null, fechaInscripcion: new Date() }),
     atenciones: () => ({
       programa: null,
       examenLaboral: null,
@@ -255,8 +284,15 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       fechaCreacion: new Date(),
       fechaActualizacion: new Date(),
     }),
-    disciplinas: () => ({ descripcion: null, tipo: "Individual", activa: true, fechaCreacion: new Date() }),
-    gruposDeporte: () => ({ instructor: null, lugar: null, cupo: 25, inscripcionesAbiertas: true, activo: true, fechaCreacion: new Date() }),
+    disciplinas: () => ({ descripcion: null, tipo: "Individual", categorias: [], activa: true, fechaCreacion: new Date() }),
+    docentesDeporte: () => ({ telefono: null, especialidad: null, activo: true, fechaCreacion: new Date() }),
+    eventosDeporte: () => ({ tipo: "Torneo", descripcion: null, disciplinaId: null, lugar: null, cupo: null, fechaLimite: null, horasReconocidas: null, categorias: [], estado: "Publicado", creadoPor: null, fechaCreacion: new Date() }),
+    inscripcionesEventoDeporte: () => ({ estado: "Activa", asistio: null, fechaInscripcion: new Date() }),
+    implementos: () => ({ codigo: null, descripcion: null, disciplinaId: null, ubicacion: null, cantidadTotal: 0, cantidadDanada: 0, stockMinimo: 0, activo: true, fechaCreacion: new Date() }),
+    prestamos: () => ({ responsableEmail: null, grupoId: null, fechaPrestamo: new Date(), fechaDevolucion: null, devueltosBien: null, devueltosDanados: null, perdidos: null, observacion: null, registradoPor: null }),
+    movimientosInv: () => ({ motivo: null, registradoPor: null, fecha: new Date() }),
+    alertasDeporte: () => ({ prioridad: "Informativa", alcance: "Todos", disciplinaId: null, grupoId: null, autor: null, autorEmail: null, vigenteHasta: null, fecha: new Date() }),
+    gruposDeporte: () => ({ instructor: null, docenteId: null, lugar: null, cupo: 25, inscripcionesAbiertas: true, activo: true, fechaCreacion: new Date() }),
     inscripcionesDeporte: () => ({ estado: "Activa", fechaInscripcion: new Date(), fechaRetiro: null }),
     sesionesDeporte: () => ({ tema: null, registradaPor: null, fechaRegistro: new Date() }),
     asistenciasDeporte: () => ({ presente: true }),
@@ -362,6 +398,11 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
         tablas[tabla] = tablas[tabla].filter((r) => r !== registro);
         return registro;
       },
+      updateMany: async ({ where, data }) => {
+        const lista = tablas[tabla].filter((r) => cumpleWhere(r, where));
+        for (const r of lista) Object.assign(r, data);
+        return { count: lista.length };
+      },
       deleteMany: async ({ where } = {}) => {
         const antes = tablas[tabla].length;
         tablas[tabla] = tablas[tabla].filter((r) => !cumpleWhere(r, where));
@@ -388,9 +429,16 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       asistenciaDeporte: modelo("asistenciasDeporte", "asis"),
       horaDeporteManual: modelo("horasDeporte", "hora"),
       configDeporte: modelo("configDeporte", "config"),
+      docenteDeporte: modelo("docentesDeporte", "docente"),
+      eventoDeporte: modelo("eventosDeporte", "evdep"),
+      inscripcionEventoDeporte: modelo("inscripcionesEventoDeporte", "inevd"),
+      alertaDeporte: modelo("alertasDeporte", "alerta-dep"),
+      implementoDeporte: modelo("implementos", "impl"),
+      prestamoImplemento: modelo("prestamos", "prest"),
+      movimientoInventario: modelo("movimientosInv", "mov"),
       salidaConvocatoria: modelo("salidas", "salida"),
       inscripcionSalida: modelo("inscripcionesSalida", "insal"),
-      bloqueoAgenda: modelo("bloqueos", "bloqueo"),
+      inscripcionActividadSalud: modelo("inscripcionesActividad", "inact"),
     },
     reset() {
       tablas.personas = [];
@@ -409,8 +457,16 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       tablas.asistenciasDeporte = [];
       tablas.horasDeporte = [];
       tablas.configDeporte = [];
+      tablas.docentesDeporte = [];
+      tablas.eventosDeporte = [];
+      tablas.inscripcionesEventoDeporte = [];
+      tablas.alertasDeporte = [];
+      tablas.implementos = [];
+      tablas.prestamos = [];
+      tablas.movimientosInv = [];
       tablas.salidas = [];
       tablas.inscripcionesSalida = [];
+      tablas.inscripcionesActividad = [];
       tablas.bloqueos = [];
       consecutivoSst = 0;
     },

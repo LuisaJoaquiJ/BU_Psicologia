@@ -75,4 +75,4 @@ function notificar(tipo, datos) {
   dispararAutomatizacion(tipo, datos).catch(() => {});
 }
 
-module.exports = { dispararAutomatizacion, notificar, postJson, listarEjecuciones, limpiarEjecuciones };
+module.exports = { dispararAutomatizacion, notificar, postJson, registrar, listarEjecuciones, limpiarEjecuciones };

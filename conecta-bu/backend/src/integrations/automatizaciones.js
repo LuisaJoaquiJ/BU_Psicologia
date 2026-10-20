@@ -8,9 +8,11 @@ function datosEstudiante(usuario) {
   return { id: usuario.id, nombre: usuario.nombre, email: usuario.emailInstitucional };
 }
 
-function datosCita(cita) {
+// modulo: de que area es la cita (el correo lo nombra: Orientacion, Salud Integral).
+function datosCita(cita, modulo = "Orientación") {
   return {
     citaId: cita.id,
+    modulo,
     estado: cita.estado,
     servicio: cita.horario?.servicio?.nombre,
     fecha: cita.horario?.fecha,
@@ -30,12 +32,12 @@ function datosEvento(evento) {
   };
 }
 
-function citaAgendada(usuario, cita) {
-  notificar("cita.agendada", { estudiante: datosEstudiante(usuario), cita: datosCita(cita) });
+function citaAgendada(usuario, cita, modulo) {
+  notificar("cita.agendada", { estudiante: datosEstudiante(usuario), cita: datosCita(cita, modulo) });
 }
 
-function citaCancelada(usuario, cita) {
-  notificar("cita.cancelada", { estudiante: datosEstudiante(usuario), cita: datosCita(cita) });
+function citaCancelada(usuario, cita, modulo) {
+  notificar("cita.cancelada", { estudiante: datosEstudiante(usuario), cita: datosCita(cita, modulo) });
 }
 
 function inscripcionEvento(usuario, inscripcion) {

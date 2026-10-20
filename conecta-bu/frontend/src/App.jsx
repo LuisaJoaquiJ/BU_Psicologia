@@ -1,26 +1,33 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage } from "./app/login/LoginPage";
-import { LandingPage } from "./app/inicio/LandingPage";
+import { LandingPage } from "./app/desarrollo-humano/publico/LandingPage";
 import { PortalPage } from "./app/portal/PortalPage";
-import { SaludPanel } from "./app/salud/SaludPanel";
+import { SaludPanel } from "./app/salud/personal/SaludPanel";
 import { SuperPanel } from "./app/super/SuperPanel";
-import { SaludEstudiantePanel } from "./app/estudiante/SaludEstudiantePanel";
-import { ReportesSstPanel } from "./app/sst/ReportesSstPanel";
-import { DeportePanel } from "./app/deporte/DeportePanel";
-import { MiDeportePanel } from "./app/deporte/MiDeportePanel";
-import { EstudiantePanel } from "./app/estudiante/EstudiantePanel";
-import { AdminPanel } from "./app/admin/AdminPanel";
+import { SaludEstudiantePanel } from "./app/salud/estudiante/SaludEstudiantePanel";
+import { ReportesSstPanel } from "./app/salud/sst/ReportesSstPanel";
+import { DeportePanel, DocentePanel, MiDeportePanel } from "./app/deporte";
+import { EstudiantePanel } from "./app/desarrollo-humano/estudiante/EstudiantePanel";
+import { AdminPanel } from "./app/desarrollo-humano/personal/AdminPanel";
 import { ProtectedRoute } from "./lib/auth/ProtectedRoute";
 import { useAuth } from "./lib/auth/AuthContext";
 import { AyudaOrtografia } from "./components/AyudaOrtografia";
+import { inicioDirecto } from "./lib/modulos";
+import { lazy, Suspense } from "react";
 import { AsistenteFlotante } from "./components/AsistenteFlotante";
 
-// "/" es el portal de Conecta BU con los cinco modulos de Bienestar.
-// "/desarrollo-humano" es la pagina publica de este modulo; a quien ya tiene
-// sesion lo lleva directo a su panel.
+// Galeria de graficas con datos de ejemplo: solo existe en desarrollo (no entra al build).
+const GaleriaGraficas = import.meta.env.DEV ? lazy(() => import("./app/desarrollo-humano/comunes/componentes/graficas/Galeria")) : null;
+
+// "/" es el portal de Conecta BU con los cinco modulos de Bienestar. El
+// personal de un solo modulo y el superadministrador no lo ven: entran
+// directo a su panel. "/desarrollo-humano" es la pagina publica de este
+// modulo; a quien ya tiene sesion lo lleva directo a su panel.
 function PortalInicio() {
-  const { cargando } = useAuth();
+  const { cargando, usuario } = useAuth();
   if (cargando) return null;
+  const directo = inicioDirecto(usuario);
+  if (directo) return <Navigate to={directo} replace />;
   return <PortalPage />;
 }
 
@@ -29,7 +36,7 @@ function DesarrolloHumano() {
   if (cargando) return null;
   if (!estaAutenticado) return <LandingPage />;
   if (usuario.rol === "Estudiante") return <Navigate to="/estudiante" replace />;
-  return <Navigate to="/" replace />;
+  return <Navigate to={inicioDirecto(usuario) || "/"} replace />;
 }
 
 export default function App() {
@@ -41,6 +48,16 @@ export default function App() {
         <Route path="/" element={<PortalInicio />} />
         <Route path="/desarrollo-humano" element={<DesarrolloHumano />} />
         <Route path="/login" element={<LoginPage />} />
+        {GaleriaGraficas && (
+          <Route
+            path="/dev/graficas"
+            element={
+              <Suspense fallback={null}>
+                <GaleriaGraficas />
+              </Suspense>
+            }
+          />
+        )}
 
         <Route
           path="/estudiante/*"
@@ -54,7 +71,7 @@ export default function App() {
         <Route
           path="/admin/*"
           element={
-            <ProtectedRoute rolesPermitidos={["Administrador", "SuperAdministrador"]} modulo="desarrollo-humano">
+            <ProtectedRoute rolesPermitidos={["Administrador"]} modulo="desarrollo-humano">
               <AdminPanel />
             </ProtectedRoute>
           }
@@ -63,7 +80,7 @@ export default function App() {
         <Route
           path="/salud/*"
           element={
-            <ProtectedRoute rolesPermitidos={["Administrador", "SuperAdministrador"]} modulo="salud">
+            <ProtectedRoute rolesPermitidos={["Administrador"]} modulo="salud">
               <SaludPanel />
             </ProtectedRoute>
           }
@@ -91,17 +108,26 @@ export default function App() {
         <Route
           path="/deporte/*"
           element={
-            <ProtectedRoute rolesPermitidos={["Administrador", "SuperAdministrador"]} modulo="deporte">
+            <ProtectedRoute rolesPermitidos={["Administrador"]} modulo="deporte">
               <DeportePanel />
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/deporte-docente/*"
+          element={
+            <ProtectedRoute rolesPermitidos={["Administrador"]} modulo="deporte-docente">
+              <DocentePanel />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Salidas institucionales y reportes SST: cualquier persona con sesion. */}
+        {/* Salidas institucionales y reportes SST: solo el personal (los
+            estudiantes se inscriben a las salidas en Mi Salud). */}
         <Route
           path="/reportes-sst/*"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute rolesPermitidos={["Administrador"]}>
               <ReportesSstPanel />
             </ProtectedRoute>
           }

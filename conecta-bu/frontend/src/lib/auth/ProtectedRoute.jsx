@@ -16,6 +16,12 @@ export function ProtectedRoute({ children, rolesPermitidos, modulo }) {
     return <Navigate to="/login" replace />;
   }
 
+  // El superadministrador solo trabaja en su panel: cualquier otra seccion
+  // (modulos, area del estudiante, reportes SST) lo devuelve a /super.
+  if (usuario.rol === "SuperAdministrador" && !rolesPermitidos?.includes("SuperAdministrador")) {
+    return <Navigate to="/super" replace />;
+  }
+
   if (rolesPermitidos && !rolesPermitidos.includes(usuario.rol)) {
     return (
       <div className="p-8 text-center text-red-600">

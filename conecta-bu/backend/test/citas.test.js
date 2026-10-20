@@ -75,6 +75,17 @@ describe("RF-004 / HU-07: consulta de horarios disponibles", () => {
     expect(res.body.horarios[0].servicio).toBeTruthy();
   });
 
+  test("no ofrece los horarios de hoy que ya empezaron", async () => {
+    const { token } = crearEstudiante();
+    const { hoyBogota } = require("../src/common/utils/fechas");
+    // Hoy a las 00:00 (hora de Bogota): ya paso; manana a las 9:00 sigue disponible.
+    prisma.__seedHorario({ fecha: hoyBogota(), horaInicio: new Date(Date.UTC(1970, 0, 1, 0, 0)), horaFin: new Date(Date.UTC(1970, 0, 1, 0, 30)) });
+    const libre = prisma.__seedHorario({ fecha: manana(), horaInicio: nueveAM() });
+
+    const res = await request(app).get("/api/v1/citas/horarios-disponibles").set("Authorization", `Bearer ${token}`);
+    expect(res.body.horarios.map((h) => h.id)).toEqual([libre.id]);
+  });
+
   test("sin horarios disponibles, devuelve una lista vacia", async () => {
     const { token } = crearEstudiante();
     const res = await request(app)
@@ -133,6 +144,19 @@ describe("RF-005 / HU-08, HU-09, HU-10: agendamiento de citas", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({ horarioId: horario2.id });
     expect(segunda.status).toBe(409);
+  });
+
+  test("no agenda un horario pasado, sin cita o en un tiempo no disponible (409)", async () => {
+    const { token } = crearEstudiante();
+    const pasado = prisma.__seedHorario({ fecha: enDias(-1) });
+    const sinCita = prisma.__seedHorario({ fecha: manana(), sinCita: true });
+    const bloqueado = prisma.__seedHorario({ fecha: enDias(2) });
+    await prisma.bloqueoDesarrollo.create({ data: { fechaInicio: enDias(2), fechaFin: enDias(2), motivo: "Incapacidad" } });
+
+    for (const horario of [pasado, sinCita, bloqueado]) {
+      const res = await request(app).post("/api/v1/citas").set("Authorization", `Bearer ${token}`).send({ horarioId: horario.id });
+      expect(res.status).toBe(409);
+    }
   });
 
   test("sin horarioId en el body, responde 400", async () => {
