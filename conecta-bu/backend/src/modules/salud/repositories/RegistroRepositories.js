@@ -29,15 +29,15 @@ class PersonaRepository extends BaseRepository {
   pagina(where, pagina, porPagina) {
     return this.tabla.findMany({ where, orderBy: [{ apellidos: "asc" }, { nombres: "asc" }], skip: (pagina - 1) * porPagina, take: porPagina });
   }
+  porIds(ids) {
+    return ids.length ? this.tabla.findMany({ where: { id: { in: ids } } }) : [];
+  }
   porDocumentos(documentos) {
     return this.tabla.findMany({ where: { numeroDocumento: { in: documentos } } });
   }
   crearVarias(data) {
     return this.tabla.createMany({ data, skipDuplicates: true });
   }
-  // Docentes y administrativos (sugerencias del formulario de reportes SST).
-  docentesYAdministrativos(prefijoDocumento) {
-    return this.tabla.findMany({
   porCodigos(codigos) {
     return codigos.length ? this.tabla.findMany({ where: { codigoEstudiantil: { in: codigos } } }) : [];
   }
@@ -48,6 +48,9 @@ class PersonaRepository extends BaseRepository {
   desactivarEstudiantesExcepto(documentos) {
     return this.tabla.updateMany({ where: { estudianteActivo: true, numeroDocumento: { notIn: documentos } }, data: { estudianteActivo: false } });
   }
+  // Docentes y administrativos (sugerencias del formulario de reportes SST).
+  docentesYAdministrativos(prefijoDocumento) {
+    return this.tabla.findMany({
       where: { poblacion: { in: ["Docente", "Administrativo"] }, ...(prefijoDocumento ? { numeroDocumento: { startsWith: prefijoDocumento } } : {}) },
       select: { nombres: true, apellidos: true, tipoDocumento: true, numeroDocumento: true, poblacion: true },
       orderBy: [{ apellidos: "asc" }, { nombres: "asc" }],
@@ -74,6 +77,28 @@ class ActividadRepository extends BaseRepository {
   }
   crearVarias(data) {
     return this.tabla.createMany({ data });
+  }
+  // Jornadas publicadas para los estudiantes que aun no terminan.
+  publicadasDesde(hoy) {
+    return this.tabla.findMany({ where: { publicada: true, activa: true, fechaFin: { gte: hoy } }, orderBy: [{ fechaInicio: "asc" }, { nombre: "asc" }] });
+  }
+}
+
+class InscripcionActividadRepository extends BaseRepository {
+  constructor(db) {
+    super("inscripcionActividadSalud", db);
+  }
+  activasDe(ids) {
+    return ids.length ? this.tabla.findMany({ where: { actividadId: { in: ids }, estado: "Inscrita" } }) : [];
+  }
+  deUsuario(usuarioId) {
+    return this.tabla.findMany({ where: { usuarioId } });
+  }
+  deUsuarioEn(actividadId, usuarioId) {
+    return this.tabla.findFirst({ where: { actividadId, usuarioId } });
+  }
+  deActividad(actividadId) {
+    return this.tabla.findMany({ where: { actividadId }, orderBy: { fechaInscripcion: "asc" } });
   }
 }
 
@@ -136,4 +161,4 @@ class EvidenciaRepository extends BaseRepository {
   }
 }
 
-module.exports = { PersonaRepository, ActividadRepository, AtencionRepository, EvidenciaRepository };
+module.exports = { PersonaRepository, ActividadRepository, InscripcionActividadRepository, AtencionRepository, EvidenciaRepository };

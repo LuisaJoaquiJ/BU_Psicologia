@@ -34,8 +34,9 @@ class AtencionService {
 
   // En jornadas puntuales ajusta el rango de fechas de la actividad (se usa
   // en el reporte SNIES).
+  // Las jornadas publicadas para estudiantes conservan las fechas anunciadas.
   async ajustarRango(actividad, fecha) {
-    if (actividad.permanente) return;
+    if (actividad.permanente || actividad.publicada) return;
     const previas = await this.repos.atenciones.contar({ actividadId: actividad.id });
     const cambios = {};
     if (previas === 0) Object.assign(cambios, { fechaInicio: fecha, fechaFin: fecha });

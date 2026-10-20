@@ -24,6 +24,12 @@ export function FormularioActividad({ inicial = {}, catalogos, periodo, onGuarda
     dificultades: "",
     aprendizajes: "",
     observaciones: "",
+    publicada: false,
+    lugar: "",
+    horaInicio: "",
+    horaFin: "",
+    cupos: "",
+    descripcion: "",
     ...Object.fromEntries(Object.entries(inicial).map(([k, v]) => [k, v ?? ""])),
   });
   const [error, setError] = useState("");
@@ -81,6 +87,33 @@ export function FormularioActividad({ inicial = {}, catalogos, periodo, onGuarda
           Pide signos vitales (enfermería)
         </label>
       </div>
+
+      <fieldset className="rounded-2xl border border-gray-200 p-4 m-0">
+        <label className="flex gap-2.5 items-center text-sm font-bold text-ink-900 cursor-pointer">
+          <input type="checkbox" checked={form.publicada} onChange={cambiar("publicada")} className="w-4 h-4 accent-primary" />
+          Publicar para que los estudiantes se inscriban
+        </label>
+        <p className="m-0 mt-1 ml-[26px] text-xs text-ink-500">Aparece en Mi Salud → Jornadas y campañas hasta la fecha final.</p>
+        {form.publicada && (
+          <div className="grid gap-3 sm:grid-cols-2 mt-4">
+            <Campo etiqueta="Lugar" className="sm:col-span-2">
+              <input value={form.lugar} onChange={cambiar("lugar")} className={claseCampo} placeholder="Ej. Bloque A, primer piso" />
+            </Campo>
+            <Campo etiqueta="Hora de inicio">
+              <input type="time" value={form.horaInicio} onChange={cambiar("horaInicio")} className={claseCampo} />
+            </Campo>
+            <Campo etiqueta="Hora final">
+              <input type="time" value={form.horaFin} onChange={cambiar("horaFin")} className={claseCampo} />
+            </Campo>
+            <Campo etiqueta="Cupos" ayuda="Vacío = sin límite.">
+              <input type="number" min="1" value={form.cupos} onChange={cambiar("cupos")} className={claseCampo} />
+            </Campo>
+            <Campo etiqueta="Descripción para los estudiantes" className="sm:col-span-2">
+              <textarea value={form.descripcion} onChange={cambiar("descripcion")} rows={2} className={`${claseCampo} py-2.5`} placeholder="Qué se hará y qué deben llevar." />
+            </Campo>
+          </div>
+        )}
+      </fieldset>
 
       <details className="rounded-2xl border border-gray-200 p-4">
         <summary className="cursor-pointer font-bold text-primary text-sm">Datos para SNIES e informe de gestión</summary>

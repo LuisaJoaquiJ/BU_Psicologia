@@ -12,6 +12,10 @@ const router = Router();
 const soloEstudiante = [authMiddleware, requireRole("Estudiante")];
 
 router.get("/mis-participaciones", soloEstudiante, manejar(e.participaciones));
+// Jornadas y campanas publicadas: inscripcion del estudiante.
+router.get("/jornadas", soloEstudiante, manejar(e.jornadas));
+router.post("/jornadas/:id/inscripcion", soloEstudiante, manejar(e.inscribirseJornada));
+router.patch("/jornadas/:id/inscripcion/cancelar", soloEstudiante, manejar(e.cancelarJornada));
 router.get("/salidas", soloEstudiante, manejar(s.paraEstudiante));
 router.post("/salidas/:id/inscripcion", soloEstudiante, comprobanteService.recibir, manejar(s.inscribirse));
 router.patch("/salidas/:id/inscripcion/cancelar", soloEstudiante, manejar(s.cancelar));

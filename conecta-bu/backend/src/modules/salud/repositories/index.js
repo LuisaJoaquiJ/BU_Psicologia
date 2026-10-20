@@ -10,6 +10,7 @@ function reposCon(db) {
   return {
     personas: new registro.PersonaRepository(db),
     actividades: new registro.ActividadRepository(db),
+    inscripcionesActividad: new registro.InscripcionActividadRepository(db),
     atenciones: new registro.AtencionRepository(db),
     evidencias: new registro.EvidenciaRepository(db),
     informes: new informes.InformeRepository(db),

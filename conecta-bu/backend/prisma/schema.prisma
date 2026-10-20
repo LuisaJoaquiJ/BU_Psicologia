@@ -411,13 +411,40 @@ model ActividadSalud {
   pendientes           String?                 @db.Text
   observaciones        String?                 @db.Text
   activa               Boolean                 @default(true)
+  // Publicacion para los estudiantes (jornadas y campanas con inscripcion).
+  publicada            Boolean                 @default(false)
+  descripcion          String?                 @db.Text
+  lugar                String?                 @db.VarChar(200)
+  horaInicio           String?                 @db.VarChar(5)
+  horaFin              String?                 @db.VarChar(5)
+  // Vacio = sin limite de cupos.
+  cupos                Int?
   fechaCreacion        DateTime                @default(now())
 
-  atenciones AtencionSalud[]
-  evidencias EvidenciaSalud[]
+  atenciones    AtencionSalud[]
+  evidencias    EvidenciaSalud[]
+  inscripciones InscripcionActividadSalud[]
 
   @@unique([periodo, codigo])
   @@map("salud_actividades")
+}
+
+// Inscripcion de un estudiante a una jornada o campana publicada. Al marcar
+// la asistencia se registra la atencion (su participacion).
+model InscripcionActividadSalud {
+  id               String         @id @default(uuid())
+  actividadId      String
+  actividad        ActividadSalud @relation(fields: [actividadId], references: [id], onDelete: Cascade)
+  usuarioId        String
+  personaId        String
+  estado           String         @default("Inscrita") @db.VarChar(15)
+  asistio          Boolean        @default(false)
+  atencionId       String?
+  fechaInscripcion DateTime       @default(now())
+
+  @@unique([actividadId, usuarioId])
+  @@index([usuarioId])
+  @@map("salud_actividades_inscripciones")
 }
 
 model AtencionSalud {
@@ -958,6 +985,9 @@ model SalidaConvocatoria {
   fechaLimiteInscripcion DateTime  @db.Date
   estado                 String    @default("Borrador") @db.VarChar(15)
   creadaPor              String?   @db.VarChar(120)
+  // Reporte SST de la salida de estudiantes de la que nacio la convocatoria.
+  reporteSstId           String?   @unique
+  reporteSst             ReporteSST? @relation(fields: [reporteSstId], references: [id], onDelete: SetNull)
   fechaCreacion          DateTime  @default(now())
   fechaActualizacion     DateTime  @updatedAt
 
@@ -988,9 +1018,6 @@ model InscripcionSalida {
   observacion        String?            @db.Text
   consentimiento     Boolean            @default(false)
   revisadoPor        String?            @db.VarChar(120)
-  // Reporte SST de la salida de estudiantes de la que nacio la convocatoria.
-  reporteSstId           String?   @unique
-  reporteSst             ReporteSST? @relation(fields: [reporteSstId], references: [id], onDelete: SetNull)
   fechaRevision      DateTime?
   fechaInscripcion   DateTime           @default(now())
   fechaActualizacion DateTime           @updatedAt

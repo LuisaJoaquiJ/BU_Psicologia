@@ -60,7 +60,18 @@ function validarActividad(datos, { parcial = false } = {}) {
   if (datos.fechaInicio !== undefined) limpio.fechaInicio = aFechaUTC(datos.fechaInicio, "fecha de inicio");
   if (datos.fechaFin !== undefined) limpio.fechaFin = aFechaUTC(datos.fechaFin, "fecha final");
   if (datos.tipoSnies !== undefined) limpio.tipoSnies = enteroOpcional(datos.tipoSnies, "tipo SNIES", { min: 1, max: 99 }) ?? 1;
-  for (const campo of ["permanente", "clinica", "activa"]) if (datos[campo] !== undefined) limpio[campo] = datos[campo] === true;
+  for (const campo of ["permanente", "clinica", "activa", "publicada"]) if (datos[campo] !== undefined) limpio[campo] = datos[campo] === true;
+  // Publicacion para los estudiantes: lugar, horario, cupos y descripcion.
+  if (datos.lugar !== undefined) limpio.lugar = textoCorto(datos.lugar, 200);
+  for (const [campo, nombre] of [["horaInicio", "hora de inicio"], ["horaFin", "hora final"]]) {
+    if (datos[campo] === undefined) continue;
+    const h = textoCorto(datos[campo], 5);
+    if (h && !/^([01]\d|2[0-3]):[0-5]\d$/.test(h)) throw new AppError(400, `La ${nombre} debe tener el formato HH:MM.`);
+    limpio[campo] = h;
+  }
+  if (datos.descripcion !== undefined) limpio.descripcion = textoLargo(datos.descripcion);
+  const cupos = enteroOpcional(datos.cupos, "cupos", { min: 1, max: 10000 });
+  if (cupos !== undefined) limpio.cupos = cupos;
   const numeros = [["meta", "meta", { max: 10000 }], ["presupuesto", "presupuesto", {}], ["horasDedicacion", "horas de dedicación", { max: 5000 }]];
   for (const [campo, nombre, rango] of numeros) {
     const n = enteroOpcional(datos[campo], nombre, rango);

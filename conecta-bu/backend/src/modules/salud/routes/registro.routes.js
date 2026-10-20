@@ -26,6 +26,8 @@ router.post("/actividades", manejar(c.crearActividad));
 router.post("/actividades/copiar-periodo", manejar(c.copiarPeriodo));
 router.get("/actividades/:id", manejar(c.actividad));
 router.patch("/actividades/:id", manejar(c.actualizarActividad));
+router.get("/actividades/:id/inscritos", manejar(c.inscritos));
+router.patch("/actividades/:id/inscritos/:inscripcionId", manejar(c.asistencia));
 router.post("/actividades/:id/evidencias", evidenciaService.recibir, manejar(c.subirEvidencias));
 router.get("/evidencias/:id/archivo", manejar(c.archivoEvidencia));
 router.delete("/evidencias/:id", manejar(c.eliminarEvidencia));

@@ -170,11 +170,16 @@ export function SaludParticipacionesPage() {
       {!datos && <div className="h-32 bg-white/60 border border-gray-200 rounded-xl animate-pulse" />}
       {datos && !datos.vinculado && (
         <p className="text-ink-500 bg-white border border-gray-200 rounded-2xl p-6">
-          Aún no tienes participaciones asociadas a tu correo. Cuando asistas a una jornada, pide que registren tu correo institucional.
+          Aún no tienes participaciones asociadas a tu correo. Inscríbete en una jornada o campaña y, cuando asistas, aparecerá aquí.
         </p>
       )}
       {datos?.vinculado && datos.participaciones.length === 0 && (
-        <p className="text-ink-500 bg-white border border-gray-200 rounded-2xl p-6">Todavía no hay participaciones registradas.</p>
+        <p className="text-ink-500 bg-white border border-gray-200 rounded-2xl p-6">
+          Todavía no hay participaciones registradas.{" "}
+          <Link to="/mi-salud/jornadas" className="font-bold text-primary-soft">
+            Ver jornadas y campañas
+          </Link>
+        </p>
       )}
       {datos?.participaciones?.length > 0 && (
         <ul className="list-none m-0 p-0 bg-white border border-gray-200 rounded-xl px-6 py-2">

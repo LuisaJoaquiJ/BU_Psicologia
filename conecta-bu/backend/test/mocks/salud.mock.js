@@ -71,7 +71,7 @@ function errorUnico(campos) {
 }
 
 function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
-  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [], docentesDeporte: [], eventosDeporte: [], inscripcionesEventoDeporte: [], alertasDeporte: [], implementos: [], prestamos: [], movimientosInv: [], salidas: [], inscripcionesSalida: [], bloqueos: [] };
+  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [], docentesDeporte: [], eventosDeporte: [], inscripcionesEventoDeporte: [], alertasDeporte: [], implementos: [], prestamos: [], movimientosInv: [], salidas: [], inscripcionesSalida: [], bloqueos: [], inscripcionesActividad: [] };
   let consecutivoSst = 0;
 
   const usuarioPorId = (id) => {
@@ -97,11 +97,11 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     reportesSst: {
       adjuntos: (r, o) => listar("adjuntosSst", { ...(o === true ? {} : o), where: { ...(o?.where || {}), reporteId: r.id } }),
       reportadoPor: (r, o) => seleccionar(usuarioPorId(r.reportadoPorId), o?.select),
-    },
       convocatoria: (r, o) => {
         const s = tablas.salidas.find((x) => x.reporteSstId === r.id);
         return s ? seleccionar(s, o?.select) : null;
       },
+    },
     informes: {},
     historicos: {},
     disciplinas: {},
@@ -120,6 +120,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     movimientosInv: {},
     salidas: {},
     inscripcionesSalida: {},
+    inscripcionesActividad: {},
     bloqueos: {},
     adjuntosSst: {
       reporte: (r) => clonar(tablas.reportesSst.find((x) => x.id === r.reporteId)),
@@ -155,6 +156,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     movimientosInv: [],
     salidas: [["reporteSstId"]],
     inscripcionesSalida: [["salidaId", "usuarioId"]],
+    inscripcionesActividad: [["actividadId", "usuarioId"]],
     bloqueos: [],
     adjuntosSst: [],
   };
@@ -168,9 +170,9 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       correo: null,
       poblacion: "Estudiante",
       programa: null,
+      estudianteActivo: false,
       consentimientoDatos: false,
       fechaConsentimiento: null,
-      estudianteActivo: false,
       fechaCreacion: new Date(),
       fechaActualizacion: new Date(),
     }),
@@ -188,8 +190,15 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       pendientes: null,
       observaciones: null,
       activa: true,
+      publicada: false,
+      descripcion: null,
+      lugar: null,
+      horaInicio: null,
+      horaFin: null,
+      cupos: null,
       fechaCreacion: new Date(),
     }),
+    inscripcionesActividad: () => ({ estado: "Inscrita", asistio: false, atencionId: null, fechaInscripcion: new Date() }),
     atenciones: () => ({
       programa: null,
       examenLaboral: null,
@@ -389,6 +398,11 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
         tablas[tabla] = tablas[tabla].filter((r) => r !== registro);
         return registro;
       },
+      updateMany: async ({ where, data }) => {
+        const lista = tablas[tabla].filter((r) => cumpleWhere(r, where));
+        for (const r of lista) Object.assign(r, data);
+        return { count: lista.length };
+      },
       deleteMany: async ({ where } = {}) => {
         const antes = tablas[tabla].length;
         tablas[tabla] = tablas[tabla].filter((r) => !cumpleWhere(r, where));
@@ -398,11 +412,6 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
   }
 
   return {
-      updateMany: async ({ where, data }) => {
-        const lista = tablas[tabla].filter((r) => cumpleWhere(r, where));
-        for (const r of lista) Object.assign(r, data);
-        return { count: lista.length };
-      },
     modelos: {
       personaSalud: modelo("personas", "persona"),
       actividadSalud: modelo("actividades", "actividad-salud"),
@@ -429,6 +438,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       movimientoInventario: modelo("movimientosInv", "mov"),
       salidaConvocatoria: modelo("salidas", "salida"),
       inscripcionSalida: modelo("inscripcionesSalida", "insal"),
+      inscripcionActividadSalud: modelo("inscripcionesActividad", "inact"),
     },
     reset() {
       tablas.personas = [];
@@ -456,6 +466,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       tablas.movimientosInv = [];
       tablas.salidas = [];
       tablas.inscripcionesSalida = [];
+      tablas.inscripcionesActividad = [];
       tablas.bloqueos = [];
       consecutivoSst = 0;
     },

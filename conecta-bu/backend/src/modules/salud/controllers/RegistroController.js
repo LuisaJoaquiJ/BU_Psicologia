@@ -7,6 +7,7 @@ const { atencionService } = require("../services/AtencionService");
 const { evidenciaService } = require("../services/EvidenciaService");
 const { importadorService } = require("../services/ImportadorService");
 const { estudiantesActivosService } = require("../services/EstudiantesActivosService");
+const { jornadaService } = require("../services/JornadaService");
 
 // Registro de la Unidad de Salud: catalogos, personas, actividades,
 // evidencias, atenciones e importacion de los Excel existentes.
@@ -53,6 +54,10 @@ class RegistroController extends BaseController {
   atenciones = async (req, res) => this.ok(res, { atenciones: await atencionService.listar(req.query) });
   actualizarAtencion = async (req, res) => this.ok(res, { atencion: await atencionService.actualizar(req.params.id, req.body) });
   eliminarAtencion = async (req, res) => this.ok(res, await atencionService.eliminar(req.params.id));
+
+  // ---- Inscritos de una jornada publicada y su asistencia ----
+  inscritos = async (req, res) => this.ok(res, { inscritos: await jornadaService.inscritos(req.params.id) });
+  asistencia = async (req, res) => this.ok(res, await jornadaService.marcarAsistencia(req.params.id, req.params.inscripcionId, req.body?.asistio === true, req.usuario));
 
   // ---- Estudiantes activos (lista del periodo en Excel) ----
   resumenActivos = async (req, res) => this.ok(res, await estudiantesActivosService.resumen());

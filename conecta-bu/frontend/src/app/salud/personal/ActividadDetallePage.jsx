@@ -179,6 +179,79 @@ function SubirEvidencias({ actividadId, onSubidas }) {
 
 // Detalle de una actividad: indicadores, datos para SNIES/informe,
 // evidencias (fotos y planillas) y lista de asistentes.
+// Estudiantes inscritos desde Mi Salud: al marcar la asistencia queda
+// registrada la atencion (su participacion).
+function Inscritos({ actividad, onCambio }) {
+  const [inscritos, setInscritos] = useState(null);
+  const [error, setError] = useState("");
+  const [guardando, setGuardando] = useState(null);
+
+  const cargar = () =>
+    http
+      .get(`/salud/actividades/${actividad.id}/inscritos`)
+      .then((r) => setInscritos(r.data.inscritos))
+      .catch((err) => setError(mensajeError(err, "No fue posible cargar los inscritos.")));
+  useEffect(() => {
+    cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actividad.id]);
+
+  async function marcar(ins, asistio) {
+    setGuardando(ins.id);
+    setError("");
+    try {
+      await http.patch(`/salud/actividades/${actividad.id}/inscritos/${ins.id}`, { asistio });
+      await cargar();
+      onCambio?.();
+    } catch (err) {
+      setError(mensajeError(err, "No fue posible guardar la asistencia."));
+    } finally {
+      setGuardando(null);
+    }
+  }
+
+  const asistieron = inscritos?.filter((i) => i.asistio).length || 0;
+  return (
+    <Tarjeta
+      titulo="Estudiantes inscritos"
+      subtitulo={
+        inscritos
+          ? `${inscritos.length}${actividad.cupos ? ` de ${actividad.cupos} cupos` : ""} · ${asistieron} con asistencia. Marca a quienes llegaron: queda en sus participaciones.`
+          : "Cargando…"
+      }
+    >
+      {error && <div className="mb-3"><Aviso>{error}</Aviso></div>}
+      {inscritos && inscritos.length === 0 && <Vacio>Aún no hay estudiantes inscritos.</Vacio>}
+      {inscritos && inscritos.length > 0 && (
+        <ul className="m-0 p-0 list-none divide-y divide-gray-100">
+          {inscritos.map((i) => (
+            <li key={i.id} className="py-2.5 flex items-center gap-3 flex-wrap">
+              <label className="flex items-center gap-3 flex-1 min-w-[220px] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={i.asistio}
+                  disabled={guardando === i.id}
+                  onChange={(e) => marcar(i, e.target.checked)}
+                  className="w-5 h-5 accent-[#0d9488] shrink-0"
+                  aria-label={`Asistió ${nombreCompleto(i.persona)}`}
+                />
+                <span className="min-w-0">
+                  <span className="block font-semibold text-ink-900">{i.persona ? nombreCompleto(i.persona) : "Persona no encontrada"}</span>
+                  <span className="block text-xs text-ink-500">
+                    {i.persona?.tipoDocumento} {i.persona?.numeroDocumento}
+                    {i.persona?.programa ? ` · ${i.persona.programa}` : ""}
+                  </span>
+                </span>
+              </label>
+              {i.asistio && <Insignia tono="verde">Asistió</Insignia>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Tarjeta>
+  );
+}
+
 export function ActividadDetallePage() {
   const { id } = useParams();
   const catalogos = useCatalogos();
@@ -253,6 +326,7 @@ export function ActividadDetallePage() {
               {actividad.permanente ? <Insignia tono="gris">Servicio permanente</Insignia> : <Insignia>Jornada</Insignia>}
               {actividad.clinica && <Insignia tono="verde">Atención de enfermería</Insignia>}
               {!actividad.activa && <Insignia tono="rojo">Inactiva</Insignia>}
+              {actividad.publicada && <Insignia tono="verde">Publicada para estudiantes</Insignia>}
               <Insignia tono="gris">
                 {fechaCorta(actividad.fechaInicio)} – {fechaCorta(actividad.fechaFin)}
               </Insignia>
@@ -320,6 +394,8 @@ export function ActividadDetallePage() {
             ))}
         </div>
       )}
+
+      {actividad.publicada && <Inscritos actividad={actividad} onCambio={cargar} />}
 
       <Tarjeta titulo="Evidencias" subtitulo="Fotos de la jornada, planillas firmadas y actas. Salen en el registro fotográfico del informe de gestión.">
         <div className="grid gap-5 lg:grid-cols-[360px_1fr]">

@@ -28,6 +28,7 @@ const MODULOS_ESTUDIANTE = {
     menu: [
       { to: "/mi-salud", label: "Agendar cita", end: true },
       { to: "/mi-salud/mis-citas", label: "Mis citas" },
+      { to: "/mi-salud/jornadas", label: "Jornadas y campañas" },
       { to: "/mi-salud/participaciones", label: "Mis participaciones" },
       { to: "/mi-salud/salidas", label: "Salidas" },
     ],
