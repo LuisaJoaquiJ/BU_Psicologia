@@ -75,6 +75,17 @@ describe("RF-004 / HU-07: consulta de horarios disponibles", () => {
     expect(res.body.horarios[0].servicio).toBeTruthy();
   });
 
+  test("no ofrece los horarios de hoy que ya empezaron", async () => {
+    const { token } = crearEstudiante();
+    const { hoyBogota } = require("../src/common/utils/fechas");
+    // Hoy a las 00:00 (hora de Bogota): ya paso; manana a las 9:00 sigue disponible.
+    prisma.__seedHorario({ fecha: hoyBogota(), horaInicio: new Date(Date.UTC(1970, 0, 1, 0, 0)), horaFin: new Date(Date.UTC(1970, 0, 1, 0, 30)) });
+    const libre = prisma.__seedHorario({ fecha: manana(), horaInicio: nueveAM() });
+
+    const res = await request(app).get("/api/v1/citas/horarios-disponibles").set("Authorization", `Bearer ${token}`);
+    expect(res.body.horarios.map((h) => h.id)).toEqual([libre.id]);
+  });
+
   test("sin horarios disponibles, devuelve una lista vacia", async () => {
     const { token } = crearEstudiante();
     const res = await request(app)

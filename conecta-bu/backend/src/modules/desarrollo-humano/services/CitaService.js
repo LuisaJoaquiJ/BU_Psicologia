@@ -1,6 +1,7 @@
 const { prisma } = require("../../../config/prisma");
 const { AppError } = require("../../../common/utils/AppError");
 const { config } = require("../../../config/env");
+const { hoyBogota } = require("../../../common/utils/fechas");
 const repos = require("../repositories");
 const { reposCon } = require("../repositories");
 const { bloqueoService } = require("./BloqueoService");
@@ -13,13 +14,12 @@ class CitaService {
     this.bloqueos = bloqueos;
   }
 
-  // RF-004 / HU-07: horarios libres de hoy en adelante, sin los que caen en
-  // un tiempo no disponible del personal.
+  // RF-004 / HU-07: horarios libres que aun no empiezan (los de hoy que ya
+  // pasaron no se ofrecen), sin los que caen en un tiempo no disponible del personal.
   async disponibles() {
-    const inicioHoy = new Date();
-    inicioHoy.setHours(0, 0, 0, 0);
-    const horarios = await this.repos.horarios.buscar({ ocupado: false, fecha: { gte: inicioHoy } });
-    return this.bloqueos.quitarBloqueados(horarios.filter((h) => !h.sinCita));
+    const ahora = new Date();
+    const horarios = await this.repos.horarios.buscar({ ocupado: false, fecha: { gte: hoyBogota() } });
+    return this.bloqueos.quitarBloqueados(horarios.filter((h) => !h.sinCita && inicioDeCita(h) > ahora));
   }
 
   // RF-005 / HU-08 a HU-10: en una transaccion valida que el estudiante no
