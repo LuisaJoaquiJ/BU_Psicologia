@@ -1,5 +1,7 @@
 # Conecta BU
 
+Manual de uso, historias de usuario, bitácora de desarrollo y bitácora de pruebas: carpeta [`docs/`](docs/HISTORIAS-DE-USUARIO.md).
+
 > **Avance por sprint** (rama `Luisa`)
 >
 > | Sprint | Qué incluye | Requisitos |
@@ -252,19 +254,24 @@ Gemini) están en la carpeta [`n8n/`](n8n/README.md), con la guía paso a paso.
 
 ### Asistente de orientación (RF-014)
 
+La historia que se cumple es la **HU-012** en
+[`docs/HISTORIAS-DE-USUARIO.md`](docs/HISTORIAS-DE-USUARIO.md).
+
 1. **Filtros de seguridad (RN-011)** en el backend, antes de cualquier IA:
    preguntas sobre diagnósticos, medicamentos o tratamientos reciben una
    respuesta fija que orienta a agendar una cita; mensajes con señales de
    crisis reciben las líneas de ayuda (123, 192 opción 4) y la orientación a
    Bienestar. Estos mensajes nunca se envían al modelo.
-2. Si `N8N_AGENTE_URL` está configurada, la pregunta va a ese webhook de n8n
-   junto con contexto real (servicios activos, horarios disponibles, próximos
-   eventos) y las reglas del agente. n8n debe responder `{ "respuesta": "..." }`.
-   Ahí pueden conectar Gemini (nodo *Google Gemini Chat Model* o *AI Agent*) y
-   terminar con *Respond to Webhook*.
-3. Si n8n no está configurado o falla, el asistente responde con una base de
-   conocimiento local construida con esos mismos datos, así la funcionalidad
-   se puede demostrar sin n8n.
+2. Si `GEMINI_API_KEY` está definida, la pregunta va a Gemini con el primer
+   nombre y el contexto público (servicios, horarios disponibles y próximos
+   eventos). El correo no viaja. El modelo se elige con `GEMINI_MODEL`.
+3. Si Gemini no está o falla, y `N8N_AGENTE_URL` está configurada, se intenta
+   el webhook de n8n. n8n debe responder `{ "respuesta": "..." }`.
+4. Si nada de eso responde, el asistente usa la base de conocimiento local
+   construida con esos mismos datos.
+
+En la interfaz está la pantalla **Asistente** y un botón flotante, visible
+con la sesión iniciada y oculto en el ingreso.
 
 ### Dashboard (RF-015)
 
@@ -282,6 +289,9 @@ N8N_SECRET=        # se envía en la cabecera X-Conecta-BU-Secret
 N8N_TIMEOUT_MS=8000
 N8N_AGENTE_TIMEOUT_MS=20000
 HORAS_MINIMAS_CANCELACION=24
+GEMINI_API_KEY=    # asistente (HU-012 / RF-014); si queda vacía, responde la base local
+GEMINI_MODEL=gemini-flash-latest
+GEMINI_TIMEOUT_MS=20000
 ```
 
 Pruebas: `npm test` incluye `usuarios.test.js`, `estadisticas.test.js` y

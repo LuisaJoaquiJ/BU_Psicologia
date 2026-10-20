@@ -14,6 +14,7 @@ import { useAuth } from "./lib/auth/AuthContext";
 import { AyudaOrtografia } from "./components/AyudaOrtografia";
 import { inicioDirecto } from "./lib/modulos";
 import { lazy, Suspense } from "react";
+import { AsistenteFlotante } from "./components/AsistenteFlotante";
 
 // Galeria de graficas con datos de ejemplo: solo existe en desarrollo (no entra al build).
 const GaleriaGraficas = import.meta.env.DEV ? lazy(() => import("./app/desarrollo-humano/comunes/componentes/graficas/Galeria")) : null;
@@ -42,6 +43,7 @@ export default function App() {
   return (
     <>
       <AyudaOrtografia />
+      <AsistenteFlotante />
       <Routes>
         <Route path="/" element={<PortalInicio />} />
         <Route path="/desarrollo-humano" element={<DesarrolloHumano />} />

@@ -20,10 +20,14 @@ const REGLAS =
 // RF-014: asistente de orientacion. Flujo:
 //   1. Filtros de seguridad locales (RN-011) ANTES de cualquier IA: crisis y
 //      solicitudes clinicas nunca se envian al modelo.
-//   2. Si N8N_AGENTE_URL esta configurada, la consulta va al flujo de n8n
-//      (que puede usar Gemini u otro modelo) con contexto del modulo.
-//   3. Si n8n no esta configurado o falla, responde la base local con los
-//      datos reales (servicios, horarios, eventos).
+//   2. Si GEMINI_API_KEY esta definida, la pregunta va a Gemini con el
+//      contexto autorizado y los ultimos mensajes (solo el primer nombre; no
+//      viaja el correo).
+//   3. Si Gemini no esta o falla, y N8N_AGENTE_URL esta configurada, se
+//      intenta el flujo de n8n.
+//   4. Si nada de eso responde, la base local con los datos reales
+//      (servicios, horarios, eventos).
+const claveGemini = () => String(process.env.GEMINI_API_KEY || "").trim();
 class AsistenteService {
   // Contexto autorizado para el agente: el agente no consulta la base de
   // datos; recibe solo datos de Orientacion y, del estudiante, sus propias
@@ -80,6 +84,39 @@ class AsistenteService {
     return respuesta.slice(0, 2000);
   }
 
+  // Gemini con las mismas reglas y el mismo contexto que recibe n8n. El
+  // historial va como turnos previos para entender preguntas de seguimiento.
+  async consultarGemini(pregunta, contexto, usuario, historial) {
+    const modelo = String(process.env.GEMINI_MODEL || "gemini-flash-latest").trim();
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${claveGemini()}`;
+    const primerNombre = usuario.nombre?.split(" ")[0] || "Estudiante";
+    const consulta = `Persona: ${primerNombre}
+Contexto de Conecta BU (JSON): ${JSON.stringify(contexto)}
+
+Pregunta: ${pregunta}`;
+    const turnos = historial.map((m) => ({ role: m.autor === "estudiante" ? "user" : "model", parts: [{ text: m.texto }] }));
+    const controller = new AbortController();
+    const temporizador = setTimeout(() => controller.abort(), Number(process.env.GEMINI_TIMEOUT_MS || 20000));
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: `Eres el asistente de Conecta BU, de Bienestar Institucional de la Uniautónoma del Cauca. ${REGLAS}` }] },
+          contents: [...turnos, { role: "user", parts: [{ text: consulta }] }],
+          generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      const texto = data?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("").trim();
+      if (!res.ok || !texto) throw new Error(data?.error?.message || "Gemini no devolvio texto.");
+      return texto.slice(0, 2000);
+    } finally {
+      clearTimeout(temporizador);
+    }
+  }
+
   // Si el estudiante pide una cita (o responde a los horarios ofrecidos), el
   // backend busca horarios reales; la IA no los puede inventar.
   agenda(texto, contexto, historial) {
@@ -109,6 +146,18 @@ class AsistenteService {
     if (directa) return directa;
     const extra = opciones ? { opciones } : {};
     const local = responderLocal(texto, contexto, usuario.nombre?.split(" ")[0]);
+
+    if (claveGemini()) {
+      try {
+        const inicio = Date.now();
+        const respuesta = await this.consultarGemini(pregunta, contexto, usuario, historial);
+        registrar({ tipo: "asistente.consulta", estado: "exitosa", detalle: `Gemini respondió en ${Date.now() - inicio} ms.` });
+        return { origen: "gemini", respuesta, sugerencias: local.sugerencias, ...extra };
+      } catch (err) {
+        const detalle = err.name === "AbortError" ? "Tiempo de espera agotado." : err.message;
+        console.error(`[asistente] Gemini no respondio: ${detalle}`);
+      }
+    }
 
     if (config.n8nAgenteUrl) {
       try {
