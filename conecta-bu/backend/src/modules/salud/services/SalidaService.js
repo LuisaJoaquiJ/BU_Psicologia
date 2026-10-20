@@ -90,6 +90,14 @@ class SalidaService {
     for (const r of pendientes) await this.desdeReporte(r.id, null, { publicar: true }).catch(() => {});
   }
 
+  // Cierre automatico: las salidas publicadas cuya fecha limite ya paso
+  // pasan a "Cerrada" (los estudiantes ya no se pueden inscribir).
+  async cerrarVencidas() {
+    const vencidas = await this.repos.salidas.porFecha({ estado: "Publicada", fechaLimiteInscripcion: { lt: hoyBogota() } });
+    for (const s of vencidas) await this.repos.salidas.actualizar(s.id, { estado: "Cerrada" });
+    return vencidas.length;
+  }
+
   async actualizar(id, cuerpo) {
     const actual = await this.obtenerOFallar(id);
     if (actual.estado === "Cancelada") throw new AppError(409, "La salida está cancelada y ya no se puede editar.");

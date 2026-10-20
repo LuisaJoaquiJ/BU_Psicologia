@@ -43,6 +43,11 @@ function inicioDeCita(horario) {
   return new Date(Date.UTC(fecha.getUTCFullYear(), fecha.getUTCMonth(), fecha.getUTCDate(), hora.getUTCHours(), hora.getUTCMinutes()) + DESFASE_BOGOTA_MS);
 }
 
+// Instante real en que termina una cita (fecha + hora final del horario).
+function finDeCita(horario) {
+  return inicioDeCita({ fecha: horario.fecha, horaInicio: horario.horaFin });
+}
+
 // Hora actual en Bogota como "HH:mm".
 function horaBogota() {
   const d = new Date(Date.now() - DESFASE_BOGOTA_MS);
@@ -67,4 +72,4 @@ function texto(v, max) {
 
 const esVerdadero = (v) => v === true || v === "true";
 
-module.exports = { MOTIVOS, DURACIONES, fechaHorario, horaHorario, inicioDeCita, horaBogota, ms, iso, cruza, texto, esVerdadero };
+module.exports = { MOTIVOS, DURACIONES, fechaHorario, horaHorario, inicioDeCita, finDeCita, horaBogota, ms, iso, cruza, texto, esVerdadero };

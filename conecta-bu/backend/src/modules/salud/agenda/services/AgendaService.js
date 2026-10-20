@@ -31,7 +31,8 @@ class AgendaService {
       const r = reposCon(tx);
       const cita = await r.citas.buscarPorId(citaId);
       if (!cita) throw new AppError(404, "Cita no encontrada.");
-      if (cita.estado !== "Agendada") throw new AppError(409, "Solo se puede registrar asistencia de una cita que este agendada.");
+      // "No asistio" sin registro es el cierre automatico: el personal aun puede corregirlo.
+      if (!["Agendada", "NoAsistio"].includes(cita.estado)) throw new AppError(409, "Solo se puede registrar asistencia de una cita que este agendada.");
       if (await r.asistencias.deCita(citaId)) throw new AppError(409, "Ya se registro la asistencia de esta cita.");
       const actualizada = await r.citas.cambiarEstado(citaId, asistio ? "Atendida" : "NoAsistio");
       await r.asistencias.crear({ citaId, asistio: Boolean(asistio), registradoPorId: adminId });
