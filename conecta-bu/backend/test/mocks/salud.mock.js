@@ -97,6 +97,10 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       adjuntos: (r, o) => listar("adjuntosSst", { ...(o === true ? {} : o), where: { ...(o?.where || {}), reporteId: r.id } }),
       reportadoPor: (r, o) => seleccionar(usuarioPorId(r.reportadoPorId), o?.select),
     },
+      convocatoria: (r, o) => {
+        const s = tablas.salidas.find((x) => x.reporteSstId === r.id);
+        return s ? seleccionar(s, o?.select) : null;
+      },
     informes: {},
     historicos: {},
     disciplinas: {},
@@ -148,7 +152,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     implementos: [["codigo"]],
     prestamos: [],
     movimientosInv: [],
-    salidas: [],
+    salidas: [["reporteSstId"]],
     inscripcionesSalida: [["salidaId", "usuarioId"]],
     bloqueos: [],
     adjuntosSst: [],

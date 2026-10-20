@@ -120,11 +120,12 @@ export default function App() {
           }
         />
 
-        {/* Salidas institucionales y reportes SST: cualquier persona con sesion. */}
+        {/* Salidas institucionales y reportes SST: solo el personal (los
+            estudiantes se inscriben a las salidas en Mi Salud). */}
         <Route
           path="/reportes-sst/*"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute rolesPermitidos={["Administrador"]}>
               <ReportesSstPanel />
             </ProtectedRoute>
           }

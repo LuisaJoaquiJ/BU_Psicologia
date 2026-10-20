@@ -6,6 +6,10 @@ const { inscripcionSalidaService } = require("../services/InscripcionSalidaServi
 class SalidaController extends BaseController {
   listar = async (req, res) => this.ok(res, { salidas: await salidaService.listar() });
   crear = async (req, res) => this.creado(res, { salida: await salidaService.crear(req.body, req.usuario) });
+  desdeReporte = async (req, res) => {
+    const { salida, creada } = await salidaService.desdeReporte(req.params.id, req.usuario);
+    this.ok(res, { salida, creada }, creada ? 201 : 200);
+  };
   obtener = async (req, res) => this.ok(res, { salida: await salidaService.obtener(req.params.id) });
   actualizar = async (req, res) => this.ok(res, { salida: await salidaService.actualizar(req.params.id, req.body) });
   cambiarEstado = async (req, res) => this.ok(res, { salida: await salidaService.cambiarEstado(req.params.id, req.body.estado) });

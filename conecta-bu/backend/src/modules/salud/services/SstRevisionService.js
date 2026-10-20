@@ -4,6 +4,7 @@ const repos = require("../repositories");
 const cat = require("../utils/sst");
 const { DIA_MS, texto, parrafo, faltantes, serializar } = require("../utils/sst/validacion");
 const { sstReporteService } = require("./SstReporteService");
+const { salidaService } = require("./SalidaService");
 
 // Bandeja del personal de Salud integral: revisa los documentos de los
 // reportes SST, reporta a la ARL o gestiona ASIST CARD y cambia el estado.
@@ -75,6 +76,10 @@ class SstRevisionService {
     if (gestionExterna !== undefined) data.gestionExterna = gestionExterna === true;
     if (!Object.keys(data).length) return serializar(reporte);
     await this.repos.reportesSst.actualizar(id, { ...data, revisadoPor: usuario.emailInstitucional, fechaRevision: new Date() });
+    // Salida con estudiantes verificada: los estudiantes ya la ven y se inscriben.
+    if (data.estado === "Verificado" && cat.TIPOS[reporte.tipo]?.grupo === "estudiantes") {
+      await salidaService.desdeReporte(id, usuario, { publicar: true }).catch(() => {});
+    }
     return serializar(await this.reportes.obtenerOFallar(id));
   }
 

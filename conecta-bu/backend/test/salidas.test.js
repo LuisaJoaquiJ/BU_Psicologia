@@ -139,3 +139,80 @@ describe("Salidas con inscripción de estudiantes", () => {
     expect((await personal("delete", `/${salida.id}`)).status).toBe(409); // tiene inscripciones
   });
 });
+
+describe("Inscripción abierta desde un reporte SST", () => {
+  const reporteSst = (extra = {}) =>
+    prisma.reporteSST.create({
+      data: {
+        tipo: "SalidaEstudiantesRegional",
+        reportadoPorId: salud.usuario.id,
+        evento: "Práctica de campo en el Cauca",
+        motivo: "Reconocimiento de ecosistemas.",
+        destino: "Popayán, Cauca",
+        responsableNombre: "Ana Gómez",
+        numeroEstudiantes: 25,
+        fechaSalida: new Date(`${enDias(15)}T00:00:00Z`),
+        fechaRegreso: new Date(`${enDias(16)}T00:00:00Z`),
+        horaSalida: "06:00",
+        horaRegreso: "19:00",
+        ...extra,
+      },
+    });
+  const abrir = (id) => request(app).post(`/api/v1/salud/reportes-sst/${id}/convocatoria`).set(auth(salud.token));
+
+  test("crea el borrador con los datos del reporte y no lo duplica", async () => {
+    const reporte = await reporteSst();
+    const res = await abrir(reporte.id);
+    expect(res.status).toBe(201);
+    expect(res.body.salida).toMatchObject({
+      nombre: "Práctica de campo en el Cauca",
+      destino: "Popayán, Cauca",
+      responsable: "Ana Gómez",
+      cupos: 25,
+      estado: "Borrador",
+      fechaSalida: enDias(15),
+      fechaRegreso: enDias(16),
+      fechaLimiteInscripcion: enDias(14),
+      reporteSstId: reporte.id,
+    });
+    const otra = await abrir(reporte.id);
+    expect(otra.status).toBe(200);
+    expect(otra.body.salida.id).toBe(res.body.salida.id);
+    expect((await personal("get", "")).body.salidas).toHaveLength(1);
+
+    // El detalle del reporte muestra la convocatoria enlazada.
+    const detalle = await request(app).get(`/api/v1/reportes-sst/${reporte.id}`).set(auth(salud.token));
+    expect(detalle.body.reporte.convocatoria).toEqual({ id: res.body.salida.id, estado: "Borrador" });
+  });
+
+  test("solo salidas con estudiantes que aún no pasan, y solo el personal de Salud", async () => {
+    const representacion = await reporteSst({ tipo: "RepresentacionNacional" });
+    expect((await abrir(representacion.id)).status).toBe(409);
+    const pasada = await reporteSst({ fechaSalida: new Date(`${enDias(-3)}T00:00:00Z`), fechaRegreso: new Date(`${enDias(-2)}T00:00:00Z`) });
+    expect((await abrir(pasada.id)).status).toBe(409);
+    expect((await abrir("no-existe")).status).toBe(404);
+    const est = crearUsuario("Estudiante", "est@uniautonoma.edu.co");
+    const reporte = await reporteSst();
+    expect((await request(app).post(`/api/v1/salud/reportes-sst/${reporte.id}/convocatoria`).set(auth(est.token))).status).toBe(403);
+  });
+
+  test("al verificar el reporte la salida se publica sola a los estudiantes", async () => {
+    const reporte = await reporteSst({ adjuntos: { create: [{ tipo: "Poliza", nombreArchivo: "poliza.pdf", ruta: "x/poliza.pdf", tipoMime: "application/pdf", tamano: 10 }] } });
+    const res = await request(app).patch(`/api/v1/salud/reportes-sst/${reporte.id}`).set(auth(salud.token)).send({ estado: "Verificado" });
+    expect(res.status).toBe(200);
+    expect(res.body.reporte.convocatoria).toMatchObject({ estado: "Publicada" });
+    const est = crearUsuario("Estudiante", "est@uniautonoma.edu.co");
+    const vista = await estudianteApi(est, "get", "/salidas");
+    expect(vista.body.salidas).toHaveLength(1);
+    expect(vista.body.salidas[0]).toMatchObject({ nombre: "Práctica de campo en el Cauca", inscripcionAbierta: true, cuposDisponibles: 25 });
+  });
+
+  test("las salidas ya verificadas sin convocatoria aparecen al estudiante", async () => {
+    await reporteSst({ estado: "Verificado" });
+    await reporteSst({ estado: "Recibido", evento: "Sin verificar" });
+    const est = crearUsuario("Estudiante", "est@uniautonoma.edu.co");
+    const vista = await estudianteApi(est, "get", "/salidas");
+    expect(vista.body.salidas.map((s) => s.nombre)).toEqual(["Práctica de campo en el Cauca"]);
+    expect((await estudianteApi(est, "get", "/salidas")).body.salidas).toHaveLength(1); // no se duplica
+  });
+});

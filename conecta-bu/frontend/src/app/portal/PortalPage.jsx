@@ -111,7 +111,6 @@ function Portada({ proximo, destinoEventos }) {
   const { usuario } = useAuth();
   const nombre = usuario?.nombre?.split(" ")[0];
   const tramites = tramitesDe(usuario);
-  const esEstudianteOAnonimo = !usuario || usuario.rol === "Estudiante";
   const fecha = proximo ? fechaDeEvento(proximo.fecha) : null;
 
   return (
@@ -141,7 +140,7 @@ function Portada({ proximo, destinoEventos }) {
               </li>
             ))}
           </ul>
-          {esEstudianteOAnonimo && (
+          {!usuario && (
             <p className="mt-1.5 mb-0 text-sm text-ink-500">
               Docentes y administrativos: el reporte de salidas institucionales está en{" "}
               <Link to="/reportes-sst" className="font-bold text-primary underline-offset-4 hover:underline">
@@ -198,6 +197,7 @@ function Portada({ proximo, destinoEventos }) {
     </section>
   );
 }
+
 // Resumen corto de cada dimension para la fila bajo la portada.
 const RESUMEN = {
   "desarrollo-humano": "Psicología y talleres",
@@ -251,7 +251,6 @@ function FilaDimensiones() {
     </section>
   );
 }
-
 
 function Dimensiones() {
   const { usuario } = useAuth();
@@ -328,7 +327,7 @@ function Dimensiones() {
             ) : (
               <p className="m-0 font-bold text-ink-500">Solo para el personal asignado a esta dimensión.</p>
             )}
-            {disponible && modulo.extra && usuario && (
+            {disponible && modulo.extra && usuario && usuario.rol !== "Estudiante" && (
               <Link to={modulo.extra.to} className="mt-3 flex items-center gap-1.5 py-2 text-sm font-bold text-primary hover:underline underline-offset-4 w-fit">
                 {modulo.extra.label}
                 <Icono nombre="flecha" size={16} strokeWidth={2.2} />
@@ -420,8 +419,8 @@ export function PortalPage() {
   return (
     <div className="min-h-screen bg-[#F6F8FB] overflow-x-hidden">
       <Encabezado />
-      <FilaDimensiones />
       <Portada proximo={eventos?.[0]} destinoEventos={destinoEventos} />
+      <FilaDimensiones />
       <Dimensiones />
       <Agenda eventos={eventos} error={error} destino={destinoEventos} />
 

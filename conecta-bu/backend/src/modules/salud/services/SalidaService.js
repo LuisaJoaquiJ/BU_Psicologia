@@ -1,7 +1,11 @@
 const path = require("path");
 const { AppError } = require("../../../common/utils/AppError");
 const repos = require("../repositories");
-const { ESTADOS_SALIDA, texto, datosSalida, serializar, publicaInscripcion } = require("../utils/salidas");
+const { ESTADOS_SALIDA, texto, iso, datosSalida, serializar, publicaInscripcion } = require("../utils/salidas");
+const { TIPOS } = require("../utils/sst");
+const { hoyBogota } = require("../../../common/utils/fechas");
+
+const DIA_MS = 24 * 60 * 60 * 1000;
 const { comprobanteService } = require("./ComprobanteService");
 const { generarListado } = require("../archivos/ListadoSalidaExcel");
 
@@ -43,6 +47,47 @@ class SalidaService {
   async crear(cuerpo, usuario) {
     const estado = cuerpo.estado === "Publicada" ? "Publicada" : "Borrador";
     return serializar(await this.repos.salidas.crear({ ...datosSalida(cuerpo), estado, creadaPor: usuario?.emailInstitucional || null }));
+  }
+
+  // Abre la inscripcion de estudiantes de una salida reportada en SST: crea
+  // la convocatoria con los datos del reporte, en borrador o ya publicada
+  // (al verificar el reporte). Si ya existe, la devuelve (y la publica si se pide).
+  async desdeReporte(reporteId, usuario, { publicar = false } = {}) {
+    const reporte = await this.repos.reportesSst.completo(reporteId);
+    if (!reporte) throw new AppError(404, "El reporte no existe.");
+    if (reporte.convocatoria) {
+      if (publicar && reporte.convocatoria.estado === "Borrador") await this.repos.salidas.actualizar(reporte.convocatoria.id, { estado: "Publicada" });
+      return { salida: await this.obtener(reporte.convocatoria.id), creada: false };
+    }
+    if (TIPOS[reporte.tipo]?.grupo !== "estudiantes") throw new AppError(409, "Solo las salidas con estudiantes abren inscripción.");
+    if (reporte.estado === "Cerrado") throw new AppError(409, "El reporte está cerrado.");
+    const hoy = hoyBogota();
+    const salida = new Date(reporte.fechaSalida);
+    if (salida < hoy) throw new AppError(409, "La salida ya pasó: no se puede abrir inscripción.");
+    // Las inscripciones cierran un dia antes de la salida (o hoy, si es manana).
+    const limite = new Date(Math.max(hoy.getTime(), salida.getTime() - DIA_MS));
+    const datos = datosSalida({
+      nombre: reporte.evento || `Salida a ${reporte.destino}`,
+      destino: reporte.destino,
+      descripcion: reporte.motivo,
+      responsable: reporte.responsableNombre,
+      fechaSalida: iso(reporte.fechaSalida),
+      fechaRegreso: iso(reporte.fechaRegreso || reporte.fechaSalida),
+      horaSalida: reporte.horaSalida,
+      horaRegreso: reporte.horaRegreso,
+      cupos: Math.max(1, Number(reporte.numeroEstudiantes) || 1),
+      fechaLimiteInscripcion: iso(limite),
+    });
+    const creada = await this.repos.salidas.crear({ ...datos, estado: publicar ? "Publicada" : "Borrador", reporteSstId: reporte.id, creadaPor: usuario?.emailInstitucional || null });
+    return { salida: serializar(creada), creada: true };
+  }
+
+  // Salidas con estudiantes ya verificadas en SST que aun no tienen
+  // convocatoria (p. ej. verificadas antes de existir este enlace): se publican.
+  async publicarVerificadas() {
+    const tipos = Object.keys(TIPOS).filter((t) => TIPOS[t].grupo === "estudiantes");
+    const pendientes = await this.repos.reportesSst.buscar({ estado: "Verificado", tipo: { in: tipos }, fechaSalida: { gte: hoyBogota() }, convocatoria: { is: null } });
+    for (const r of pendientes) await this.desdeReporte(r.id, null, { publicar: true }).catch(() => {});
   }
 
   async actualizar(id, cuerpo) {

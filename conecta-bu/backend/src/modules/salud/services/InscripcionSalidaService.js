@@ -16,6 +16,7 @@ class InscripcionSalidaService {
   }
 
   async paraEstudiante(usuario) {
+    await this.salidas.publicarVerificadas();
     const hoy = hoyBogota();
     const vigentes = (await this.repos.salidas.porFecha({ estado: { in: ["Publicada", "Cerrada"] } })).filter((s) => s.fechaRegreso >= hoy);
     const mapa = await this.salidas.conteos(vigentes.map((s) => s.id));

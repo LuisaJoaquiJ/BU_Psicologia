@@ -7,8 +7,9 @@ class ReporteSstRepository extends BaseRepository {
   constructor(db) {
     super("reporteSST", db);
   }
+  // Con la convocatoria de inscripcion que se abrio desde el reporte, si hay.
   completo(id) {
-    return this.tabla.findUnique({ where: { id }, include: CON_ADJUNTOS });
+    return this.tabla.findUnique({ where: { id }, include: { ...CON_ADJUNTOS, convocatoria: { select: { id: true, estado: true } } } });
   }
   buscar(where, { orden = { fechaCreacion: "desc" }, limite } = {}) {
     return this.tabla.findMany({ where, include: CON_ADJUNTOS, orderBy: orden, ...(limite ? { take: limite } : {}) });

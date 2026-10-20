@@ -185,9 +185,18 @@ export function SalidasInscripcionPage() {
     cargar();
   }, []);
 
+  const editar = (s) => setFormulario({ ...VACIA, ...s, costo: s.costo ?? "", horaSalida: s.horaSalida || "", horaRegreso: s.horaRegreso || "" });
+
+  // ?editar=<id>: llega desde un reporte SST con la convocatoria en borrador.
+  const editarId = params.get("editar");
+  useEffect(() => {
+    const s = editarId && salidas?.find((x) => x.id === editarId);
+    if (s) editar(s);
+  }, [editarId, salidas]);
+
   const cerrar = useCallback(() => {
     setFormulario(null);
-    if (params.get("nueva")) setParams({}, { replace: true });
+    if (params.get("nueva") || params.get("editar")) setParams({}, { replace: true });
   }, [params, setParams]);
 
   async function cambiarEstado(s, estado) {
@@ -288,9 +297,7 @@ export function SalidasInscripcionPage() {
                     {s.estado !== "Cancelada" && (
                       <button
                         type="button"
-                        onClick={() =>
-                          setFormulario({ ...VACIA, ...s, costo: s.costo ?? "", horaSalida: s.horaSalida || "", horaRegreso: s.horaRegreso || "" })
-                        }
+                        onClick={() => editar(s)}
                         className="min-h-[42px] px-3 rounded-full text-sm font-bold text-primary hover:bg-primary-light"
                       >
                         Editar

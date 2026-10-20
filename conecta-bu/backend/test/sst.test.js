@@ -29,8 +29,8 @@ let salud;
 let orientacion;
 beforeEach(() => {
   prisma.__reset();
-  docente = crearUsuario("Estudiante", "docente.viajero@uniautonoma.edu.co", "Docente Viajero");
-  otro = crearUsuario("Estudiante", "otra.persona@uniautonoma.edu.co");
+  docente = crearUsuario("Administrador", "docente.viajero@uniautonoma.edu.co", "Docente Viajero");
+  otro = crearUsuario("Administrador", "otra.persona@uniautonoma.edu.co");
   salud = crearUsuario("Salud", "sst@uniautonoma.edu.co");
   orientacion = crearUsuario("Administrador", "psicologia@uniautonoma.edu.co");
 });
@@ -69,7 +69,13 @@ function enviar(datos, archivos = {}, token = docente.token) {
   return req;
 }
 
-describe("Reportar una salida (cualquier persona de la Institución)", () => {
+describe("Reportar una salida (personal de la Institución)", () => {
+  test("los estudiantes no hacen reportes SST", async () => {
+    const est = crearUsuario("Estudiante", "estudiante.sst@uniautonoma.edu.co");
+    expect((await request(app).get("/api/v1/reportes-sst/mios").set(auth(est.token))).status).toBe(403);
+    expect((await request(app).post("/api/v1/reportes-sst").set(auth(est.token)).send({})).status).toBe(403);
+  });
+
   it("entrega el catálogo con los tipos del formulario", async () => {
     const res = await request(app).get("/api/v1/reportes-sst/catalogos").set(auth(docente.token));
     expect(res.status).toBe(200);

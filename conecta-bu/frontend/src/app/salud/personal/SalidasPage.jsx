@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { Icono } from "../comunes/componentes/Iconos";
 import { ESTILO_GRUPO, TONO_ESTADO, destinoDe, diasPara, fechaLarga, hora12, tituloDe, useCatalogoSst } from "../comunes/lib/sst";
@@ -202,6 +202,59 @@ export function SalidasPage() {
 }
 
 // Detalle y revision de un reporte.
+// Inscripcion de estudiantes de una salida reportada: la abre como borrador
+// con los datos del reporte, o lleva a la convocatoria que ya existe.
+const ESTADO_CONVOCATORIA = {
+  Borrador: { texto: "Borrador: falta publicarla", tono: "dorado" },
+  Publicada: { texto: "Publicada: los estudiantes ya se inscriben", tono: "verde" },
+  Cerrada: { texto: "Inscripciones cerradas", tono: "azul" },
+  Cancelada: { texto: "Cancelada", tono: "gris" },
+};
+
+function InscripcionEstudiantes({ reporte }) {
+  const navigate = useNavigate();
+  const [abriendo, setAbriendo] = useState(false);
+  const [error, setError] = useState("");
+  const conv = reporte.convocatoria;
+
+  async function abrir() {
+    setAbriendo(true);
+    setError("");
+    try {
+      const res = await http.post(`/salud/reportes-sst/${reporte.id}/convocatoria`);
+      navigate(`/salud/salidas-estudiantes?editar=${res.data.salida.id}`);
+    } catch (err) {
+      setError(mensajeError(err, "No fue posible abrir la inscripción."));
+      setAbriendo(false);
+    }
+  }
+
+  return (
+    <Tarjeta titulo="Inscripción de estudiantes">
+      {conv ? (
+        <div className="flex flex-col gap-3">
+          <Insignia tono={ESTADO_CONVOCATORIA[conv.estado]?.tono} className="w-fit">
+            {ESTADO_CONVOCATORIA[conv.estado]?.texto || conv.estado}
+          </Insignia>
+          <Link to={conv.estado === "Borrador" ? `/salud/salidas-estudiantes?editar=${conv.id}` : `/salud/salidas-estudiantes/${conv.id}`} className={`${botonSecundario} w-full justify-center`}>
+            {conv.estado === "Borrador" ? "Revisar y publicar" : "Ver inscritos"}
+          </Link>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          <p className="m-0 text-sm text-ink-500">
+            Al verificar la salida se publica sola a los estudiantes, con {reporte.numeroEstudiantes || "los"} cupos y los datos de este reporte. Si quieres agregar costo o datos de pago antes, ábrela como borrador.
+          </p>
+          {error && <Aviso>{error}</Aviso>}
+          <button type="button" disabled={abriendo} onClick={abrir} className={`${botonPrimario} w-full`}>
+            <Icono nombre="mas" size={18} strokeWidth={2.4} /> {abriendo ? "Abriendo…" : "Abrir inscripción"}
+          </button>
+        </div>
+      )}
+    </Tarjeta>
+  );
+}
+
 export function SalidaDetallePage() {
   const { id } = useParams();
   const { catalogo } = useCatalogoSst();
@@ -324,6 +377,8 @@ export function SalidaDetallePage() {
               )}
             </div>
           </Tarjeta>
+
+          {reporte.grupo === "estudiantes" && reporte.estado !== "Cerrado" && <InscripcionEstudiantes reporte={reporte} />}
 
           <Tarjeta titulo="Quien reporta">
             <p className="m-0 font-semibold text-ink-900">{reporte.nombreReporta}</p>

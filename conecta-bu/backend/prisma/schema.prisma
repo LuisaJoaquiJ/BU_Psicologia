@@ -574,7 +574,8 @@ model ReporteSST {
   fechaCreacion        DateTime            @default(now())
   fechaActualizacion   DateTime            @updatedAt
 
-  adjuntos AdjuntoReporteSST[]
+  adjuntos     AdjuntoReporteSST[]
+  convocatoria SalidaConvocatoria?
 
   @@index([estado])
   @@index([fechaSalida])
@@ -984,6 +985,9 @@ model InscripcionSalida {
   observacion        String?            @db.Text
   consentimiento     Boolean            @default(false)
   revisadoPor        String?            @db.VarChar(120)
+  // Reporte SST de la salida de estudiantes de la que nacio la convocatoria.
+  reporteSstId           String?   @unique
+  reporteSst             ReporteSST? @relation(fields: [reporteSstId], references: [id], onDelete: SetNull)
   fechaRevision      DateTime?
   fechaInscripcion   DateTime           @default(now())
   fechaActualizacion DateTime           @updatedAt
