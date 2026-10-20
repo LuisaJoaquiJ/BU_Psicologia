@@ -13,7 +13,7 @@ import { AsistentePage } from "./AsistentePage";
 // estructura de carpetas de F-03 (seccion 6.2).
 export function EstudiantePanel() {
   return (
-    <div>
+    <div className="tema-desarrollo-humano min-h-screen fondo-panel panel-moderno">
       <Navbar modulo="desarrollo-humano" />
       <Routes>
         <Route index element={<InicioEstudiante />} />

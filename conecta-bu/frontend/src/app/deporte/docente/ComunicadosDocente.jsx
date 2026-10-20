@@ -54,7 +54,7 @@ export function ComunicadosDocente() {
         </Ventana>
       )}
       <section className="flex flex-col gap-3">
-        <h2 className="m-0 font-sans text-lg font-bold text-primary">Enviados a tus grupos</h2>
+        <h2 className="m-0 font-sans text-lg font-bold text-primary-dark">Enviados a tus grupos</h2>
         {alertas?.length === 0 && <Vacio>Aún no hay comunicados.</Vacio>}
         {alertas?.map((a) => (
           <TarjetaComunicado key={a.id} a={a} />

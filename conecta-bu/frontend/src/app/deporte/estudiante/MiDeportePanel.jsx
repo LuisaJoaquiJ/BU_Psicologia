@@ -11,7 +11,7 @@ import { ConfirmarProvider } from "../comunes/componentes/Confirmar";
 export function MiDeportePanel() {
   return (
     <ConfirmarProvider>
-      <div>
+      <div className="tema-deporte min-h-screen fondo-panel panel-moderno">
         <Navbar modulo="deporte" />
         <Routes>
           <Route index element={<InicioDeporte />} />

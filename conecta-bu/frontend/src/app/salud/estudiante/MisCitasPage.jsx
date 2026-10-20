@@ -377,7 +377,7 @@ export function MisCitasPage() {
       {citas && citas.length > 0 && (
         <div className="flex flex-col gap-9">
           <section aria-labelledby="proximas">
-            <h2 id="proximas" className="m-0 mb-3 font-sans text-lg font-bold text-primary">
+            <h2 id="proximas" className="m-0 mb-3 font-sans text-lg font-bold text-primary-dark">
               {proximas.length > 1 ? "Próximas citas" : "Tu próxima cita"}
             </h2>
             {proximas.length ? (
@@ -407,7 +407,7 @@ export function MisCitasPage() {
           {historial.length > 0 && (
             <section aria-labelledby="historial" className="flex flex-col gap-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 id="historial" className="m-0 font-sans text-lg font-bold text-primary">
+                <h2 id="historial" className="m-0 font-sans text-lg font-bold text-primary-dark">
                   Historial
                 </h2>
                 <div className="inline-flex rounded-full vidrio-panel p-1" role="tablist" aria-label="Vista del historial">

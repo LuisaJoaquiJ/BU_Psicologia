@@ -37,7 +37,7 @@ function Encabezado() {
   const { estaAutenticado, usuario, cerrarSesion } = useAuth();
   return (
     <header className="relative z-20">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-3 flex items-center justify-between gap-4">
         <span className="hidden sm:block">
           <Logo alto={56} />
         </span>
@@ -115,9 +115,9 @@ function Portada({ proximo, destinoEventos }) {
   const fecha = proximo ? fechaDeEvento(proximo.fecha) : null;
 
   return (
-    <section className="max-w-[1280px] mx-auto px-4 sm:px-6 pt-6 sm:pt-10 pb-16 flex flex-wrap gap-10 lg:gap-12 items-stretch">
-      <div className="flex-[1_1_480px] min-w-0 flex flex-col gap-6 justify-center">
-        <h1 className={`m-0 font-sans text-[44px] sm:text-[64px] lg:text-[72px] leading-[0.98] tracking-[-0.045em] font-extrabold text-primary-dark max-w-[11em] ${ENTRA}`}>
+    <section className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 pt-4 sm:pt-6 pb-6 grid gap-7 lg:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] items-stretch">
+      <div className="min-w-0 flex flex-col gap-5 justify-center">
+        <h1 className={`m-0 font-sans text-[40px] sm:text-[52px] xl:text-[56px] leading-[1] tracking-[-0.045em] font-extrabold text-primary-dark max-w-[13em] ${ENTRA}`}>
           {nombre ? `Hola, ${nombre}` : "Tu bienestar también hace parte de tu formación"}
         </h1>
         <p style={retraso(60)} className={`m-0 text-lg sm:text-xl leading-normal text-ink-600 max-w-[32em] [text-wrap:pretty] ${ENTRA}`}>
@@ -127,12 +127,12 @@ function Portada({ proximo, destinoEventos }) {
         </p>
         <div id="tramites" style={retraso(120)} className={`scroll-mt-6 flex flex-col gap-2 ${ENTRA}`}>
           <h2 className="m-0 mb-1 font-sans text-lg font-extrabold tracking-normal">¿Qué necesitas hacer hoy?</h2>
-          <ul className="list-none m-0 p-0 flex flex-col gap-2">
+          <ul className="list-none m-0 p-0 grid gap-2.5 sm:grid-cols-2">
             {tramites.map((t) => (
               <li key={t.to}>
                 <Link
                   to={t.to}
-                  className="group flex items-center gap-3.5 min-h-[56px] px-[18px] rounded-2xl bg-white border border-[#E3E8F0] font-bold text-ink-900 no-underline transition-[background-color,transform] duration-200 ease-salida hover:bg-[#EAF0FA] motion-safe:hover:translate-x-[3px]"
+                  className="group h-full flex items-center gap-3 min-h-[64px] px-4 rounded-[18px] bg-white border border-[#E3E8F0] font-bold text-[15px] leading-snug text-ink-900 no-underline transition-[background-color,transform] duration-200 ease-salida hover:bg-[#EAF0FA] motion-safe:hover:-translate-y-0.5"
                 >
                   <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: t.color }} />
                   <span className="flex-1">{t.texto}</span>
@@ -153,7 +153,7 @@ function Portada({ proximo, destinoEventos }) {
         </div>
       </div>
 
-      <div style={retraso(180)} className={`flex-[1_1_440px] min-w-0 relative min-h-[460px] sm:min-h-[620px] rounded-[40px] overflow-hidden shadow-[0_30px_70px_rgba(11,35,71,0.25)] ${ENTRA}`}>
+      <div style={retraso(180)} className={`min-w-0 relative min-h-[420px] sm:min-h-[560px] lg:min-h-[600px] rounded-[36px] overflow-hidden shadow-[0_30px_70px_rgba(11,35,71,0.25)] ${ENTRA}`}>
         <img src={IMAGENES.integracion.src} alt={IMAGENES.integracion.alt} className="absolute inset-0 w-full h-full object-cover" />
         <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,35,71,0)_40%,rgba(11,35,71,0.6)_100%)]" />
         <div className="vidrio-claro absolute top-5 left-5 rounded-full py-2 pl-2 pr-4 flex items-center gap-2.5 text-white">
@@ -198,6 +198,60 @@ function Portada({ proximo, destinoEventos }) {
     </section>
   );
 }
+// Resumen corto de cada dimension para la fila bajo la portada.
+const RESUMEN = {
+  "desarrollo-humano": "Psicología y talleres",
+  salud: "Enfermería y prevención",
+  deporte: "Grupos y horas de deporte",
+};
+
+// Las cinco dimensiones a la vista desde la primera pantalla: las disponibles
+// llevan a su modulo; las que vienen, a su detalle mas abajo.
+function FilaDimensiones() {
+  const { usuario } = useAuth();
+  return (
+    <section aria-label="Dimensiones de Bienestar" style={retraso(240)} className={`max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 pb-12 ${ENTRA}`}>
+      <ul className="list-none m-0 p-0 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+        {MODULOS.map((m) => {
+          const lista = m.estado === "disponible";
+          const ruta = lista ? rutaModulo(m, usuario) : null;
+          const contenido = (
+            <>
+              <span
+                aria-hidden="true"
+                className="w-10 h-10 rounded-[14px] flex items-center justify-center shrink-0 text-white"
+                style={{ background: lista ? `linear-gradient(140deg, ${COLOR[m.id]}99, ${COLOR[m.id]})` : "#E8ECF3", color: lista ? "#FFFFFF" : "#6B6B76" }}
+              >
+                <Icono nombre={m.icono} size={20} strokeWidth={2} />
+              </span>
+              <span className="min-w-0 leading-tight">
+                <strong className={`block text-base ${lista ? "text-primary-dark" : "text-ink-600"}`}>{m.nombre}</strong>
+                <span className="text-[13px] text-ink-500">{lista ? RESUMEN[m.id] || m.corto : "Pronto"}</span>
+              </span>
+            </>
+          );
+          return (
+            <li key={m.id}>
+              {lista ? (
+                <Link
+                  to={ruta || "#dimensiones"}
+                  className="h-full flex items-center gap-3 rounded-[22px] px-[18px] py-4 bg-white border border-[#E3E8F0] no-underline transition-[background-color,transform] duration-200 ease-salida hover:bg-[#EAF0FA] motion-safe:hover:-translate-y-0.5"
+                >
+                  {contenido}
+                </Link>
+              ) : (
+                <a href="#dimensiones" className="h-full flex items-center gap-3 rounded-[22px] px-[18px] py-4 border-[1.5px] border-dashed border-[#C9D2E2] no-underline hover:bg-white">
+                  {contenido}
+                </a>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 
 function Dimensiones() {
   const { usuario } = useAuth();
@@ -207,7 +261,7 @@ function Dimensiones() {
   const ruta = rutaModulo(modulo, usuario);
 
   return (
-    <section id="dimensiones" className="scroll-mt-6 max-w-[1280px] mx-auto px-4 sm:px-6 py-16 sm:py-20">
+    <section id="dimensiones" className="scroll-mt-6 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-16 sm:py-20">
       <h2 className="m-0 mb-2 font-sans text-[34px] sm:text-[48px] leading-tight font-extrabold tracking-[-0.04em]">Cinco dimensiones, una sola cuenta</h2>
       <p className="m-0 mb-8 text-ink-500 text-[17px] max-w-[40em]">
         Así organiza la Uniautónoma su Bienestar Institucional. Elige una dimensión para ver qué puedes hacer en ella.
@@ -291,7 +345,7 @@ function Agenda({ eventos, error, destino }) {
   const { usuario } = useAuth();
   return (
     <section id="agenda" className="scroll-mt-6 bg-white">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-16 sm:py-20">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-16 sm:py-20">
         <div className="flex justify-between items-end gap-5 flex-wrap mb-8">
           <h2 className="m-0 font-sans text-[32px] sm:text-[44px] leading-tight font-extrabold tracking-[-0.04em]">Próximamente en el campus</h2>
           <Link to="/desarrollo-humano#eventos" className="inline-flex items-center gap-1.5 min-h-[44px] font-extrabold text-primary">
@@ -366,11 +420,12 @@ export function PortalPage() {
   return (
     <div className="min-h-screen bg-[#F6F8FB] overflow-x-hidden">
       <Encabezado />
+      <FilaDimensiones />
       <Portada proximo={eventos?.[0]} destinoEventos={destinoEventos} />
       <Dimensiones />
       <Agenda eventos={eventos} error={error} destino={destinoEventos} />
 
-      <section id="ayuda" className="scroll-mt-6 max-w-[1280px] mx-auto px-4 sm:px-6 py-16">
+      <section id="ayuda" className="scroll-mt-6 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-16">
         <div className="relative overflow-hidden flex gap-8 flex-wrap items-center justify-between p-7 sm:p-10 rounded-[32px] bg-primary-dark text-white">
           <div aria-hidden="true" className="absolute w-[420px] h-[420px] -right-24 -top-40 rounded-full bg-[radial-gradient(circle,rgba(127,232,255,0.45)_0%,rgba(127,232,255,0)_70%)]" />
           <div aria-hidden="true" className="absolute w-[380px] h-[380px] left-[30%] -bottom-56 rounded-full bg-[radial-gradient(circle,rgba(201,162,63,0.35)_0%,rgba(201,162,63,0)_70%)]" />
@@ -393,7 +448,7 @@ export function PortalPage() {
         </div>
       </section>
 
-      <footer className="max-w-[1280px] mx-auto px-4 sm:px-6 pb-6">
+      <footer className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 pb-6">
         <div className="relative overflow-hidden rounded-[32px] bg-primary-dark text-[#D9E2F2] px-6 sm:px-10 pt-10 pb-6">
           <div aria-hidden="true" className="absolute w-[480px] h-[480px] -left-40 -bottom-64 rounded-full bg-[radial-gradient(circle,rgba(29,78,158,0.9)_0%,rgba(29,78,158,0)_70%)]" />
           <div aria-hidden="true" className="absolute w-[420px] h-[420px] right-[10%] -top-56 rounded-full bg-[radial-gradient(circle,rgba(30,158,154,0.4)_0%,rgba(30,158,154,0)_70%)]" />

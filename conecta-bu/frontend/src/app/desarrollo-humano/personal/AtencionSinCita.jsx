@@ -59,7 +59,7 @@ function ElegirEstudiante({ api, elegido, setElegido, nuevo, setNuevo }) {
     return (
       <div className="flex items-center justify-between gap-3 flex-wrap rounded-2xl border-[1.5px] border-primary bg-primary-light px-4 py-3">
         <span className="flex items-center gap-3 min-w-0">
-          <span className="w-10 h-10 rounded-full bg-primary text-white font-extrabold text-sm grid place-items-center shrink-0">
+          <span className="w-10 h-10 rounded-full boton-liquido font-extrabold text-sm grid place-items-center shrink-0">
             {iniciales(elegido.nombre)}
           </span>
           <span className="min-w-0">

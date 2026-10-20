@@ -34,7 +34,7 @@ export function Avisos() {
   };
   return (
     <section aria-label="Comunicados de Deportes" className="flex flex-col gap-3">
-      <h2 className="m-0 font-sans text-lg font-bold text-primary flex items-center gap-2">
+      <h2 className="m-0 font-sans text-lg font-bold text-primary-dark flex items-center gap-2">
         <Icono nombre="chat" size={18} /> Comunicados ({visibles.length})
       </h2>
       <div className="grid gap-3 md:grid-cols-2">

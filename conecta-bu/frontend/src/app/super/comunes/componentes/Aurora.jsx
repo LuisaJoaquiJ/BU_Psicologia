@@ -55,7 +55,7 @@ function Manchas({ colores }) {
 export function BandaAurora({ tono = "desarrollo-humano", titulo, fecha, texto, acciones, lado, children }) {
   const t = TONOS[tono];
   return (
-    <section className="relative overflow-hidden bg-[#071A38] text-white">
+    <section className="relative overflow-hidden bg-[#071A38] text-white lg:mt-3 lg:mr-3 lg:rounded-[28px]">
       <Manchas colores={t.manchas} />
       <div className="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-12 sm:pt-16 pb-28 flex flex-wrap gap-10 items-end">
         <div className="flex-[999_1_520px] min-w-0 flex flex-col gap-4">

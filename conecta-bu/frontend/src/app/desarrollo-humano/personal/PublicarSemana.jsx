@@ -52,7 +52,7 @@ function citasDelBloque(hora, duracion) {
 
 const chip = (activo) =>
   `min-h-[44px] px-3.5 rounded-full border-[1.5px] text-sm font-extrabold transition-colors ${
-    activo ? "border-primary bg-primary text-white" : "border-[#D3DBE8] bg-white text-primary hover:border-primary"
+    activo ? "border-transparent boton-liquido" : "border-[#D3DBE8] bg-white text-primary hover:border-primary"
   }`;
 
 export function PublicarSemana({ api, servicios, horarios, alPublicar }) {

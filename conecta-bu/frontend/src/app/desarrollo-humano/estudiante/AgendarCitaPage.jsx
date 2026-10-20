@@ -48,7 +48,7 @@ function Pasos({ paso }) {
           >
             <span
               className={`w-[30px] h-[30px] rounded-full shrink-0 flex items-center justify-center font-extrabold text-sm ${
-                hecho ? "bg-[#1D7A55] text-white" : actual ? "bg-primary text-white" : "border-[1.5px] border-[#B8C2D3] text-ink-500"
+                hecho ? "bg-[#1D7A55] text-white" : actual ? "boton-liquido" : "border-[1.5px] border-[#B8C2D3] text-ink-500"
               }`}
             >
               {hecho ? <Icono nombre="check" size={15} strokeWidth={3} /> : n}
@@ -275,7 +275,7 @@ export function AgendarCitaPage() {
                             setDia(f);
                             setHorario(null);
                           }}
-                          className={`h-12 rounded-xl font-extrabold transition-colors ${elegido ? "bg-primary text-white" : "bg-primary-light text-primary-dark hover:bg-[#D3E0F5]"}`}
+                          className={`h-12 rounded-xl font-extrabold transition-colors ${elegido ? "boton-liquido" : "bg-primary-light text-primary-dark hover:bg-[#D3E0F5]"}`}
                         >
                           {n}
                         </button>
@@ -299,7 +299,7 @@ export function AgendarCitaPage() {
                               aria-pressed={elegido}
                               onClick={() => setHorario(h)}
                               className={`min-h-[52px] rounded-xl border-[1.5px] font-bold transition-colors ${
-                                elegido ? "border-primary bg-primary text-white" : "border-[#D3DBE8] bg-white text-primary-dark hover:border-primary"
+                                elegido ? "border-transparent boton-liquido" : "border-[#D3DBE8] bg-white text-primary-dark hover:border-primary"
                               }`}
                             >
                               {formatearHora(h.horaInicio)}

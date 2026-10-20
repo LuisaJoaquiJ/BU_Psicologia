@@ -5,6 +5,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Color interactivo (botones, enlaces, casillas, seleccion) en canales RGB
+   para que Tailwind admita opacidades (bg-primary/10). Azul del escudo por
+   defecto; cada tema de modulo lo cambia abajo. */
+:root {
+  --primario: 29 78 158;
+  --primario-hover: 23 63 130;
+  --primario-claro: 235 241 250;
+}
+
 @layer base {
   body {
     @apply bg-cream text-ink-900 font-sans antialiased;
@@ -81,7 +90,7 @@
     background-color: #edf1f8;
     background-image: radial-gradient(38rem 38rem at 12% -6%, rgba(127, 232, 255, 0.45), transparent 70%),
       radial-gradient(36rem 36rem at 100% 30%, rgba(29, 78, 158, 0.2), transparent 70%),
-      radial-gradient(32rem 32rem at 45% 110%, rgba(201, 162, 63, 0.2), transparent 70%);
+      radial-gradient(34rem 34rem at 30% 115%, rgba(30, 158, 154, 0.12), transparent 70%);
     background-attachment: fixed;
   }
 
@@ -108,11 +117,13 @@
     overflow: hidden;
     isolation: isolate;
   }
+  /* El color sale del tema del modulo (variables abajo); sin tema, azul. */
   .boton-liquido {
-    background: linear-gradient(180deg, #2d67c6 0%, #1d4e9e 55%, #163f86 100%);
-    color: #ffffff;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -3px 8px rgba(5, 20, 50, 0.25), 0 8px 20px rgba(29, 78, 158, 0.3);
+    background: linear-gradient(180deg, var(--liquido-1, #2d67c6) 0%, var(--liquido-2, #1d4e9e) 55%, var(--liquido-3, #163f86) 100%);
+    color: var(--liquido-texto, #ffffff);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -3px 8px rgba(5, 20, 50, 0.25), 0 8px 20px var(--liquido-sombra, rgba(29, 78, 158, 0.3));
   }
+
   .boton-liquido-dorado {
     background: linear-gradient(180deg, #f3e3b3 0%, #e0be62 55%, #c9a23f 100%);
     color: #0b2347;
@@ -131,6 +142,17 @@
     z-index: -1;
   }
 
+  /* Menu lateral que se desplaza: sin la barra del navegador; los bordes se
+     desvanecen para indicar que hay mas opciones arriba o abajo. */
+  .menu-desliza {
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 28px), transparent 100%);
+  }
+  .menu-desliza::-webkit-scrollbar {
+    display: none;
+  }
+
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .vidrio-panel {
       background: rgba(255, 255, 255, 0.96);
@@ -143,6 +165,41 @@
       border-color: #b9c3d3;
     }
   }
+}
+
+/* Tema de cada modulo para los botones liquidos. El tono del medio es el
+   que lleva el texto y cumple contraste AA con el color del texto. Va fuera
+   de @layer porque las clases se arman en el codigo (tema-${panel}) y
+   Tailwind quitaria las que no ve escritas tal cual. */
+.tema-salud {
+  --primario: 14 124 112;
+  --primario-hover: 10 99 90;
+  --primario-claro: 227 245 242;
+  --liquido-1: #1fa88e;
+  --liquido-2: #0e7c70;
+  --liquido-3: #0a635a;
+  --liquido-sombra: rgba(14, 124, 112, 0.32);
+}
+.tema-deporte,
+.tema-deporte-docente {
+  --primario: 194 78 28;
+  --primario-hover: 163 63 21;
+  --primario-claro: 252 237 229;
+  --liquido-1: #e8703a;
+  --liquido-2: #c24e1c;
+  --liquido-3: #a33f15;
+  --liquido-sombra: rgba(194, 78, 28, 0.32);
+}
+.tema-super {
+  /* Dorado oscuro: el claro no da contraste para texto sobre blanco. */
+  --primario: 138 100 16;
+  --primario-hover: 111 80 12;
+  --primario-claro: 248 242 225;
+  --liquido-1: #f3e3b3;
+  --liquido-2: #e0be62;
+  --liquido-3: #c9a23f;
+  --liquido-texto: #0b2347;
+  --liquido-sombra: rgba(201, 162, 63, 0.35);
 }
 
 /* Tarjetas blancas de todas las paginas de los paneles: pasan a vidrio con

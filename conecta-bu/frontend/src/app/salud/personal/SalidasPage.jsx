@@ -86,7 +86,7 @@ export function SalidasPage() {
               aria-selected={activo}
               onClick={() => setFiltros((f) => ({ ...f, estado: p.id }))}
               className={`whitespace-nowrap rounded-full px-4 min-h-[40px] text-sm font-bold inline-flex items-center gap-2 ${
-                activo ? "bg-primary text-white" : "bg-white border border-gray-200 text-ink-600 hover:bg-gray-50"
+                activo ? "boton-liquido" : "burbuja text-ink-600 hover:bg-white"
               }`}
             >
               {p.label}

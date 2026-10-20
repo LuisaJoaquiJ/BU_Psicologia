@@ -101,7 +101,7 @@ export function CalendarioMes({ marcas = {}, seleccionado, onSeleccionar, leyend
               aria-label={`${d.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" })}${lista.length ? `: ${lista.map((m) => m.etiqueta || m.texto).join(", ")}` : ""}`}
               className={`min-h-[56px] sm:min-h-[104px] rounded-xl sm:rounded-2xl p-1 sm:p-2 text-left flex flex-col gap-1 align-top transition-[transform,background-color] duration-200 ease-salida ${
                 elegido
-                  ? "bg-white ring-2 ring-primary shadow-[0_8px_22px_rgba(29,78,158,0.18)]"
+                  ? "bg-white ring-2 ring-primary shadow-[0_8px_22px_rgb(var(--primario)_/_0.18)]"
                   : `${pasado ? "bg-white/35 border border-white/70" : "burbuja"} hover:bg-white motion-safe:hover:-translate-y-0.5`
               }`}
             >

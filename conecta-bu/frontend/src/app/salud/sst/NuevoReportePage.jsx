@@ -82,7 +82,7 @@ function CampoDinamico({ def, valor, onCambio, catalogo }) {
                 aria-checked={activo}
                 onClick={() => onCambio(o)}
                 className={`rounded-full px-4 min-h-[42px] text-sm font-bold border-[1.5px] transition-colors ${
-                  activo ? "bg-primary text-white border-primary" : "bg-white text-ink-600 border-gray-200 hover:border-primary-soft"
+                  activo ? "boton-liquido border-transparent" : "burbuja text-ink-600 hover:bg-white"
                 }`}
               >
                 {texto}
@@ -388,7 +388,7 @@ export function NuevoReportePage({ catalogo }) {
                         aria-checked={activo}
                         onClick={() => poner("medioTransporte")(t)}
                         className={`rounded-2xl border-[1.5px] px-4 py-3.5 text-left flex items-center gap-2.5 font-bold text-sm transition-colors ${
-                          activo ? "bg-primary text-white border-primary" : "bg-white text-ink-600 border-gray-200 hover:border-primary-soft"
+                          activo ? "boton-liquido border-transparent" : "burbuja text-ink-600 hover:bg-white"
                         }`}
                       >
                         <Icono nombre={{ Aereo: "avion", Caminando: "persona", Particular: "carro" }[t] || "bus"} size={19} strokeWidth={2} />

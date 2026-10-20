@@ -88,14 +88,17 @@ export function InicioEstudiante() {
   return (
     <>
       {/* Banda de bienvenida a todo el ancho, con la próxima cita dentro */}
-      <section className="relative overflow-hidden bg-primary-dark text-white">
-        <svg viewBox="0 0 400 400" width="520" height="520" aria-hidden="true" className="absolute -right-28 -top-40 pointer-events-none">
-          <circle cx="200" cy="200" r="190" fill="none" stroke="rgba(127,232,255,0.30)" strokeWidth="1.5" />
-          <circle cx="200" cy="200" r="130" fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="1.5" />
-        </svg>
-        <div className="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-14 flex gap-8 lg:gap-14 flex-wrap items-center">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-4 sm:pt-6">
+      <section className="relative overflow-hidden bg-[#071A38] text-white rounded-[24px] sm:rounded-[28px]">
+        {/* Aurora de Desarrollo Humano (quieta si se pidio reducir movimiento). */}
+        <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
+          <div className="absolute w-[620px] h-[620px] -left-40 -top-64 rounded-full blur-[30px] bg-[radial-gradient(circle,rgba(29,78,158,0.95)_0%,transparent_70%)] animate-deriva-a motion-reduce:animate-none" />
+          <div className="absolute w-[560px] h-[560px] left-[38%] -top-32 rounded-full blur-[40px] bg-[radial-gradient(circle,rgba(30,158,154,0.8)_0%,transparent_70%)] animate-deriva-b motion-reduce:animate-none" />
+          <div className="absolute w-[520px] h-[520px] left-[18%] -bottom-[330px] rounded-full blur-[40px] bg-[radial-gradient(circle,rgba(201,162,63,0.55)_0%,transparent_70%)] animate-deriva-c motion-reduce:animate-none" />
+        </div>
+        <div className="relative px-6 sm:px-10 py-8 sm:py-10 flex gap-8 lg:gap-12 flex-wrap items-center">
           <div className="flex-[999_1_480px] min-w-0 flex flex-col gap-3.5">
-            <h1 className="m-0 text-[40px] sm:text-[52px] leading-[1.05] font-extrabold text-white">
+            <h1 className="m-0 font-sans text-[40px] sm:text-[56px] leading-[1.02] tracking-[-0.04em] font-extrabold text-white">
               Hola, <span className="text-cyan">{primerNombre}.</span>
             </h1>
             <p className="m-0 text-[15px] font-semibold text-[#B9C7DE]">{hoyLargo()}</p>
@@ -103,16 +106,16 @@ export function InicioEstudiante() {
               ¿Cómo te podemos acompañar hoy? Agenda una cita, revisa tus eventos o pregúntale al asistente.
             </p>
             <div className="flex gap-3 flex-wrap mt-2">
-              <Link to="/estudiante/agendar" className="bg-cyan text-primary-dark font-extrabold text-[15px] px-6 min-h-[48px] rounded-full inline-flex items-center hover:brightness-95">
+              <Link to="/estudiante/agendar" className="bg-[linear-gradient(100deg,#7FE8FF_0%,#3FD0C9_55%,#1E9E9A_100%)] text-[#071A38] font-extrabold text-[15px] px-6 min-h-[48px] rounded-full inline-flex items-center shadow-[0_8px_22px_rgba(127,232,255,0.3)] transition-transform duration-200 ease-salida hover:-translate-y-px motion-reduce:hover:translate-y-0">
                 Pedir una cita
               </Link>
-              <Link to="/estudiante/asistente" className="border-[1.5px] border-white/45 text-white font-semibold text-[15px] px-6 min-h-[48px] rounded-full inline-flex items-center hover:bg-white/10">
+              <Link to="/estudiante/asistente" className="bg-white/10 border-[1.5px] border-white/35 text-white font-bold text-[15px] px-6 min-h-[48px] rounded-full inline-flex items-center hover:bg-white/[0.18]">
                 Preguntar al asistente
               </Link>
             </div>
           </div>
 
-          <section aria-labelledby="titulo-proxima-cita" className="flex-[1_1_340px] max-w-[460px] min-w-0 bg-white text-ink-900 rounded-xl p-6 sm:p-7 flex flex-col gap-4 shadow-[0_20px_50px_rgba(0,0,0,0.25)]">
+          <section aria-labelledby="titulo-proxima-cita" className="flex-[1_1_340px] max-w-[460px] min-w-0 bg-white/95 text-ink-900 rounded-[24px] p-6 sm:p-7 flex flex-col gap-4 shadow-[0_24px_60px_rgba(2,10,28,0.35)]">
             <h2 id="titulo-proxima-cita" className="m-0 font-sans text-lg font-bold text-primary">Tu próxima cita</h2>
             {proximaCita === undefined && <p className="m-0 text-ink-500">Cargando…</p>}
             {proximaCita === null && (
@@ -146,6 +149,7 @@ export function InicioEstudiante() {
           </section>
         </div>
       </section>
+      </div>
 
     <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-10 pb-20 flex flex-col gap-8">
       {/* Carrusel de eventos */}
@@ -171,7 +175,7 @@ export function InicioEstudiante() {
                 onClick={() => setInicio(Math.min(maxInicio, desde + 1))}
                 disabled={desde >= maxInicio}
                 aria-label="Más eventos"
-                className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center disabled:opacity-40"
+                className="w-11 h-11 rounded-full boton-liquido flex items-center justify-center disabled:opacity-40"
               >
                 <Icono nombre="derecha" size={18} strokeWidth={2} />
               </button>
@@ -224,7 +228,7 @@ export function InicioEstudiante() {
                     className={`mt-auto min-h-[44px] rounded-full font-bold text-sm transition-colors disabled:bg-gray-100 disabled:text-ink-500 disabled:border-transparent ${
                       inscrito
                         ? "border-[1.5px] border-[#1D6B4A] bg-[#E7F4EE] text-[#1D6B4A]"
-                        : "bg-primary text-white hover:bg-primary-dark"
+                        : "boton-liquido"
                     }`}
                   >
                     {inscrito

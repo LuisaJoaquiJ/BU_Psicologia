@@ -172,8 +172,8 @@ function AnalisisDetallado() {
           <span className="text-xs text-ink-500">Descargar informe del periodo</span>
           <div className="flex gap-2">
             {[
-              ["xlsx", "Excel", "bg-primary text-white"],
-              ["pdf", "PDF", "bg-gold text-primary"],
+              ["xlsx", "Excel", "boton-liquido"],
+              ["pdf", "PDF", "boton-liquido-dorado"],
             ].map(([formato, texto, estilo]) => (
               <button
                 key={formato}
@@ -200,7 +200,7 @@ function AnalisisDetallado() {
               onClick={() => elegirPreset(p.id)}
               aria-pressed={preset === p.id}
               className={`text-sm font-semibold rounded-full px-4 min-h-[38px] transition-colors ${
-                preset === p.id ? "bg-primary text-white" : "text-ink-600 hover:bg-gray-50"
+                preset === p.id ? "boton-liquido" : "text-ink-600 hover:bg-gray-50"
               }`}
             >
               {p.texto}

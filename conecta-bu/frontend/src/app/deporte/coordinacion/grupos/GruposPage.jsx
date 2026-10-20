@@ -81,7 +81,7 @@ export function GruposPage() {
           <section key={nombre}>
             <div className="flex items-center gap-3 mb-3">
               <IconoDisciplina nombre={nombre} tamano={44} imagen={grupos[0]?.disciplina?.imagenUrl} />
-              <h2 className="m-0 font-sans text-lg font-bold text-primary">{nombre}</h2>
+              <h2 className="m-0 font-sans text-lg font-bold text-primary-dark">{nombre}</h2>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               {grupos.map((g) => (

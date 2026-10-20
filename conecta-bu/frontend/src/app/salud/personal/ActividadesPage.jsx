@@ -223,7 +223,7 @@ export function ActividadesPage() {
               onClick={() => setCategoria(c)}
               aria-pressed={categoria === c}
               className={`text-sm font-semibold rounded-full px-4 min-h-[38px] border ${
-                categoria === c ? "bg-primary text-white border-primary" : "bg-white text-ink-600 border-gray-200 hover:bg-gray-50"
+                categoria === c ? "boton-liquido border-transparent" : "burbuja text-ink-600 hover:bg-white"
               }`}
             >
               {c ? catalogos?.categorias?.[c] : "Todas"}
@@ -255,7 +255,7 @@ export function ActividadesPage() {
                 </div>
               </div>
               <div>
-                <h2 className="m-0 font-sans text-lg font-bold text-primary leading-snug group-hover:text-primary-soft">{a.nombre}</h2>
+                <h2 className="m-0 font-sans text-lg font-bold text-primary-dark leading-snug group-hover:text-primary-soft">{a.nombre}</h2>
                 <p className="m-0 mt-0.5 text-xs text-ink-500">{catalogos?.categorias?.[a.categoria]}</p>
               </div>
               <div className="grid grid-cols-3 gap-2 text-center mt-auto">

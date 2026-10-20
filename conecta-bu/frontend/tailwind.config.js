@@ -10,12 +10,15 @@ export default {
   theme: {
     extend: {
       colors: {
+        // El color interactivo sale del tema del modulo (index.css: azul por
+        // defecto, verde en Salud, naranja en Deporte, dorado en Super).
+        // "dark" es el azul noche de los titulares y no cambia.
         primary: {
-          DEFAULT: "#1D4E9E", // azul del escudo: CTA, enlaces, estado activo
-          hover: "#173F82",
+          DEFAULT: "rgb(var(--primario) / <alpha-value>)",
+          hover: "rgb(var(--primario-hover) / <alpha-value>)",
           dark: "#0B2347", // azul noche: titulares y bandas
-          light: "#EBF1FA",
-          soft: "#1D4E9E",
+          light: "rgb(var(--primario-claro) / <alpha-value>)",
+          soft: "rgb(var(--primario) / <alpha-value>)",
         },
         gold: {
           DEFAULT: "#C9A23F", // dorado metalico del escudo (marca)

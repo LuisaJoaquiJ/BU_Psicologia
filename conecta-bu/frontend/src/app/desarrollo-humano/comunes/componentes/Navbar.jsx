@@ -70,7 +70,7 @@ export function iniciales(nombre = "") {
 
 const clasePildora = ({ isActive }) =>
   `whitespace-nowrap rounded-full px-4 py-2.5 transition-colors ${
-    isActive ? "bg-primary-dark text-white" : "text-ink-600 hover:bg-primary-light hover:text-primary"
+    isActive ? "boton-liquido" : "text-ink-600 hover:bg-white/80 hover:text-primary"
   }`;
 
 export function Navbar({ modulo = "desarrollo-humano" }) {
@@ -78,7 +78,7 @@ export function Navbar({ modulo = "desarrollo-humano" }) {
   const datos = MODULOS_ESTUDIANTE[modulo];
 
   return (
-    <header className="bg-white border-b border-gray-200">
+    <header className="sticky top-0 z-30 vidrio-panel !border-x-0 !border-t-0">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0 xl:shrink-0">
           <Link to={datos.inicio} className="flex items-center gap-3 min-w-0 no-underline">
@@ -103,12 +103,12 @@ export function Navbar({ modulo = "desarrollo-humano" }) {
             to="/"
             aria-label="Cambiar de dimensión"
             title="Cambiar de dimensión"
-            className="hidden sm:inline-flex items-center justify-center gap-1.5 text-sm font-bold text-primary border-[1.5px] border-gray-200 rounded-full min-w-[44px] px-3 min-h-[44px] hover:bg-primary-light"
+            className="hidden sm:inline-flex items-center justify-center gap-1.5 text-sm font-bold text-primary burbuja rounded-full min-w-[44px] px-3 min-h-[44px] hover:bg-white"
           >
             <Icono nombre="cuadricula" size={16} strokeWidth={2} />
             <span className="xl:hidden 2xl:inline">Cambiar de dimensión</span>
           </Link>
-          <span className="w-10 h-10 rounded-full bg-primary text-white font-extrabold text-sm flex items-center justify-center shrink-0" title={usuario?.nombre}>
+          <span className="w-10 h-10 rounded-full boton-liquido font-extrabold text-sm flex items-center justify-center shrink-0" title={usuario?.nombre}>
             {iniciales(usuario?.nombre)}
           </span>
           <button
@@ -121,7 +121,7 @@ export function Navbar({ modulo = "desarrollo-humano" }) {
       </div>
 
       {/* RNF-005: en pantallas pequeñas el menú pasa a una fila desplazable. */}
-      <nav aria-label={`${datos.nombre} (móvil)`} className="xl:hidden border-t border-gray-100 px-3 py-2 flex gap-1 overflow-x-auto text-sm font-bold [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_88%,transparent)]">
+      <nav aria-label={`${datos.nombre} (móvil)`} className="xl:hidden border-t border-white/80 px-3 py-2 flex gap-1 overflow-x-auto text-sm font-bold [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_88%,transparent)]">
         {datos.menu.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end} className={clasePildora}>
             {item.label}

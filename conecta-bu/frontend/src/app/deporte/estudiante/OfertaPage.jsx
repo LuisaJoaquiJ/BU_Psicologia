@@ -160,7 +160,7 @@ export function OfertaPage() {
                   type="button"
                   aria-pressed={activo}
                   onClick={() => setDias((x) => (activo ? x.filter((y) => y !== d) : [...x, d]))}
-                  className={`w-11 h-10 rounded-xl text-sm font-bold border ${activo ? "bg-primary text-white border-primary" : "bg-white border-gray-200 text-ink-600 hover:border-primary/50"}`}
+                  className={`w-11 h-10 rounded-xl text-sm font-bold border ${activo ? "boton-liquido border-transparent" : "bg-white border-gray-200 text-ink-600 hover:border-primary/50"}`}
                 >
                   {DIAS_CORTOS[d]}
                 </button>

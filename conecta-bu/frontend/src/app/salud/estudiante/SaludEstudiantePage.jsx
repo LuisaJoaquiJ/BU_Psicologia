@@ -65,7 +65,7 @@ export function SaludEstudiantePage() {
         }
         aside={
           <>
-            <h2 className="m-0 font-sans text-lg font-bold text-primary">¿Es una emergencia?</h2>
+            <h2 className="m-0 font-sans text-lg font-bold text-primary-dark">¿Es una emergencia?</h2>
             <div className="flex gap-4 items-center">
               <span className="shrink-0 w-[76px] h-[68px] rounded-2xl bg-[#FDECEC] text-[#9B1C1C] font-extrabold flex items-center justify-center tabular-nums text-[28px]">123</span>
               <span className="min-w-0 text-ink-600">
@@ -96,7 +96,7 @@ export function SaludEstudiantePage() {
                 onClick={() => setServicioId(s.id)}
                 aria-pressed={servicioId === s.id}
                 className={`text-sm font-semibold rounded-full px-4 min-h-[40px] border ${
-                  servicioId === s.id ? "bg-primary text-white border-primary" : "bg-white text-ink-600 border-gray-200 hover:bg-gray-50"
+                  servicioId === s.id ? "boton-liquido border-transparent" : "burbuja text-ink-600 hover:bg-white"
                 }`}
               >
                 {s.nombre}
@@ -132,7 +132,7 @@ export function SaludEstudiantePage() {
       </section>
 
       <section className="bg-white border border-gray-200 rounded-xl p-6">
-        <h2 className="m-0 mb-4 font-sans text-lg font-bold text-primary">Servicios de la Unidad de Salud</h2>
+        <h2 className="m-0 mb-4 font-sans text-lg font-bold text-primary-dark">Servicios de la Unidad de Salud</h2>
         <ul className="list-none m-0 p-0 grid gap-4 sm:grid-cols-3">
           {(servicios || []).map((s) => (
             <li key={s.id} className="flex gap-3">

@@ -79,7 +79,7 @@ function TarjetaInforme({ informe, alCambiar }) {
           ["Actividades", num(r.actividades)],
           ["Cumplimiento de metas", r.cumplimientoPromedio === null || r.cumplimientoPromedio === undefined ? "—" : `${num(r.cumplimientoPromedio)} %`],
         ].map(([t, v]) => (
-          <div key={t} className="bg-[#FBF7EE] rounded-2xl px-4 py-3">
+          <div key={t} className="burbuja rounded-2xl px-4 py-3">
             <dt className="text-xs text-ink-500">{t}</dt>
             <dd className="m-0 mt-0.5 font-display text-2xl font-semibold text-primary tabular-nums">{v}</dd>
           </div>
@@ -154,7 +154,7 @@ export function InformesPage() {
             aria-selected={estado === p.id}
             onClick={() => setEstado(p.id)}
             className={`whitespace-nowrap rounded-full px-4 min-h-[40px] text-sm font-bold ${
-              estado === p.id ? "bg-primary text-white" : "bg-white border border-gray-200 text-ink-600 hover:bg-gray-50"
+              estado === p.id ? "boton-liquido" : "burbuja text-ink-600 hover:bg-white"
             }`}
           >
             {p.label}

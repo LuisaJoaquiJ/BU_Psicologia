@@ -114,7 +114,7 @@ function VentanaConfirmar({ pregunta, responder }) {
             ref={si}
             type="button"
             onClick={() => responder(true)}
-            className={`min-h-[44px] px-5 rounded-full font-bold text-sm text-white ${pregunta.peligro ? "bg-red-700 hover:bg-red-800" : "bg-primary hover:bg-primary-dark"}`}
+            className={`min-h-[44px] px-5 rounded-full font-bold text-sm ${pregunta.peligro ? "bg-red-700 hover:bg-red-800 text-white" : "boton-liquido"}`}
           >
             {pregunta.boton || "Sí, continuar"}
           </button>

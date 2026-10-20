@@ -72,7 +72,7 @@ export function PanelLayout({ menu, panel, children }) {
   }, [abierto]);
 
   return (
-    <div className={`min-h-screen fondo-panel panel-moderno overflow-x-hidden transition-[padding] duration-200 ${plegado ? "lg:pl-[96px]" : "lg:pl-[284px]"}`}>
+    <div className={`tema-${panel} min-h-screen fondo-panel panel-moderno overflow-x-hidden transition-[padding] duration-200 ${plegado ? "lg:pl-[96px]" : "lg:pl-[284px]"}`}>
       <header className="lg:hidden sticky top-0 z-30 h-14 px-4 flex items-center justify-between gap-3 vidrio-panel !border-x-0 !border-t-0">
         <button
           type="button"
@@ -84,7 +84,7 @@ export function PanelLayout({ menu, panel, children }) {
           <Icono nombre="menu" size={22} />
         </button>
         <span className="font-display font-semibold text-[15px] tracking-tight text-ink-900 truncate">{datos.nombre}</span>
-        <span className="w-9 h-9 rounded-full bg-primary text-white font-semibold text-xs flex items-center justify-center shrink-0">{iniciales(usuario?.nombre)}</span>
+        <span className="w-9 h-9 rounded-full boton-liquido font-semibold text-xs flex items-center justify-center shrink-0">{iniciales(usuario?.nombre)}</span>
       </header>
 
       {abierto && <div className="lg:hidden fixed inset-0 z-40 bg-ink-900/30" onClick={() => setAbierto(false)} aria-hidden="true" />}
@@ -134,7 +134,7 @@ export function PanelLayout({ menu, panel, children }) {
           </span>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 pb-4 flex flex-col gap-0.5">
+        <nav className="menu-desliza flex-1 overflow-y-auto px-3 pt-1 pb-6 flex flex-col gap-0.5">
           <p className={`m-0 px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500 ${oculto}`}>Menú</p>
           {menu.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={claseEnlace(plegado)} title={plegado ? item.label : undefined} aria-label={plegado ? item.label : undefined}>
@@ -157,7 +157,7 @@ export function PanelLayout({ menu, panel, children }) {
             </Link>
           )}
           <div className={`flex items-center gap-2.5 px-2 pt-2 ${plegado ? "lg:flex-col lg:px-0" : ""}`}>
-            <span title={plegado ? usuario?.nombre : undefined} className="w-9 h-9 rounded-full bg-primary text-white font-semibold text-xs flex items-center justify-center shrink-0">
+            <span title={plegado ? usuario?.nombre : undefined} className="w-9 h-9 rounded-full boton-liquido font-semibold text-xs flex items-center justify-center shrink-0">
               {iniciales(usuario?.nombre)}
             </span>
             <span className={`flex flex-col leading-tight min-w-0 flex-1 ${oculto}`}>

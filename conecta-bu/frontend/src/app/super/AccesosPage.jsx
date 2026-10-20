@@ -163,7 +163,7 @@ export function AccesosPage() {
                 onClick={() => setFiltro(id)}
                 aria-pressed={filtro === id}
                 className={`text-sm font-semibold rounded-full px-3.5 min-h-[36px] border ${
-                  filtro === id ? "bg-primary text-white border-primary" : "bg-white text-ink-600 border-gray-200 hover:bg-gray-50"
+                  filtro === id ? "boton-liquido border-transparent" : "burbuja text-ink-600 hover:bg-white"
                 }`}
               >
                 {nombre}

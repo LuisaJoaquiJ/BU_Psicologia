@@ -123,7 +123,7 @@ export function InicioDocente() {
         }
         aside={
           <>
-            <h2 className="m-0 font-sans text-lg font-bold text-primary">Clases de hoy</h2>
+            <h2 className="m-0 font-sans text-lg font-bold text-primary-dark">Clases de hoy</h2>
             {!datos && <p className="m-0 text-ink-500">Cargando…</p>}
             {datos && (
               <div className="flex gap-4 items-center">
@@ -141,7 +141,7 @@ export function InicioDocente() {
           <div className="grid gap-5 lg:grid-cols-[1fr_1.2fr] items-start">
             <SemanaDocente grupos={datos.grupos} />
             <section className="flex flex-col gap-3">
-              <h2 className="m-0 font-sans text-lg font-bold text-primary">Mis grupos</h2>
+              <h2 className="m-0 font-sans text-lg font-bold text-primary-dark">Mis grupos</h2>
               {datos.grupos.map((g) => (
                 <Link key={g.id} to={`/deporte-docente/grupos/${g.id}`} className="bg-white border border-gray-200 rounded-xl p-4 hover:border-primary-soft no-underline flex gap-4 items-center">
                   <IconoDisciplina nombre={g.disciplina?.nombre} tamano={48} />

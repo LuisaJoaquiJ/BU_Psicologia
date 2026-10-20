@@ -70,7 +70,7 @@ function MisReportesPage({ catalogo }) {
         }
         aside={
           <>
-            <h2 className="m-0 font-sans text-lg font-bold text-primary">Tus reportes</h2>
+            <h2 className="m-0 font-sans text-lg font-bold text-primary-dark">Tus reportes</h2>
             <div className="flex gap-4 items-center">
               <span className="shrink-0 w-[76px] h-[68px] rounded-2xl bg-primary-light text-primary font-extrabold flex items-center justify-center tabular-nums text-[28px]">
                 {reportes ? reportes.length : "…"}
@@ -184,7 +184,7 @@ function MiReporteDetalle({ catalogo }) {
 export function ReportesSstPanel() {
   const { catalogo, error } = useCatalogoSst();
   return (
-    <div>
+    <div className="tema-salud min-h-screen fondo-panel panel-moderno">
       <Navbar modulo="sst" />
       {error && (
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8">

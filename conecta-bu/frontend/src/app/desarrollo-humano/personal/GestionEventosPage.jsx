@@ -71,7 +71,7 @@ function erroresDe(v) {
 
 const chip = (activo) =>
   `min-h-[44px] px-4 rounded-full border-[1.5px] font-extrabold transition-colors ${
-    activo ? "border-primary bg-primary text-white" : "border-[#D3DBE8] bg-white text-primary hover:border-primary"
+    activo ? "border-transparent boton-liquido" : "border-[#D3DBE8] bg-white text-primary hover:border-primary"
   }`;
 
 function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana = false }) {

@@ -26,7 +26,7 @@ function TarjetaReporte({ icono, titulo, reemplaza, descripcion, children, onDes
           <Icono nombre={icono} size={24} />
         </span>
         <div className="min-w-0">
-          <h2 className="m-0 font-sans text-lg font-bold text-primary">{titulo}</h2>
+          <h2 className="m-0 font-sans text-lg font-bold text-primary-dark">{titulo}</h2>
           <p className="m-0 mt-0.5 text-xs font-bold uppercase tracking-wide text-accent">Reemplaza: {reemplaza}</p>
         </div>
       </div>

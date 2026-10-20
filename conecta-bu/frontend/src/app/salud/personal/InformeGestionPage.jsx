@@ -679,7 +679,7 @@ export function InformeGestionPage() {
                   onClick={() => setPaso(p.id)}
                   aria-current={activo ? "step" : undefined}
                   className={`whitespace-nowrap lg:whitespace-normal flex items-center gap-2.5 rounded-xl px-3.5 py-2 min-h-[46px] text-sm font-bold text-left ${
-                    activo ? "bg-primary text-white" : "bg-white border border-gray-200 text-ink-600 hover:bg-gray-50"
+                    activo ? "boton-liquido" : "burbuja text-ink-600 hover:bg-white"
                   }`}
                 >
                   <span className={`w-6 h-6 rounded-full text-xs flex items-center justify-center shrink-0 ${activo ? "bg-gold text-primary" : "bg-gray-100"}`}>{i + 1}</span>

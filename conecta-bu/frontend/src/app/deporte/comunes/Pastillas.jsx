@@ -17,7 +17,7 @@ export function Pastillas({ opciones, valor, onCambio, etiqueta, conteos }) {
             aria-pressed={activo}
             onClick={() => onCambio(id)}
             className={`min-h-[40px] px-4 rounded-full border text-sm font-bold inline-flex items-center gap-2 transition-colors ${
-              activo ? "bg-primary-dark border-primary-dark text-white" : "bg-white border-gray-200 text-ink-700 hover:border-primary/50"
+              activo ? "boton-liquido border-transparent" : "burbuja text-ink-600 hover:bg-white"
             }`}
           >
             {texto}

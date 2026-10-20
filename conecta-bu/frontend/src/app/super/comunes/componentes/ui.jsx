@@ -46,12 +46,12 @@ export function Tarjeta({ titulo, subtitulo, acciones, children, className = "" 
 
 export function Kpi({ titulo, valor, detalle, destacado }) {
   return (
-    <div className={`rounded-[20px] p-5 ${destacado ? "bg-[linear-gradient(155deg,#2D67C6_0%,#1D4E9E_45%,#0B2347_100%)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_14px_36px_rgba(29,78,158,0.3)]" : "vidrio-panel"}`}>
-      <p className={`m-0 text-[13px] ${destacado ? "text-white/75" : "text-ink-500"}`}>{titulo}</p>
-      <p className={`mt-1.5 mb-0 font-display text-[36px] leading-none font-semibold tabular-nums ${destacado ? "text-gold-soft" : "text-ink-900"}`}>
+    <div className={`rounded-[20px] p-5 ${destacado ? "bg-[linear-gradient(155deg,var(--liquido-1,#2D67C6)_0%,var(--liquido-2,#1D4E9E)_50%,var(--liquido-3,#163F86)_100%)] text-[color:var(--liquido-texto,#FFFFFF)] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_14px_36px_var(--liquido-sombra,rgba(29,78,158,0.3))]" : "vidrio-panel"}`}>
+      <p className={`m-0 text-[13px] ${destacado ? "opacity-80" : "text-ink-500"}`}>{titulo}</p>
+      <p className={`mt-1.5 mb-0 font-display text-[36px] leading-none font-semibold tabular-nums ${destacado ? "" : "text-ink-900"}`}>
         {valor}
       </p>
-      {detalle && <p className={`mt-2 mb-0 text-[13px] ${destacado ? "text-white/75" : "text-ink-500"}`}>{detalle}</p>}
+      {detalle && <p className={`mt-2 mb-0 text-[13px] ${destacado ? "opacity-80" : "text-ink-500"}`}>{detalle}</p>}
     </div>
   );
 }

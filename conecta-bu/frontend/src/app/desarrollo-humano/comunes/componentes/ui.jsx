@@ -46,12 +46,12 @@ export function Tarjeta({ titulo, subtitulo, acciones, children, className = "" 
 
 export function Kpi({ titulo, valor, detalle, destacado }) {
   return (
-    <div className={`rounded-[20px] p-5 ${destacado ? "bg-[linear-gradient(155deg,#2D67C6_0%,#1D4E9E_45%,#0B2347_100%)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_14px_36px_rgba(29,78,158,0.3)]" : "vidrio-panel"}`}>
-      <p className={`m-0 text-[13px] ${destacado ? "text-white/75" : "text-ink-500"}`}>{titulo}</p>
-      <p className={`mt-1.5 mb-0 font-display text-[36px] leading-none font-semibold tabular-nums ${destacado ? "text-gold-soft" : "text-ink-900"}`}>
+    <div className={`rounded-[20px] p-5 ${destacado ? "bg-[linear-gradient(155deg,var(--liquido-1,#2D67C6)_0%,var(--liquido-2,#1D4E9E)_50%,var(--liquido-3,#163F86)_100%)] text-[color:var(--liquido-texto,#FFFFFF)] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_14px_36px_var(--liquido-sombra,rgba(29,78,158,0.3))]" : "vidrio-panel"}`}>
+      <p className={`m-0 text-[13px] ${destacado ? "opacity-80" : "text-ink-500"}`}>{titulo}</p>
+      <p className={`mt-1.5 mb-0 font-display text-[36px] leading-none font-semibold tabular-nums ${destacado ? "" : "text-ink-900"}`}>
         {valor}
       </p>
-      {detalle && <p className={`mt-2 mb-0 text-[13px] ${destacado ? "text-white/75" : "text-ink-500"}`}>{detalle}</p>}
+      {detalle && <p className={`mt-2 mb-0 text-[13px] ${destacado ? "opacity-80" : "text-ink-500"}`}>{detalle}</p>}
     </div>
   );
 }
@@ -136,37 +136,39 @@ export function Estado({ estado }) {
 // derecha (próxima cita, resumen…); "lado" pone contenido libre a la derecha; "imagen" pone una foto de fondo tenue.
 export function BandaInicio({ titulo, fecha, texto, acciones, aside, lado, imagen, children }) {
   return (
-    <section className="relative overflow-hidden bg-primary-dark text-white">
-      {imagen && (
-        <>
-          <img src={imagen} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover opacity-25" />
-          <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,#0B2347_35%,rgba(11,35,71,0.6))]" />
-        </>
-      )}
-      <div className="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-12 flex gap-8 lg:gap-14 flex-wrap items-center">
+    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-4 sm:pt-6">
+    <section className="relative overflow-hidden bg-[#071A38] text-white rounded-[24px] sm:rounded-[28px]">
+      {/* Aurora con los colores del modulo (quieta si se pidio reducir movimiento). */}
+      <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
+        <div className="absolute w-[620px] h-[620px] -left-40 -top-64 rounded-full blur-[30px] animate-deriva-a motion-reduce:animate-none" style={{ background: "radial-gradient(circle, rgba(29,78,158,0.95) 0%, transparent 70%)" }} />
+        <div className="absolute w-[560px] h-[560px] left-[38%] -top-32 rounded-full blur-[40px] animate-deriva-b motion-reduce:animate-none" style={{ background: "radial-gradient(circle, rgba(30,158,154,0.8) 0%, transparent 70%)" }} />
+        <div className="absolute w-[520px] h-[520px] left-[18%] -bottom-[330px] rounded-full blur-[40px] animate-deriva-c motion-reduce:animate-none" style={{ background: "radial-gradient(circle, rgba(201,162,63,0.55) 0%, transparent 70%)" }} />
+      </div>
+      <div className="relative px-6 sm:px-10 py-8 sm:py-10 flex gap-8 lg:gap-12 flex-wrap items-center">
         <div className="flex-[999_1_480px] min-w-0 flex flex-col gap-3">
-          <h1 className="m-0 text-[36px] sm:text-[48px] leading-[1.05] font-bold text-white">{titulo}</h1>
           {fecha && <p className="m-0 text-[15px] font-semibold text-[#B9C7DE]">{fecha}</p>}
+          <h1 className="m-0 font-sans text-[34px] sm:text-[46px] leading-[1.04] tracking-[-0.04em] font-extrabold text-white max-w-[16em]">{titulo}</h1>
           {texto && <p className="m-0 text-[17px] leading-relaxed text-[#D6DDEC] max-w-[560px]">{texto}</p>}
           {children}
           {acciones && <div className="flex gap-3 flex-wrap mt-2">{acciones}</div>}
         </div>
         {aside && (
-          <div className="flex-[1_1_340px] max-w-[460px] min-w-0 bg-white text-ink-900 rounded-xl border border-white/10 p-6 sm:p-7 flex flex-col gap-4">
+          <div className="flex-[1_1_340px] max-w-[460px] min-w-0 bg-white/95 text-ink-900 rounded-[24px] shadow-[0_24px_60px_rgba(2,10,28,0.35)] p-6 sm:p-7 flex flex-col gap-4">
             {aside}
           </div>
         )}
         {lado && <div className="relative shrink-0 mx-auto lg:mx-0">{lado}</div>}
       </div>
     </section>
+    </div>
   );
 }
 
 // Botones para usar dentro de la banda (fondo azul oscuro).
 export const botonBandaPrincipal =
-  "bg-white text-primary-dark font-medium text-[15px] px-5 min-h-[44px] rounded-md inline-flex items-center gap-2 transition-all duration-200 hover:-translate-y-px hover:bg-primary-light disabled:opacity-60";
+  "bg-white text-primary-dark font-bold text-[15px] px-6 min-h-[48px] rounded-full inline-flex items-center gap-2 shadow-[0_8px_20px_rgba(2,10,28,0.25)] transition-transform duration-200 ease-salida hover:-translate-y-px motion-reduce:hover:translate-y-0 disabled:opacity-60";
 export const botonBandaSecundario =
-  "border border-white/35 text-white font-medium text-[15px] px-5 min-h-[44px] rounded-md inline-flex items-center gap-2 transition-all duration-200 hover:bg-white/10 hover:-translate-y-px";
+  "bg-white/10 border-[1.5px] border-white/35 text-white font-bold text-[15px] px-6 min-h-[48px] rounded-full inline-flex items-center gap-2 transition-colors duration-200 hover:bg-white/[0.18]";
 
 export function hoyLargo() {
   const texto = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });

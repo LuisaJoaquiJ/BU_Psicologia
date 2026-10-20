@@ -25,10 +25,10 @@ function leerPlegado() {
 // Enlace del menu lateral: el activo lleva fondo azul claro, texto azul y
 // una marca a la izquierda (no depende solo del color). Plegado, solo el icono.
 const claseEnlace = (plegado) => ({ isActive }) =>
-  `relative flex items-center gap-3 rounded-md px-3 min-h-[40px] text-sm font-medium transition-colors ${plegado ? "lg:justify-center lg:px-0" : ""} ${
+  `relative flex items-center gap-3 rounded-2xl px-3 min-h-[44px] text-sm font-medium transition-colors ${plegado ? "lg:justify-center lg:px-0" : ""} ${
     isActive
-      ? "bg-primary-light text-primary before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-primary"
-      : "text-ink-600 hover:bg-gray-100 hover:text-ink-900"
+      ? "boton-liquido font-semibold"
+      : "text-ink-600 hover:bg-white/80 hover:text-ink-900"
   }`;
 
 // Panel del personal con menu lateral fijo que se puede plegar (queda solo la
@@ -61,7 +61,7 @@ export function PanelLayout({ menu, panel, children }) {
   // vale 0 y las ventanas ocupan toda la pantalla, por encima del menu.
   useEffect(() => {
     const raiz = document.documentElement.style;
-    raiz.setProperty("--menu", plegado ? "0px" : "16rem");
+    raiz.setProperty("--menu", plegado ? "0px" : "17rem");
     return () => raiz.removeProperty("--menu");
   }, [plegado]);
   useEffect(() => {
@@ -72,8 +72,8 @@ export function PanelLayout({ menu, panel, children }) {
   }, [abierto]);
 
   return (
-    <div className={`min-h-screen bg-cream overflow-x-hidden transition-[padding] duration-200 ${plegado ? "lg:pl-[72px]" : "lg:pl-64"}`}>
-      <header className="lg:hidden sticky top-0 z-30 h-14 px-4 flex items-center justify-between gap-3 bg-white/85 backdrop-blur border-b border-gray-200">
+    <div className={`tema-${panel} min-h-screen fondo-panel panel-moderno overflow-x-hidden transition-[padding] duration-200 ${plegado ? "lg:pl-[96px]" : "lg:pl-[284px]"}`}>
+      <header className="lg:hidden sticky top-0 z-30 h-14 px-4 flex items-center justify-between gap-3 vidrio-panel !border-x-0 !border-t-0">
         <button
           type="button"
           onClick={() => setAbierto(true)}
@@ -84,14 +84,14 @@ export function PanelLayout({ menu, panel, children }) {
           <Icono nombre="menu" size={22} />
         </button>
         <span className="font-display font-semibold text-[15px] tracking-tight text-ink-900 truncate">{datos.nombre}</span>
-        <span className="w-9 h-9 rounded-full bg-primary text-white font-semibold text-xs flex items-center justify-center shrink-0">{iniciales(usuario?.nombre)}</span>
+        <span className="w-9 h-9 rounded-full boton-liquido font-semibold text-xs flex items-center justify-center shrink-0">{iniciales(usuario?.nombre)}</span>
       </header>
 
       {abierto && <div className="lg:hidden fixed inset-0 z-40 bg-ink-900/30" onClick={() => setAbierto(false)} aria-hidden="true" />}
 
       <aside
         aria-label="Menú del panel"
-        className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-white border-r border-gray-200 transition-[transform,width] duration-200 lg:translate-x-0 ${plegado ? "lg:w-[72px]" : ""} ${
+        className={`fixed inset-y-0 left-0 lg:inset-y-3 lg:left-3 z-50 w-64 flex flex-col vidrio-panel lg:rounded-[28px] transition-[transform,width] duration-200 lg:translate-x-0 ${plegado ? "lg:w-[72px]" : ""} ${
           abierto ? "translate-x-0 shadow-lg" : "-translate-x-full"
         }`}
       >
@@ -124,7 +124,7 @@ export function PanelLayout({ menu, panel, children }) {
           </button>
         </div>
 
-        <div title={plegado ? datos.nombre : undefined} className={`mx-4 mb-4 rounded-lg border border-gray-200 px-3 py-2.5 flex items-center gap-2.5 ${plegado ? "lg:mx-auto lg:border-0 lg:p-0" : ""}`}>
+        <div title={plegado ? datos.nombre : undefined} className={`mx-4 mb-4 rounded-2xl burbuja px-3 py-2.5 flex items-center gap-2.5 ${plegado ? "lg:mx-auto lg:border-0 lg:p-0" : ""}`}>
           <span className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${datos.color}`}>
             <Icono nombre={datos.icono} size={16} strokeWidth={2} />
           </span>
@@ -134,7 +134,7 @@ export function PanelLayout({ menu, panel, children }) {
           </span>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 pb-4 flex flex-col gap-0.5">
+        <nav className="menu-desliza flex-1 overflow-y-auto px-3 pt-1 pb-6 flex flex-col gap-0.5">
           <p className={`m-0 px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500 ${oculto}`}>Menú</p>
           {menu.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={claseEnlace(plegado)} title={plegado ? item.label : undefined} aria-label={plegado ? item.label : undefined}>
@@ -144,7 +144,7 @@ export function PanelLayout({ menu, panel, children }) {
           ))}
         </nav>
 
-        <div className="border-t border-gray-200 p-3 flex flex-col gap-1">
+        <div className="border-t border-white/80 p-3 flex flex-col gap-1">
           {!directo && (
             <Link
               to="/"
@@ -157,7 +157,7 @@ export function PanelLayout({ menu, panel, children }) {
             </Link>
           )}
           <div className={`flex items-center gap-2.5 px-2 pt-2 ${plegado ? "lg:flex-col lg:px-0" : ""}`}>
-            <span title={plegado ? usuario?.nombre : undefined} className="w-9 h-9 rounded-full bg-primary text-white font-semibold text-xs flex items-center justify-center shrink-0">
+            <span title={plegado ? usuario?.nombre : undefined} className="w-9 h-9 rounded-full boton-liquido font-semibold text-xs flex items-center justify-center shrink-0">
               {iniciales(usuario?.nombre)}
             </span>
             <span className={`flex flex-col leading-tight min-w-0 flex-1 ${oculto}`}>
