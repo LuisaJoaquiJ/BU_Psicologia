@@ -372,6 +372,8 @@ model PersonaSalud {
   correo              String?        @db.VarChar(120)
   poblacion           PoblacionSalud @default(Estudiante)
   programa            String?        @db.VarChar(150)
+  // Esta en la ultima lista de estudiantes activos que subio Salud.
+  estudianteActivo    Boolean        @default(false)
   // Autorizacion de tratamiento de datos (Ley 1581 de 2012).
   consentimientoDatos Boolean        @default(false)
   fechaConsentimiento DateTime?
@@ -381,6 +383,7 @@ model PersonaSalud {
   atenciones AtencionSalud[]
 
   @@index([apellidos, nombres])
+  @@index([estudianteActivo])
   @@map("salud_personas")
 }
 

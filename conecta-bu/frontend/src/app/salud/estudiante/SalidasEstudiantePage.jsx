@@ -244,7 +244,8 @@ export function SalidasEstudiantePage() {
     }
   }
 
-  const previo = datos?.misInscripciones?.[0];
+  // Ultima inscripcion o, si es la primera, los datos de la lista de estudiantes activos.
+  const previo = datos?.misInscripciones?.[0] || datos?.misDatos;
 
   return (
     <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 pb-16 flex flex-col gap-8">

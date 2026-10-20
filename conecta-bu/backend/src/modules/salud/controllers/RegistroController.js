@@ -6,6 +6,7 @@ const { actividadService } = require("../services/ActividadService");
 const { atencionService } = require("../services/AtencionService");
 const { evidenciaService } = require("../services/EvidenciaService");
 const { importadorService } = require("../services/ImportadorService");
+const { estudiantesActivosService } = require("../services/EstudiantesActivosService");
 
 // Registro de la Unidad de Salud: catalogos, personas, actividades,
 // evidencias, atenciones e importacion de los Excel existentes.
@@ -52,6 +53,19 @@ class RegistroController extends BaseController {
   atenciones = async (req, res) => this.ok(res, { atenciones: await atencionService.listar(req.query) });
   actualizarAtencion = async (req, res) => this.ok(res, { atencion: await atencionService.actualizar(req.params.id, req.body) });
   eliminarAtencion = async (req, res) => this.ok(res, await atencionService.eliminar(req.params.id));
+
+  // ---- Estudiantes activos (lista del periodo en Excel) ----
+  resumenActivos = async (req, res) => this.ok(res, await estudiantesActivosService.resumen());
+  plantillaActivos = async (req, res) => this.archivo(res, await estudiantesActivosService.plantilla(), "plantilla-estudiantes-activos.xlsx", "xlsx");
+  exportarActivos = async (req, res) => {
+    const fecha = new Date().toISOString().slice(0, 10);
+    this.archivo(res, await estudiantesActivosService.exportar(), `estudiantes-activos-${fecha}.xlsx`, "xlsx");
+  };
+  importarActivos = async (req, res) => {
+    if (!req.file) throw new AppError(400, "Adjunta el archivo de Excel.");
+    const resultado = await estudiantesActivosService.importar(req.file.buffer, { confirmar: req.query.confirmar === "true" });
+    this.ok(res, resultado, resultado.confirmado ? 201 : 200);
+  };
 
   // ---- Importar Excel ----
   importar = async (req, res) => {

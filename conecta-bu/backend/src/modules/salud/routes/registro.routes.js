@@ -11,6 +11,11 @@ const router = Router();
 router.get("/catalogos", manejar(c.catalogos));
 
 router.get("/personas/buscar", manejar(c.buscarPersonas));
+// Lista de estudiantes activos: plantilla, descarga y carga del Excel.
+router.get("/personas/estudiantes-activos", manejar(c.resumenActivos));
+router.get("/personas/estudiantes-activos/plantilla", manejar(c.plantillaActivos));
+router.get("/personas/estudiantes-activos/exportar", manejar(c.exportarActivos));
+router.post("/personas/estudiantes-activos/importar", (req, res, next) => subirExcel(req, res, next), manejar(c.importarActivos));
 router.get("/personas", manejar(c.personas));
 router.post("/personas", manejar(c.crearPersona));
 router.get("/personas/:id", manejar(c.persona));
@@ -33,7 +38,10 @@ router.patch("/atenciones/:id", manejar(c.actualizarAtencion));
 router.delete("/atenciones/:id", manejar(c.eliminarAtencion));
 
 // Importar los Excel que hoy lleva la Unidad de Salud.
-const subirExcel = multer({
+function subirExcel(req, res, next) {
+  return cargaExcel(req, res, next);
+}
+const cargaExcel = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 15 * 1024 * 1024, files: 1 },
   fileFilter(req, file, cb) {

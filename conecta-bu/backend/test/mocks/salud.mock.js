@@ -26,6 +26,7 @@ function cumpleCampo(valor, filtro) {
   const txt = (v) => (insensible ? String(v ?? "").toLowerCase() : String(v ?? ""));
   if (filtro.equals !== undefined && !igual(valor, filtro.equals)) return false;
   if (filtro.in && !filtro.in.some((v) => igual(valor, v))) return false;
+  if (filtro.notIn && filtro.notIn.some((v) => igual(valor, v))) return false;
   if (filtro.not !== undefined && igual(valor, filtro.not)) return false;
   if (filtro.contains !== undefined && !txt(valor).includes(txt(filtro.contains))) return false;
   if (filtro.startsWith !== undefined && !txt(valor).startsWith(txt(filtro.startsWith))) return false;
@@ -169,6 +170,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       programa: null,
       consentimientoDatos: false,
       fechaConsentimiento: null,
+      estudianteActivo: false,
       fechaCreacion: new Date(),
       fechaActualizacion: new Date(),
     }),
@@ -396,6 +398,11 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
   }
 
   return {
+      updateMany: async ({ where, data }) => {
+        const lista = tablas[tabla].filter((r) => cumpleWhere(r, where));
+        for (const r of lista) Object.assign(r, data);
+        return { count: lista.length };
+      },
     modelos: {
       personaSalud: modelo("personas", "persona"),
       actividadSalud: modelo("actividades", "actividad-salud"),

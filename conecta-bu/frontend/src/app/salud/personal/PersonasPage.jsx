@@ -1,11 +1,160 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { Icono } from "../comunes/componentes/Iconos";
-import { POBLACION_TEXTO, fechaCorta, mensajeError, nombreCompleto, useCatalogos } from "../comunes/lib/salud";
+import { POBLACION_TEXTO, descargar, fechaCorta, mensajeError, nombreCompleto, useCatalogos } from "../comunes/lib/salud";
 import { claseCampoCorto, Aviso, Campo, Encabezado, Insignia, Kpi, Tarjeta, Vacio, botonPrimario, botonSecundario, claseCampo } from "../comunes/componentes/ui";
 
 // Personas registradas en la Unidad de Salud (busqueda y paginacion).
+// Lista de estudiantes activos del periodo (la de Registro academico): se
+// descarga, se edita en Excel y se vuelve a subir con vista previa.
+function EstudiantesActivos({ alCargar }) {
+  const [activos, setActivos] = useState(null);
+  const [archivo, setArchivo] = useState(null);
+  const [previa, setPrevia] = useState(null);
+  const [ocupado, setOcupado] = useState(false);
+  const [error, setError] = useState("");
+  const [aviso, setAviso] = useState("");
+  const input = useRef(null);
+  const RUTA = "/salud/personas/estudiantes-activos";
+
+  const contar = () =>
+    http
+      .get(RUTA)
+      .then((r) => setActivos(r.data.activos))
+      .catch(() => setActivos(null));
+  useEffect(() => {
+    contar();
+  }, []);
+
+  async function bajar(ruta, nombre) {
+    setError("");
+    try {
+      await descargar(ruta, undefined, nombre);
+    } catch {
+      setError("No fue posible descargar el archivo. Intenta de nuevo.");
+    }
+  }
+
+  async function enviar(confirmar) {
+    if (!archivo) return;
+    setOcupado(true);
+    setError("");
+    setAviso("");
+    const datos = new FormData();
+    datos.append("archivo", archivo);
+    try {
+      const { data } = await http.post(`${RUTA}/importar${confirmar ? "?confirmar=true" : ""}`, datos);
+      if (confirmar) {
+        setPrevia(null);
+        setArchivo(null);
+        setAviso(`Lista cargada: ${data.estudiantes.toLocaleString("es-CO")} estudiantes activos.`);
+        contar();
+        alCargar?.();
+      } else setPrevia(data);
+    } catch (err) {
+      setError(mensajeError(err, "No fue posible leer el archivo."));
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  return (
+    <Tarjeta
+      className="mb-6"
+      titulo="Estudiantes activos"
+      subtitulo={
+        activos === null
+          ? "Sube la lista de matriculados del periodo para buscarlos por documento y llenar sus datos al inscribirse a salidas."
+          : activos
+            ? `${activos.toLocaleString("es-CO")} estudiantes en la lista vigente. Al subir una nueva, quienes no estén en ella dejan de figurar como activos.`
+            : "Aún no hay lista. Descarga la plantilla, pega los matriculados del periodo y súbela."
+      }
+      acciones={
+        <div className="flex gap-2 flex-wrap">
+          {activos > 0 && (
+            <button type="button" onClick={() => bajar(`${RUTA}/exportar`, "estudiantes-activos.xlsx")} className={botonSecundario}>
+              <Icono nombre="descarga" size={17} strokeWidth={2.2} /> Descargar lista
+            </button>
+          )}
+          <button type="button" onClick={() => bajar(`${RUTA}/plantilla`, "plantilla-estudiantes-activos.xlsx")} className={botonSecundario}>
+            <Icono nombre="archivo" size={17} strokeWidth={2.2} /> Plantilla
+          </button>
+        </div>
+      }
+    >
+      <div className="flex gap-3 flex-wrap items-center">
+        <button type="button" onClick={() => input.current?.click()} className={botonSecundario}>
+          <Icono nombre="subir" size={17} strokeWidth={2.2} />
+          {archivo ? "Cambiar archivo" : "Subir lista .xlsx"}
+        </button>
+        {archivo && <span className="text-sm font-semibold text-ink-900">{archivo.name}</span>}
+        <input
+          ref={input}
+          type="file"
+          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          className="sr-only"
+          onChange={(e) => {
+            setArchivo(e.target.files[0] || null);
+            setPrevia(null);
+            setAviso("");
+            e.target.value = "";
+          }}
+        />
+        {archivo && !previa && (
+          <button type="button" onClick={() => enviar(false)} disabled={ocupado} className={botonPrimario}>
+            {ocupado ? "Leyendo…" : "Revisar antes de cargar"}
+          </button>
+        )}
+      </div>
+
+      {error && <div className="mt-4"><Aviso>{error}</Aviso></div>}
+      {aviso && <div className="mt-4"><Aviso tono="verde">{aviso}</Aviso></div>}
+
+      {previa && (
+        <div className="mt-5 flex flex-col gap-4">
+          <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
+            {[
+              ["Estudiantes en la lista", previa.estudiantes],
+              ["Nuevos", previa.nuevos],
+              ["Ya estaban registrados", previa.actualizados],
+              ["Dejan de estar activos", previa.dejanDeEstarActivos],
+            ].map(([t, v]) => (
+              <div key={t} className="burbuja rounded-2xl p-4">
+                <p className="m-0 text-xs text-ink-500">{t}</p>
+                <p className="m-0 mt-1 font-display text-3xl font-semibold text-primary tabular-nums">{v.toLocaleString("es-CO")}</p>
+              </div>
+            ))}
+          </div>
+          {previa.repetidas > 0 && <Aviso tono="azul">{previa.repetidas} documentos estaban repetidos; se toma la última fila de cada uno.</Aviso>}
+          {previa.filasConError > 0 && (
+            <Aviso tono="dorado">
+              <p className="m-0 mb-1.5">
+                <strong>{previa.filasConError} filas no se cargarán</strong>; revísalas en el Excel:
+              </p>
+              <ul className="m-0 pl-5">
+                {previa.errores.map((e) => (
+                  <li key={e.fila}>
+                    Fila {e.fila}: {e.motivo}
+                  </li>
+                ))}
+              </ul>
+            </Aviso>
+          )}
+          <div className="flex gap-2.5 flex-wrap">
+            <button type="button" onClick={() => enviar(true)} disabled={ocupado} className={botonPrimario}>
+              {ocupado ? "Cargando…" : `Cargar ${previa.estudiantes.toLocaleString("es-CO")} estudiantes`}
+            </button>
+            <button type="button" onClick={() => setPrevia(null)} className={botonSecundario}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+    </Tarjeta>
+  );
+}
+
 export function PersonasPage() {
   const catalogos = useCatalogos();
   const [q, setQ] = useState("");
@@ -13,6 +162,7 @@ export function PersonasPage() {
   const [pagina, setPagina] = useState(1);
   const [datos, setDatos] = useState(null);
   const [error, setError] = useState("");
+  const [recarga, setRecarga] = useState(0);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -22,7 +172,7 @@ export function PersonasPage() {
         .catch((err) => setError(mensajeError(err, "No fue posible cargar las personas.")));
     }, 250);
     return () => clearTimeout(t);
-  }, [q, poblacion, pagina]);
+  }, [q, poblacion, pagina, recarga]);
 
   const paginas = datos ? Math.max(1, Math.ceil(datos.total / datos.porPagina)) : 1;
 
@@ -33,6 +183,7 @@ export function PersonasPage() {
         titulo="Personas"
         descripcion="Estudiantes, docentes, administrativos, egresados y visitantes atendidos. Cada persona se registra una sola vez."
       />
+      <EstudiantesActivos alCargar={() => setRecarga((n) => n + 1)} />
       <div className="flex gap-3 flex-wrap mb-5">
         <div className="relative flex-[1_1_320px]">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-500">
@@ -92,7 +243,10 @@ export function PersonasPage() {
                     <td className="px-2 py-2.5 tabular-nums">
                       {p.tipoDocumento} {p.numeroDocumento}
                     </td>
-                    <td className="px-2 py-2.5">{POBLACION_TEXTO[p.poblacion]}</td>
+                    <td className="px-2 py-2.5">
+                      {POBLACION_TEXTO[p.poblacion]}
+                      {p.estudianteActivo && <Insignia tono="azul" className="ml-2">Activo</Insignia>}
+                    </td>
                     <td className="px-2 py-2.5 text-ink-600">{p.programa || "—"}</td>
                     <td className="px-2 py-2.5">
                       {p.consentimientoDatos ? <Insignia tono="verde">Autorizados</Insignia> : <Insignia tono="dorado">Sin autorización</Insignia>}

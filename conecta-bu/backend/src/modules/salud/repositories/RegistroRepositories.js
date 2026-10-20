@@ -38,6 +38,16 @@ class PersonaRepository extends BaseRepository {
   // Docentes y administrativos (sugerencias del formulario de reportes SST).
   docentesYAdministrativos(prefijoDocumento) {
     return this.tabla.findMany({
+  porCodigos(codigos) {
+    return codigos.length ? this.tabla.findMany({ where: { codigoEstudiantil: { in: codigos } } }) : [];
+  }
+  estudiantesActivos() {
+    return this.tabla.findMany({ where: { estudianteActivo: true }, orderBy: [{ apellidos: "asc" }, { nombres: "asc" }] });
+  }
+  // Quienes no vienen en la lista nueva dejan de figurar como activos.
+  desactivarEstudiantesExcepto(documentos) {
+    return this.tabla.updateMany({ where: { estudianteActivo: true, numeroDocumento: { notIn: documentos } }, data: { estudianteActivo: false } });
+  }
       where: { poblacion: { in: ["Docente", "Administrativo"] }, ...(prefijoDocumento ? { numeroDocumento: { startsWith: prefijoDocumento } } : {}) },
       select: { nombres: true, apellidos: true, tipoDocumento: true, numeroDocumento: true, poblacion: true },
       orderBy: [{ apellidos: "asc" }, { nombres: "asc" }],

@@ -24,8 +24,11 @@ class InscripcionSalidaService {
     const miaDe = (id) => mias.find((m) => m.salidaId === id);
     const todas = await this.repos.salidas.listarPorIds(mias.map((m) => m.salidaId));
     const resumen = (s) => (s ? { id: s.id, nombre: s.nombre, destino: s.destino, fechaSalida: iso(s.fechaSalida), estado: s.estado } : null);
+    // Datos de la lista de estudiantes activos (por su correo) para llenar el formulario.
+    const persona = usuario.emailInstitucional ? await this.repos.personas.porCorreo(String(usuario.emailInstitucional).toLowerCase()) : null;
     return {
       programas: PROGRAMAS.map((p) => p.nombre),
+      misDatos: persona ? { tipoDocumento: persona.tipoDocumento, documento: persona.numeroDocumento, programa: persona.programa, celular: persona.telefono } : null,
       salidas: vigentes.map((s) => ({ ...serializar(s, mapa.get(s.id)), miInscripcion: miaDe(s.id) ? publicaInscripcion(miaDe(s.id)) : null })),
       misInscripciones: mias
         .map((m) => ({ ...publicaInscripcion(m), salida: resumen(todas.find((x) => x.id === m.salidaId)) }))
