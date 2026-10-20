@@ -94,7 +94,7 @@ class BloqueoService {
     for (const cita of afectadas) {
       const cancelada = await this.repos.citas.cambiarEstado(cita.id, "Cancelada");
       await this.repos.horarios.actualizar(cita.horarioId, { ocupado: true });
-      if (cancelada?.usuario) automatizaciones.citaCancelada(cancelada.usuario, cancelada);
+      if (cancelada?.usuario) automatizaciones.citaCancelada(cancelada.usuario, cancelada, "Salud Integral");
     }
     return { bloqueo: this.serializar(bloqueo), citasCanceladas: afectadas.length, horariosAfectados: horarios.length };
   }

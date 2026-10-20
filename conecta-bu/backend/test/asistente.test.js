@@ -170,7 +170,21 @@ describe("RF-013: automatizacion con n8n", () => {
       datos: { estudiante: { nombre: "Ana Pérez", email: "e@uniautonoma.edu.co" } },
     });
     expect(cuerpo.datos.cita.servicio).toBe("Orientación psicológica individual");
+    expect(cuerpo.datos.cita.modulo).toBe("Orientación");
     expect(listarEjecuciones()[0]).toMatchObject({ tipo: "cita.agendada", estado: "exitosa" });
+  });
+
+  test("la cita de Salud integral avisa a n8n con el nombre del modulo", async () => {
+    global.fetch.mockReturnValue(respuestaJson({ ok: true }));
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co", "Ana Pérez");
+    const servicio = prisma.__seedServicio({ nombre: "Consulta de enfermería", modulo: "salud" });
+    const horario = prisma.__seedHorario({ fecha: diasDesdeHoy(1), servicioId: servicio.id });
+
+    const res = await request(app).post("/api/v1/salud/estudiante/citas").set(auth(token)).send({ horarioId: horario.id });
+    expect(res.status).toBe(201);
+    await esperar();
+    const cuerpo = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(cuerpo).toMatchObject({ tipo: "cita.agendada", datos: { cita: { modulo: "Salud Integral", servicio: "Consulta de enfermería" } } });
   });
 
   test("si n8n no esta disponible, la cita igual queda guardada y el fallo se registra", async () => {
