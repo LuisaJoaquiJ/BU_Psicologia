@@ -13,6 +13,12 @@ const MENUS = {
     { to: "/cultura/grupos", label: "Grupos" },
     { to: "/cultura/agenda", label: "Agenda" },
     { to: "/cultura/convocatorias", label: "Convocatorias" },
+    { to: "/cultura/redes", label: "Redes" },
+    { to: "/cultura/itinerante", label: "Itinerante" },
+    { to: "/cultura/apoyo", label: "Apoyo" },
+    { to: "/cultura/informes", label: "Informes" },
+    { to: "/cultura/historico", label: "Histórico" },
+    { to: "/cultura/equipo", label: "Equipo" },
   ],
 };
 

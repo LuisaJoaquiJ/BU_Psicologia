@@ -67,6 +67,8 @@ export function GruposPersonal() {
   const [grupos, setGrupos] = useState([]);
   const [error, setError] = useState("");
   const [aviso, setAviso] = useState("");
+  const [busqueda, setBusqueda] = useState("");
+  const [hallados, setHallados] = useState([]);
   const [form, setForm] = useState({ areaId: "", nombre: "", director: "", lugar: "", cupo: 20, inicio: "14:00", fin: "16:00", dias: [2, 4] });
   const [asistencia, setAsistencia] = useState({});
   function cargar() {
@@ -116,6 +118,29 @@ export function GruposPersonal() {
     <Marco titulo="Grupos artísticos" texto="Cada grupo pertenece a un área y a un periodo. El estudiante se inscribe si hay cupo y el horario no se cruza.">
       {error && <Aviso>{error}</Aviso>}
       {aviso && <Aviso tono="verde">{aviso}</Aviso>}
+      <form
+        className="bg-white border rounded-2xl p-4 flex flex-wrap gap-2 mb-4"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setError("");
+          try {
+            const r = await http.get("/cultura/admin/inscritos", { params: { q: busqueda } });
+            setHallados(r.data);
+          } catch (err) {
+            setError(mensajeError(err, "No fue posible buscar."));
+          }
+        }}
+      >
+        <input className={`${campo} flex-1`} placeholder="Buscar inscrito por cédula, correo o nombre" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+        <button className="min-h-[44px] px-4 rounded-full border font-bold">Buscar</button>
+      </form>
+      {hallados.length > 0 && (
+        <ul className="list-none m-0 mb-6 p-0 grid gap-1">
+          {hallados.map((p) => (
+            <li key={p.usuarioId} className="text-sm bg-white border rounded-xl px-3 py-2">{p.nombre} · {p.email} · {p.documento || "sin cédula"} · {p.programa || "sin programa"}</li>
+          ))}
+        </ul>
+      )}
       <form onSubmit={crear} className="bg-white border rounded-2xl p-4 grid gap-3 sm:grid-cols-2 mb-8">
         <label className="text-sm font-semibold">
           Área
@@ -209,6 +234,7 @@ export function GruposPersonal() {
                         const datos = new FormData();
                         datos.append("evidencia", archivo);
                         datos.append("grupoId", grupo.id);
+                        datos.append("tipo", archivo.type === "application/pdf" ? "planilla" : "fotografia");
                         setError("");
                         setAviso("");
                         try {
@@ -233,7 +259,7 @@ export function GruposPersonal() {
 export function AgendaPersonal() {
   const [eventos, setEventos] = useState([]);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({ nombre: "", descripcion: "", fecha: "", horaInicio: "18:00", horaFin: "20:00", lugar: "", cupo: 40, fechaLimite: "", estado: "Publicado" });
+  const [form, setForm] = useState({ nombre: "", descripcion: "", representacion: "", fecha: "", horaInicio: "18:00", horaFin: "20:00", lugar: "", cupo: 40, fechaLimite: "", estado: "Publicado" });
   function cargar() {
     http.get("/cultura/admin/agenda").then((r) => setEventos(r.data)).catch(() => setError("No fue posible cargar la agenda."));
   }
@@ -261,6 +287,11 @@ export function AgendaPersonal() {
           Descripción
           <textarea className={`${campo} w-full mt-1`} value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} />
         </label>
+        <label className="text-sm font-semibold sm:col-span-2">
+          Representación artística
+          <input className={`${campo} w-full mt-1`} placeholder="Ej. Museo de Changó, grupo de teatro" value={form.representacion} onChange={(e) => setForm({ ...form, representacion: e.target.value })} />
+        </label>
+        <p className="m-0 sm:col-span-2 text-sm text-ink-500">Para otra franja del mismo día, publica otro evento con su hora de inicio y fin.</p>
         <label className="text-sm font-semibold">Fecha<input type="date" className={`${campo} w-full mt-1`} value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} required /></label>
         <label className="text-sm font-semibold">Límite de inscripción<input type="date" className={`${campo} w-full mt-1`} value={form.fechaLimite} onChange={(e) => setForm({ ...form, fechaLimite: e.target.value })} required /></label>
         <label className="text-sm font-semibold">Inicio<input type="time" className={`${campo} w-full mt-1`} value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} /></label>

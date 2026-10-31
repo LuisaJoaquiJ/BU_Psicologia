@@ -2,7 +2,7 @@ const { prisma } = require("../../config/prisma");
 const { AppError } = require("../../common/utils/AppError");
 const { hoyBogota } = require("../../common/utils/fechas");
 const { periodoActual, iso } = require("./periodo");
-const { tipoValido, nombreTipo, nombreCategoria, CATEGORIAS } = require("./catalogo");
+const { tipoValido, nombreTipo, nombreCategoria, CATEGORIAS, CARACTERIZACIONES } = require("./catalogo");
 
 const MAX_GRUPOS = 2;
 
@@ -54,17 +54,41 @@ function sello(tipoSnies, ip) {
   return { tipoSnies: tipoValido(tipoSnies), ip: String(ip || "desconocida").slice(0, 45), fechaInscripcion: new Date() };
 }
 
+function documentoValido(valor) {
+  const n = String(valor || "").replace(/\D/g, "");
+  if (n.length < 5 || n.length > 20) throw new AppError(400, "La cédula debe tener entre 5 y 20 dígitos.");
+  return n;
+}
+
+function caracterizacionValida(valor) {
+  const nombre = String(valor || "").trim();
+  if (!CARACTERIZACIONES.includes(nombre)) throw new AppError(400, "La caracterización no está en el listado del área.");
+  return nombre;
+}
+
 async function leerPerfil(usuarioId) {
   const perfil = await prisma.perfilCultural.findFirst({ where: { usuarioId } });
   const tipoSnies = perfil?.tipoSnies || 1;
-  return { tipoSnies, tipo: nombreTipo(tipoSnies), tipos: require("./catalogo").TIPOS };
+  return {
+    tipoSnies,
+    tipo: nombreTipo(tipoSnies),
+    tipos: require("./catalogo").TIPOS,
+    documento: perfil?.documento || "",
+    programa: perfil?.programa || "",
+    caracterizacion: perfil?.caracterizacion || "No registra",
+    caracterizaciones: CARACTERIZACIONES,
+  };
 }
 
-async function guardarPerfil(usuarioId, tipoSnies) {
-  const tipo = tipoValido(tipoSnies);
+async function guardarPerfil(usuarioId, body = {}) {
   const previo = await prisma.perfilCultural.findFirst({ where: { usuarioId } });
-  if (previo) await prisma.perfilCultural.update({ where: { usuarioId }, data: { tipoSnies: tipo } });
-  else await prisma.perfilCultural.create({ data: { usuarioId, tipoSnies: tipo } });
+  const tipo = body.tipoSnies !== undefined && body.tipoSnies !== "" ? tipoValido(body.tipoSnies) : previo?.tipoSnies || 1;
+  const documento = body.documento !== undefined ? (body.documento ? documentoValido(body.documento) : null) : previo?.documento || null;
+  const programa = body.programa !== undefined ? (body.programa ? texto(body.programa, 150, "el programa") : null) : previo?.programa || null;
+  const caracterizacion = body.caracterizacion !== undefined ? caracterizacionValida(body.caracterizacion || "No registra") : previo?.caracterizacion || "No registra";
+  const data = { tipoSnies: tipo, documento, programa, caracterizacion };
+  if (previo) await prisma.perfilCultural.update({ where: { usuarioId }, data });
+  else await prisma.perfilCultural.create({ data: { usuarioId, ...data } });
   return leerPerfil(usuarioId);
 }
 
@@ -171,6 +195,7 @@ async function listarAgenda(usuarioId) {
         horaInicio: e.horaInicio,
         horaFin: e.horaFin,
         lugar: e.lugar,
+        representacion: e.representacion,
         cupo: e.cupo,
         fechaLimite: iso(e.fechaLimite),
         cuposDisponibles: Math.max(0, e.cupo - activas.length),
@@ -365,18 +390,31 @@ function datosEvento(body, previo) {
     cupo: body.cupo !== undefined ? cupoEntero(body.cupo) : previo?.cupo,
     fechaLimite: fechaDia(iso(body.fechaLimite ?? previo?.fechaLimite), "La fecha límite"),
     categoria,
+    representacion: body.representacion ? texto(body.representacion, 300, "la representación artística") : previo?.representacion || null,
+    grupoId: body.grupoId === "" ? null : body.grupoId ?? previo?.grupoId ?? null,
     estado,
   };
 }
 
+async function grupoExistente(grupoId) {
+  if (!grupoId) return null;
+  const grupo = await prisma.grupoCultural.findUnique({ where: { id: grupoId } });
+  if (!grupo) throw new AppError(404, "No se encontró el grupo de la representación artística.");
+  return grupo.id;
+}
+
 async function crearEvento(body) {
-  return prisma.eventoCultural.create({ data: datosEvento(body) });
+  const datos = datosEvento(body);
+  datos.grupoId = await grupoExistente(datos.grupoId);
+  return prisma.eventoCultural.create({ data: datos });
 }
 
 async function editarEvento(id, body) {
   const previo = await prisma.eventoCultural.findUnique({ where: { id } });
   if (!previo) throw new AppError(404, "No se encontró el evento.");
-  return prisma.eventoCultural.update({ where: { id }, data: datosEvento(body, previo) });
+  const datos = datosEvento(body, previo);
+  datos.grupoId = await grupoExistente(datos.grupoId);
+  return prisma.eventoCultural.update({ where: { id }, data: datos });
 }
 
 async function listarEventosAdmin() {
@@ -457,25 +495,39 @@ async function resumenCultura() {
   return { inscripciones, eventos };
 }
 
-async function informeSnies() {
+function dentroDelRango(valor, desde, hasta) {
+  if (!desde && !hasta) return true;
+  if (!valor) return false;
+  const t = new Date(valor).getTime();
+  if (desde && t < desde.getTime()) return false;
+  if (hasta && t >= hasta.getTime() + 86400000) return false;
+  return true;
+}
+
+async function informeSnies(filtro = {}) {
   const ExcelJS = require("exceljs");
   const { nombreTipo: tipo, nombreCategoria: cat } = require("./catalogo");
-  const [asistencias, sesiones, grupos, areas, usuariosLista] = await Promise.all([
+  const desde = filtro.desde ? fechaDia(filtro.desde, "La fecha inicial") : null;
+  const hasta = filtro.hasta ? fechaDia(filtro.hasta, "La fecha final") : null;
+  const [asistencias, sesiones, grupos, areas, usuariosLista, perfiles] = await Promise.all([
     prisma.asistenciaCultural.findMany(),
     prisma.sesionCultural.findMany(),
     prisma.grupoCultural.findMany(),
     prisma.areaCultural.findMany(),
     prisma.usuario.findMany(),
+    prisma.perfilCultural.findMany(),
   ]);
   const sesionDe = new Map(sesiones.map((s) => [s.id, s]));
   const grupoDe = new Map(grupos.map((g) => [g.id, g]));
   const areaDe = new Map(areas.map((a) => [a.id, a]));
   const usuarioDe = new Map(usuariosLista.map((u) => [u.id, u]));
-  const filas = asistencias.map((a) => {
+  const perfilDe = new Map(perfiles.map((p) => [p.usuarioId, p]));
+  const filas = asistencias.filter((a) => dentroDelRango(a.fechaHora, desde, hasta)).map((a) => {
     const sesion = sesionDe.get(a.sesionId);
     const grupo = sesion ? grupoDe.get(sesion.grupoId) : null;
     const area = grupo ? areaDe.get(grupo.areaId) : null;
     const usuario = usuarioDe.get(a.usuarioId);
+    const perfil = perfilDe.get(a.usuarioId);
     return {
       actividad: grupo?.nombre || "",
       categoria: cat(area?.categoria),
@@ -483,6 +535,8 @@ async function informeSnies() {
       tipo: tipo(a.tipoSnies || 1),
       nombre: usuario?.nombre || "",
       correo: usuario?.emailInstitucional || "",
+      programa: perfil?.programa || "Sin programa",
+      caracterizacion: perfil?.caracterizacion || "No registra",
       cuando: a.fechaHora ? new Date(a.fechaHora).toISOString() : "",
       ip: a.ip || "",
       usuarioId: a.usuarioId,
@@ -491,8 +545,8 @@ async function informeSnies() {
   const libro = new ExcelJS.Workbook();
   const detalle = libro.addWorksheet("ASISTENCIA");
   detalle.addRow(["Codigos de esta ficha de Cultura: 1 Estudiante, 2 Docente, 3 Administrativo, 4 Egresado. La plantilla SNIES que usa Salud numera egresado 2, docente 3 y administrativo 4. Confirmar antes de cargar al Ministerio."]);
-  detalle.addRow(["Actividad", "Categoria", "Codigo SNIES", "Tipo de usuario", "Nombre", "Correo", "Fecha y hora", "IP", "ID de usuario"]);
-  for (const f of filas) detalle.addRow([f.actividad, f.categoria, f.codigo, f.tipo, f.nombre, f.correo, f.cuando, f.ip, f.usuarioId]);
+  detalle.addRow(["Actividad", "Categoria", "Codigo SNIES", "Tipo de usuario", "Nombre", "Correo", "Programa", "Caracterizacion", "Fecha y hora", "IP", "ID de usuario"]);
+  for (const f of filas) detalle.addRow([f.actividad, f.categoria, f.codigo, f.tipo, f.nombre, f.correo, f.programa, f.caracterizacion, f.cuando, f.ip, f.usuarioId]);
   const resumen = libro.addWorksheet("RESUMEN");
   resumen.addRow(["Actividad", "Categoria", "Codigo SNIES", "Tipo de usuario", "Asistencias"]);
   const cuentas = new Map();
@@ -501,6 +555,24 @@ async function informeSnies() {
     cuentas.set(clave, { ...f, total: (cuentas.get(clave)?.total || 0) + 1 });
   }
   for (const f of cuentas.values()) resumen.addRow([f.actividad, f.categoria, f.codigo, f.tipo, f.total]);
+  const porPrograma = libro.addWorksheet("PROGRAMA");
+  porPrograma.addRow(["Programa", "Estudiante", "Correo", "Asistencias confirmadas"]);
+  const personas = new Map();
+  for (const f of filas) {
+    const clave = `${f.programa}|${f.usuarioId}`;
+    personas.set(clave, { ...f, total: (personas.get(clave)?.total || 0) + 1 });
+  }
+  for (const f of personas.values()) porPrograma.addRow([f.programa, f.nombre, f.correo, f.total]);
+  const inclusion = libro.addWorksheet("INCLUSION");
+  inclusion.addRow(["Caracterizacion", "Personas con asistencia"]);
+  const porCaracter = new Map();
+  for (const f of personas.values()) porCaracter.set(f.caracterizacion, (porCaracter.get(f.caracterizacion) || 0) + 1);
+  for (const [nombre, total] of porCaracter) inclusion.addRow([nombre, total]);
+  if (filtro.formato === "csv") {
+    const encabezado = ["Actividad", "Categoria", "Codigo SNIES", "Tipo", "Nombre", "Correo", "Programa", "Caracterizacion", "Fecha y hora", "IP", "ID"];
+    const lineas = [encabezado, ...filas.map((f) => [f.actividad, f.categoria, f.codigo, f.tipo, f.nombre, f.correo, f.programa, f.caracterizacion, f.cuando, f.ip, f.usuarioId])];
+    return lineas.map((linea) => linea.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  }
   return libro.xlsx.writeBuffer();
 }
 

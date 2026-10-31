@@ -51,6 +51,31 @@ export function InicioCultura() {
           ))}
         </select>
       </label>
+      <form
+        key={`${perfil?.documento || ""}-${perfil?.programa || ""}-${perfil?.caracterizacion || ""}`}
+        className="grid gap-3 sm:grid-cols-3 mb-6"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const datos = new FormData(e.currentTarget);
+          const r = await http.put("/cultura/perfil", {
+            tipoSnies: perfil?.tipoSnies || 1,
+            documento: datos.get("documento"),
+            programa: datos.get("programa"),
+            caracterizacion: datos.get("caracterizacion"),
+          });
+          setPerfil(r.data);
+          setAviso("Quedaron guardados tu programa, tu cédula y tu caracterización.");
+        }}
+      >
+        <label className="text-sm font-semibold">Cédula<input name="documento" defaultValue={perfil?.documento || ""} className="border rounded-xl px-3 min-h-[44px] w-full mt-1" /></label>
+        <label className="text-sm font-semibold">Programa académico<input name="programa" defaultValue={perfil?.programa || ""} className="border rounded-xl px-3 min-h-[44px] w-full mt-1" /></label>
+        <label className="text-sm font-semibold">Caracterización
+          <select name="caracterizacion" defaultValue={perfil?.caracterizacion || "No registra"} className="border rounded-xl px-3 min-h-[44px] w-full mt-1">
+            {(perfil?.caracterizaciones || ["No registra"]).map((c) => <option key={c}>{c}</option>)}
+          </select>
+        </label>
+        <button className="boton-liquido min-h-[44px] px-4 rounded-full font-bold w-fit">Guardar perfil</button>
+      </form>
       <div className="grid gap-4 sm:grid-cols-3">
         <Link to="/mi-cultura/grupos" className="bg-white border rounded-2xl p-5 no-underline text-ink-900">
           <p className="m-0 text-sm text-ink-500">Grupos</p>
@@ -127,8 +152,12 @@ export function GruposCultura() {
                       Retirarme
                     </button>
                   </div>
+                ) : grupo.cuposDisponibles < 1 ? (
+                  <button type="button" disabled className="min-h-[44px] px-4 rounded-full border font-bold opacity-60">
+                    Sin cupos
+                  </button>
                 ) : (
-                  <button type="button" disabled={ocupado || !grupo.inscripcionesAbiertas || grupo.cuposDisponibles < 1} onClick={() => accion(grupo, "inscribir")} className="boton-liquido min-h-[44px] px-4 rounded-full font-bold disabled:opacity-50">
+                  <button type="button" disabled={ocupado || !grupo.inscripcionesAbiertas} onClick={() => accion(grupo, "inscribir")} className="boton-liquido min-h-[44px] px-4 rounded-full font-bold disabled:opacity-50">
                     Inscribirme
                   </button>
                 )}
@@ -175,14 +204,17 @@ export function AgendaCultura() {
                 {evento.lugar ? ` · ${evento.lugar}` : ""}
               </p>
               {evento.descripcion && <p className="m-0 mt-2 text-sm">{evento.descripcion}</p>}
+              {evento.representacion && <p className="m-0 mt-1 text-sm">Representación artística: {evento.representacion}</p>}
               <p className="m-0 mt-1 text-sm">{evento.cuposDisponibles} cupos · inscripción hasta {evento.fechaLimite}</p>
             </div>
             {evento.inscrito ? (
               <button type="button" disabled={ocupado} onClick={() => accion(evento, "cancelar")} className="min-h-[44px] px-4 rounded-full border font-bold">
                 Cancelar inscripción
               </button>
+            ) : evento.cuposDisponibles < 1 ? (
+              <button type="button" disabled className="min-h-[44px] px-4 rounded-full border font-bold opacity-60">Sin cupos</button>
             ) : (
-              <button type="button" disabled={ocupado || !evento.abierta || evento.cuposDisponibles < 1} onClick={() => accion(evento, "inscribir")} className="boton-liquido min-h-[44px] px-4 rounded-full font-bold disabled:opacity-50">
+              <button type="button" disabled={ocupado || !evento.abierta} onClick={() => accion(evento, "inscribir")} className="boton-liquido min-h-[44px] px-4 rounded-full font-bold disabled:opacity-50">
                 Inscribirme
               </button>
             )}

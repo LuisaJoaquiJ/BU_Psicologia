@@ -18,6 +18,11 @@ const CATEGORIAS = [
   { id: "promocion", nombre: "Evento interno / promoción" },
 ];
 
+const CARACTERIZACIONES = ["No registra", "Afro", "Indígena", "Rom", "Raizal", "Palenquero", "Mestizo", "Otra"];
+const REDES = ["ASIES", "ASCUN"];
+const ROLES_OPERATIVOS = ["administrador", "docente", "monitor"];
+const TIPOS_EVIDENCIA = ["fotografia", "planilla"];
+
 const CATALOGO = [
   { categoria: "taller", nombre: "Guitarra" },
   { categoria: "taller", nombre: "Piano" },
@@ -59,4 +64,7 @@ function ipDe(req) {
   return (cruda || "desconocida").slice(0, 45);
 }
 
-module.exports = { TIPOS, CATEGORIAS, CATALOGO, tipoValido, nombreTipo, nombreCategoria, ipDe };
+module.exports = {
+  TIPOS, CATEGORIAS, CATALOGO, CARACTERIZACIONES, REDES, ROLES_OPERATIVOS, TIPOS_EVIDENCIA,
+  tipoValido, nombreTipo, nombreCategoria, ipDe,
+};
