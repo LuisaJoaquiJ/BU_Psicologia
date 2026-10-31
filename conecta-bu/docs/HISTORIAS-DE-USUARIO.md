@@ -213,7 +213,7 @@ Como personal de orientación, quiero registrar a quien llega sin haber agendado
 
 ## HU-021 — Participar en Arte y Cultura
 
-**Se cumple.** Fuera del F-02. Caso en `cultura.test.js`. El área entra solo si el superadministrador asignó el correo al módulo Cultura.
+**Se cumple.** Fuera del F-02. Casos CP-023 a CP-030, en `cultura.test.js` y `cultura-hu.test.js`, ejecutados el 30 de octubre de 2026. El área entra solo si el superadministrador asignó el correo al módulo Cultura.
 
 Como estudiante, quiero inscribirme a un grupo artístico, a un evento de la agenda y postularme a una convocatoria, para participar y que el área lleve la asistencia y la decisión.
 

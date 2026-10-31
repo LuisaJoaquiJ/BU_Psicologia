@@ -187,3 +187,91 @@ Estas funciones no están en el acta. Se probaron porque están en el repositori
 Los diez requisitos funcionales del F-02 tienen caso y salieron aprobados en la API, con tres salvedades ya escritas: el registro es por Google y no por contraseña, la cancelación exige 24 horas, y desactivar un usuario no pide confirmación por citas activas.
 
 Los requisitos no funcionales del F-02, salvo la parte de JWT del RNF-002, no quedaron demostrados en esta ejecución.
+
+## 8. Arte y Cultura — ejecución del 30 de octubre de 2026
+
+Fuera del F-02. Cubre la historia HU-021 y el mapa HU-01 a HU-13 de la ficha del área. El código probado es `main` en el commit `53a9235`. Las pruebas simulan PostgreSQL y no tocan la base real.
+
+Comando, desde `conecta-bu/backend`:
+
+```
+npx jest test/cultura.test.js test/cultura-hu.test.js --watchman=false --forceExit
+```
+
+| Resultado | Cantidad |
+|---|---|
+| Suites | 2 de 2 aprobadas |
+| Casos | 8 de 8 aprobados |
+| Tiempo | 6,6 s |
+
+| Caso | Qué comprueba | Historia | Archivo | Resultado |
+|---|---|---|---|---|
+| CP-023 | Inscripción a un grupo, rechazo del duplicado y retiro que libera el cupo | HU-021, HU-01 | `cultura.test.js` | Aprobado |
+| CP-024 | Sin cupo responde 409. Un horario que se cruza con otro grupo del mismo periodo también responde 409 | HU-021, HU-03 | `cultura.test.js` | Aprobado |
+| CP-025 | La agenda publicada acepta una inscripción y rechaza la que pasa el cupo | HU-021, HU-05 | `cultura.test.js` | Aprobado |
+| CP-026 | La postulación exige motivación. Queda Recibida. Quien no tiene el módulo recibe 403. El personal la pasa a Aceptada | HU-021 | `cultura.test.js` | Aprobado |
+| CP-027 | El personal publica un grupo e inscribe la asistencia de quien está inscrito | HU-021, HU-07 | `cultura.test.js` | Aprobado |
+| CP-028 | La inscripción y el auto-registro de asistencia guardan tipo SNIES 2, fecha y hora, e IP. Una segunda marca el mismo día responde 409. El informe SNIES sale en Excel | HU-07, HU-09 | `cultura.test.js` | Aprobado |
+| CP-029 | El monitor no crea grupos (403). Una representación ASIES guarda la red, la posición y al participante, y se consulta en el histórico | HU-02, HU-12, HU-13 | `cultura-hu.test.js` | Aprobado |
+| CP-030 | La pausa creativa y el apoyo a mercadeo quedan registrados. El perfil guarda cédula, programa Derecho y caracterización Afro. La búsqueda por cédula encuentra al inscrito. El registro calificado confirma la asistencia. El informe de inclusión cuenta Afro. El CSV del SNIES incluye el programa | HU-04, HU-06, HU-07, HU-10, HU-11 | `cultura-hu.test.js` | Aprobado |
+
+### CP-023 — Inscripción, duplicado y retiro
+
+- **Dado** un grupo activo con inscripciones abiertas.
+- **Cuando** el estudiante se inscribe, lo intenta otra vez y luego se retira.
+- **Entonces** la primera respuesta es 200, la segunda es 409 y, al retirarse, el cupo ocupado vuelve a cero.
+- **Evidencia:** `test/cultura.test.js` («el estudiante se inscribe, no repite y se retira»).
+- **Resultado:** Aprobado.
+
+### CP-024 — Cupo y horario cruzado
+
+- **Dado** un grupo con cupo 1 ya ocupado, y otro par de grupos cuyo horario se solapa.
+- **Cuando** una segunda persona pide el cupo lleno, o la misma persona pide el grupo que se cruza.
+- **Entonces** ambas peticiones responden 409.
+- **Evidencia:** `test/cultura.test.js` («no hay cupo ni horario cruzado»).
+- **Resultado:** Aprobado.
+
+### CP-025 — Agenda con cupo
+
+- **Dado** un evento publicado, con cupo 1 y fecha límite futura.
+- **Cuando** dos estudiantes se inscriben.
+- **Entonces** el primero entra y el segundo recibe 409.
+- **Evidencia:** `test/cultura.test.js` («la agenda respeta cupo y fecha límite»).
+- **Resultado:** Aprobado.
+
+### CP-026 — Convocatoria
+
+- **Cuando** el estudiante postula con una motivación de una palabra, y luego con un texto suficiente.
+- **Entonces** la corta responde 400 y la válida queda en estado Recibida. Un administrador de otro módulo no lista las postulaciones (403). El personal de Cultura la acepta.
+- **Evidencia:** `test/cultura.test.js` («la convocatoria se postula y el personal la acepta»).
+- **Resultado:** Aprobado.
+
+### CP-027 — Publicar grupo y pasar asistencia
+
+- **Cuando** el personal crea el grupo y marca presente a quien ya se inscribió.
+- **Entonces** el grupo responde 201 y la asistencia cuenta un presente.
+- **Evidencia:** `test/cultura.test.js` («el personal publica un grupo y marca asistencia»).
+- **Resultado:** Aprobado.
+
+### CP-028 — Auditoría SNIES
+
+- **Cuando** el estudiante se inscribe como tipo SNIES 2 y marca su propia asistencia.
+- **Entonces** la inscripción y la asistencia guardan el tipo 2, la fecha y hora, y la IP. Repetir la asistencia el mismo día responde 409. El informe del área se descarga como hoja de cálculo.
+- **Evidencia:** `test/cultura.test.js` («la inscripcion y la asistencia guardan tipo, hora e IP»).
+- **Resultado:** Aprobado. Los códigos de esta ficha son 1 Estudiante, 2 Docente, 3 Administrativo y 4 Egresado.
+
+### CP-029 — Monitor y red ASIES
+
+- **Cuando** el personal deja a un correo como monitor y ese monitor intenta crear un grupo. Luego el personal registra una representación ASIES con posición y el correo del participante.
+- **Entonces** crear el grupo responde 403. La representación responde 201 y el histórico de esa persona devuelve una fila.
+- **Evidencia:** `test/cultura-hu.test.js` («el monitor no configura grupos y la delegacion ASIES guarda el reconocimiento»).
+- **Resultado:** Aprobado.
+
+### CP-030 — Pausa, apoyo, cédula e informes
+
+- **Cuando** el personal registra una pausa creativa y un apoyo a un colegio. El estudiante guarda cédula `1061731427`, programa Derecho y caracterización Afro, se inscribe y el personal marca asistencia.
+- **Entonces** la búsqueda por esa cédula devuelve Derecho, el registro calificado de Derecho confirma la asistencia, el informe de inclusión incluye Afro y el CSV del SNIES contiene el programa.
+- **Evidencia:** `test/cultura-hu.test.js` («la pausa, el apoyo y la busqueda por cedula quedan registrados»).
+- **Resultado:** Aprobado.
+
+La subida de la foto o el PDF de la planilla (HU-08) y la segunda franja del mismo día (HU-05) están en el módulo y no tienen un caso automático en esta ejecución.
