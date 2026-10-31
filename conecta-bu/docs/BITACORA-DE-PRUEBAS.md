@@ -175,11 +175,11 @@ Estas funciones no están en el acta. Se probaron porque están en el repositori
 
 | ID | Métrica del F-02 | Resultado el 13 de octubre de 2026 |
 |---|---|---|
-| RNF-001 | Listados en menos de 2 s con 50 usuarios concurrentes | No ejecutada. No hay prueba de carga. |
+| RNF-001 | Listados en menos de 2 s con 50 usuarios concurrentes | Aprobado el 30 de octubre de 2026, en este equipo. Sección 9. |
 | RNF-002 | Contraseñas con bcrypt y ningún endpoint protegido sin JWT | Parcial. No hay contraseñas. Sí se comprobó que sin JWT la respuesta es 401 (CP-013). |
-| RNF-003 | 90 % de 10 usuarios agenda una cita en menos de 3 minutos | No ejecutada. No hubo prueba piloto. |
+| RNF-003 | 90 % de 10 usuarios agenda una cita en menos de 3 minutos | Aprobado el 30 de octubre de 2026: 10 de 10. Es una prueba de laboratorio, no una sesión con diez personas de la universidad. Sección 9. |
 | RNF-004 | Cobertura de pruebas del backend ≥ 70 % | No medida. Hay 197 casos, sin informe de cobertura. |
-| RNF-005 | Chrome, Edge y Firefox, en computador y en la vista de celular | Parcial. El 13 de octubre de 2026 se abrió en el navegador de este equipo. No quedó constancia en Edge, Firefox ni en el celular. |
+| RNF-005 | Chrome, Edge y Firefox, en computador y en la vista de celular | Aprobado el 30 de octubre de 2026. Chrome y Edge instalados en el equipo; Firefox 157 abierto con el motor de Playwright porque el equipo no tiene Firefox instalado. La vista de celular es una ventana de 390×844, no un teléfono físico. Sección 9. |
 | RNF-006 | Disponibilidad ≥ 95 % y respaldo diario | No ejecutada. Corre en local, sin respaldo programado. |
 
 ## 7. Lectura
@@ -275,3 +275,44 @@ npx jest test/cultura.test.js test/cultura-hu.test.js --watchman=false --forceEx
 - **Resultado:** Aprobado.
 
 La subida de la foto o el PDF de la planilla (HU-08) y la segunda franja del mismo día (HU-05) están en el módulo y no tienen un caso automático en esta ejecución.
+
+## 9. Carga, agenda y navegadores — 30 de octubre de 2026
+
+Se corrió contra el sistema encendido en este equipo: API en `http://localhost:4000` y sitio en `http://localhost:5173`. El código es `main`. Las cuentas de la medición se crearon con el prefijo `rnf.20261030` y se borraron al terminar, junto con las citas y los horarios de prueba. No quedaron citas de esta medición.
+
+### RNF-001 — 50 usuarios a la vez
+
+Cincuenta sesiones de estudiante pidieron cada listado al mismo tiempo. Todas respondieron bien y la más lenta tardó menos de 2 segundos.
+
+| Listado | Respuestas | Mediana | Peor caso |
+|---|---|---|---|
+| Eventos públicos | 50 de 50 | 150 ms | 249 ms |
+| Servicios de orientación | 50 de 50 | 157 ms | 169 ms |
+| Eventos del estudiante | 50 de 50 | 147 ms | 155 ms |
+| Horarios libres | 50 de 50 | 122 ms | 136 ms |
+| Mis citas | 50 de 50 | 142 ms | 153 ms |
+| Grupos de Cultura | 50 de 50 | 189 ms | 199 ms |
+| Agenda de Cultura | 50 de 50 | 142 ms | 159 ms |
+| Oferta de Deporte | 50 de 50 | 178 ms | 187 ms |
+
+**Resultado:** aprobado en este equipo. No mide un servidor publicado ni cincuenta personas en la red de la universidad.
+
+### RNF-003 — Agendar en menos de 3 minutos
+
+Diez cuentas de prueba recorrieron el mismo camino que la pantalla: ver servicios, ver horarios libres, agendar y consultar «Mis citas». Las diez citas quedaron creadas (respuesta 201). La más lenta tardó 78 ms y la más rápida 28 ms. El criterio del F-02 es 9 de 10; aquí fueron 10 de 10.
+
+Además se recorrió la pantalla «Pedir una cita» con una cuenta de prueba: elegir orientación psicológica, el 16 de diciembre, las 11:00 a. m. y confirmar. La aplicación abrió «Mis citas» con el aviso de cita agendada. Ese recorrido cabe en los 3 minutos.
+
+**Resultado:** aprobado como prueba de laboratorio. No sustituye una sesión en la que diez personas de Bienestar usen el sistema por su cuenta.
+
+### RNF-005 — Chrome, Edge, Firefox y celular
+
+Se abrió el portal en computador (1366×768) y el ingreso en una ventana de celular (390×844).
+
+| Navegador | Escritorio | Ventana de celular |
+|---|---|---|
+| Google Chrome, instalado en el equipo | El portal muestra el título, los trámites y el botón Ingresar | El ingreso muestra Continuar con Google y las dimensiones |
+| Microsoft Edge, instalado en el equipo | Igual que en Chrome | Igual que en Chrome |
+| Firefox 157 | Igual que en Chrome. El texto del ingreso se acomoda y el botón de Google queda completo | Igual, con las cinco dimensiones visibles |
+
+**Resultado:** aprobado en estos tres motores. No se probó un teléfono físico ni la red de la universidad.
