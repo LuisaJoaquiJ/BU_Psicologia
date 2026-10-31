@@ -278,7 +278,7 @@ export function InicioAdmin() {
         <div className="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-12 sm:pt-16 pb-28 flex flex-wrap gap-10 items-end">
           <div className="flex-[999_1_520px] min-w-0 flex flex-col gap-4">
             <p className={`m-0 text-[15px] font-semibold text-[#9EEFFF] ${ENTRA}`}>{hoyLargo()}</p>
-            <h1 style={retraso(50)} className={`${ENTRA} m-0 font-sans text-[44px] sm:text-[64px] lg:text-[72px] leading-[0.98] tracking-[-0.045em] font-extrabold max-w-[8em] bg-[linear-gradient(100deg,#FFFFFF_0%,#FFFFFF_45%,#B8F4FF_75%,#EAD8A2_100%)] bg-clip-text text-transparent`}>
+            <h1 style={retraso(50)} className={`${ENTRA} m-0 font-sans text-[44px] sm:text-[64px] lg:text-[72px] leading-[0.98] tracking-[-0.045em] font-extrabold max-w-[8em] bg-[linear-gradient(100deg,#FFFFFF_0%,#FFFFFF_45%,#FFE082_75%,#EAD8A2_100%)] bg-clip-text text-transparent`}>
               {saludo()}, {usuario?.nombre?.split(" ")[0]}
             </h1>
             <p style={retraso(100)} className={`m-0 text-[17px] sm:text-[19px] leading-normal text-white/[0.84] max-w-[30em] ${ENTRA}`}>

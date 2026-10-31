@@ -8,10 +8,10 @@ import { Aviso, hoyLargo } from "./comunes/componentes/ui";
 import { BandaAurora, CifraVidrio, ENTRA, IndicadoresAurora, KpiAurora, PanelVidrio, botonAuroraPrincipal, botonAuroraSecundario, botonVidrio, retraso } from "./comunes/componentes/Aurora";
 
 const ESTILO = {
-  "desarrollo-humano": { color: "bg-cyan text-primary-dark" },
-  salud: { color: "bg-[#14B8A6] text-primary-dark" },
-  deporte: { color: "bg-[#F97316] text-white" },
-  cultura: { color: "bg-[#7C5CD6] text-white" },
+  "desarrollo-humano": { color: "bg-[#1E3A5F] text-white" },
+  salud: { color: "bg-[#2C3E50] text-white" },
+  deporte: { color: "bg-[#E8740E] text-white" },
+  cultura: { color: "bg-[#FF9800] text-[#1E3A5F]" },
 };
 
 // Vista general de Conecta BU: cada modulo con su personal asignado y sus

@@ -17,11 +17,11 @@ const ROL_TEXTO = { Administrador: "Personal de Bienestar", SuperAdministrador: 
 
 // Color de cada dimension (el mismo de sus paneles).
 const COLOR = {
-  "desarrollo-humano": "#1D4E9E",
-  salud: "#1BAF7A",
-  deporte: "#EB6834",
-  permanencia: "#C9A23F",
-  cultura: "#7C5CD6",
+  "desarrollo-humano": "#1E3A5F",
+  salud: "#2C3E50",
+  deporte: "#E8740E",
+  permanencia: "#C89B14",
+  cultura: "#FF9800",
 };
 
 // Entrada al cargar: los bloques aparecen en cascada (solo fundido si se pidio reducir movimiento).
@@ -143,7 +143,7 @@ function Portada({ proximo, destinoEventos }) {
               <li key={t.to}>
                 <Link
                   to={t.to}
-                  className="group h-full flex items-center gap-3 min-h-[64px] px-4 rounded-[18px] bg-white border border-[#E3E8F0] font-bold text-[15px] leading-snug text-ink-900 no-underline transition-[background-color,transform] duration-200 ease-salida hover:bg-[#EAF0FA] motion-safe:hover:-translate-y-0.5"
+                  className="group h-full flex items-center gap-3 min-h-[64px] px-4 rounded-[18px] bg-white border border-[#E6DCC8] font-bold text-[15px] leading-snug text-ink-900 no-underline transition-[background-color,transform] duration-200 ease-salida hover:bg-[#EDE6D8] motion-safe:hover:-translate-y-0.5"
                 >
                   <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: t.color }} />
                   <span className="flex-1">{t.texto}</span>
@@ -248,7 +248,7 @@ function FilaDimensiones() {
               {lista ? (
                 <Link
                   to={ruta || "#dimensiones"}
-                  className="h-full flex items-center gap-3 rounded-[22px] px-[18px] py-4 bg-white border border-[#E3E8F0] no-underline transition-[background-color,transform] duration-200 ease-salida hover:bg-[#EAF0FA] motion-safe:hover:-translate-y-0.5"
+                  className="h-full flex items-center gap-3 rounded-[22px] px-[18px] py-4 bg-white border border-[#E6DCC8] no-underline transition-[background-color,transform] duration-200 ease-salida hover:bg-[#EDE6D8] motion-safe:hover:-translate-y-0.5"
                 >
                   {contenido}
                 </Link>
@@ -295,7 +295,7 @@ function Dimensiones() {
                 activa
                   ? "bg-primary-dark text-white"
                   : lista
-                    ? "bg-white border border-[#E3E8F0] text-primary-dark hover:bg-[#EAF0FA]"
+                    ? "bg-white border border-[#E6DCC8] text-primary-dark hover:bg-[#EDE6D8]"
                     : "border-[1.5px] border-dashed border-[#C9D2E2] text-ink-500 hover:bg-white"
               }`}
             >
@@ -306,7 +306,7 @@ function Dimensiones() {
           );
         })}
       </div>
-      <div role="tabpanel" id="panel-dimension" aria-labelledby={`tab-${modulo.id}`} className="flex gap-8 flex-wrap bg-white rounded-[32px] p-4 sm:p-5 border border-[#E3E8F0] shadow-[0_18px_50px_rgba(11,35,71,0.08)]">
+      <div role="tabpanel" id="panel-dimension" aria-labelledby={`tab-${modulo.id}`} className="flex gap-8 flex-wrap bg-white rounded-[32px] p-4 sm:p-5 border border-[#E6DCC8] shadow-[0_18px_50px_rgba(11,35,71,0.08)]">
         <div className="flex-[1_1_320px] min-w-0 relative h-[300px] sm:h-[360px] rounded-[26px] overflow-hidden">
           <img src={modulo.imagen.src} alt={modulo.imagen.alt} className={`absolute inset-0 w-full h-full object-cover ${disponible ? "" : "grayscale"}`} />
           <span className="vidrio-claro absolute top-4 left-4 rounded-full px-4 min-h-[38px] inline-flex items-center gap-2 text-white text-sm font-bold">
@@ -369,7 +369,7 @@ function Agenda({ eventos, error, destino, onReintentar }) {
           <p role="status" className="m-0 mb-4 text-ink-500">Cargando la agenda del campus…</p>
         )}
         {eventos && eventos.length === 0 && (
-          <div className="m-0 p-6 bg-[#F6F8FB] rounded-3xl text-ink-500 flex flex-wrap items-center gap-3" role={error ? "alert" : "status"}>
+          <div className="m-0 p-6 bg-[#EDE6D8] rounded-3xl text-ink-500 flex flex-wrap items-center gap-3" role={error ? "alert" : "status"}>
             <p className="m-0 flex-1">
               {error
                 ? "No pudimos cargar la agenda. Revisa tu conexión y vuelve a intentarlo."
@@ -384,10 +384,10 @@ function Agenda({ eventos, error, destino, onReintentar }) {
         )}
         <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
           {(eventos || [null, null, null]).map((e, i) => {
-            if (!e) return <div key={i} className="h-[360px] rounded-[28px] bg-[#F1F4F9] animate-pulse" />;
+            if (!e) return <div key={i} className="h-[360px] rounded-[28px] bg-[#EDE6D8] animate-pulse" />;
             const fecha = fechaDeEvento(e.fecha);
             return (
-              <article key={e.id} className="rounded-[28px] bg-[#F6F8FB] p-3 flex flex-col">
+              <article key={e.id} className="rounded-[28px] bg-[#EDE6D8] p-3 flex flex-col">
                 <div className="relative h-[210px] rounded-[22px] overflow-hidden">
                   <img src={imagenDeEvento(e).src} alt="" onError={respaldoDeFoto(e)} className="absolute inset-0 w-full h-full object-cover" />
                   {/* Las fotos de eventos pueden ser claras: la fecha va en blanco solido para leerse siempre. */}
@@ -448,7 +448,7 @@ export function PortalPage() {
   const destinoEventos = usuario?.rol === "Estudiante" ? "/estudiante/eventos" : usuario ? "/desarrollo-humano#eventos" : "/login";
 
   return (
-    <div className="min-h-screen bg-[#F6F8FB] overflow-x-hidden">
+    <div className="min-h-screen bg-[#F3EDE1] overflow-x-hidden">
       <Encabezado />
       <Portada proximo={eventos?.[0]} destinoEventos={destinoEventos} />
       <FilaDimensiones />
@@ -485,7 +485,7 @@ export function PortalPage() {
       </section>
 
       <footer className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 pb-6">
-        <div className="relative overflow-hidden rounded-[32px] bg-primary-dark text-[#D9E2F2] px-6 sm:px-10 pt-10 pb-6">
+        <div className="relative overflow-hidden rounded-[32px] bg-primary-dark text-[#F3EDE1] px-6 sm:px-10 pt-10 pb-6">
           <div aria-hidden="true" className="absolute w-[480px] h-[480px] -left-40 -bottom-64 rounded-full bg-[radial-gradient(circle,rgba(29,78,158,0.9)_0%,rgba(29,78,158,0)_70%)]" />
           <div aria-hidden="true" className="absolute w-[420px] h-[420px] right-[10%] -top-56 rounded-full bg-[radial-gradient(circle,rgba(30,158,154,0.4)_0%,rgba(30,158,154,0)_70%)]" />
 
