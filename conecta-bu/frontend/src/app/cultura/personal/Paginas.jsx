@@ -273,7 +273,8 @@ export function AgendaPersonal() {
         {eventos.map((e) => (
           <li key={e.id} className="bg-white border rounded-2xl px-4 py-3">
             <strong>{e.nombre}</strong>
-            <span className="text-sm text-ink-500"> · {e.fecha} · {e.estado} · {e.inscritos} inscritos</span>
+            <span className="text-sm text-ink-500"> · {e.fecha} · {e.horaInicio}–{e.horaFin}{e.lugar ? ` · ${e.lugar}` : ""} · {e.estado} · {e.inscritos} inscritos</span>
+            {e.descripcion && <p className="m-0 mt-1 text-sm text-ink-500">{e.descripcion}</p>}
           </li>
         ))}
       </ul>
