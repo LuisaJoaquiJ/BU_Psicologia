@@ -1,10 +1,8 @@
 /** @type {import('tailwindcss').Config} */
-// Paleta institucional con el estilo "Genesis" (editorial y sobria): el azul
-// del escudo de la Uniautonoma para lo interactivo (botones, enlaces, foco,
-// estado activo), el dorado del escudo solo para la marca y el turquesa de la
-// esfera como acento de Salud y de los graficos. Fondo gris muy claro,
-// superficies blancas y bordes sutiles. Los nombres (primary, gold, cream,
-// ink...) se mantienen para que todas las pantallas tomen la paleta.
+// Paleta del portal institucional (portal.uniautonoma.edu.co): azul marino
+// #243B8E en botones, títulos y bandas; cian #1C9DD8 como luz de marca;
+// naranja #F08600 solo como acento. El marino lleva el texto y los botones
+// porque el cian y el naranja claros no dan contraste sobre blanco.
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
@@ -16,26 +14,26 @@ export default {
         primary: {
           DEFAULT: "rgb(var(--primario) / <alpha-value>)",
           hover: "rgb(var(--primario-hover) / <alpha-value>)",
-          dark: "#0B2347", // azul noche: titulares y bandas
+          dark: "#243B8E", // azul marino del portal: titulares, botones y bandas
           light: "rgb(var(--primario-claro) / <alpha-value>)",
           soft: "rgb(var(--primario) / <alpha-value>)",
         },
         gold: {
-          DEFAULT: "#C9A23F", // dorado metalico del escudo (marca)
-          soft: "#EAD8A2",
-          light: "#F8F2E1",
+          DEFAULT: "#F08600", // naranja del portal, solo como acento
+          soft: "#FFD7A3",
+          light: "#FFF4E6",
         },
         accent: {
-          DEFAULT: "#8A6410", // dorado oscuro para textos (contraste AA)
-          light: "#F8F2E1",
+          DEFAULT: "#9A4E00", // naranja oscuro para texto (contraste sobre blanco)
+          light: "#FFF4E6",
         },
         teal: {
           DEFAULT: "#1E9E9A", // turquesa de la esfera del escudo
           dark: "#0E625F",
           light: "#E3F5F4",
         },
-        cream: "#FAFAFA", // fondo de la pagina
-        cyan: { DEFAULT: "#7FE8FF", dark: "#0E5F73", light: "#E4FAFF" },
+        cream: "#F4F8FC", // fondo, cercano al blanco azulado del portal
+        cyan: { DEFAULT: "#1C9DD8", dark: "#0E5F73", light: "#EBF5FF" },
         ink: {
           900: "#0E1222", // texto principal (casi negro)
           600: "#4A4B57",
@@ -70,7 +68,7 @@ export default {
       },
       boxShadow: {
         tarjeta: "0 8px 30px rgba(14, 18, 34, 0.08)",
-        primario: "0 4px 12px rgba(29, 78, 158, 0.35)",
+        primario: "0 4px 12px rgba(36, 59, 142, 0.35)",
       },
       keyframes: {
         flota: {

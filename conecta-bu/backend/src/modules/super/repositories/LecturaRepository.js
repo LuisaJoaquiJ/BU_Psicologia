@@ -51,7 +51,7 @@ class LecturaRepository {
   }
 
   async resumen() {
-    const [usuarios, accesos, citas, eventos, atenciones, personas, informesPorRevisar, inscripcionesDeporte, sesionesDeporte] = await Promise.all([
+    const [usuarios, accesos, citas, eventos, atenciones, personas, informesPorRevisar, inscripcionesDeporte, sesionesDeporte, inscripcionesCultura, eventosCultura] = await Promise.all([
       this.db.usuario.findMany({ include: { rol: true } }),
       this.db.accesoModulo.findMany(),
       this.citas(),
@@ -61,8 +61,10 @@ class LecturaRepository {
       this.db.informeGestion.count({ where: { estado: "Enviado" } }),
       this.db.inscripcionDeporte.findMany({ where: { estado: "Activa" } }),
       this.db.sesionDeporte.count(),
+      this.db.inscripcionCultural.count({ where: { estado: "Activa" } }),
+      this.db.eventoCultural.count({ where: { estado: "Publicado" } }),
     ]);
-    return { usuarios, accesos, citas, eventos, atenciones, personas, informesPorRevisar, inscripcionesDeporte, sesionesDeporte };
+    return { usuarios, accesos, citas, eventos, atenciones, personas, informesPorRevisar, inscripcionesDeporte, sesionesDeporte, inscripcionesCultura, eventosCultura };
   }
 }
 

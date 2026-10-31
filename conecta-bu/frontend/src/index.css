@@ -9,9 +9,9 @@
    para que Tailwind admita opacidades (bg-primary/10). Azul del escudo por
    defecto; cada tema de modulo lo cambia abajo. */
 :root {
-  --primario: 29 78 158;
-  --primario-hover: 23 63 130;
-  --primario-claro: 235 241 250;
+  --primario: 36 59 142;
+  --primario-hover: 28 46 112;
+  --primario-claro: 235 245 255;
 }
 
 @layer base {
@@ -34,14 +34,14 @@
      El anillo doble (dorado por fuera del borde, azul encima) se ve tanto
      sobre el marfil como sobre los fondos azules. */
   ::selection {
-    background: #ebf1fa;
-    color: #0b2347;
+    background: #ebf5ff;
+    color: #243b8e;
   }
-  /* Foco de teclado: borde azul del escudo con un halo suave. */
+  /* Foco de teclado: borde azul marino del portal con un halo suave. */
   :focus-visible {
-    outline: 2px solid #1d4e9e;
+    outline: 2px solid #243b8e;
     outline-offset: 2px;
-    box-shadow: 0 0 0 5px rgba(29, 78, 158, 0.18);
+    box-shadow: 0 0 0 5px rgba(28, 157, 216, 0.28);
   }
 }
 
@@ -87,10 +87,10 @@
   /* Fondo de los paneles: luces suaves de la marca que quedan quietas al
      desplazarse, para que el vidrio de menu y tarjetas tenga que mostrar. */
   .fondo-panel {
-    background-color: #edf1f8;
-    background-image: radial-gradient(38rem 38rem at 12% -6%, rgba(127, 232, 255, 0.45), transparent 70%),
-      radial-gradient(36rem 36rem at 100% 30%, rgba(29, 78, 158, 0.2), transparent 70%),
-      radial-gradient(34rem 34rem at 30% 115%, rgba(30, 158, 154, 0.12), transparent 70%);
+    background-color: #f4f8fc;
+    background-image: radial-gradient(38rem 38rem at 12% -6%, rgba(28, 157, 216, 0.22), transparent 70%),
+      radial-gradient(36rem 36rem at 100% 30%, rgba(36, 59, 142, 0.16), transparent 70%),
+      radial-gradient(34rem 34rem at 30% 115%, rgba(240, 134, 0, 0.1), transparent 70%);
     background-attachment: fixed;
   }
 
@@ -119,15 +119,15 @@
   }
   /* El color sale del tema del modulo (variables abajo); sin tema, azul. */
   .boton-liquido {
-    background: linear-gradient(180deg, var(--liquido-1, #2d67c6) 0%, var(--liquido-2, #1d4e9e) 55%, var(--liquido-3, #163f86) 100%);
+    background: linear-gradient(180deg, var(--liquido-1, #3d62c4) 0%, var(--liquido-2, #243b8e) 55%, var(--liquido-3, #1b2f78) 100%);
     color: var(--liquido-texto, #ffffff);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -3px 8px rgba(5, 20, 50, 0.25), 0 8px 20px var(--liquido-sombra, rgba(29, 78, 158, 0.3));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -3px 8px rgba(5, 20, 50, 0.25), 0 8px 20px var(--liquido-sombra, rgba(36, 59, 142, 0.32));
   }
 
   .boton-liquido-dorado {
-    background: linear-gradient(180deg, #f3e3b3 0%, #e0be62 55%, #c9a23f 100%);
-    color: #0b2347;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -3px 8px rgba(80, 55, 5, 0.2), 0 8px 20px rgba(201, 162, 63, 0.3);
+    background: linear-gradient(180deg, #ffc56a 0%, #f08600 55%, #d87400 100%);
+    color: #243b8e;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -3px 8px rgba(120, 60, 0, 0.22), 0 8px 20px rgba(240, 134, 0, 0.32);
   }
   /* Reflejo: un degradado suave sobre todo el boton (sin borde propio, para
      que no se vea como una pieza aparte). */
@@ -190,16 +190,25 @@
   --liquido-3: #a33f15;
   --liquido-sombra: rgba(194, 78, 28, 0.32);
 }
+.tema-cultura {
+  --primario: 92 58 168;
+  --primario-hover: 74 42 140;
+  --primario-claro: 240 234 252;
+  --liquido-1: #9b7ae8;
+  --liquido-2: #5c3aa8;
+  --liquido-3: #4a2a8c;
+  --liquido-sombra: rgba(92, 58, 168, 0.32);
+}
 .tema-super {
-  /* Dorado oscuro: el claro no da contraste para texto sobre blanco. */
-  --primario: 138 100 16;
-  --primario-hover: 111 80 12;
-  --primario-claro: 248 242 225;
-  --liquido-1: #f3e3b3;
-  --liquido-2: #e0be62;
-  --liquido-3: #c9a23f;
-  --liquido-texto: #0b2347;
-  --liquido-sombra: rgba(201, 162, 63, 0.35);
+  /* Naranja del portal, oscurecido para que el texto sobre blanco se lea. */
+  --primario: 154 78 0;
+  --primario-hover: 122 62 0;
+  --primario-claro: 255 244 230;
+  --liquido-1: #ffc56a;
+  --liquido-2: #f08600;
+  --liquido-3: #d87400;
+  --liquido-texto: #243b8e;
+  --liquido-sombra: rgba(240, 134, 0, 0.35);
 }
 
 /* Tarjetas blancas de todas las paginas de los paneles: pasan a vidrio con

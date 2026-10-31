@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { http } from "../../lib/api/http";
 import { useAuth } from "../../lib/auth/AuthContext";
 import { Icono } from "./comunes/componentes/Iconos";
@@ -11,20 +11,27 @@ const ESTILO = {
   "desarrollo-humano": { color: "bg-cyan text-primary-dark" },
   salud: { color: "bg-[#14B8A6] text-primary-dark" },
   deporte: { color: "bg-[#F97316] text-white" },
+  cultura: { color: "bg-[#7C5CD6] text-white" },
 };
 
 // Vista general de Conecta BU: cada modulo con su personal asignado y sus
 // cifras, y accesos directos a sus paneles.
 export function SuperInicio() {
   const { usuario } = useAuth();
+  const location = useLocation();
   const [resumen, setResumen] = useState(null);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  function cargarResumen() {
+    setError("");
     http
       .get("/super/resumen")
       .then((res) => setResumen(res.data))
       .catch(() => setError("No fue posible cargar el resumen."));
+  }
+
+  useEffect(() => {
+    cargarResumen();
   }, []);
 
   const porRol = resumen?.usuarios.porRol || {};
@@ -60,7 +67,16 @@ export function SuperInicio() {
         }
       />
     <main className="relative max-w-[1440px] mx-auto -mt-[72px] px-4 sm:px-6 lg:px-10 pb-16 flex flex-col gap-8">
-      {error && <Aviso>{error}</Aviso>}
+      {location.state?.aviso && <Aviso tono="azul">{location.state.aviso}</Aviso>}
+      {!resumen && !error && <p role="status" className="m-0 text-ink-500">Cargando el resumen de Bienestar…</p>}
+      {error && (
+        <Aviso>
+          {error}{" "}
+          <button type="button" onClick={cargarResumen} className="font-bold underline">
+            Reintentar
+          </button>
+        </Aviso>
+      )}
 
       <IndicadoresAurora>
         <KpiAurora titulo="Usuarios registrados" valor={resumen ? resumen.usuarios.total : "…"} />

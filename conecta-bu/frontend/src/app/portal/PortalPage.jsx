@@ -33,10 +33,20 @@ const fechaDeEvento = (fecha) => {
   return { dia: f.getDate(), mes: f.toLocaleDateString("es-CO", { month: "short" }).replace(".", "") };
 };
 
+const ENLACES_PORTAL = [
+  ["#tramites", "Trámites"],
+  ["#dimensiones", "Dimensiones"],
+  ["#agenda", "Agenda"],
+  ["#ayuda", "Ayuda"],
+];
+
 function Encabezado() {
   const { estaAutenticado, usuario, cerrarSesion } = useAuth();
   return (
     <header className="relative z-20">
+      <a href="#tramites" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-30 focus:bg-white focus:text-primary-dark focus:px-4 focus:py-2 focus:rounded-full focus:font-bold">
+        Saltar al contenido
+      </a>
       <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-3 flex items-center justify-between gap-4">
         <span className="hidden sm:block">
           <Logo alto={56} />
@@ -45,12 +55,7 @@ function Encabezado() {
           <Logo alto={44} subtitulo="" />
         </span>
         <nav aria-label="Portal" className="hidden md:flex items-center gap-1 text-[15px] font-semibold">
-          {[
-            ["#tramites", "Trámites"],
-            ["#dimensiones", "Dimensiones"],
-            ["#agenda", "Agenda"],
-            ["#ayuda", "Ayuda"],
-          ].map(([href, texto]) => (
+          {ENLACES_PORTAL.map(([href, texto]) => (
             <a key={href} href={href} className="text-primary-dark hover:bg-white px-4 min-h-[44px] inline-flex items-center rounded-full">
               {texto}
             </a>
@@ -78,6 +83,13 @@ function Encabezado() {
           </Link>
         )}
       </div>
+      <nav aria-label="Secciones del portal" className="md:hidden max-w-[1800px] mx-auto px-4 pb-2 flex flex-wrap gap-1">
+        {ENLACES_PORTAL.map(([href, texto]) => (
+          <a key={href} href={href} className="text-primary-dark text-sm font-semibold px-3 min-h-[36px] inline-flex items-center rounded-full hover:bg-white">
+            {texto}
+          </a>
+        ))}
+      </nav>
     </header>
   );
 }
@@ -203,6 +215,7 @@ const RESUMEN = {
   "desarrollo-humano": "Psicología y talleres",
   salud: "Enfermería y prevención",
   deporte: "Grupos y horas de deporte",
+  cultura: "Grupos, agenda y convocatorias",
 };
 
 // Las cinco dimensiones a la vista desde la primera pantalla: las disponibles
@@ -226,7 +239,7 @@ function FilaDimensiones() {
               </span>
               <span className="min-w-0 leading-tight">
                 <strong className={`block text-base ${lista ? "text-primary-dark" : "text-ink-600"}`}>{m.nombre}</strong>
-                <span className="text-[13px] text-ink-500">{lista ? RESUMEN[m.id] || m.corto : "Pronto"}</span>
+                <span className="text-[13px] text-ink-500">{lista ? RESUMEN[m.id] || m.corto : "Próximamente"}</span>
               </span>
             </>
           );
@@ -288,7 +301,7 @@ function Dimensiones() {
             >
               <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full" style={{ background: lista ? COLOR[m.id] : "#C9D2E2" }} />
               {m.nombre}
-              {!lista && <span className="text-[13px] font-semibold">· pronto</span>}
+              {!lista && <span className="text-[13px] font-semibold">· próximamente</span>}
             </button>
           );
         })}
@@ -340,7 +353,7 @@ function Dimensiones() {
   );
 }
 
-function Agenda({ eventos, error, destino }) {
+function Agenda({ eventos, error, destino, onReintentar }) {
   const { usuario } = useAuth();
   return (
     <section id="agenda" className="scroll-mt-6 bg-white">
@@ -352,10 +365,22 @@ function Agenda({ eventos, error, destino }) {
             <Icono nombre="flecha" size={17} strokeWidth={2.2} />
           </Link>
         </div>
+        {eventos === null && (
+          <p role="status" className="m-0 mb-4 text-ink-500">Cargando la agenda del campus…</p>
+        )}
         {eventos && eventos.length === 0 && (
-          <p className="m-0 p-6 bg-[#F6F8FB] rounded-3xl text-ink-500">
-            {error ? "No pudimos cargar la agenda en este momento. Intenta de nuevo en unos minutos." : "Pronto publicaremos nuevos talleres y eventos."}
-          </p>
+          <div className="m-0 p-6 bg-[#F6F8FB] rounded-3xl text-ink-500 flex flex-wrap items-center gap-3" role={error ? "alert" : "status"}>
+            <p className="m-0 flex-1">
+              {error
+                ? "No pudimos cargar la agenda. Revisa tu conexión y vuelve a intentarlo."
+                : "Aún no hay talleres ni eventos publicados. Vuelve más tarde o entra a Desarrollo Humano."}
+            </p>
+            {error && (
+              <button type="button" onClick={onReintentar} className="min-h-[44px] px-5 rounded-full bg-primary-dark text-white font-extrabold">
+                Reintentar
+              </button>
+            )}
+          </div>
         )}
         <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
           {(eventos || [null, null, null]).map((e, i) => {
@@ -401,7 +426,9 @@ export function PortalPage() {
   const [eventos, setEventos] = useState(null);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
+  function cargarAgenda() {
+    setError(false);
+    setEventos(null);
     http
       .get("/eventos/publicos")
       .then((res) => setEventos(res.data.eventos.slice(0, 3)))
@@ -409,6 +436,10 @@ export function PortalPage() {
         setError(true);
         setEventos([]);
       });
+  }
+
+  useEffect(() => {
+    cargarAgenda();
   }, []);
 
   const orientacion = MODULOS.find((m) => m.id === "desarrollo-humano");
@@ -422,14 +453,20 @@ export function PortalPage() {
       <Portada proximo={eventos?.[0]} destinoEventos={destinoEventos} />
       <FilaDimensiones />
       <Dimensiones />
-      <Agenda eventos={eventos} error={error} destino={destinoEventos} />
+      <Agenda eventos={eventos} error={error} destino={destinoEventos} onReintentar={cargarAgenda} />
 
       <section id="ayuda" className="scroll-mt-6 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-16">
         <div className="relative overflow-hidden flex gap-8 flex-wrap items-center justify-between p-7 sm:p-10 rounded-[32px] bg-primary-dark text-white">
           <div aria-hidden="true" className="absolute w-[420px] h-[420px] -right-24 -top-40 rounded-full bg-[radial-gradient(circle,rgba(127,232,255,0.45)_0%,rgba(127,232,255,0)_70%)]" />
           <div aria-hidden="true" className="absolute w-[380px] h-[380px] left-[30%] -bottom-56 rounded-full bg-[radial-gradient(circle,rgba(201,162,63,0.35)_0%,rgba(201,162,63,0)_70%)]" />
           <div className="relative flex-[1_1_460px] min-w-0">
-            <h2 className="m-0 mb-2 font-sans text-[28px] sm:text-[34px] font-extrabold tracking-[-0.03em] text-white">¿Necesitas hablar con alguien ahora?</h2>
+            <h2 className="m-0 mb-3 font-sans text-lg font-extrabold text-white">Cómo usar Conecta BU</h2>
+            <ol className="m-0 mb-6 pl-5 flex flex-col gap-1.5 text-white/85">
+              <li>Entra con tu correo institucional @uniautonoma.edu.co.</li>
+              <li>Elige una dimensión: orientación, deporte o salud.</li>
+              <li>Pide la cita o inscríbete. Puedes salir cuando quieras desde el botón Salir.</li>
+            </ol>
+            <h3 className="m-0 mb-2 font-sans text-[28px] sm:text-[34px] font-extrabold tracking-[-0.03em] text-white">¿Necesitas hablar con alguien ahora?</h3>
             <p className="m-0 text-white/80 max-w-[40em]">
               En una emergencia llama a la línea 123. Para acompañamiento, pide una cita de orientación o acércate a la oficina de
               Bienestar Institucional.
@@ -472,7 +509,7 @@ export function PortalPage() {
                     <>
                       <span aria-hidden="true" className="w-2 h-2 rounded-full shrink-0" style={{ background: lista ? COLOR[m.id] : "rgba(255,255,255,0.3)" }} />
                       <span className="whitespace-nowrap">{m.nombre}</span>
-                      {!lista && <span className="text-xs text-white/50">pronto</span>}
+                      {!lista && <span className="text-xs text-white/50">próximamente</span>}
                     </>
                   );
                   return ruta && lista ? (
@@ -490,12 +527,7 @@ export function PortalPage() {
                 <h2 id="pie-portal" className="m-0 mb-2 font-sans text-sm font-bold tracking-normal text-white/60">
                   Portal
                 </h2>
-                {[
-                  ["#tramites", "Trámites"],
-                  ["#dimensiones", "Dimensiones"],
-                  ["#agenda", "Agenda"],
-                  ["#ayuda", "Ayuda"],
-                ].map(([href, texto]) => (
+                {ENLACES_PORTAL.map(([href, texto]) => (
                   <a key={href} href={href} className="inline-flex items-center min-h-[36px] text-[15px] text-white no-underline hover:underline underline-offset-4">
                     {texto}
                   </a>

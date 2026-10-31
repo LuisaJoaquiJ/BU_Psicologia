@@ -7,6 +7,7 @@ import { SuperPanel } from "./app/super/SuperPanel";
 import { SaludEstudiantePanel } from "./app/salud/estudiante/SaludEstudiantePanel";
 import { ReportesSstPanel } from "./app/salud/sst/ReportesSstPanel";
 import { DeportePanel, DocentePanel, MiDeportePanel } from "./app/deporte";
+import { CulturaPanel, MiCulturaPanel } from "./app/cultura";
 import { EstudiantePanel } from "./app/desarrollo-humano/estudiante/EstudiantePanel";
 import { AdminPanel } from "./app/desarrollo-humano/personal/AdminPanel";
 import { ProtectedRoute } from "./lib/auth/ProtectedRoute";
@@ -110,6 +111,22 @@ export default function App() {
           element={
             <ProtectedRoute rolesPermitidos={["Administrador"]} modulo="deporte">
               <DeportePanel />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mi-cultura/*"
+          element={
+            <ProtectedRoute rolesPermitidos={["Estudiante"]}>
+              <MiCulturaPanel />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cultura/*"
+          element={
+            <ProtectedRoute rolesPermitidos={["Administrador"]} modulo="cultura">
+              <CulturaPanel />
             </ProtectedRoute>
           }
         />

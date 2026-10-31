@@ -162,7 +162,7 @@ describe("Superadministrador: accesos por modulo", () => {
     expect(me.body.usuario.modulos).toEqual([]);
     const res = await api("get", "/resumen");
     expect(res.status).toBe(200);
-    expect(res.body.modulos.map((m) => m.id)).toEqual(["desarrollo-humano", "salud", "deporte"]);
+    expect(res.body.modulos.map((m) => m.id)).toEqual(["desarrollo-humano", "salud", "deporte", "cultura"]);
   });
 });
 

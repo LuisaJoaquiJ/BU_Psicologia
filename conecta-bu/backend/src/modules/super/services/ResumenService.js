@@ -45,6 +45,15 @@ class ResumenService {
             { nombre: "Sesiones registradas", valor: d.sesionesDeporte },
           ],
         },
+        {
+          id: "cultura",
+          nombre: MODULOS.cultura,
+          personal: personal("cultura"),
+          indicadores: [
+            { nombre: "Inscripciones a grupos", valor: d.inscripcionesCultura },
+            { nombre: "Eventos publicados", valor: d.eventosCultura },
+          ],
+        },
       ],
     };
   }

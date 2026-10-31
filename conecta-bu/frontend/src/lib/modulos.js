@@ -65,7 +65,8 @@ export const MODULOS = [
     descripcion: "Expresión artística, cultura institucional y espacios de participación para la comunidad.",
     icono: "musica",
     imagen: IMAGENES.auditorio,
-    estado: "pronto",
+    estado: "disponible",
+    panel: { Estudiante: "/mi-cultura", personal: "/cultura" },
     servicios: ["Grupos artísticos", "Agenda cultural", "Convocatorias"],
   },
 ];
