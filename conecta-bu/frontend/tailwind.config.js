@@ -1,10 +1,7 @@
 /** @type {import('tailwindcss').Config} */
-// Paleta institucional con el estilo "Genesis" (editorial y sobria): el azul
-// del escudo de la Uniautonoma para lo interactivo (botones, enlaces, foco,
-// estado activo), el dorado del escudo solo para la marca y el turquesa de la
-// esfera como acento de Salud y de los graficos. Fondo gris muy claro,
-// superficies blancas y bordes sutiles. Los nombres (primary, gold, cream,
-// ink...) se mantienen para que todas las pantallas tomen la paleta.
+// Paleta de NOVA (nova.uniautonoma.edu.co): marino #1E3A5F en títulos,
+// bandas y botones; crema #F3EDE1 de fondo; dorado #FFC107 y naranja
+// #FF9800 / #E8740E solo como acento. El marino lleva el texto.
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
@@ -16,30 +13,30 @@ export default {
         primary: {
           DEFAULT: "rgb(var(--primario) / <alpha-value>)",
           hover: "rgb(var(--primario-hover) / <alpha-value>)",
-          dark: "#0B2347", // azul noche: titulares y bandas
+          dark: "#1E3A5F", // marino de NOVA: titulares, botones y bandas
           light: "rgb(var(--primario-claro) / <alpha-value>)",
           soft: "rgb(var(--primario) / <alpha-value>)",
         },
         gold: {
-          DEFAULT: "#C9A23F", // dorado metalico del escudo (marca)
-          soft: "#EAD8A2",
-          light: "#F8F2E1",
+          DEFAULT: "#FFC107", // dorado de los iconos activos de NOVA
+          soft: "#FFE082",
+          light: "#FFF8E1",
         },
         accent: {
-          DEFAULT: "#8A6410", // dorado oscuro para textos (contraste AA)
-          light: "#F8F2E1",
+          DEFAULT: "#E8740E", // naranja de las etiquetas de NOVA
+          light: "#FFF3E0",
         },
         teal: {
           DEFAULT: "#1E9E9A", // turquesa de la esfera del escudo
           dark: "#0E625F",
           light: "#E3F5F4",
         },
-        cream: "#FAFAFA", // fondo de la pagina
-        cyan: { DEFAULT: "#7FE8FF", dark: "#0E5F73", light: "#E4FAFF" },
+        cream: "#F3EDE1", // crema de la portada de NOVA
+        cyan: { DEFAULT: "#FFC107", dark: "#8C6A10", light: "#FFF8E1" },
         ink: {
-          900: "#0E1222", // texto principal (casi negro)
-          600: "#4A4B57",
-          500: "#6B6B76", // texto secundario
+          900: "#1E3A5F", // texto, el mismo marino de NOVA
+          600: "#2C3E50",
+          500: "#6B7A8D", // texto secundario de NOVA
         },
         // Grises neutros con un leve tinte frio (bordes, fondos suaves).
         gray: {
@@ -70,7 +67,7 @@ export default {
       },
       boxShadow: {
         tarjeta: "0 8px 30px rgba(14, 18, 34, 0.08)",
-        primario: "0 4px 12px rgba(29, 78, 158, 0.35)",
+        primario: "0 4px 12px rgba(30, 58, 95, 0.35)",
       },
       keyframes: {
         flota: {

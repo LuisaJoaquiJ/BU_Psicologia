@@ -114,6 +114,22 @@ export default function App() {
           }
         />
         <Route
+          path="/mi-cultura/*"
+          element={
+            <ProtectedRoute rolesPermitidos={["Estudiante"]}>
+              <MiCulturaPanel />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cultura/*"
+          element={
+            <ProtectedRoute rolesPermitidos={["Administrador"]} modulo="cultura">
+              <CulturaPanel />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/deporte-docente/*"
           element={
             <ProtectedRoute rolesPermitidos={["Administrador"]} modulo="deporte-docente">

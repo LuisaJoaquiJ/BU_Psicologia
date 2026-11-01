@@ -28,7 +28,7 @@ Al entrar se ve el portal de las cinco dimensiones de Bienestar:
 | Deporte y Recreación | Disponible | Grupos, asistencia y horas |
 | Salud Integral | Disponible | Citas de salud, participaciones y salidas |
 | Permanencia Estudiantil | Próximamente | Todavía no está habilitada |
-| Arte y Cultura | Próximamente | Todavía no está habilitada |
+| Arte y Cultura | Disponible | Grupos artísticos, agenda y convocatorias |
 
 Elija la dimensión. Si su correo fue asignado al personal de un módulo, el portal lo lleva al panel de ese módulo. El superadministrador ve, además, el acceso a su panel.
 
@@ -81,6 +81,17 @@ Entre por **Deporte y Recreación**. El menú tiene **Mi avance**, **Disciplinas
 - **Mis horas** es el historial. Desde ahí puede descargar la constancia en PDF.
 
 Las horas se acumulan en toda la carrera. No se reinician cada periodo.
+
+## 5.1 Estudiante — Arte y Cultura
+
+Entre por **Arte y Cultura**. El menú tiene **Inicio**, **Grupos artísticos**, **Agenda cultural** y **Convocatorias**.
+
+- En **Inicio** indica si es estudiante (1), docente (2), administrativo (3) o egresado (4). Ese código queda en la inscripción y en la asistencia para el informe del área.
+- En **Grupos artísticos** elige un grupo del periodo. Puede estar en dos. No deja inscribirse si el horario se cruza con otro, si no hay cupo o si el área cerró las inscripciones. Quien ya está inscrito puede registrar su asistencia del día.
+- En **Agenda cultural** se inscribe a presentaciones y muestras publicadas, hasta la fecha límite y el cupo.
+- En **Convocatorias** escribe una motivación y la envía. El estado queda Recibida, Aceptada o Rechazada.
+
+Cada inscripción y cada asistencia guarda el usuario, la fecha y hora exactas y la dirección IP. El personal publica los grupos, toma la asistencia, adjunta la foto o el PDF de la planilla física y descarga el Excel de apoyo al SNIES. El superadministrador asigna ese personal en **Accesos**.
 
 ## 6. Salidas institucionales
 

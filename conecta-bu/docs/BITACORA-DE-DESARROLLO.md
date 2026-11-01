@@ -126,4 +126,4 @@ Sigue habiendo una diferencia de identidad frente al texto original del F-02: al
 - Anotar en el numeral 10 del F-02 el ingreso con Google (en vez del registro con contraseña) y los módulos de Salud, Deporte y salidas.
 - Manual de usuario y producto desplegado (compromiso 10.1 del F-00). El sistema corre en local.
 - GitHub Projects, citado en el F-01, no está enlazado en estos documentos.
-- Permanencia estudiantil y Arte y cultura siguen sin construir.
+- Permanencia estudiantil sigue sin construir. Arte y Cultura tiene grupos, agenda, convocatorias, asistencia con usuario, hora e IP, tipo SNIES de la ficha del área e informe en Excel. Las pruebas de ese módulo quedaron en la bitácora de pruebas, sección 8: 8 casos aprobados el 30 de octubre de 2026 (CP-023 a CP-030).

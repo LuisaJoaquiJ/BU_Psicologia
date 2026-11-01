@@ -1,6 +1,6 @@
 # Historias de usuario que se cumplen — Conecta BU
 
-Texto de las historias cuyo comportamiento ya está en el producto. Cada una dice qué puede hacer una persona hoy en http://localhost:5173. Lo que el sistema no hace (videollamada, diagnóstico, Permanencia, Arte y Cultura, aplicación de tienda) no tiene historia aquí.
+Texto de las historias cuyo comportamiento ya está en el producto. Cada una dice qué puede hacer una persona hoy en http://localhost:5173. Lo que el sistema no hace (videollamada, diagnóstico, Permanencia y aplicación de tienda) no tiene historia aquí.
 
 La bitácora de pruebas usa estos mismos identificadores HU-001 a HU-008. El README del sprint 1 llama HU-01 a HU-05 a partes del ingreso: aquí esas partes están en HU-001 y HU-002.
 
@@ -148,8 +148,8 @@ Como personal de Desarrollo Humano, quiero ver citas, asistencia a talleres y ci
 
 Como persona de la universidad, quiero ver las cinco dimensiones de Bienestar al entrar, para ir a la que necesito.
 
-- Desarrollo Humano, Salud Integral y Deporte y Recreación abren su módulo.
-- Permanencia Estudiantil y Arte y Cultura se ven como **Próximamente** y no tienen funciones.
+- Desarrollo Humano, Salud Integral, Deporte y Recreación y Arte y Cultura abren su módulo.
+- Permanencia Estudiantil se ve como **Próximamente** y no tiene funciones.
 
 ## HU-015 — Registrar la atención de salud
 
@@ -210,3 +210,18 @@ Como personal de orientación, quiero registrar a quien llega sin haber agendado
 - Se busca por nombre o correo, o se crea con el correo institucional.
 - Se indican el servicio, la hora y una nota.
 - Queda en estado **Asistió** y cuenta en las estadísticas.
+
+## HU-021 — Participar en Arte y Cultura
+
+**Se cumple.** Fuera del F-02. Casos CP-023 a CP-030, en `cultura.test.js` y `cultura-hu.test.js`, ejecutados el 30 de octubre de 2026. El área entra solo si el superadministrador asignó el correo al módulo Cultura.
+
+Como estudiante, quiero inscribirme a un grupo artístico, a un evento de la agenda y postularme a una convocatoria, para participar y que el área lleve la asistencia y la decisión.
+
+- Hay hasta 2 grupos por periodo. No deja inscribirse si el horario se cruza, si no hay cupo o si las inscripciones están cerradas.
+- La agenda publicada se puede tomar hasta la fecha límite y solo hasta llenar el cupo.
+- La convocatoria pide una motivación. Queda Recibida hasta que el personal la acepte o la rechace.
+- El personal publica grupos, marca asistencia de quienes están inscritos, adjunta la foto o el PDF de la planilla física y descarga el Excel de apoyo al SNIES.
+- Cada inscripción y cada asistencia guarda el usuario, la fecha y hora, y la dirección IP.
+- La persona indica si es estudiante (1), docente (2), administrativo (3) o egresado (4), según la ficha del área.
+
+La ficha posterior del área queda cubierta así: grupos representativos e inscripción (HU-01), redes ASIES y ASCUN con reconocimiento (HU-02), talleres con cupo y el aviso Sin cupos (HU-03), pausas creativas con impacto y foto (HU-04), fechas especiales con representación artística y varias franjas el mismo día (HU-05), apoyo a colegios y ferias (HU-06), asistencia con correo, hora, IP y búsqueda por cédula o correo (HU-07), evidencias clasificadas como fotografía o planilla (HU-08), Excel y CSV SNIES por fechas (HU-09), registro calificado por programa (HU-10), caracterización en el informe de inclusión (HU-11), roles de administrador, docente y monitor sobre el acceso que asigna el superadministrador (HU-12) e histórico por año, semestre o nombre (HU-13).

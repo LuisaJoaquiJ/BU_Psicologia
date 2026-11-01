@@ -60,6 +60,7 @@ const TONOS = {
   azul: "bg-primary-light text-primary-soft",
   verde: "bg-teal-light text-teal-dark",
   dorado: "bg-gold-light text-[#7A5405]",
+  morado: "bg-[#F0EAF8] text-[#4A2A8C]",
   rojo: "bg-red-50 text-red-700",
   gris: "bg-gray-100 text-ink-600",
 };

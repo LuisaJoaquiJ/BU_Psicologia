@@ -3,6 +3,7 @@ const MODULOS = {
   "desarrollo-humano": "Desarrollo Humano",
   salud: "Salud Integral",
   deporte: "Deporte y Recreación",
+  cultura: "Arte y Cultura",
   // Docentes de Deporte: solo ven y toman asistencia de sus grupos.
   "deporte-docente": "Deporte (docentes)",
 };

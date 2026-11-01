@@ -12,12 +12,19 @@ import { iniciales } from "../../components/Navbar";
 const ROL_TEXTO = { Administrador: "Personal de Bienestar", SuperAdministrador: "Superadministrador", Estudiante: "Estudiante" };
 
 const COLOR = {
-  "desarrollo-humano": "#1D4E9E",
-  salud: "#1BAF7A",
-  deporte: "#EB6834",
-  permanencia: "#C9A23F",
-  cultura: "#7C5CD6",
+  "desarrollo-humano": "#1E3A5F",
+  salud: "#2C3E50",
+  deporte: "#E8740E",
+  permanencia: "#C89B14",
+  cultura: "#FF9800",
 };
+
+const ENLACES_PORTAL = [
+  ["#tramites", "Trámites"],
+  ["#dimensiones", "Dimensiones"],
+  ["#agenda", "Agenda"],
+  ["#ayuda", "Ayuda"],
+];
 
 const ENTRA = "animate-aparecer motion-reduce:animate-aparecer-suave";
 const retraso = (ms) => ({ animationDelay: `${ms}ms` });
@@ -33,6 +40,9 @@ function Encabezado() {
   const { estaAutenticado, usuario, cerrarSesion } = useAuth();
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 lg:px-10 pt-4 transition-all duration-300">
+      <a href="#tramites" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-30 focus:bg-white focus:text-primary-dark focus:px-4 focus:py-2 focus:rounded-full focus:font-bold">
+        Saltar al contenido
+      </a>
       <div className="max-w-[1800px] mx-auto rounded-[32px] pl-3 sm:pl-6 pr-2 py-2 flex items-center justify-between gap-4 bg-white/70 backdrop-blur-2xl border border-white/80 shadow-[0_8px_32px_rgba(11,35,71,0.08)] supports-[not(backdrop-filter:blur(1px))]:bg-white">
         <span className="hidden sm:block">
           <Logo alto={48} />
@@ -41,7 +51,7 @@ function Encabezado() {
           <Logo alto={40} subtitulo="" />
         </span>
         <nav aria-label="Portal" className="hidden md:flex items-center gap-1 text-[15px] font-bold text-primary-dark">
-          {[["#tramites", "Trámites"], ["#dimensiones", "Dimensiones"], ["#agenda", "Agenda"], ["#ayuda", "Ayuda"]].map(([href, texto]) => (
+          {ENLACES_PORTAL.map(([href, texto]) => (
             <a key={href} href={href} className="hover:bg-black/5 px-5 min-h-[44px] inline-flex items-center rounded-full transition-colors">{texto}</a>
           ))}
         </nav>
@@ -62,6 +72,13 @@ function Encabezado() {
           </Link>
         )}
       </div>
+      <nav aria-label="Secciones del portal" className="md:hidden mt-1.5 flex flex-wrap justify-center gap-1 rounded-full bg-white/80 backdrop-blur-xl">
+        {ENLACES_PORTAL.map(([href, texto]) => (
+          <a key={href} href={href} className="text-primary-dark text-sm font-semibold px-3 min-h-[36px] inline-flex items-center rounded-full">
+            {texto}
+          </a>
+        ))}
+      </nav>
     </header>
   );
 }
@@ -72,7 +89,7 @@ const DIMENSION = {
   deporte: { velo: "122,44,12", barra: "#FFB08A", texto: "Grupos, torneos y tus horas de deporte del semestre.", accion: "Ver la oferta" },
   permanencia: { velo: "92,66,6", barra: "#F3D27A", texto: "Tutorías y acompañamiento para culminar tu carrera.", accion: "Próximamente" },
   salud: { velo: "7,77,70", barra: "#5DE0C6", texto: "Enfermería, medicina general, jornadas y salidas académicas.", accion: "Ver servicios" },
-  cultura: { velo: "52,32,110", barra: "#C9B8FF", texto: "Talleres de música y danza, grupos representativos y eventos.", accion: "Ver talleres" },
+  cultura: { velo: "150,82,0", barra: "#C9B8FF", texto: "Talleres de música y danza, grupos representativos y eventos.", accion: "Ver talleres" },
 };
 
 function HeroFullScreen() {
@@ -80,11 +97,11 @@ function HeroFullScreen() {
   const nombre = usuario?.nombre?.split(" ")[0];
 
   return (
-    <div className="relative min-h-[100svh] flex flex-col justify-end pb-12 pt-28 bg-[#071A38] overflow-x-clip">
+    <div className="relative min-h-[100svh] flex flex-col justify-end pb-12 pt-28 bg-[#1E3A5F] overflow-x-clip">
       <img src={IMAGENES.sede.src} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#071A38] via-[#071A38]/80 to-[#071A38]/45" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#1E3A5F] via-[#1E3A5F]/80 to-[#1E3A5F]/45" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-        <div className="absolute w-[520px] h-[520px] -left-40 top-10 rounded-full blur-3xl bg-[radial-gradient(circle,rgba(127,232,255,0.22)_0%,transparent_70%)]" />
+        <div className="absolute w-[520px] h-[520px] -left-40 top-10 rounded-full blur-3xl bg-[radial-gradient(circle,rgba(255,193,7,0.22)_0%,transparent_70%)]" />
         <div className="absolute w-[480px] h-[480px] -right-32 bottom-10 rounded-full blur-3xl bg-[radial-gradient(circle,rgba(235,104,52,0.18)_0%,transparent_70%)]" />
       </div>
 
@@ -173,7 +190,7 @@ function Tramites() {
 
   return (
     <section id="tramites" className="relative scroll-mt-24 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-16 sm:py-24">
-      <div className="absolute -z-10 w-[800px] h-[600px] -left-40 top-0 rounded-full bg-[radial-gradient(circle,rgba(127,232,255,0.3)_0%,rgba(127,232,255,0)_70%)]" />
+      <div className="absolute -z-10 w-[800px] h-[600px] -left-40 top-0 rounded-full bg-[radial-gradient(circle,rgba(255,193,7,0.3)_0%,rgba(255,193,7,0)_70%)]" />
       
       {/* Bento Grid */}
       <div className="flex flex-col gap-6">
@@ -185,8 +202,8 @@ function Tramites() {
                 to={t.to}
                 className={`tarjeta-levanta group h-full flex flex-col justify-between p-6 sm:p-8 rounded-[32px] border no-underline
                   ${index === 0 
-                    ? 'bg-gradient-to-br from-white to-[#EAF0FA] border-primary/10 shadow-[0_10px_30px_rgba(11,35,71,0.05)]' 
-                    : 'bg-white border-[#E3E8F0] hover:bg-[#F8FAFC]'
+                    ? 'bg-gradient-to-br from-white to-[#EDE6D8] border-primary/10 shadow-[0_10px_30px_rgba(11,35,71,0.05)]' 
+                    : 'bg-white border-[#E6DCC8] hover:bg-[#FBF7EF]'
                   }`}
               >
                 <div className="flex items-start gap-4 sm:gap-5">
@@ -252,7 +269,7 @@ function Dimensiones() {
             >
               <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full" style={{ background: activa ? color.barra : lista ? `rgb(${color.velo})` : "#C9D2E2" }} />
               {m.nombre}
-              {!lista && <span className="text-[13px] font-semibold">· pronto</span>}
+              {!lista && <span className="text-[13px] font-semibold">· próximamente</span>}
             </button>
           );
         })}
@@ -316,7 +333,7 @@ function Dimensiones() {
 }
 
 // --- AGENDA INMERSIVA ---
-function Agenda({ eventos, error, destino }) {
+function Agenda({ eventos, error, destino, onReintentar }) {
   const { usuario } = useAuth();
   const textoBoton = usuario ? "Inscribirme" : "Ingresar para inscribirme";
   const [destacado, ...siguientes] = eventos || [];
@@ -325,9 +342,9 @@ function Agenda({ eventos, error, destino }) {
 
   return (
     <section id="agenda" className="scroll-mt-24 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10">
-      <div className="relative overflow-hidden bg-[#071A38] text-white px-5 sm:px-10 lg:px-14 py-14 sm:py-20 rounded-[40px]">
-        <div aria-hidden="true" className="absolute w-[800px] h-[800px] -left-60 -top-80 rounded-full bg-[radial-gradient(circle,rgba(29,78,158,0.8)_0%,rgba(29,78,158,0)_70%)]" />
-        <div aria-hidden="true" className="absolute w-[600px] h-[600px] right-[-10rem] bottom-[-20rem] rounded-full bg-[radial-gradient(circle,rgba(30,158,154,0.5)_0%,rgba(30,158,154,0)_70%)]" />
+      <div className="relative overflow-hidden bg-[#1E3A5F] text-white px-5 sm:px-10 lg:px-14 py-14 sm:py-20 rounded-[40px]">
+        <div aria-hidden="true" className="absolute w-[800px] h-[800px] -left-60 -top-80 rounded-full bg-[radial-gradient(circle,rgba(30,58,95,0.8)_0%,rgba(30,58,95,0)_70%)]" />
+        <div aria-hidden="true" className="absolute w-[600px] h-[600px] right-[-10rem] bottom-[-20rem] rounded-full bg-[radial-gradient(circle,rgba(232,116,14,0.5)_0%,rgba(232,116,14,0)_70%)]" />
 
         <div className="relative max-w-[1600px] mx-auto">
           <div className="revela flex justify-between items-end gap-5 flex-wrap mb-10">
@@ -338,9 +355,14 @@ function Agenda({ eventos, error, destino }) {
           </div>
 
           {eventos && eventos.length === 0 && (
-            <p className="relative m-0 p-8 rounded-[32px] bg-white/10 backdrop-blur-md border border-white/20 text-white/90 text-lg">
-              {error ? "No pudimos cargar la agenda en este momento. Intenta de nuevo en unos minutos." : "Pronto publicaremos nuevos talleres y eventos."}
-            </p>
+            <div role={error ? "alert" : "status"} className="relative p-8 rounded-[32px] bg-white/10 backdrop-blur-md border border-white/20 text-white/90 text-lg flex flex-wrap items-center gap-4">
+              <p className="m-0 flex-1">{error ? "No pudimos cargar la agenda. Revisa tu conexión y vuelve a intentarlo." : "Aún no hay talleres ni eventos publicados. Vuelve más tarde."}</p>
+              {error && (
+                <button type="button" onClick={onReintentar} className="min-h-[44px] px-5 rounded-full bg-white text-primary-dark font-extrabold">
+                  Reintentar
+                </button>
+              )}
+            </div>
           )}
 
           {!eventos && (
@@ -361,7 +383,7 @@ function Agenda({ eventos, error, destino }) {
                 <FechaEvento fecha={destacado.fecha} className="absolute top-4 left-4" />
               </div>
               <div className="min-w-0 flex flex-col justify-center gap-2 p-2 sm:p-6">
-                <p className="m-0 text-sm sm:text-base font-bold text-[#7FE8FF] tabular-nums">{fechaLarga(destacado.fecha)} · {formatearHora(destacado.horaInicio)}</p>
+                <p className="m-0 text-sm sm:text-base font-bold text-[#FFC107] tabular-nums">{fechaLarga(destacado.fecha)} · {formatearHora(destacado.horaInicio)}</p>
                 <h3 className="m-0 font-sans text-[26px] sm:text-[32px] leading-tight font-extrabold tracking-[-0.03em] text-white">{destacado.nombre}</h3>
                 <p className="m-0 text-white/80 text-lg">{destacado.lugar ? `${destacado.lugar} · ` : ""}<span className="tabular-nums">{cupos(destacado)}</span></p>
                 <Link to={destino} className="mt-3 self-start inline-flex items-center min-h-[52px] px-7 rounded-full bg-white text-primary-dark font-extrabold no-underline transition-transform duration-200 hover:-translate-y-1 shadow-xl">{textoBoton}</Link>
@@ -373,10 +395,10 @@ function Agenda({ eventos, error, destino }) {
             <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
               <article className="relative min-h-[400px] sm:min-h-[500px] rounded-[32px] overflow-hidden flex flex-col justify-end group">
                 <img src={imagenDeEvento(destacado).src} alt="" onError={respaldoDeFoto(destacado)} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                <span aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,26,56,0.05)_20%,rgba(7,26,56,0.6)_55%,rgba(7,26,56,0.95)_100%)]" />
+                <span aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(30,58,95,0.05)_20%,rgba(30,58,95,0.6)_55%,rgba(30,58,95,0.95)_100%)]" />
                 <FechaEvento fecha={destacado.fecha} className="absolute top-6 left-6" />
                 <div className="relative p-6 sm:p-10 flex flex-col gap-3 z-10">
-                  <p className="m-0 text-sm sm:text-base font-bold text-[#7FE8FF] tabular-nums">{fechaLarga(destacado.fecha)} · {formatearHora(destacado.horaInicio)}</p>
+                  <p className="m-0 text-sm sm:text-base font-bold text-[#FFC107] tabular-nums">{fechaLarga(destacado.fecha)} · {formatearHora(destacado.horaInicio)}</p>
                   <h3 className="m-0 font-sans text-[28px] sm:text-[40px] leading-tight font-extrabold tracking-[-0.03em] text-white">{destacado.nombre}</h3>
                   <p className="m-0 text-white/80 text-lg">{destacado.lugar ? `${destacado.lugar} · ` : ""}<span className="tabular-nums">{cupos(destacado)}</span></p>
                   <Link to={destino} className="mt-4 self-start inline-flex items-center min-h-[54px] px-8 rounded-full bg-white text-primary-dark font-extrabold text-lg no-underline transition-transform duration-200 hover:-translate-y-1 shadow-xl">{textoBoton}</Link>
@@ -391,7 +413,7 @@ function Agenda({ eventos, error, destino }) {
                       <FechaEvento fecha={e.fecha} className="absolute top-4 left-4" />
                     </div>
                     <div className="min-w-0 flex flex-col gap-2 py-2 pr-2">
-                      <p className="m-0 text-sm font-bold text-[#7FE8FF] tabular-nums">{fechaLarga(e.fecha)} · {formatearHora(e.horaInicio)}</p>
+                      <p className="m-0 text-sm font-bold text-[#FFC107] tabular-nums">{fechaLarga(e.fecha)} · {formatearHora(e.horaInicio)}</p>
                       <h3 className="m-0 font-sans text-2xl font-extrabold tracking-[-0.02em] text-white leading-tight">{e.nombre}</h3>
                       <p className="m-0 text-white/70 text-[15px]">{e.lugar ? `${e.lugar} · ` : ""}<span className="tabular-nums">{cupos(e)}</span></p>
                       <Link to={destino} className="mt-auto self-start inline-flex items-center min-h-[44px] px-6 rounded-full bg-white/10 hover:bg-white text-white hover:text-primary-dark transition-colors font-extrabold text-sm no-underline">{textoBoton}</Link>
@@ -424,8 +446,14 @@ export function PortalPage() {
   const [error, setError] = useState(false);
   const raiz = useRef(null);
 
-  useEffect(() => {
+  function cargarAgenda() {
+    setError(false);
+    setEventos(null);
     http.get("/eventos/publicos").then((res) => setEventos(res.data.eventos.slice(0, 3))).catch(() => { setError(true); setEventos([]); });
+  }
+
+  useEffect(() => {
+    cargarAgenda();
   }, []);
 
   useEffect(() => {
@@ -447,18 +475,24 @@ export function PortalPage() {
   const destinoEventos = usuario?.rol === "Estudiante" ? "/estudiante/eventos" : usuario ? "/desarrollo-humano#eventos" : "/login";
 
   return (
-    <div ref={raiz} className="portal relative isolate min-h-screen bg-[#F2F5FA] overflow-x-clip selection:bg-accent selection:text-white">
+    <div ref={raiz} className="portal relative isolate min-h-screen bg-[#F3EDE1] overflow-x-clip selection:bg-accent selection:text-white">
       <Encabezado />
       <HeroFullScreen />
       <Tramites />
       <Dimensiones />
-      <Agenda eventos={eventos} error={error} destino={destinoEventos} />
+      <Agenda eventos={eventos} error={error} destino={destinoEventos} onReintentar={cargarAgenda} />
 
       <section id="ayuda" className="scroll-mt-24 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-16 sm:py-24">
         <div className="revela relative overflow-hidden flex gap-8 flex-wrap items-center justify-between p-8 sm:p-12 rounded-[40px] bg-white/70 backdrop-blur-xl border border-white shadow-[0_20px_60px_-15px_rgba(11,35,71,0.1)]">
-          <div aria-hidden="true" className="absolute w-[420px] h-[420px] -right-24 -top-40 rounded-full bg-[radial-gradient(circle,rgba(127,232,255,0.35)_0%,rgba(127,232,255,0)_70%)]" />
+          <div aria-hidden="true" className="absolute w-[420px] h-[420px] -right-24 -top-40 rounded-full bg-[radial-gradient(circle,rgba(255,193,7,0.35)_0%,rgba(255,193,7,0)_70%)]" />
           <div className="relative flex-[1_1_460px] min-w-0">
-            <h2 className="m-0 mb-3 font-sans text-3xl sm:text-4xl font-extrabold tracking-[-0.03em] text-primary-dark">¿Necesitas hablar con alguien ahora?</h2>
+            <h2 className="m-0 mb-3 font-sans text-lg font-extrabold text-primary-dark">Cómo usar Conecta BU</h2>
+            <ol className="m-0 mb-6 pl-5 flex flex-col gap-1.5 text-ink-600">
+              <li>Entra con tu correo institucional @uniautonoma.edu.co.</li>
+              <li>Elige una dimensión: orientación, deporte, salud o arte y cultura.</li>
+              <li>Pide la cita o inscríbete. Puedes salir cuando quieras desde el botón Salir.</li>
+            </ol>
+            <h3 className="m-0 mb-3 font-sans text-3xl sm:text-4xl font-extrabold tracking-[-0.03em] text-primary-dark">¿Necesitas hablar con alguien ahora?</h3>
             <p className="m-0 text-ink-600 text-lg max-w-[40em]">En una emergencia llama a la línea 123. Para acompañamiento, pide una cita de orientación o acércate a la oficina de Bienestar Institucional.</p>
           </div>
           <div className="relative flex gap-3 flex-wrap">
@@ -474,8 +508,8 @@ export function PortalPage() {
 
       <footer className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 pb-8">
         <div className="revela relative overflow-hidden rounded-[40px] bg-primary-dark text-[#D9E2F2] px-8 sm:px-12 pt-12 pb-8 shadow-2xl">
-          <div aria-hidden="true" className="absolute w-[480px] h-[480px] -left-40 -bottom-64 rounded-full bg-[radial-gradient(circle,rgba(29,78,158,0.9)_0%,rgba(29,78,158,0)_70%)]" />
-          <div aria-hidden="true" className="absolute w-[420px] h-[420px] right-[12%] -top-60 rounded-full bg-[radial-gradient(circle,rgba(30,158,154,0.35)_0%,rgba(30,158,154,0)_70%)]" />
+          <div aria-hidden="true" className="absolute w-[480px] h-[480px] -left-40 -bottom-64 rounded-full bg-[radial-gradient(circle,rgba(30,58,95,0.9)_0%,rgba(30,58,95,0)_70%)]" />
+          <div aria-hidden="true" className="absolute w-[420px] h-[420px] right-[12%] -top-60 rounded-full bg-[radial-gradient(circle,rgba(232,116,14,0.35)_0%,rgba(232,116,14,0)_70%)]" />
           {/* Tres columnas: marca, dimensiones y portal. La ayuda ya esta en el bloque de arriba. */}
           <div className="relative grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,0.7fr)] lg:gap-16">
             <div className="min-w-0 flex flex-col gap-4 sm:col-span-2 lg:col-span-1">
@@ -497,14 +531,14 @@ export function PortalPage() {
                   <span key={m.id} className="inline-flex items-center gap-2.5 min-h-[36px] text-[15px] text-white/60">
                     <span aria-hidden="true" className="w-2 h-2 rounded-full shrink-0 bg-white/30" />
                     {m.nombre}
-                    <span className="text-xs text-white/45">pronto</span>
+                    <span className="text-xs text-white/45">próximamente</span>
                   </span>
                 );
               })}
             </nav>
             <nav aria-labelledby="pie-portal" className="flex flex-col gap-1">
               <h2 id="pie-portal" className="m-0 mb-2 font-sans text-sm font-bold tracking-normal text-white/60">Portal</h2>
-              {[["#tramites", "Trámites"], ["#dimensiones", "Dimensiones"], ["#agenda", "Agenda"], ["#ayuda", "Ayuda"]].map(([href, texto]) => (
+              {ENLACES_PORTAL.map(([href, texto]) => (
                 <a key={href} href={href} className="inline-flex items-center min-h-[36px] text-[15px] text-white no-underline hover:underline underline-offset-4">{texto}</a>
               ))}
               {!usuario && <Link to="/login" className="inline-flex items-center min-h-[36px] text-[15px] text-white no-underline hover:underline underline-offset-4">Ingresar</Link>}

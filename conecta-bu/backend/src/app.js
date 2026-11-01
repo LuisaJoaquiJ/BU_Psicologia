@@ -9,6 +9,7 @@ const desarrollo = require("./modules/desarrollo-humano");
 const salud = require("./modules/salud");
 const superadmin = require("./modules/super");
 const deporte = require("./modules/deporte");
+const cultura = require("./modules/cultura");
 const { notFoundHandler, errorHandler } = require("./common/middlewares/error.middleware");
 
 const app = express();
@@ -59,6 +60,9 @@ app.use("/api/v1/deporte/imagenes", deporte.imagenes);
 app.use("/api/v1/deporte/admin", deporte.admin);
 app.use("/api/v1/deporte/docente", deporte.docente);
 app.use("/api/v1/deporte", deporte.router);
+// Arte y Cultura: estudiante y personal asignado por el superadministrador.
+app.use("/api/v1/cultura/admin", cultura.admin);
+app.use("/api/v1/cultura", cultura.estudiante);
 // Salidas institucionales y reportes SST: los diligencia cualquier persona de la Institucion.
 app.use("/api/v1/reportes-sst", salud.reportesSst);
 app.use("/api/v1/salud", salud.personal);

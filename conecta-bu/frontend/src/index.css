@@ -9,9 +9,9 @@
    para que Tailwind admita opacidades (bg-primary/10). Azul del escudo por
    defecto; cada tema de modulo lo cambia abajo. */
 :root {
-  --primario: 29 78 158;
-  --primario-hover: 23 63 130;
-  --primario-claro: 235 241 250;
+  --primario: 30 58 95;
+  --primario-hover: 22 44 73;
+  --primario-claro: 243 237 225;
 }
 
 @layer base {
@@ -34,14 +34,14 @@
      El anillo doble (dorado por fuera del borde, azul encima) se ve tanto
      sobre el marfil como sobre los fondos azules. */
   ::selection {
-    background: #ebf1fa;
-    color: #0b2347;
+    background: #fff3e0;
+    color: #1e3a5f;
   }
-  /* Foco de teclado: borde azul del escudo con un halo suave. */
+  /* Foco de teclado: borde marino de NOVA con un halo dorado. */
   :focus-visible {
-    outline: 2px solid #1d4e9e;
+    outline: 2px solid #1e3a5f;
     outline-offset: 2px;
-    box-shadow: 0 0 0 5px rgba(29, 78, 158, 0.18);
+    box-shadow: 0 0 0 5px rgba(255, 193, 7, 0.35);
   }
 }
 
@@ -87,10 +87,10 @@
   /* Fondo de los paneles: luces suaves de la marca que quedan quietas al
      desplazarse, para que el vidrio de menu y tarjetas tenga que mostrar. */
   .fondo-panel {
-    background-color: #edf1f8;
-    background-image: radial-gradient(38rem 38rem at 12% -6%, rgba(127, 232, 255, 0.45), transparent 70%),
-      radial-gradient(36rem 36rem at 100% 30%, rgba(29, 78, 158, 0.2), transparent 70%),
-      radial-gradient(34rem 34rem at 30% 115%, rgba(30, 158, 154, 0.12), transparent 70%);
+    background-color: #f3ede1;
+    background-image: radial-gradient(38rem 38rem at 12% -6%, rgba(255, 193, 7, 0.22), transparent 70%),
+      radial-gradient(36rem 36rem at 100% 30%, rgba(30, 58, 95, 0.12), transparent 70%),
+      radial-gradient(34rem 34rem at 30% 115%, rgba(232, 116, 14, 0.1), transparent 70%);
     background-attachment: fixed;
   }
 
@@ -119,15 +119,15 @@
   }
   /* El color sale del tema del modulo (variables abajo); sin tema, azul. */
   .boton-liquido {
-    background: linear-gradient(180deg, var(--liquido-1, #2d67c6) 0%, var(--liquido-2, #1d4e9e) 55%, var(--liquido-3, #163f86) 100%);
+    background: linear-gradient(180deg, var(--liquido-1, #3d6288) 0%, var(--liquido-2, #1e3a5f) 55%, var(--liquido-3, #162c49) 100%);
     color: var(--liquido-texto, #ffffff);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -3px 8px rgba(5, 20, 50, 0.25), 0 8px 20px var(--liquido-sombra, rgba(29, 78, 158, 0.3));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -3px 8px rgba(5, 20, 50, 0.25), 0 8px 20px var(--liquido-sombra, rgba(30, 58, 95, 0.32));
   }
 
   .boton-liquido-dorado {
-    background: linear-gradient(180deg, #f3e3b3 0%, #e0be62 55%, #c9a23f 100%);
-    color: #0b2347;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -3px 8px rgba(80, 55, 5, 0.2), 0 8px 20px rgba(201, 162, 63, 0.3);
+    background: linear-gradient(180deg, #ffc107 0%, #ff9800 55%, #e8740e 100%);
+    color: #1e3a5f;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -3px 8px rgba(120, 60, 0, 0.22), 0 8px 20px rgba(255, 152, 0, 0.32);
   }
   /* Reflejo: un degradado suave sobre todo el boton (sin borde propio, para
      que no se vea como una pieza aparte). */
@@ -293,24 +293,23 @@
   --liquido-sombra: rgba(194, 78, 28, 0.32);
 }
 .tema-cultura {
-  --primario: 109 76 196;
-  --primario-hover: 88 60 163;
-  --primario-claro: 240 235 251;
-  --liquido-1: #8f72e0;
-  --liquido-2: #6d4cc4;
-  --liquido-3: #583ca3;
-  --liquido-sombra: rgba(109, 76, 196, 0.32);
+  --primario: 30 58 95;
+  --primario-hover: 22 44 73;
+  --primario-claro: 243 237 225;
+  --liquido-1: #3d6288;
+  --liquido-2: #1e3a5f;
+  --liquido-3: #162c49;
+  --liquido-sombra: rgba(30, 58, 95, 0.32);
 }
 .tema-super {
-  /* Dorado oscuro: el claro no da contraste para texto sobre blanco. */
-  --primario: 138 100 16;
-  --primario-hover: 111 80 12;
-  --primario-claro: 248 242 225;
-  --liquido-1: #f3e3b3;
-  --liquido-2: #e0be62;
-  --liquido-3: #c9a23f;
-  --liquido-texto: #0b2347;
-  --liquido-sombra: rgba(201, 162, 63, 0.35);
+  --primario: 30 58 95;
+  --primario-hover: 22 44 73;
+  --primario-claro: 243 237 225;
+  --liquido-1: #3d6288;
+  --liquido-2: #1e3a5f;
+  --liquido-3: #162c49;
+  --liquido-texto: #ffffff;
+  --liquido-sombra: rgba(30, 58, 95, 0.35);
 }
 
 /* Tarjetas blancas de todas las paginas de los paneles: pasan a vidrio con

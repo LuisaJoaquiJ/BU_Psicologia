@@ -71,7 +71,7 @@ function errorUnico(campos) {
 }
 
 function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
-  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [], docentesDeporte: [], eventosDeporte: [], inscripcionesEventoDeporte: [], alertasDeporte: [], implementos: [], prestamos: [], movimientosInv: [], salidas: [], inscripcionesSalida: [], bloqueos: [], inscripcionesActividad: [] };
+  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [], docentesDeporte: [], eventosDeporte: [], inscripcionesEventoDeporte: [], alertasDeporte: [], implementos: [], prestamos: [], movimientosInv: [], salidas: [], inscripcionesSalida: [], bloqueos: [], inscripcionesActividad: [], areasCultura: [], gruposCultura: [], inscripcionesCultura: [], sesionesCultura: [], asistenciasCultura: [], eventosCultura: [], inscripcionesEventoCultura: [], convocatoriasCultura: [], postulacionesCultura: [], perfilesCultura: [], evidenciasCultura: [], representacionesCultura: [], participantesRed: [], pausasCultura: [], solicitudesApoyo: [], rolesCultura: [] };
   let consecutivoSst = 0;
 
   const usuarioPorId = (id) => {
@@ -122,6 +122,22 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     inscripcionesSalida: {},
     inscripcionesActividad: {},
     bloqueos: {},
+    areasCultura: {},
+    gruposCultura: {},
+    inscripcionesCultura: {},
+    sesionesCultura: {},
+    asistenciasCultura: {},
+    eventosCultura: {},
+    inscripcionesEventoCultura: {},
+    convocatoriasCultura: {},
+    postulacionesCultura: {},
+    perfilesCultura: {},
+    evidenciasCultura: {},
+    representacionesCultura: {},
+    participantesRed: {},
+    pausasCultura: {},
+    solicitudesApoyo: {},
+    rolesCultura: {},
     adjuntosSst: {
       reporte: (r) => clonar(tablas.reportesSst.find((x) => x.id === r.reporteId)),
     },
@@ -159,6 +175,22 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     inscripcionesActividad: [["actividadId", "usuarioId"]],
     bloqueos: [],
     adjuntosSst: [],
+    areasCultura: [["nombre"]],
+    gruposCultura: [],
+    inscripcionesCultura: [["grupoId", "usuarioId"]],
+    sesionesCultura: [["grupoId", "fecha"]],
+    asistenciasCultura: [["sesionId", "usuarioId"]],
+    eventosCultura: [],
+    inscripcionesEventoCultura: [["eventoId", "usuarioId"]],
+    convocatoriasCultura: [],
+    postulacionesCultura: [["convocatoriaId", "usuarioId"]],
+    perfilesCultura: [["usuarioId"]],
+    evidenciasCultura: [],
+    representacionesCultura: [],
+    participantesRed: [["representacionId", "usuarioId"]],
+    pausasCultura: [],
+    solicitudesApoyo: [],
+    rolesCultura: [["email"]],
   };
 
   const defaults = {
@@ -298,6 +330,22 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     asistenciasDeporte: () => ({ presente: true }),
     horasDeporte: () => ({ disciplinaId: null, registradoPor: null, fechaRegistro: new Date() }),
     configDeporte: () => ({ horasRequeridas: 40, maxGruposPorPeriodo: 2 }),
+    areasCultura: () => ({ descripcion: null, categoria: "taller", activa: true }),
+    gruposCultura: () => ({ director: null, lugar: null, cupo: 20, inscripcionesAbiertas: true, activo: true, fechaCreacion: new Date() }),
+    inscripcionesCultura: () => ({ estado: "Activa", tipoSnies: 1, ip: null, fechaInscripcion: new Date(), fechaRetiro: null }),
+    sesionesCultura: () => ({ registradaPor: null, fechaRegistro: new Date() }),
+    asistenciasCultura: () => ({ presente: true, tipoSnies: 1, ip: null, fechaHora: new Date() }),
+    eventosCultura: () => ({ descripcion: null, lugar: null, categoria: "especial", representacion: null, grupoId: null, estado: "Borrador", fechaCreacion: new Date() }),
+    inscripcionesEventoCultura: () => ({ estado: "Activa", tipoSnies: 1, ip: null, asistio: null, fechaInscripcion: new Date() }),
+    convocatoriasCultura: () => ({ descripcion: null, cupo: null, estado: "Abierta", fechaCreacion: new Date() }),
+    postulacionesCultura: () => ({ estado: "Recibida", tipoSnies: 1, ip: null, fecha: new Date() }),
+    perfilesCultura: () => ({ tipoSnies: 1, documento: null, programa: null, caracterizacion: "No registra" }),
+    evidenciasCultura: () => ({ grupoId: null, eventoId: null, pausaId: null, tipo: "fotografia", subidoPor: null, fecha: new Date() }),
+    representacionesCultura: () => ({ modalidad: null, grupoId: null, posicion: null, fechaCreacion: new Date() }),
+    participantesRed: () => ({}),
+    pausasCultura: () => ({ registradaPor: null, fechaCreacion: new Date() }),
+    solicitudesApoyo: () => ({ grupoId: null, detalle: null, personalAsignado: null, estado: "Recibida", solicitadaPor: null, fechaCreacion: new Date() }),
+    rolesCultura: () => ({ rol: "administrador" }),
     historicos: () => ({ estudiantes: 0, docentes: 0, administrativos: 0, externos: 0, egresados: 0, enfermeria: null, poblacionGeneral: null }),
   };
 
@@ -439,6 +487,22 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       salidaConvocatoria: modelo("salidas", "salida"),
       inscripcionSalida: modelo("inscripcionesSalida", "insal"),
       inscripcionActividadSalud: modelo("inscripcionesActividad", "inact"),
+      areaCultural: modelo("areasCultura", "area-cul"),
+      grupoCultural: modelo("gruposCultura", "grupo-cul"),
+      inscripcionCultural: modelo("inscripcionesCultura", "ins-cul"),
+      sesionCultural: modelo("sesionesCultura", "ses-cul"),
+      asistenciaCultural: modelo("asistenciasCultura", "asi-cul"),
+      eventoCultural: modelo("eventosCultura", "ev-cul"),
+      inscripcionEventoCultural: modelo("inscripcionesEventoCultura", "inev-cul"),
+      convocatoriaCultural: modelo("convocatoriasCultura", "conv-cul"),
+      postulacionCultural: modelo("postulacionesCultura", "post-cul"),
+      perfilCultural: modelo("perfilesCultura", "perfil-cul"),
+      evidenciaCultural: modelo("evidenciasCultura", "evi-cul"),
+      representacionRed: modelo("representacionesCultura", "red-cul"),
+      participanteRed: modelo("participantesRed", "part-red"),
+      pausaCreativa: modelo("pausasCultura", "pausa-cul"),
+      solicitudApoyo: modelo("solicitudesApoyo", "apoyo-cul"),
+      rolOperativoCultural: modelo("rolesCultura", "rol-cul"),
     },
     reset() {
       tablas.personas = [];
@@ -468,6 +532,22 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       tablas.inscripcionesSalida = [];
       tablas.inscripcionesActividad = [];
       tablas.bloqueos = [];
+      tablas.areasCultura = [];
+      tablas.gruposCultura = [];
+      tablas.inscripcionesCultura = [];
+      tablas.sesionesCultura = [];
+      tablas.asistenciasCultura = [];
+      tablas.eventosCultura = [];
+      tablas.inscripcionesEventoCultura = [];
+      tablas.convocatoriasCultura = [];
+      tablas.postulacionesCultura = [];
+      tablas.perfilesCultura = [];
+      tablas.evidenciasCultura = [];
+      tablas.representacionesCultura = [];
+      tablas.participantesRed = [];
+      tablas.pausasCultura = [];
+      tablas.solicitudesApoyo = [];
+      tablas.rolesCultura = [];
       consecutivoSst = 0;
     },
     tablas,

@@ -66,7 +66,7 @@ export const MODULOS = [
     imagen: IMAGENES.auditorio,
     estado: "disponible",
     panel: { Estudiante: "/mi-cultura", personal: "/cultura" },
-    servicios: ["Talleres con inscripción en línea", "Grupos representativos", "Agenda de eventos culturales"],
+    servicios: ["Grupos artísticos", "Agenda cultural", "Convocatorias"],
   },
 ];
 

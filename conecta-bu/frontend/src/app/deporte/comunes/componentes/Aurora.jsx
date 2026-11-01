@@ -6,7 +6,7 @@ const TONOS = {
   "desarrollo-humano": {
     manchas: ["rgba(29,78,158,0.95)", "rgba(30,158,154,0.85)", "rgba(201,162,63,0.6)"],
     fecha: "text-[#9EEFFF]",
-    titulo: "bg-[linear-gradient(100deg,#FFFFFF_0%,#FFFFFF_45%,#B8F4FF_75%,#EAD8A2_100%)]",
+    titulo: "bg-[linear-gradient(100deg,#FFFFFF_0%,#FFFFFF_45%,#FFE082_75%,#EAD8A2_100%)]",
     boton: "bg-[linear-gradient(100deg,#7FE8FF_0%,#3FD0C9_55%,#1E9E9A_100%)] hover:shadow-[0_10px_28px_rgba(127,232,255,0.45)]",
   },
   salud: {
@@ -24,7 +24,7 @@ const TONOS = {
   super: {
     manchas: ["rgba(29,78,158,0.95)", "rgba(201,162,63,0.65)", "rgba(30,158,154,0.8)"],
     fecha: "text-[#EAD8A2]",
-    titulo: "bg-[linear-gradient(100deg,#FFFFFF_0%,#FFFFFF_45%,#EAD8A2_75%,#B8F4FF_100%)]",
+    titulo: "bg-[linear-gradient(100deg,#FFFFFF_0%,#FFFFFF_45%,#EAD8A2_75%,#FFE082_100%)]",
     boton: "bg-[linear-gradient(100deg,#F3E3B3_0%,#E0BE62_55%,#C9A23F_100%)] hover:shadow-[0_10px_28px_rgba(224,190,98,0.45)]",
   },
 };

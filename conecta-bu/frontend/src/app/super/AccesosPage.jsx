@@ -6,7 +6,7 @@ import { useConfirmar } from "./comunes/componentes/Confirmar";
 import { fechaCorta, mensajeError } from "./comunes/lib/salud";
 import { Aviso, Campo, Encabezado, Insignia, Tarjeta, Vacio, botonPrimario, claseCampo } from "./comunes/componentes/ui";
 
-const COLOR = { "desarrollo-humano": "dorado", salud: "verde", deporte: "azul", cultura: "azul" };
+const COLOR = { "desarrollo-humano": "dorado", salud: "verde", deporte: "azul", cultura: "morado" };
 // El acceso de los docentes de Deporte depende de su ficha: se cambia desde
 // Deporte > Docentes, no desde aqui.
 const ACCESO_DOCENTE = "deporte-docente";
