@@ -184,7 +184,7 @@ function MiReporteDetalle({ catalogo }) {
 export function ReportesSstPanel() {
   const { catalogo, error } = useCatalogoSst();
   return (
-    <div className="tema-salud min-h-screen fondo-panel panel-moderno">
+    <div className="tema-salud min-h-screen fondo-panel panel-moderno pb-[calc(80px+env(safe-area-inset-bottom))] md:pb-0">
       <Navbar modulo="sst" />
       {error && (
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8">

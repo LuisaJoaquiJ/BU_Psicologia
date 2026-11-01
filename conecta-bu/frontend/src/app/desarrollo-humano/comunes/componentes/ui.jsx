@@ -1,4 +1,5 @@
 import { BarrasH } from "./graficas/Barras";
+import { Icono } from "./Iconos";
 // Piezas de interfaz compartidas por las pantallas de Salud integral.
 
 export const claseCampo =
@@ -85,6 +86,42 @@ export function Campo({ etiqueta, ayuda, children, className = "" }) {
       {children}
       {ayuda && <span className="text-xs font-normal text-ink-500">{ayuda}</span>}
     </label>
+  );
+}
+
+// Carga: bloques con la forma del contenido, no un texto "Cargando…".
+// forma: "lista" (filas), "tarjetas" (cuadricula) o "linea" (un dato corto).
+export function Esqueleto({ forma = "lista", cantidad = 3, etiqueta = "Cargando…" }) {
+  const pulso = "animate-pulse motion-reduce:animate-none";
+  if (forma === "linea") {
+    return (
+      <span role="status" className={`block h-5 w-40 max-w-full rounded-full bg-primary-light ${pulso}`}>
+        <span className="sr-only">{etiqueta}</span>
+      </span>
+    );
+  }
+  return (
+    <div role="status" className={forma === "tarjetas" ? "grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]" : "flex flex-col gap-3"}>
+      <span className="sr-only">{etiqueta}</span>
+      {Array.from({ length: cantidad }, (_, i) => (
+        <span key={i} aria-hidden="true" className={`block rounded-[22px] bg-white/70 border border-white ${forma === "tarjetas" ? "h-56" : "h-20"} ${pulso}`} />
+      ))}
+    </div>
+  );
+}
+
+// Estado vacio: que pasa y que puede hacer ahora la persona (accion: botones
+// o enlaces). compacto: dentro de una tarjeta que ya tiene titulo.
+export function EstadoVacio({ icono = "calendario", titulo, texto, accion, compacto = false }) {
+  return (
+    <div className={`text-center flex flex-col items-center gap-3 ${compacto ? "py-6 px-4" : "vidrio-panel rounded-[22px] p-8 sm:p-10"}`}>
+      <span aria-hidden="true" className="w-14 h-14 rounded-full bg-primary-light text-primary grid place-items-center">
+        <Icono nombre={icono} size={26} strokeWidth={2} />
+      </span>
+      <p className="m-0 text-lg font-extrabold text-primary-dark">{titulo}</p>
+      {texto && <p className="m-0 text-ink-500 max-w-md [text-wrap:pretty]">{texto}</p>}
+      {accion && <div className="flex flex-wrap justify-center gap-2 mt-1">{accion}</div>}
+    </div>
   );
 }
 

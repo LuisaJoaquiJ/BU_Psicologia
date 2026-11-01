@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { http } from "../../../lib/api/http";
-import { Aviso, Vacio } from "../comunes/componentes/ui";
+import { Aviso, EstadoVacio, botonSecundario, Esqueleto } from "../comunes/componentes/ui";
 import { Icono } from "../comunes/componentes/Iconos";
 
 // RF-003 / HU-06: consulta de servicios de Desarrollo Humano / Orientación.
@@ -17,8 +17,8 @@ export function ServiciosPage() {
   }, []);
 
   return (
-    <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 lg:py-10">
-      <h1 className="m-0 text-3xl sm:text-[34px] font-extrabold">Servicios de Desarrollo Humano</h1>
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 lg:pt-10 pb-16 [&>*]:max-w-4xl">
+      <h1 className="m-0 font-sans text-[32px] sm:text-[40px] leading-[1.05] tracking-[-0.035em] font-extrabold text-primary-dark">Servicios de Desarrollo Humano</h1>
       <p className="mt-1.5 mb-7 text-ink-500 max-w-[620px]">
         Consulta la oferta de orientación disponible para la comunidad institucional.
       </p>
@@ -29,9 +29,20 @@ export function ServiciosPage() {
         </div>
       )}
 
-      {!servicios && !error && <p className="text-ink-500">Cargando servicios…</p>}
+      {!servicios && !error && <Esqueleto etiqueta="Cargando servicios…" />}
 
-      {servicios && servicios.length === 0 && <Vacio>Por ahora no hay servicios publicados.</Vacio>}
+      {servicios && servicios.length === 0 && (
+        <EstadoVacio
+          icono="cuadricula"
+          titulo="Aún no hay servicios publicados"
+          texto="Bienestar publicará pronto sus servicios de orientación. Si tienes una duda, el asistente te puede ayudar."
+          accion={
+            <Link to="/estudiante/asistente" className={botonSecundario}>
+              Hablar con el asistente
+            </Link>
+          }
+        />
+      )}
 
       {servicios?.length > 0 && (
         <ul className="list-none m-0 p-0 bg-white border border-gray-200 rounded-xl divide-y divide-gray-200">

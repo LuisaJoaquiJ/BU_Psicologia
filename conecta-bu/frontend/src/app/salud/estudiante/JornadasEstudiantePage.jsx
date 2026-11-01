@@ -1,9 +1,10 @@
+import { Link } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { http } from "../../../lib/api/http";
 import { fechaLarga } from "../comunes/lib/format";
 import { Icono } from "../comunes/componentes/Iconos";
 import { Ventana } from "../comunes/componentes/Ventana";
-import { Aviso, Campo, Insignia, botonPrimario, botonSecundario, claseCampo } from "../comunes/componentes/ui";
+import { Aviso, Campo, Insignia, botonPrimario, botonSecundario, claseCampo, EstadoVacio, Esqueleto } from "../comunes/componentes/ui";
 
 // Jornadas y campanas de Salud integral (/mi-salud/jornadas): el estudiante
 // ve las publicadas, se inscribe o cancela. Cuando el personal marca su
@@ -17,7 +18,7 @@ const mensajeError = (err, porDefecto) => err?.response?.data?.message || porDef
 function Dato({ icono, children }) {
   return (
     <li className="flex items-start gap-2 text-sm text-ink-700">
-      <Icono nombre={icono} className="w-4 h-4 mt-0.5 shrink-0 text-[#0d9488]" />
+      <Icono nombre={icono} className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
       <span>{children}</span>
     </li>
   );
@@ -72,7 +73,7 @@ function FormularioDatos({ jornada, datos, alTerminar }) {
         </datalist>
       </Campo>
       <label className="flex gap-3 items-start text-sm text-ink-700 cursor-pointer">
-        <input type="checkbox" required checked={v.consentimiento} onChange={set("consentimiento")} className="w-5 h-5 mt-0.5 accent-[#0d9488] shrink-0" />
+        <input type="checkbox" required checked={v.consentimiento} onChange={set("consentimiento")} className="w-5 h-5 mt-0.5 accent-primary shrink-0" />
         Autorizo a la Uniautónoma del Cauca a tratar mis datos personales para registrar mi participación en las actividades de Salud integral (Ley 1581 de 2012).
       </label>
       {error && <Aviso>{error}</Aviso>}
@@ -108,11 +109,11 @@ function TarjetaJornada({ jornada, ocupado, alInscribirse, alCancelar }) {
   return (
     <article className="bg-white border border-gray-200 rounded-xl p-5 sm:p-6 flex flex-col gap-4">
       <div className="flex items-start gap-3">
-        <span className="w-11 h-11 rounded-2xl bg-[#ccfbf1] text-[#0d9488] grid place-items-center shrink-0">
+        <span className="w-11 h-11 rounded-2xl bg-primary-light text-primary grid place-items-center shrink-0">
           <Icono nombre="pulso" className="w-5 h-5" />
         </span>
         <div className="min-w-0">
-          {jornada.categoria && <p className="m-0 text-xs font-bold text-[#0d9488]">{jornada.categoria}</p>}
+          {jornada.categoria && <p className="m-0 text-xs font-bold text-primary">{jornada.categoria}</p>}
           <h3 className="m-0 text-lg font-extrabold leading-tight">{jornada.nombre}</h3>
         </div>
       </div>
@@ -195,9 +196,9 @@ export function JornadasEstudiantePage() {
   }
 
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 pb-16 flex flex-col gap-8">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 lg:pt-10 pb-16 flex flex-col gap-8">
       <header>
-        <h1 className="m-0 text-3xl sm:text-4xl font-extrabold">Jornadas y campañas</h1>
+        <h1 className="m-0 font-sans text-[32px] sm:text-[40px] leading-[1.05] tracking-[-0.035em] font-extrabold text-primary-dark">Jornadas y campañas</h1>
         <p className="m-0 mt-2 text-ink-500 max-w-[680px]">
           Vacunación, tamizajes, donación de sangre y más actividades de la Unidad de Salud. Inscríbete y, cuando asistas, quedará en tus participaciones.
         </p>
@@ -207,9 +208,18 @@ export function JornadasEstudiantePage() {
       {exito && <Aviso tono="verde">{exito}</Aviso>}
 
       {!datos ? (
-        <p className="text-ink-500">Cargando…</p>
+        <Esqueleto forma="tarjetas" etiqueta="Cargando jornadas…" />
       ) : datos.jornadas.length === 0 ? (
-        <div className="bg-white border border-dashed border-gray-300 rounded-xl p-8 text-center text-ink-500">No hay jornadas ni campañas abiertas por ahora.</div>
+        <EstadoVacio
+          icono="pulso"
+          titulo="No hay jornadas ni campañas abiertas"
+          texto="Cuando la Unidad de Salud publique una, podrás inscribirte aquí. Mientras tanto puedes pedir una cita."
+          accion={
+            <Link to="/mi-salud" className={botonPrimario}>
+              Pedir una cita
+            </Link>
+          }
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {datos.jornadas.map((j) => (

@@ -10,7 +10,7 @@ import { JornadasEstudiantePage } from "./JornadasEstudiantePage";
 // menu, sus propias citas y sus participaciones.
 export function SaludEstudiantePanel() {
   return (
-    <div className="tema-salud min-h-screen fondo-panel panel-moderno">
+    <div className="tema-salud min-h-screen fondo-panel panel-moderno pb-[calc(80px+env(safe-area-inset-bottom))] md:pb-0">
       <Navbar modulo="salud" />
       <Routes>
         <Route index element={<SaludEstudiantePage />} />

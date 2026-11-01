@@ -1,12 +1,12 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage } from "./app/login/LoginPage";
-import { LandingPage } from "./app/desarrollo-humano/publico/LandingPage";
 import { PortalPage } from "./app/portal/PortalPage";
 import { SaludPanel } from "./app/salud/personal/SaludPanel";
 import { SuperPanel } from "./app/super/SuperPanel";
 import { SaludEstudiantePanel } from "./app/salud/estudiante/SaludEstudiantePanel";
 import { ReportesSstPanel } from "./app/salud/sst/ReportesSstPanel";
 import { DeportePanel, DocentePanel, MiDeportePanel } from "./app/deporte";
+import { CulturaPanel, MiCulturaPanel } from "./app/cultura";
 import { EstudiantePanel } from "./app/desarrollo-humano/estudiante/EstudiantePanel";
 import { AdminPanel } from "./app/desarrollo-humano/personal/AdminPanel";
 import { ProtectedRoute } from "./lib/auth/ProtectedRoute";
@@ -21,8 +21,8 @@ const GaleriaGraficas = import.meta.env.DEV ? lazy(() => import("./app/desarroll
 
 // "/" es el portal de Conecta BU con los cinco modulos de Bienestar. El
 // personal de un solo modulo y el superadministrador no lo ven: entran
-// directo a su panel. "/desarrollo-humano" es la pagina publica de este
-// modulo; a quien ya tiene sesion lo lleva directo a su panel.
+// directo a su panel. "/desarrollo-humano" (enlaces antiguos) lleva al
+// inicio de sesion, o al panel de quien ya tiene sesion.
 function PortalInicio() {
   const { cargando, usuario } = useAuth();
   if (cargando) return null;
@@ -34,7 +34,7 @@ function PortalInicio() {
 function DesarrolloHumano() {
   const { estaAutenticado, usuario, cargando } = useAuth();
   if (cargando) return null;
-  if (!estaAutenticado) return <LandingPage />;
+  if (!estaAutenticado) return <Navigate to="/login" replace />;
   if (usuario.rol === "Estudiante") return <Navigate to="/estudiante" replace />;
   return <Navigate to={inicioDirecto(usuario) || "/"} replace />;
 }
@@ -118,6 +118,24 @@ export default function App() {
           element={
             <ProtectedRoute rolesPermitidos={["Administrador"]} modulo="deporte-docente">
               <DocentePanel />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Modulo Arte y Cultura: area del estudiante y panel del personal. */}
+        <Route
+          path="/mi-cultura/*"
+          element={
+            <ProtectedRoute rolesPermitidos={["Estudiante"]}>
+              <MiCulturaPanel />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cultura/*"
+          element={
+            <ProtectedRoute rolesPermitidos={["Administrador"]} modulo="cultura">
+              <CulturaPanel />
             </ProtectedRoute>
           }
         />

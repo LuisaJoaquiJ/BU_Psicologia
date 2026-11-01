@@ -316,11 +316,11 @@ export function MisCitasPage() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 lg:py-10">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 lg:pt-10 pb-16 [&>*]:max-w-4xl">
       <style>{`@keyframes aparecer{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}`}</style>
       <div className="flex items-end justify-between gap-4 flex-wrap mb-7">
         <div>
-          <h1 className="m-0 text-3xl sm:text-[34px] font-extrabold">Mis citas</h1>
+          <h1 className="m-0 font-sans text-[32px] sm:text-[40px] leading-[1.05] tracking-[-0.035em] font-extrabold text-primary-dark">Mis citas</h1>
           <p className="mt-1.5 mb-0 text-ink-500">
             Tus citas de salud. Puedes cancelar hasta 24 horas antes.
           </p>

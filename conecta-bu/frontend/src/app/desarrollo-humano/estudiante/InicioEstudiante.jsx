@@ -5,6 +5,7 @@ import { useAuth } from "../../../lib/auth/AuthContext";
 import { formatearFecha, formatearHora, fechaLarga } from "../comunes/lib/format";
 import { imagenDeEvento, respaldoDeFoto } from "../comunes/lib/imagenes";
 import { Icono } from "../comunes/componentes/Iconos";
+import { EstadoVacio, botonSecundario, Esqueleto } from "../comunes/componentes/ui";
 
 const MESES = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 function usePorVista() {
@@ -117,7 +118,7 @@ export function InicioEstudiante() {
 
           <section aria-labelledby="titulo-proxima-cita" className="flex-[1_1_340px] max-w-[460px] min-w-0 bg-white/95 text-ink-900 rounded-[24px] p-6 sm:p-7 flex flex-col gap-4 shadow-[0_24px_60px_rgba(2,10,28,0.35)]">
             <h2 id="titulo-proxima-cita" className="m-0 font-sans text-lg font-bold text-primary">Tu próxima cita</h2>
-            {proximaCita === undefined && <p className="m-0 text-ink-500">Cargando…</p>}
+            {proximaCita === undefined && <Esqueleto forma="linea" etiqueta="Cargando tu próxima cita…" />}
             {proximaCita === null && (
               <>
                 <p className="m-0 text-ink-600">No tienes citas agendadas.</p>
@@ -184,9 +185,18 @@ export function InicioEstudiante() {
         </div>
 
         {aviso && <p className="text-sm text-primary bg-primary-light rounded-xl p-3 mb-5">{aviso}</p>}
-        {!eventos && <p className="text-ink-500">Cargando eventos...</p>}
+        {!eventos && <Esqueleto forma="tarjetas" etiqueta="Cargando eventos…" />}
         {eventos && eventos.length === 0 && (
-          <p className="text-ink-500 bg-white border border-gray-200 rounded-2xl p-6">Por ahora no hay eventos publicados.</p>
+          <EstadoVacio
+            icono="estrella"
+            titulo="No hay eventos próximos"
+            texto="Aquí aparecerán los talleres y eventos de Bienestar cuando se publiquen."
+            accion={
+              <Link to="/estudiante/servicios" className={botonSecundario}>
+                Ver servicios
+              </Link>
+            }
+          />
         )}
 
         <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">

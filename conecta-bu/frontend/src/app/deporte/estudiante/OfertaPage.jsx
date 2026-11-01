@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Aviso, Insignia, Vacio } from "../comunes/componentes/ui";
+import { Aviso, Insignia, Vacio, EstadoVacio, Esqueleto } from "../comunes/componentes/ui";
 import { useConfirmar } from "../comunes/componentes/Confirmar";
 import { Icono } from "../comunes/componentes/Iconos";
 import { FotoDeporte } from "../comunes/componentes/SelectorFoto";
@@ -94,11 +94,11 @@ export function OfertaPage() {
   const hayFiltros = buscar || dias.length || franja || conCupos || filtro;
 
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 lg:pt-10 pb-16">
       <div className="flex justify-between items-end gap-4 flex-wrap mb-6">
         <div>
           <p className="m-0 mb-1.5 text-sm font-semibold text-ink-500">Deporte · periodo {oferta?.periodo || "…"}</p>
-          <h1 className="m-0 text-3xl sm:text-[36px] font-extrabold">Disciplinas e inscripciones</h1>
+          <h1 className="m-0 font-sans text-[32px] sm:text-[40px] leading-[1.05] tracking-[-0.035em] font-extrabold text-primary-dark">Disciplinas e inscripciones</h1>
           <p className="mt-1.5 mb-0 text-ink-500 max-w-[640px]">
             Elige el grupo que mejor se ajuste a tu horario. Puedes inscribirte hasta en {oferta?.maxGruposPorPeriodo || 2} grupo(s) por periodo
             {oferta ? ` (llevas ${oferta.inscritoEn})` : ""}.
@@ -145,8 +145,8 @@ export function OfertaPage() {
               className="w-full border border-gray-200 rounded-full pl-10 pr-4 min-h-[44px] text-sm bg-white"
             />
           </label>
-          <label className="flex items-center gap-2 text-sm font-semibold text-ink-700 cursor-pointer">
-            <input type="checkbox" checked={conCupos} onChange={(e) => setConCupos(e.target.checked)} className="w-4 h-4 accent-[#0B2A5B]" />
+          <label className="flex items-center gap-2.5 min-h-[44px] text-sm font-semibold text-ink-700 cursor-pointer">
+            <input type="checkbox" checked={conCupos} onChange={(e) => setConCupos(e.target.checked)} className="w-5 h-5 accent-primary" />
             Solo con cupos
           </label>
         </div>
@@ -201,8 +201,8 @@ export function OfertaPage() {
           <Aviso tono="verde">{aviso}</Aviso>
         </div>
       )}
-      {!oferta && <p className="text-ink-500">Cargando…</p>}
-      {oferta && visibles.length === 0 && <Vacio>No hay grupos con esos filtros. Prueba con otros días u horas.</Vacio>}
+      {!oferta && <Esqueleto cantidad={4} etiqueta="Cargando la oferta…" />}
+      {oferta && visibles.length === 0 && <EstadoVacio icono="balon" titulo="No hay grupos con esos filtros" texto="Prueba con otros días u horas, o quita algún filtro." />}
       <div className="grid gap-5 lg:grid-cols-2">
         {visibles.map((d) => {
           const e = estiloDisciplina(d.nombre);

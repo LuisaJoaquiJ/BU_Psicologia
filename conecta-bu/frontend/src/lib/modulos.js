@@ -17,7 +17,6 @@ export const MODULOS = [
     icono: "persona",
     imagen: IMAGENES.permanencia,
     estado: "disponible",
-    publica: "/desarrollo-humano",
     panel: { Estudiante: "/estudiante", personal: "/admin" },
     servicios: ["Citas en línea con el equipo de psicología", "Talleres y eventos con inscripción", "Asistente que responde dudas sobre Bienestar"],
   },
@@ -62,11 +61,12 @@ export const MODULOS = [
     id: "cultura",
     nombre: "Arte y Cultura",
     corto: "Arte y Cultura",
-    descripcion: "Expresión artística, cultura institucional y espacios de participación para la comunidad.",
+    descripcion: "Talleres de música, danza y expresión corporal, grupos representativos y las actividades culturales del semestre.",
     icono: "musica",
     imagen: IMAGENES.auditorio,
-    estado: "pronto",
-    servicios: ["Grupos artísticos", "Agenda cultural", "Convocatorias"],
+    estado: "disponible",
+    panel: { Estudiante: "/mi-cultura", personal: "/cultura" },
+    servicios: ["Talleres con inscripción en línea", "Grupos representativos", "Agenda de eventos culturales"],
   },
 ];
 

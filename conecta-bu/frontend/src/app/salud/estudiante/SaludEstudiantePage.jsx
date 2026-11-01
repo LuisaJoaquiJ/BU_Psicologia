@@ -4,7 +4,7 @@ import { http } from "../../../lib/api/http";
 import { formatearFecha, formatearHora, fechaLarga } from "../comunes/lib/format";
 import { IMAGENES } from "../comunes/lib/imagenes";
 import { Icono } from "../comunes/componentes/Iconos";
-import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo } from "../comunes/componentes/ui";
+import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo, EstadoVacio, botonPrimario, botonSecundario } from "../comunes/componentes/ui";
 
 // Salud integral para el estudiante (/mi-salud): horarios para agendar una
 // cita de salud y servicios de la Unidad de Salud.
@@ -83,7 +83,7 @@ export function SaludEstudiantePage() {
           <div>
             <h2 className="m-0 text-[28px] font-extrabold">Horarios disponibles</h2>
           </div>
-          <Link to="/mi-salud/mis-citas" className="text-sm font-bold text-primary-soft">
+          <Link to="/mi-salud/mis-citas" className="inline-flex items-center min-h-[44px] px-3 -mr-3 rounded-full text-sm font-bold text-primary-soft hover:bg-primary-light transition-colors">
             Mis citas →
           </Link>
         </div>
@@ -108,7 +108,16 @@ export function SaludEstudiantePage() {
         {error && <p className="text-sm text-red-700 bg-red-50 rounded-xl p-3 mb-4">{error}</p>}
         {!horarios && <div className="h-32 bg-white/60 border border-gray-200 rounded-xl animate-pulse" />}
         {horarios && visibles.length === 0 && (
-          <p className="text-ink-500 bg-white border border-gray-200 rounded-2xl p-6">No hay horarios de salud disponibles por ahora. Vuelve a consultar pronto.</p>
+          <EstadoVacio
+            icono="calendario"
+            titulo="No hay horarios libres por ahora"
+            texto="Vuelve pronto. Mientras tanto, revisa las jornadas y campañas: no necesitan cita."
+            accion={
+              <Link to="/mi-salud/jornadas" className={botonSecundario}>
+                Ver jornadas y campañas
+              </Link>
+            }
+          />
         )}
         <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
           {visibles.map((h) => (
@@ -131,6 +140,7 @@ export function SaludEstudiantePage() {
         </div>
       </section>
 
+      {servicios?.length > 0 && (
       <section className="bg-white border border-gray-200 rounded-xl p-6">
         <h2 className="m-0 mb-4 font-sans text-lg font-bold text-primary-dark">Servicios de la Unidad de Salud</h2>
         <ul className="list-none m-0 p-0 grid gap-4 sm:grid-cols-3">
@@ -147,6 +157,7 @@ export function SaludEstudiantePage() {
           ))}
         </ul>
       </section>
+      )}
     </main>
     </>
   );
@@ -163,23 +174,34 @@ export function SaludParticipacionesPage() {
       .catch(() => setDatos({ vinculado: false, participaciones: [] }));
   }, []);
   return (
-    <main className="max-w-[900px] mx-auto px-5 sm:px-8 pt-8 pb-16">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 lg:pt-10 pb-16 [&>*]:max-w-4xl">
       <p className="m-0 mb-1.5 text-sm font-semibold text-ink-500">Salud integral</p>
-      <h1 className="m-0 text-3xl font-extrabold">Mis participaciones</h1>
+      <h1 className="m-0 font-sans text-[32px] sm:text-[40px] leading-[1.05] tracking-[-0.035em] font-extrabold text-primary-dark">Mis participaciones</h1>
       <p className="mt-1.5 mb-6 text-ink-500">Jornadas, campañas y atenciones registradas con tu correo institucional.</p>
       {!datos && <div className="h-32 bg-white/60 border border-gray-200 rounded-xl animate-pulse" />}
       {datos && !datos.vinculado && (
-        <p className="text-ink-500 bg-white border border-gray-200 rounded-2xl p-6">
-          Aún no tienes participaciones asociadas a tu correo. Inscríbete en una jornada o campaña y, cuando asistas, aparecerá aquí.
-        </p>
+        <EstadoVacio
+          icono="check"
+          titulo="Aún no tienes participaciones"
+          texto="Inscríbete en una jornada o campaña y, cuando asistas, aparecerá aquí."
+          accion={
+            <Link to="/mi-salud/jornadas" className={botonPrimario}>
+              Ver jornadas y campañas
+            </Link>
+          }
+        />
       )}
       {datos?.vinculado && datos.participaciones.length === 0 && (
-        <p className="text-ink-500 bg-white border border-gray-200 rounded-2xl p-6">
-          Todavía no hay participaciones registradas.{" "}
-          <Link to="/mi-salud/jornadas" className="font-bold text-primary-soft">
-            Ver jornadas y campañas
-          </Link>
-        </p>
+        <EstadoVacio
+          icono="check"
+          titulo="Todavía no hay participaciones registradas"
+          texto="Cuando asistas a una jornada, campaña o atención, aparecerá aquí."
+          accion={
+            <Link to="/mi-salud/jornadas" className={botonPrimario}>
+              Ver jornadas y campañas
+            </Link>
+          }
+        />
       )}
       {datos?.participaciones?.length > 0 && (
         <ul className="list-none m-0 p-0 bg-white border border-gray-200 rounded-xl px-6 py-2">

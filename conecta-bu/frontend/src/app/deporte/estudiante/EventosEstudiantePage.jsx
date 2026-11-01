@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Aviso, Insignia, Vacio, botonPrimario, botonSecundario } from "../comunes/componentes/ui";
+import { Aviso, Insignia, botonPrimario, botonSecundario, EstadoVacio, Esqueleto } from "../comunes/componentes/ui";
 import { useConfirmar } from "../comunes/componentes/Confirmar";
 import { Icono } from "../comunes/componentes/Iconos";
 import { FotoDeporte } from "../comunes/componentes/SelectorFoto";
@@ -49,17 +49,17 @@ export function EventosEstudiantePage() {
   const lista = (eventos || []).filter((e) => (filtro === "inscritos" ? e.inscrito : filtro === "horas" ? e.horasReconocidas : !e.yaPaso));
   const conteos = { todos: (eventos || []).filter((e) => !e.yaPaso).length, inscritos: (eventos || []).filter((e) => e.inscrito).length, horas: (eventos || []).filter((e) => e.horasReconocidas).length };
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-5">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 lg:pt-10 pb-16 flex flex-col gap-5">
       <div>
         <p className="m-0 mb-1.5 text-sm font-semibold text-ink-500">Deporte</p>
-        <h1 className="m-0 text-3xl sm:text-[36px] font-extrabold">Eventos deportivos</h1>
+        <h1 className="m-0 font-sans text-[32px] sm:text-[40px] leading-[1.05] tracking-[-0.035em] font-extrabold text-primary-dark">Eventos deportivos</h1>
         <p className="mt-1.5 mb-0 text-ink-500 max-w-[640px]">Torneos, masterclasses y jornadas. Algunos suman horas de deporte si asistes.</p>
       </div>
       <Pastillas etiqueta="Filtrar eventos" opciones={[["todos", "Próximos"], ["inscritos", "Mis inscripciones"], ["horas", "Suman horas"]]} valor={filtro} onCambio={setFiltro} conteos={conteos} />
       {error && <Aviso>{error}</Aviso>}
       {aviso && <Aviso tono="verde">{aviso}</Aviso>}
-      {!eventos && <p className="text-ink-500">Cargando…</p>}
-      {eventos && lista.length === 0 && <Vacio>No hay eventos aquí por ahora.</Vacio>}
+      {!eventos && <Esqueleto forma="tarjetas" etiqueta="Cargando eventos…" />}
+      {eventos && lista.length === 0 && <EstadoVacio icono="trofeo" titulo="No hay eventos aquí por ahora" texto="Revisa las otras pestañas o vuelve pronto: aquí aparecen los torneos y actividades de Deporte." />}
       <ul className="list-none m-0 p-0 grid grid-cols-1 gap-4 md:grid-cols-2">
         {lista.map((e) => {
           const d = new Date(`${e.fecha}T12:00:00Z`);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Aviso, Insignia, Tarjeta, Vacio } from "../comunes/componentes/ui";
+import { Aviso, Insignia, Tarjeta, Vacio, EstadoVacio, botonPrimario } from "../comunes/componentes/ui";
 import { Icono } from "../comunes/componentes/Iconos";
 import { FotoDeporte } from "../comunes/componentes/SelectorFoto";
 import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo } from "../comunes/componentes/ui";
@@ -67,13 +67,17 @@ export function InicioDeporte() {
 
       <Tarjeta titulo="Mi semana" subtitulo={datos?.grupos?.length ? `${datos.grupos.length} grupo(s) este periodo · tus eventos aparecen en naranja` : null}>
         {datos && datos.grupos.length === 0 ? (
-          <Vacio>
-            Aún no estás inscrito en ningún grupo este periodo.{" "}
-            <Link to="/mi-deporte/oferta" className="font-bold text-primary-soft">
-              Mira la oferta
-            </Link>
-            .
-          </Vacio>
+          <EstadoVacio
+            compacto
+            icono="balon"
+            titulo="Aún no estás inscrito en ningún grupo"
+            texto="Inscríbete en una disciplina para empezar a sumar tus horas de deporte de este periodo."
+            accion={
+              <Link to="/mi-deporte/oferta" className={botonPrimario}>
+                Ver disciplinas
+              </Link>
+            }
+          />
         ) : (
           datos && <MiSemana grupos={datos.grupos} eventos={eventos} />
         )}
@@ -118,7 +122,7 @@ export function InicioDeporte() {
         <Tarjeta
           titulo="Últimas horas registradas"
           acciones={
-            <Link to="/mi-deporte/horas" className="text-sm font-bold text-primary-soft">
+            <Link to="/mi-deporte/horas" className="inline-flex items-center min-h-[44px] px-3 -mr-3 rounded-full text-sm font-bold text-primary-soft hover:bg-primary-light transition-colors">
               Ver todo →
             </Link>
           }

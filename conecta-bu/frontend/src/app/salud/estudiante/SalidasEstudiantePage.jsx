@@ -4,7 +4,7 @@ import { useAuth } from "../../../lib/auth/AuthContext";
 import { fechaLarga } from "../comunes/lib/format";
 import { Icono } from "../comunes/componentes/Iconos";
 import { Ventana } from "../comunes/componentes/Ventana";
-import { Aviso, Campo, Insignia, botonPrimario, botonSecundario, claseCampo } from "../comunes/componentes/ui";
+import { Aviso, Campo, Insignia, botonPrimario, botonSecundario, claseCampo, EstadoVacio, Esqueleto } from "../comunes/componentes/ui";
 
 // Salidas de Salud integral para el estudiante (/mi-salud/salidas): ve las
 // salidas publicadas por el personal de Salud, se inscribe con los datos que
@@ -29,7 +29,7 @@ const mensajeError = (err, porDefecto) => err?.response?.data?.message || porDef
 function Dato({ icono, children }) {
   return (
     <li className="flex items-start gap-2 text-sm text-ink-700">
-      <Icono nombre={icono} className="w-4 h-4 mt-0.5 shrink-0 text-[#0d9488]" />
+      <Icono nombre={icono} className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
       <span>{children}</span>
     </li>
   );
@@ -138,7 +138,7 @@ function FormularioInscripcion({ salida, programas, previo, alTerminar }) {
                 type="file"
                 accept="application/pdf,image/jpeg,image/png,image/webp"
                 onChange={(e) => setArchivo(e.target.files?.[0] || null)}
-                className="block w-full text-sm min-h-[44px] file:mr-3 file:min-h-[44px] file:px-4 file:rounded-full file:border-0 file:bg-[#19407B] file:text-white file:font-semibold"
+                className="block w-full text-sm min-h-[44px] file:mr-3 file:min-h-[44px] file:px-4 file:rounded-full file:border-0 file:bg-primary file:text-white file:font-semibold"
               />
             </Campo>
           )}
@@ -146,7 +146,7 @@ function FormularioInscripcion({ salida, programas, previo, alTerminar }) {
       )}
 
       <label className="bg-white rounded-xl p-5 sm:p-6 flex items-start gap-3 text-sm text-ink-700 cursor-pointer">
-        <input required type="checkbox" checked={v.consentimiento} onChange={set("consentimiento")} className="w-5 h-5 mt-0.5 shrink-0 accent-[#19407B]" />
+        <input required type="checkbox" checked={v.consentimiento} onChange={set("consentimiento")} className="w-5 h-5 mt-0.5 shrink-0 accent-primary" />
         <span>
           Autorizo a la Unidad de Salud integral a usar estos datos para organizar la salida y reportarla a la ARL o al seguro estudiantil. Solo el personal de
           Salud integral los puede ver.
@@ -179,7 +179,7 @@ function TarjetaSalida({ salida, alInscribirse }) {
   return (
     <article className="bg-white border border-gray-200 rounded-xl p-5 sm:p-6 flex flex-col gap-4">
       <div className="flex items-start gap-3">
-        <span className="w-11 h-11 rounded-2xl bg-[#ccfbf1] text-[#0d9488] grid place-items-center shrink-0">
+        <span className="w-11 h-11 rounded-2xl bg-primary-light text-primary grid place-items-center shrink-0">
           <Icono nombre="bus" className="w-5 h-5" />
         </span>
         <div className="min-w-0">
@@ -248,9 +248,9 @@ export function SalidasEstudiantePage() {
   const previo = datos?.misInscripciones?.[0] || datos?.misDatos;
 
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 pb-16 flex flex-col gap-8">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 lg:pt-10 pb-16 flex flex-col gap-8">
       <header>
-        <h1 className="m-0 text-3xl sm:text-4xl font-extrabold">Salidas</h1>
+        <h1 className="m-0 font-sans text-[32px] sm:text-[40px] leading-[1.05] tracking-[-0.035em] font-extrabold text-primary-dark">Salidas</h1>
         <p className="m-0 mt-2 text-ink-500 max-w-[680px]">
           Salidas académicas y visitas técnicas organizadas con Salud integral. Inscríbete aquí: tus datos se usan para reportar la salida a la ARL o al seguro.
         </p>
@@ -262,9 +262,13 @@ export function SalidasEstudiantePage() {
       <section className="flex flex-col gap-4">
         <h2 className="m-0 text-xl font-extrabold">Salidas disponibles</h2>
         {!datos ? (
-          <p className="text-ink-500">Cargando…</p>
+          <Esqueleto forma="tarjetas" etiqueta="Cargando salidas…" />
         ) : datos.salidas.length === 0 ? (
-          <div className="bg-white border border-dashed border-gray-300 rounded-xl p-8 text-center text-ink-500">No hay salidas publicadas por ahora.</div>
+          <EstadoVacio
+            icono="bus"
+            titulo="No hay salidas abiertas"
+            texto="Las salidas académicas aparecen aquí cuando tu docente las reporta y la Unidad de Salud las verifica."
+          />
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {datos.salidas.map((s) => (

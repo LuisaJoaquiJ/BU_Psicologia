@@ -1,4 +1,5 @@
-import { Aviso, Insignia, Tarjeta, Vacio, botonPrimario } from "../comunes/componentes/ui";
+import { Link } from "react-router-dom";
+import { Aviso, Insignia, Tarjeta, botonPrimario, EstadoVacio } from "../comunes/componentes/ui";
 import { Icono } from "../comunes/componentes/Iconos";
 import { fechaCorta, horas } from "../comunes/lib/deporte";
 import { descargarConstancia, useMisHoras } from "./useMisHoras";
@@ -8,11 +9,11 @@ import { descargarConstancia, useMisHoras } from "./useMisHoras";
 export function MisHorasPage() {
   const { datos, error } = useMisHoras();
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-9 pb-16 flex flex-col gap-6">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 lg:pt-10 pb-16 flex flex-col gap-6">
       <div className="flex justify-between items-end gap-4 flex-wrap">
         <div>
           <p className="m-0 mb-1.5 text-sm font-semibold text-ink-500">Deporte</p>
-          <h1 className="m-0 text-3xl sm:text-[36px] font-extrabold">Mis horas</h1>
+          <h1 className="m-0 font-sans text-[32px] sm:text-[40px] leading-[1.05] tracking-[-0.035em] font-extrabold text-primary-dark">Mis horas</h1>
         </div>
         <button type="button" onClick={descargarConstancia} className={botonPrimario}>
           <Icono nombre="descarga" size={17} /> Descargar constancia
@@ -41,7 +42,17 @@ export function MisHorasPage() {
           </div>
           <Tarjeta titulo="Historial" subtitulo="Asistencias registradas por los instructores y horas reconocidas por Bienestar">
             {datos.historial.length === 0 ? (
-              <Vacio>Aún no tienes horas registradas.</Vacio>
+              <EstadoVacio
+                compacto
+                icono="reloj"
+                titulo="Aún no tienes horas registradas"
+                texto="Tus horas aparecen cuando el instructor toma asistencia en tus clases o en un evento."
+                accion={
+                  <Link to="/mi-deporte/oferta" className={botonPrimario}>
+                    Ver disciplinas
+                  </Link>
+                }
+              />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse min-w-[560px]">

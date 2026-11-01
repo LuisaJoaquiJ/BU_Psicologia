@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { fechaLarga, formatearHora } from "../comunes/lib/format";
-import { Aviso, Vacio } from "../comunes/componentes/ui";
+import { Aviso, Vacio, EstadoVacio, botonSecundario, Esqueleto } from "../comunes/componentes/ui";
 import { Icono } from "../comunes/componentes/Iconos";
 
 // RF-004 / RF-005 · HU-07 a HU-10: pedir una cita en tres pasos
@@ -35,7 +35,8 @@ const PASOS = ["Servicio", "Día y hora", "Confirmar"];
 
 function Pasos({ paso }) {
   return (
-    <ol aria-label="Pasos" className="list-none m-0 p-0 flex lg:flex-col gap-1 overflow-x-auto">
+    // Celular: los tres pasos caben en una fila (sin desplazarse de lado).
+    <ol aria-label="Pasos" className="list-none m-0 p-0 grid grid-cols-3 lg:flex lg:flex-col gap-1">
       {PASOS.map((nombre, i) => {
         const n = i + 1;
         const hecho = n < paso;
@@ -44,7 +45,7 @@ function Pasos({ paso }) {
           <li
             key={nombre}
             aria-current={actual ? "step" : undefined}
-            className={`flex-1 lg:flex-none flex gap-3 items-center p-3 rounded-xl min-w-[150px] ${actual ? "bg-white shadow-[0_4px_14px_rgba(11,35,71,0.08)]" : ""}`}
+            className={`min-w-0 flex flex-col sm:flex-row gap-1.5 sm:gap-3 items-center text-center sm:text-left p-2 sm:p-3 rounded-xl ${actual ? "bg-white shadow-[0_4px_14px_rgba(11,35,71,0.08)]" : ""}`}
           >
             <span
               className={`w-[30px] h-[30px] rounded-full shrink-0 flex items-center justify-center font-extrabold text-sm ${
@@ -53,10 +54,9 @@ function Pasos({ paso }) {
             >
               {hecho ? <Icono nombre="check" size={15} strokeWidth={3} /> : n}
             </span>
-            <span className="leading-tight">
-              <strong className={actual || hecho ? "text-ink-900" : "text-ink-500"}>{nombre}</strong>
-              <br />
-              <span className="text-[13px] text-ink-500">{hecho ? "Hecho" : actual ? "Ahora" : "Después"}</span>
+            <span className="leading-tight min-w-0">
+              <strong className={`block text-[13px] sm:text-base ${actual || hecho ? "text-ink-900" : "text-ink-500"}`}>{nombre}</strong>
+              <span className="hidden sm:block text-[13px] text-ink-500">{hecho ? "Hecho" : actual ? "Ahora" : "Después"}</span>
             </span>
           </li>
         );
@@ -150,18 +150,19 @@ export function AgendarCitaPage() {
   const hoy = hoyISO();
 
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8 lg:py-10 flex gap-8 flex-wrap items-start">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 lg:pt-10 pb-16 flex gap-8 flex-wrap items-start">
       <aside className="flex-[1_1_240px] min-w-0">
-        <h1 className="m-0 text-[30px] sm:text-[34px] leading-tight font-extrabold">Pedir una cita</h1>
+        <h1 className="m-0 font-sans text-[32px] sm:text-[40px] leading-[1.05] tracking-[-0.035em] font-extrabold text-primary-dark">Pedir una cita</h1>
         <p className="mt-1.5 mb-6 text-ink-500">Orientación con el equipo de Desarrollo Humano. La cita queda agendada cuando la confirmas.</p>
         <Pasos paso={paso} />
-        <p className="mt-6 mb-0 p-3.5 rounded-xl bg-[#FFF6E0] text-[#5C4206] text-sm">
-          ¿Es una urgencia? No esperes la cita: llama a la{" "}
-          <a href="tel:123" className="font-extrabold text-[#5C4206] underline underline-offset-4">
-            línea 123
+        {/* Urgencias: un boton de 44 px para llamar, no un enlace dentro del texto. */}
+        <div className="mt-6 p-3.5 rounded-xl bg-[#FFF6E0] text-[#5C4206] text-sm flex flex-col items-start gap-2.5">
+          <p className="m-0">¿Es una urgencia? No esperes la cita: llama a la línea 123.</p>
+          <a href="tel:123" className="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-full bg-[#5C4206] text-white font-extrabold text-sm no-underline hover:bg-[#46320A] transition-colors">
+            <Icono nombre="telefono" size={16} strokeWidth={2.2} />
+            Llamar al 123
           </a>
-          .
-        </p>
+        </div>
       </aside>
 
       <div className="flex-[999_1_640px] min-w-0 flex flex-col gap-4">
@@ -172,7 +173,7 @@ export function AgendarCitaPage() {
           <section aria-labelledby="paso1" className="bg-white rounded-xl p-5 sm:p-7 shadow-[0_10px_30px_rgba(11,35,71,0.08)]">
             <h2 id="paso1" className="m-0 mb-1 text-2xl font-extrabold">1 · ¿Qué servicio necesitas?</h2>
             <p className="m-0 mb-5 text-ink-500">Si no estás seguro, elige orientación psicológica: el profesional te orienta.</p>
-            {!servicios && !error && <p className="text-ink-500">Cargando servicios…</p>}
+            {!servicios && !error && <Esqueleto etiqueta="Cargando servicios…" />}
             <fieldset className="m-0 p-0 border-0 flex flex-col gap-2.5">
               <legend className="sr-only">Servicio</legend>
               {servicios?.map((s) => {
@@ -185,7 +186,7 @@ export function AgendarCitaPage() {
                       activo ? "border-primary bg-primary-light" : "border-gray-200 hover:border-primary/40"
                     }`}
                   >
-                    <input type="radio" name="servicio" checked={activo} onChange={() => elegirServicio(s.id)} className="mt-1 w-5 h-5 accent-[#19407B]" />
+                    <input type="radio" name="servicio" checked={activo} onChange={() => elegirServicio(s.id)} className="mt-1 w-5 h-5 accent-primary" />
                     <span className="flex-1 min-w-0">
                       <strong className="block text-[17px] text-primary-dark">{s.nombre}</strong>
                       {s.descripcion && <span className="block text-ink-600 text-[15px] mt-0.5">{s.descripcion}</span>}
@@ -197,7 +198,25 @@ export function AgendarCitaPage() {
                 );
               })}
             </fieldset>
-            <div className="mt-5 flex justify-end">
+            {servicios?.length === 0 && (
+              <EstadoVacio
+                compacto
+                icono="cuadricula"
+                titulo="Aún no hay servicios para agendar"
+                texto="Bienestar publicará pronto los servicios de orientación. Mientras tanto puedes revisar los talleres o escribirle al asistente."
+                accion={
+                  <>
+                    <Link to="/estudiante/eventos" className={botonSecundario}>
+                      Ver talleres y eventos
+                    </Link>
+                    <Link to="/estudiante/asistente" className={botonSecundario}>
+                      Hablar con el asistente
+                    </Link>
+                  </>
+                }
+              />
+            )}
+            <div className={`mt-5 justify-end ${servicios?.length === 0 ? "hidden" : "flex"}`}>
               <button
                 type="button"
                 disabled={!servicioId}

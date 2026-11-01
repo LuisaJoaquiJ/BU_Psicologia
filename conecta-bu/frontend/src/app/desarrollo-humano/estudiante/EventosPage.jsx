@@ -1,7 +1,9 @@
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { http } from "../../../lib/api/http";
 import { formatearFecha, formatearHora, fechaLarga } from "../comunes/lib/format";
 import { imagenDeEvento, respaldoDeFoto } from "../comunes/lib/imagenes";
+import { EstadoVacio, botonPrimario, Esqueleto } from "../comunes/componentes/ui";
 
 const ESTADO_INSCRIPCION = {
   Confirmada: "bg-emerald-50 text-emerald-700",
@@ -67,15 +69,26 @@ export function EventosPage() {
   const inscritoEn = (evento) => evento.miInscripcion?.estado === "Confirmada";
 
   return (
-    <main className="max-w-6xl mx-auto p-6 lg:p-10">
-      <h1 className="text-3xl font-extrabold text-primary mb-1">Eventos</h1>
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 lg:pt-10 pb-16">
+      <h1 className="m-0 font-sans text-[32px] sm:text-[40px] leading-[1.05] tracking-[-0.035em] font-extrabold text-primary-dark mb-1">Eventos</h1>
       <p className="text-gray-500 mb-8">Talleres y actividades de Desarrollo Humano. Inscríbete mientras haya cupos disponibles.</p>
 
       {error && <p className="text-sm text-red-600 bg-red-50 rounded-md p-3 mb-6">{error}</p>}
       {aviso && <p className="text-sm text-emerald-700 bg-emerald-50 rounded-md p-3 mb-6">{aviso}</p>}
 
-      {!eventos && !error && <p className="text-gray-500">Cargando eventos...</p>}
-      {eventos && eventos.length === 0 && <p className="text-gray-500">No hay eventos publicados por ahora. Vuelve a consultar más tarde.</p>}
+      {!eventos && !error && <Esqueleto forma="tarjetas" etiqueta="Cargando eventos…" />}
+      {eventos && eventos.length === 0 && (
+        <EstadoVacio
+          icono="estrella"
+          titulo="No hay talleres ni eventos abiertos"
+          texto="Cuando Bienestar publique uno, aparecerá aquí para que te inscribas. Mientras tanto puedes pedir una cita de orientación."
+          accion={
+            <Link to="/estudiante/agendar" className={botonPrimario}>
+              Pedir una cita
+            </Link>
+          }
+        />
+      )}
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
         {eventos?.map((evento) => (
@@ -165,7 +178,7 @@ export function EventosPage() {
 
       <h2 className="text-lg font-extrabold text-ink-900 mb-3">Mis inscripciones</h2>
       {inscripciones.length === 0 ? (
-        <p className="text-gray-500 text-sm">Aún no te has inscrito a ningún evento.</p>
+        <EstadoVacio icono="lista" titulo="Aún no te has inscrito a ningún evento" texto="Cuando te inscribas, aquí verás tus talleres con su fecha y lugar." />
       ) : (
         <div className="flex flex-col gap-3">
           {inscripciones.map((inscripcion) => (

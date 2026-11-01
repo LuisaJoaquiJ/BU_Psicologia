@@ -211,7 +211,7 @@ export function AsistenteConversacion({ compacto = false, alNavegar }) {
             <button
               key={texto}
               onClick={() => enviar(texto)}
-              className="text-sm border border-gray-200 bg-white rounded-full px-4 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors"
+              className="inline-flex items-center min-h-[44px] text-sm font-semibold burbuja rounded-full px-4 text-ink-600 hover:bg-white transition-colors"
             >
               {texto}
             </button>
