@@ -191,13 +191,19 @@
   --liquido-sombra: rgba(194, 78, 28, 0.32);
 }
 .tema-cultura {
-  --primario: 30 58 95;
-  --primario-hover: 22 44 73;
-  --primario-claro: 243 237 225;
-  --liquido-1: #3d6288;
-  --liquido-2: #1e3a5f;
-  --liquido-3: #162c49;
-  --liquido-sombra: rgba(30, 58, 95, 0.32);
+  --primario: 15 118 110;
+  --primario-hover: 17 94 89;
+  --primario-claro: 204 251 241;
+  --liquido-1: #5eead4;
+  --liquido-2: #2dd4bf;
+  --liquido-3: #14b8a6;
+  --liquido-texto: #0f172a;
+  --liquido-sombra: rgba(45, 212, 191, 0.4);
+}
+.tema-cultura.fondo-panel {
+  background-color: #fbf9f1;
+  background-image: radial-gradient(38rem 38rem at 8% -8%, rgba(45, 212, 191, 0.22), transparent 70%),
+    radial-gradient(34rem 34rem at 100% 20%, rgba(15, 23, 42, 0.08), transparent 70%);
 }
 .tema-super {
   --primario: 30 58 95;
