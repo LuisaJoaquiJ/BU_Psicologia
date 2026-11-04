@@ -385,3 +385,25 @@
     animation: none;
   }
 }
+
+/* Anillo del asistente, igual que NOVA: crece y se desvanece. */
+.nova-pulso {
+  border: 2px solid #e8740e;
+  animation: nova-pulso 1.8s ease-out infinite;
+}
+@keyframes nova-pulso {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nova-pulso {
+    animation: none;
+    opacity: 0;
+  }
+}
