@@ -154,8 +154,9 @@ export function Navbar({ modulo = "desarrollo-humano" }) {
   // haria que "fixed" se mida desde el encabezado y no desde la pantalla.
   return (
     <>
-    <header className="sticky top-0 z-30 vidrio-panel !border-x-0 !border-t-0">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-3 flex items-center justify-between gap-4">
+    {/* Barra flotante de vidrio, la misma del portal: queda arriba al bajar y deja ver la pagina por debajo. */}
+    <header className="sticky top-0 z-30 px-3 sm:px-6 lg:px-10 pt-3">
+      <div className="max-w-[1440px] mx-auto rounded-[28px] pl-3 sm:pl-5 pr-2 sm:pr-3 py-2 flex items-center justify-between gap-4 bg-[linear-gradient(140deg,rgba(255,255,255,0.72),rgba(255,255,255,0.42))] backdrop-blur-2xl backdrop-saturate-150 border border-white/80 shadow-[inset_0_1px_0_#fff,0_8px_32px_rgba(11,35,71,0.1)] supports-[not(backdrop-filter:blur(1px))]:bg-white">
         <div className="flex items-center gap-3 min-w-0 xl:shrink-0">
           <Link to={datos.inicio} className="flex items-center gap-3 min-w-0 no-underline">
             <img src="/img/logo-uniautonoma-marca.png" alt="Uniautónoma del Cauca" className="h-11 sm:h-[52px] w-auto shrink-0" />

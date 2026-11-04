@@ -29,7 +29,7 @@ function recibir(req, res, next) {
     },
   }).single("evidencia")(req, res, (err) => {
     if (!err) return next();
-    next(err instanceof AppError ? err : new AppError(400, "No se pudo subir la planilla. El archivo debe pesar hasta 5 MB."));
+    next(err instanceof AppError ? err : new AppError(400, "No se pudo subir el archivo. Debe pesar hasta 5 MB."));
   });
 }
 
@@ -38,18 +38,21 @@ async function guardar(req, res) {
   const grupoId = req.body.grupoId || null;
   const eventoId = req.body.eventoId || null;
   const pausaId = req.body.pausaId || null;
-  if (!grupoId && !eventoId && !pausaId) throw new AppError(400, "Indica el grupo, el evento o la pausa creativa de la evidencia.");
+  const representacionId = req.body.representacionId || null;
+  if (!grupoId && !eventoId && !pausaId && !representacionId) throw new AppError(400, "Indica el grupo, el evento, la pausa creativa o la representación de la evidencia.");
+  if (representacionId && !(await prisma.representacionRed.findUnique({ where: { id: representacionId } }))) throw new AppError(404, "No se encontró la representación.");
   if (grupoId && !(await prisma.grupoCultural.findUnique({ where: { id: grupoId } }))) throw new AppError(404, "No se encontró el grupo.");
   if (eventoId && !(await prisma.eventoCultural.findUnique({ where: { id: eventoId } }))) throw new AppError(404, "No se encontró el evento.");
   if (pausaId && !(await prisma.pausaCreativa.findUnique({ where: { id: pausaId } }))) throw new AppError(404, "No se encontró la pausa creativa.");
   const tipo = req.body.tipo || (req.file.mimetype === "application/pdf" ? "planilla" : "fotografia");
-  if (!TIPOS_EVIDENCIA.includes(tipo)) throw new AppError(400, "Clasifica el archivo como fotografia o planilla.");
-  if (tipo === "fotografia" && req.file.mimetype === "application/pdf") throw new AppError(400, "Un PDF se clasifica como planilla física.");
+  if (!TIPOS_EVIDENCIA.includes(tipo)) throw new AppError(400, "Clasifica el archivo como fotografia, planilla u oficio.");
+  if (tipo === "fotografia" && req.file.mimetype === "application/pdf") throw new AppError(400, "Un PDF se clasifica como planilla física u oficio.");
   const evidencia = await prisma.evidenciaCultural.create({
     data: {
       grupoId,
       eventoId,
       pausaId,
+      representacionId,
       tipo,
       archivo: req.file.filename,
       nombreOriginal: String(req.file.originalname || "evidencia").slice(0, 200),
@@ -66,7 +69,8 @@ async function listar(filtro = {}) {
     .filter((e) => !filtro.grupoId || e.grupoId === filtro.grupoId)
     .filter((e) => !filtro.eventoId || e.eventoId === filtro.eventoId)
     .filter((e) => !filtro.pausaId || e.pausaId === filtro.pausaId)
-    .map((e) => ({ id: e.id, tipo: e.tipo, nombreOriginal: e.nombreOriginal, mime: e.mime, fecha: e.fecha, grupoId: e.grupoId, eventoId: e.eventoId, pausaId: e.pausaId }));
+    .filter((e) => !filtro.representacionId || e.representacionId === filtro.representacionId)
+    .map((e) => ({ id: e.id, tipo: e.tipo, nombreOriginal: e.nombreOriginal, mime: e.mime, fecha: e.fecha, grupoId: e.grupoId, eventoId: e.eventoId, pausaId: e.pausaId, representacionId: e.representacionId }));
 }
 
 async function archivo(id) {

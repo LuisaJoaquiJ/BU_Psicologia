@@ -92,6 +92,57 @@ const DIMENSION = {
   cultura: { velo: "150,82,0", barra: "#C9B8FF", texto: "Talleres de música y danza, grupos representativos y eventos.", accion: "Ver talleres" },
 };
 
+// Las cinco dimensiones pasan en una cinta que se desliza sola de derecha a
+// izquierda y vuelve a empezar sin corte (las tarjetas van dos veces). Se
+// detiene al pasar el mouse o con el teclado; con movimiento reducido queda
+// quieta y se recorre deslizando.
+function ColumnasDimensiones({ usuario }) {
+  const tarjeta = (m, copia) => {
+    const d = DIMENSION[m.id];
+    const lista = m.estado === "disponible";
+    const ruta = lista ? rutaModulo(m, usuario) || "#dimensiones" : "#dimensiones";
+    const contenido = (
+      <>
+        <span className="absolute inset-0 overflow-hidden rounded-[28px]">
+          <img src={m.imagen.src} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none" />
+          <span aria-hidden="true" className="absolute inset-0" style={{ background: `linear-gradient(180deg, rgba(${d.velo},0.08) 18%, rgba(${d.velo},0.95) 100%)` }} />
+        </span>
+        <span className="relative p-6 flex flex-col gap-2 text-white h-full justify-end">
+          <span aria-hidden="true" className="w-[34px] h-1 rounded mb-1" style={{ background: d.barra }} />
+          <strong className="text-2xl lg:text-[26px] leading-tight tracking-[-0.02em] [text-wrap:balance]">{m.nombre}</strong>
+          <span className="text-[15px] leading-snug text-white/90 lg:opacity-0 transition-opacity duration-300 lg:group-hover:opacity-100 lg:group-focus-visible:opacity-100">{d.texto}</span>
+          <span className="text-sm font-bold inline-flex items-center gap-1.5 mt-2">
+            {d.accion} {lista && <Icono nombre="flecha" size={16} strokeWidth={2.4} />}
+          </span>
+        </span>
+      </>
+    );
+    // Sombra teñida del color de la dimension: la tarjeta flota sobre la foto de la sede.
+    const sombra = { boxShadow: `0 26px 50px -22px rgba(${d.velo},0.75), 0 8px 18px -10px rgba(0,0,0,0.4)` };
+    const clase = "group relative h-full rounded-[28px] flex flex-col justify-end no-underline";
+    // La segunda vuelta es solo visual: no la leen los lectores de pantalla ni se enfoca.
+    const oculta = copia ? { "aria-hidden": true, tabIndex: -1 } : {};
+    return (
+      <li key={`${m.id}-${copia}`} className="shrink-0 w-[78vw] sm:w-[320px] lg:w-[300px] h-[380px] lg:h-[440px] lg:transition-[width] lg:duration-500 lg:ease-salida lg:hover:w-[560px] lg:focus-within:w-[560px] motion-reduce:transition-none">
+        {lista ? (
+          <Link to={ruta} className={clase} style={sombra} {...oculta}>{contenido}</Link>
+        ) : (
+          <a href="#dimensiones" className={clase} style={sombra} {...oculta}>{contenido}</a>
+        )}
+      </li>
+    );
+  };
+
+  return (
+    <section aria-label="Dimensiones de Bienestar" style={retraso(160)} className={`${ENTRA} cinta-dimensiones -mx-4 sm:-mx-6 lg:-mx-10`}>
+      <ul className="cinta-pista list-none m-0 py-6 px-4 sm:px-6 lg:px-10 flex gap-4 w-max">
+        {MODULOS.map((m) => tarjeta(m, false))}
+        {MODULOS.map((m) => tarjeta(m, true))}
+      </ul>
+    </section>
+  );
+}
+
 function HeroFullScreen() {
   const { usuario } = useAuth();
   const nombre = usuario?.nombre?.split(" ")[0];
@@ -115,45 +166,7 @@ function HeroFullScreen() {
           </p>
         </section>
 
-        <section aria-label="Dimensiones de Bienestar" style={retraso(160)} className={ENTRA}>
-          <ul className="list-none m-0 p-0 flex flex-col lg:flex-row gap-3 lg:h-[440px] w-full">
-            {MODULOS.map((m) => {
-              const d = DIMENSION[m.id];
-              const lista = m.estado === "disponible";
-              const ruta = lista ? rutaModulo(m, usuario) || "#dimensiones" : "#dimensiones";
-              const contenido = (
-                <>
-                  <span className="absolute inset-0 overflow-hidden rounded-[28px]">
-                    <img src={m.imagen.src} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none" />
-                    <span aria-hidden="true" className="absolute inset-0" style={{ background: `linear-gradient(180deg, rgba(${d.velo},0.08) 18%, rgba(${d.velo},0.95) 100%)` }} />
-                  </span>
-                  <span className="relative p-6 flex flex-col gap-2 text-white h-full justify-end">
-                    <span aria-hidden="true" className="w-[34px] h-1 rounded mb-1" style={{ background: d.barra }} />
-                    <strong className="text-2xl lg:text-[26px] leading-tight tracking-[-0.02em] [text-wrap:balance]">{m.nombre}</strong>
-                    <span className="text-[15px] leading-snug text-white/90 lg:opacity-0 transition-opacity duration-300 lg:group-hover:opacity-100 lg:group-focus-visible:opacity-100">{d.texto}</span>
-                    <span className="text-sm font-bold inline-flex items-center gap-1.5 mt-2">
-                      {d.accion} {lista && <Icono nombre="flecha" size={16} strokeWidth={2.4} />}
-                    </span>
-                  </span>
-                </>
-              );
-              // Sombra teñida del color de la dimension: la columna flota sobre la foto de la sede.
-              const sombra = { boxShadow: `0 26px 50px -22px rgba(${d.velo},0.75), 0 8px 18px -10px rgba(0,0,0,0.4)` };
-              const clase = "group relative w-full min-h-[200px] lg:min-h-0 rounded-[28px] flex flex-col justify-end no-underline";
-
-              // En escritorio la columna se ensancha al pasar el mouse o con el foco.
-              return (
-                <li key={m.id} className="flex min-w-0 lg:flex-1 lg:transition-[flex-grow] lg:duration-500 lg:ease-salida lg:hover:flex-[2.2] lg:focus-within:flex-[2.2] motion-reduce:transition-none">
-                  {lista ? (
-                    <Link to={ruta} className={clase} style={sombra}>{contenido}</Link>
-                  ) : (
-                    <a href="#dimensiones" className={clase} style={sombra}>{contenido}</a>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+        <ColumnasDimensiones usuario={usuario} />
       </div>
     </div>
   );
@@ -275,6 +288,9 @@ function Dimensiones() {
         })}
       </div>
 
+      {/* Envoltura fija para la transicion de scroll: el panel de adentro se
+          vuelve a montar al cambiar de pestana (key) y perderia la clase. */}
+      <div style={escalon(140)} className="revela">
       <div
         key={modulo.id}
         role="tabpanel"
@@ -327,6 +343,7 @@ function Dimensiones() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </section>
   );
@@ -386,7 +403,7 @@ function Agenda({ eventos, error, destino, onReintentar }) {
                 <p className="m-0 text-sm sm:text-base font-bold text-[#FFC107] tabular-nums">{fechaLarga(destacado.fecha)} · {formatearHora(destacado.horaInicio)}</p>
                 <h3 className="m-0 font-sans text-[26px] sm:text-[32px] leading-tight font-extrabold tracking-[-0.03em] text-white">{destacado.nombre}</h3>
                 <p className="m-0 text-white/80 text-lg">{destacado.lugar ? `${destacado.lugar} · ` : ""}<span className="tabular-nums">{cupos(destacado)}</span></p>
-                <Link to={destino} className="mt-3 self-start inline-flex items-center min-h-[52px] px-7 rounded-full bg-white text-primary-dark font-extrabold no-underline transition-transform duration-200 hover:-translate-y-1 shadow-xl">{textoBoton}</Link>
+                <Link to={destacado.destino || destino} className="mt-3 self-start inline-flex items-center min-h-[52px] px-7 rounded-full bg-white text-primary-dark font-extrabold no-underline transition-transform duration-200 hover:-translate-y-1 shadow-xl">{textoBoton}</Link>
               </div>
             </article>
           )}
@@ -401,7 +418,7 @@ function Agenda({ eventos, error, destino, onReintentar }) {
                   <p className="m-0 text-sm sm:text-base font-bold text-[#FFC107] tabular-nums">{fechaLarga(destacado.fecha)} · {formatearHora(destacado.horaInicio)}</p>
                   <h3 className="m-0 font-sans text-[28px] sm:text-[40px] leading-tight font-extrabold tracking-[-0.03em] text-white">{destacado.nombre}</h3>
                   <p className="m-0 text-white/80 text-lg">{destacado.lugar ? `${destacado.lugar} · ` : ""}<span className="tabular-nums">{cupos(destacado)}</span></p>
-                  <Link to={destino} className="mt-4 self-start inline-flex items-center min-h-[54px] px-8 rounded-full bg-white text-primary-dark font-extrabold text-lg no-underline transition-transform duration-200 hover:-translate-y-1 shadow-xl">{textoBoton}</Link>
+                  <Link to={destacado.destino || destino} className="mt-4 self-start inline-flex items-center min-h-[54px] px-8 rounded-full bg-white text-primary-dark font-extrabold text-lg no-underline transition-transform duration-200 hover:-translate-y-1 shadow-xl">{textoBoton}</Link>
                 </div>
               </article>
 
@@ -416,7 +433,7 @@ function Agenda({ eventos, error, destino, onReintentar }) {
                       <p className="m-0 text-sm font-bold text-[#FFC107] tabular-nums">{fechaLarga(e.fecha)} · {formatearHora(e.horaInicio)}</p>
                       <h3 className="m-0 font-sans text-2xl font-extrabold tracking-[-0.02em] text-white leading-tight">{e.nombre}</h3>
                       <p className="m-0 text-white/70 text-[15px]">{e.lugar ? `${e.lugar} · ` : ""}<span className="tabular-nums">{cupos(e)}</span></p>
-                      <Link to={destino} className="mt-auto self-start inline-flex items-center min-h-[44px] px-6 rounded-full bg-white/10 hover:bg-white text-white hover:text-primary-dark transition-colors font-extrabold text-sm no-underline">{textoBoton}</Link>
+                      <Link to={e.destino || destino} className="mt-auto self-start inline-flex items-center min-h-[44px] px-6 rounded-full bg-white/10 hover:bg-white text-white hover:text-primary-dark transition-colors font-extrabold text-sm no-underline">{textoBoton}</Link>
                     </div>
                   </article>
                 ))}
@@ -449,7 +466,10 @@ export function PortalPage() {
   function cargarAgenda() {
     setError(false);
     setEventos(null);
-    http.get("/eventos/publicos").then((res) => setEventos(res.data.eventos.slice(0, 3))).catch(() => { setError(true); setEventos([]); });
+    const cultura = http.get("/cultura/publico/agenda").then((r) => r.data.map((e) => ({ ...e, id: `cultura-${e.id}`, horaInicio: `1970-01-01T${e.horaInicio}:00.000Z`, destino: rutaCultura }))).catch(() => []);
+    Promise.all([http.get("/eventos/publicos"), cultura])
+      .then(([res, deCultura]) => setEventos([...res.data.eventos, ...deCultura].sort((a, b) => String(a.fecha).localeCompare(String(b.fecha))).slice(0, 3)))
+      .catch(() => { setError(true); setEventos([]); });
   }
 
   useEffect(() => {
@@ -457,14 +477,23 @@ export function PortalPage() {
   }, []);
 
   useEffect(() => {
-    const nodos = raiz.current.querySelectorAll(".revela:not(.visible)");
+    const nodos = raiz.current.querySelectorAll(".revela");
     if (!("IntersectionObserver" in window)) {
       nodos.forEach((n) => n.classList.add("visible"));
       return undefined;
     }
+    // Entra al aparecer y sale al irse, en los dos sentidos del scroll. Se anota
+    // por donde salio para que al volver entre desde ese mismo lado.
     const observador = new IntersectionObserver(
-      (entradas) => entradas.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("visible"); observador.unobserve(e.target); } }),
-      { rootMargin: "0px 0px -8% 0px" }
+      (entradas) => entradas.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add("visible");
+        } else {
+          e.target.dataset.salida = e.boundingClientRect.top < 0 ? "arriba" : "abajo";
+          e.target.classList.remove("visible");
+        }
+      }),
+      { rootMargin: "-6% 0px -10% 0px" }
     );
     nodos.forEach((n) => observador.observe(n));
     return () => observador.disconnect();
@@ -472,6 +501,7 @@ export function PortalPage() {
 
   const orientacion = MODULOS.find((m) => m.id === "desarrollo-humano");
   const rutaOrientacion = !usuario ? "/login" : usuario.rol === "Estudiante" ? "/estudiante/agendar" : (orientacion && rutaModulo(orientacion, usuario)) || "/";
+  const rutaCultura = usuario?.rol === "Estudiante" ? "/mi-cultura/agenda" : usuario ? "/" : "/login";
   const destinoEventos = usuario?.rol === "Estudiante" ? "/estudiante/eventos" : usuario ? "/desarrollo-humano#eventos" : "/login";
 
   return (
@@ -487,7 +517,7 @@ export function PortalPage() {
           <div aria-hidden="true" className="absolute w-[420px] h-[420px] -right-24 -top-40 rounded-full bg-[radial-gradient(circle,rgba(255,193,7,0.35)_0%,rgba(255,193,7,0)_70%)]" />
           <div className="relative flex-[1_1_460px] min-w-0">
             <h2 className="m-0 mb-3 font-sans text-lg font-extrabold text-primary-dark">Cómo usar Conecta BU</h2>
-            <ol className="m-0 mb-6 pl-5 flex flex-col gap-1.5 text-ink-600">
+            <ol className="m-0 mb-6 pl-5 list-decimal flex flex-col gap-1.5 text-ink-600">
               <li>Entra con tu correo institucional @uniautonoma.edu.co.</li>
               <li>Elige una dimensión: orientación, deporte, salud o arte y cultura.</li>
               <li>Pide la cita o inscríbete. Puedes salir cuando quieras desde el botón Salir.</li>

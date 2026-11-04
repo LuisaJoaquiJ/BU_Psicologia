@@ -21,7 +21,8 @@ const CATEGORIAS = [
 const CARACTERIZACIONES = ["No registra", "Afro", "Indígena", "Rom", "Raizal", "Palenquero", "Mestizo", "Otra"];
 const REDES = ["ASIES", "ASCUN"];
 const ROLES_OPERATIVOS = ["administrador", "docente", "monitor"];
-const TIPOS_EVIDENCIA = ["fotografia", "planilla"];
+// "oficio": la invitacion que llega de la red, el colegio o la dependencia.
+const TIPOS_EVIDENCIA = ["fotografia", "planilla", "oficio"];
 
 const CATALOGO = [
   { categoria: "taller", nombre: "Guitarra" },
@@ -58,10 +59,10 @@ function nombreCategoria(id) {
   return CATEGORIAS.find((c) => c.id === id)?.nombre || id || "";
 }
 
+// req.ip respeta TRUST_PROXY (app.js): el encabezado x-forwarded-for lo puede
+// inventar quien hace la peticion, asi que no se lee directo.
 function ipDe(req) {
-  const fwd = req.headers?.["x-forwarded-for"];
-  const cruda = String((typeof fwd === "string" ? fwd.split(",")[0] : req.ip || "") || "").trim();
-  return (cruda || "desconocida").slice(0, 45);
+  return String(req.ip || "desconocida").slice(0, 45);
 }
 
 module.exports = {

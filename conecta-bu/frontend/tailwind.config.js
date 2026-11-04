@@ -4,6 +4,9 @@
 // #FF9800 / #E8740E solo como acento. El marino lleva el texto.
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
+  // Los componentes de cult-ui traen estilos dark: solo se activan con la clase .dark,
+  // no con el modo oscuro del sistema (Conecta BU es solo claro).
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
@@ -16,6 +19,7 @@ export default {
           dark: "#1E3A5F", // marino de NOVA: titulares, botones y bandas
           light: "rgb(var(--primario-claro) / <alpha-value>)",
           soft: "rgb(var(--primario) / <alpha-value>)",
+          foreground: "rgb(var(--ui-primary-foreground) / <alpha-value>)",
         },
         gold: {
           DEFAULT: "#FFC107", // dorado de los iconos activos de NOVA
@@ -25,7 +29,19 @@ export default {
         accent: {
           DEFAULT: "#E8740E", // naranja de las etiquetas de NOVA
           light: "#FFF3E0",
+          foreground: "rgb(var(--ui-accent-foreground) / <alpha-value>)",
         },
+        // Tokens de shadcn / cult-ui (ver index.css).
+        background: "rgb(var(--ui-background) / <alpha-value>)",
+        foreground: "rgb(var(--ui-foreground) / <alpha-value>)",
+        card: { DEFAULT: "rgb(var(--ui-card) / <alpha-value>)", foreground: "rgb(var(--ui-foreground) / <alpha-value>)" },
+        popover: { DEFAULT: "rgb(var(--ui-card) / <alpha-value>)", foreground: "rgb(var(--ui-foreground) / <alpha-value>)" },
+        secondary: { DEFAULT: "rgb(var(--ui-secondary) / <alpha-value>)", foreground: "rgb(var(--ui-foreground) / <alpha-value>)" },
+        muted: { DEFAULT: "rgb(var(--ui-muted) / <alpha-value>)", foreground: "rgb(var(--ui-muted-foreground) / <alpha-value>)" },
+        destructive: { DEFAULT: "rgb(var(--ui-destructive) / <alpha-value>)", foreground: "rgb(255 255 255 / <alpha-value>)" },
+        border: "rgb(var(--ui-border) / <alpha-value>)",
+        input: "rgb(var(--ui-border) / <alpha-value>)",
+        ring: "rgb(var(--primario) / <alpha-value>)",
         teal: {
           DEFAULT: "#1E9E9A", // turquesa de la esfera del escudo
           dark: "#0E625F",

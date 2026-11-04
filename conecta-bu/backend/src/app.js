@@ -61,6 +61,7 @@ app.use("/api/v1/deporte/admin", deporte.admin);
 app.use("/api/v1/deporte/docente", deporte.docente);
 app.use("/api/v1/deporte", deporte.router);
 // Arte y Cultura: estudiante y personal asignado por el superadministrador.
+app.use("/api/v1/cultura/publico", cultura.publico);
 app.use("/api/v1/cultura/admin", cultura.admin);
 app.use("/api/v1/cultura", cultura.estudiante);
 // Salidas institucionales y reportes SST: los diligencia cualquier persona de la Institucion.

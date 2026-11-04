@@ -1,3 +1,4 @@
+import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -5,6 +6,8 @@ import react from "@vitejs/plugin-react";
 // http://localhost:5173/api/... y Vite lo reenvia al backend en el puerto 4000.
 export default defineConfig({
   plugins: [react()],
+  // "@/..." apunta a src/: asi importan los componentes de cult-ui y shadcn.
+  resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   server: {
     port: 5173,
     proxy: {

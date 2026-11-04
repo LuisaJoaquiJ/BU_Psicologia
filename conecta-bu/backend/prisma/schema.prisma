@@ -20,39 +20,39 @@ model Rol {
 }
 
 model Usuario {
-  id                 String    @id @default(uuid())
-  emailInstitucional String    @unique @db.VarChar(120)
-  nombre             String    @db.VarChar(200)
-  rolId              String
-  rol                Rol       @relation(fields: [rolId], references: [id])
-  habilitado         Boolean   @default(true)
+  id                  String   @id @default(uuid())
+  emailInstitucional  String   @unique @db.VarChar(120)
+  nombre              String   @db.VarChar(200)
+  rolId               String
+  rol                 Rol      @relation(fields: [rolId], references: [id])
+  habilitado          Boolean  @default(true)
   // Pregrado, Posgrado o Egresado (RN-002 de Deporte). Vacio = Pregrado.
   categoriaEstudiante String?  @db.VarChar(15)
-  fechaCreacion      DateTime  @default(now())
-  fechaActualizacion DateTime  @updatedAt
+  fechaCreacion       DateTime @default(now())
+  fechaActualizacion  DateTime @updatedAt
 
-  citasDesarrollo              CitaDesarrollo[]
-  citasSalud                   CitaSalud[]
-  inscripciones                Inscripcion[]
-  asistenciasCitaRegistradas   AsistenciaCitaDesarrollo[] @relation("registradoPorCita")
-  asistenciasCitaSaludRegistradas AsistenciaCitaSalud[]   @relation("registradoPorCitaSalud")
-  asistenciasEventoRegistradas AsistenciaEvento[] @relation("registradoPorEvento")
-  alertas                      AlertaInApp[]
-  historial                    HistorialEstado[]
-  atencionesSaludRegistradas   AtencionSalud[]    @relation("atencionSaludRegistradaPor")
-  evidenciasSaludSubidas       EvidenciaSalud[]   @relation("evidenciaSaludSubidaPor")
-  reportesSst                  ReporteSST[]       @relation("reporteSstReportadoPor")
-  inscripcionesDeporte         InscripcionDeporte[]
-  asistenciasDeporte           AsistenciaDeporte[]
-  horasDeporteManuales         HoraDeporteManual[]
-  inscripcionesSalida          InscripcionSalida[]
-  inscripcionesEventoDeporte   InscripcionEventoDeporte[]
-  inscripcionesCulturales      InscripcionCultural[]
-  inscripcionesEventoCultural  InscripcionEventoCultural[]
-  postulacionesCulturales      PostulacionCultural[]
-  asistenciasCulturales        AsistenciaCultural[]
-  perfilCultural               PerfilCultural?
-  participantesRed             ParticipanteRed[]
+  citasDesarrollo                 CitaDesarrollo[]
+  citasSalud                      CitaSalud[]
+  inscripciones                   Inscripcion[]
+  asistenciasCitaRegistradas      AsistenciaCitaDesarrollo[]  @relation("registradoPorCita")
+  asistenciasCitaSaludRegistradas AsistenciaCitaSalud[]       @relation("registradoPorCitaSalud")
+  asistenciasEventoRegistradas    AsistenciaEvento[]          @relation("registradoPorEvento")
+  alertas                         AlertaInApp[]
+  historial                       HistorialEstado[]
+  atencionesSaludRegistradas      AtencionSalud[]             @relation("atencionSaludRegistradaPor")
+  evidenciasSaludSubidas          EvidenciaSalud[]            @relation("evidenciaSaludSubidaPor")
+  reportesSst                     ReporteSST[]                @relation("reporteSstReportadoPor")
+  inscripcionesDeporte            InscripcionDeporte[]
+  asistenciasDeporte              AsistenciaDeporte[]
+  horasDeporteManuales            HoraDeporteManual[]
+  inscripcionesSalida             InscripcionSalida[]
+  inscripcionesEventoDeporte      InscripcionEventoDeporte[]
+  inscripcionesCulturales         InscripcionCultural[]
+  inscripcionesEventoCultural     InscripcionEventoCultural[]
+  postulacionesCulturales         PostulacionCultural[]
+  asistenciasCulturales           AsistenciaCultural[]
+  perfilCultural                  PerfilCultural?
+  participantesRed                ParticipanteRed[]
 
   @@map("usuarios")
 }
@@ -63,11 +63,11 @@ model Usuario {
 // modulo comparte datos con otro.
 // ---------------------------------------------------------------------------
 model ServicioDesarrollo {
-  id            String               @id @default(uuid())
-  nombre        String               @db.VarChar(150)
-  descripcion   String?              @db.Text
-  activo        Boolean              @default(true)
-  fechaCreacion DateTime             @default(now())
+  id            String              @id @default(uuid())
+  nombre        String              @db.VarChar(150)
+  descripcion   String?             @db.Text
+  activo        Boolean             @default(true)
+  fechaCreacion DateTime            @default(now())
   horarios      HorarioDesarrollo[]
 
   @@map("servicios_desarrollo")
@@ -312,16 +312,16 @@ model AlertaInApp {
 }
 
 model HistorialEstado {
-  id             String   @id @default(uuid())
+  id             String          @id @default(uuid())
   citaId         String?
   cita           CitaDesarrollo? @relation(fields: [citaId], references: [id])
   eventoId       String?
-  evento         Evento?  @relation(fields: [eventoId], references: [id])
-  estadoAnterior String   @db.VarChar(50)
-  estadoNuevo    String   @db.VarChar(50)
+  evento         Evento?         @relation(fields: [eventoId], references: [id])
+  estadoAnterior String          @db.VarChar(50)
+  estadoNuevo    String          @db.VarChar(50)
   usuarioId      String
-  usuario        Usuario  @relation(fields: [usuarioId], references: [id])
-  fecha          DateTime @default(now())
+  usuario        Usuario         @relation(fields: [usuarioId], references: [id])
+  fecha          DateTime        @default(now())
 
   @@map("historial_estados")
 }
@@ -973,29 +973,29 @@ model ConfigDeporte {
 // estudiantes se inscriben con sus datos, EPS y, si se pide, el comprobante de
 // pago. Con los inscritos aprobados se arma el listado para la ARL o el seguro.
 model SalidaConvocatoria {
-  id                     String    @id @default(uuid())
-  nombre                 String    @db.VarChar(200)
-  descripcion            String?   @db.Text
-  destino                String    @db.VarChar(200)
-  programa               String?   @db.VarChar(150)
-  responsable            String?   @db.VarChar(200)
-  lugarEncuentro         String?   @db.VarChar(200)
-  fechaSalida            DateTime  @db.Date
-  fechaRegreso           DateTime  @db.Date
-  horaSalida             String?   @db.VarChar(5)
-  horaRegreso            String?   @db.VarChar(5)
+  id                     String      @id @default(uuid())
+  nombre                 String      @db.VarChar(200)
+  descripcion            String?     @db.Text
+  destino                String      @db.VarChar(200)
+  programa               String?     @db.VarChar(150)
+  responsable            String?     @db.VarChar(200)
+  lugarEncuentro         String?     @db.VarChar(200)
+  fechaSalida            DateTime    @db.Date
+  fechaRegreso           DateTime    @db.Date
+  horaSalida             String?     @db.VarChar(5)
+  horaRegreso            String?     @db.VarChar(5)
   cupos                  Int
   costo                  Int?
-  infoPago               String?   @db.Text
-  pideComprobante        Boolean   @default(false)
-  fechaLimiteInscripcion DateTime  @db.Date
-  estado                 String    @default("Borrador") @db.VarChar(15)
-  creadaPor              String?   @db.VarChar(120)
+  infoPago               String?     @db.Text
+  pideComprobante        Boolean     @default(false)
+  fechaLimiteInscripcion DateTime    @db.Date
+  estado                 String      @default("Borrador") @db.VarChar(15)
+  creadaPor              String?     @db.VarChar(120)
   // Reporte SST de la salida de estudiantes de la que nacio la convocatoria.
-  reporteSstId           String?   @unique
+  reporteSstId           String?     @unique
   reporteSst             ReporteSST? @relation(fields: [reporteSstId], references: [id], onDelete: SetNull)
-  fechaCreacion          DateTime  @default(now())
-  fechaActualizacion     DateTime  @updatedAt
+  fechaCreacion          DateTime    @default(now())
+  fechaActualizacion     DateTime    @updatedAt
 
   inscripciones InscripcionSalida[]
 
@@ -1038,11 +1038,11 @@ model InscripcionSalida {
 // Grupos del periodo, agenda de presentaciones y convocatorias.
 // ---------------------------------------------------------------------------
 model AreaCultural {
-  id          String   @id @default(uuid())
-  nombre      String   @unique @db.VarChar(80)
-  descripcion String?  @db.Text
-  categoria   String   @default("taller") @db.VarChar(40)
-  activa      Boolean  @default(true)
+  id          String  @id @default(uuid())
+  nombre      String  @unique @db.VarChar(80)
+  descripcion String? @db.Text
+  categoria   String  @default("taller") @db.VarChar(40)
+  activa      Boolean @default(true)
 
   grupos GrupoCultural[]
 
@@ -1062,6 +1062,9 @@ model GrupoCultural {
   horario               Json
   inscripcionesAbiertas Boolean      @default(true)
   activo                Boolean      @default(true)
+  // Lo que pide el SNIES de cada actividad: su codigo y la cedula de quien la dirige.
+  codigoSnies           String?      @db.VarChar(30)
+  documentoResponsable  String?      @db.VarChar(30)
   fechaCreacion         DateTime     @default(now())
 
   inscripciones    InscripcionCultural[]
@@ -1070,6 +1073,8 @@ model GrupoCultural {
   eventos          EventoCultural[]
   representaciones RepresentacionRed[]
   solicitudes      SolicitudApoyo[]
+  articulos        ArticuloCultural[]
+  prestamos        PrestamoCultural[]
 
   @@index([periodo])
   @@map("cultura_grupos")
@@ -1093,12 +1098,20 @@ model InscripcionCultural {
 }
 
 model SesionCultural {
-  id            String        @id @default(uuid())
-  grupoId       String
-  grupo         GrupoCultural @relation(fields: [grupoId], references: [id])
-  fecha         DateTime      @db.Date
-  registradaPor String?       @db.VarChar(120)
-  fechaRegistro DateTime      @default(now())
+  id                    String        @id @default(uuid())
+  grupoId               String
+  grupo                 GrupoCultural @relation(fields: [grupoId], references: [id])
+  fecha                 DateTime      @db.Date
+  registradaPor         String?       @db.VarChar(120)
+  fechaRegistro         DateTime      @default(now())
+  // Lo muestra el personal en la sesion; vale hasta abiertaHasta.
+  codigo                String?       @db.VarChar(8)
+  abiertaHasta          DateTime?
+  // Asistentes sin cuenta (publico o datos de otros anos).
+  conteoEstudiantes     Int           @default(0)
+  conteoDocentes        Int           @default(0)
+  conteoAdministrativos Int           @default(0)
+  conteoEgresados       Int           @default(0)
 
   asistencias AsistenciaCultural[]
 
@@ -1115,6 +1128,8 @@ model AsistenciaCultural {
   presente  Boolean        @default(true)
   tipoSnies Int            @default(1)
   ip        String?        @db.VarChar(45)
+  // Codigo: la persona lo escribio con su cuenta. Personal: la marco el equipo.
+  origen    String         @default("Personal") @db.VarChar(10)
   fechaHora DateTime       @default(now())
 
   @@unique([sesionId, usuarioId])
@@ -1122,21 +1137,31 @@ model AsistenciaCultural {
 }
 
 model EventoCultural {
-  id          String    @id @default(uuid())
-  nombre      String    @db.VarChar(150)
-  descripcion String?   @db.Text
-  fecha       DateTime  @db.Date
-  horaInicio  String    @db.VarChar(5)
-  horaFin     String    @db.VarChar(5)
-  lugar       String?   @db.VarChar(150)
-  cupo        Int
-  fechaLimite DateTime  @db.Date
-  categoria      String    @default("especial") @db.VarChar(40)
-  representacion String?   @db.VarChar(300)
-  grupoId        String?
-  grupo          GrupoCultural? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
-  estado         String    @default("Borrador") @db.VarChar(15)
-  fechaCreacion  DateTime  @default(now())
+  id                    String         @id @default(uuid())
+  nombre                String         @db.VarChar(150)
+  descripcion           String?        @db.Text
+  fecha                 DateTime       @db.Date
+  horaInicio            String         @db.VarChar(5)
+  horaFin               String         @db.VarChar(5)
+  lugar                 String?        @db.VarChar(150)
+  cupo                  Int
+  fechaLimite           DateTime       @db.Date
+  categoria             String         @default("especial") @db.VarChar(40)
+  representacion        String?        @db.VarChar(300)
+  grupoId               String?
+  grupo                 GrupoCultural? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  estado                String         @default("Borrador") @db.VarChar(15)
+  fechaCreacion         DateTime       @default(now())
+  codigoSnies           String?        @db.VarChar(30)
+  documentoResponsable  String?        @db.VarChar(30)
+  // Foto de portada (publica): uuid + extension en uploads/cultura/eventos.
+  imagen                String?        @db.VarChar(255)
+  codigo                String?        @db.VarChar(8)
+  abiertaHasta          DateTime?
+  conteoEstudiantes     Int            @default(0)
+  conteoDocentes        Int            @default(0)
+  conteoAdministrativos Int            @default(0)
+  conteoEgresados       Int            @default(0)
 
   inscripciones InscripcionEventoCultural[]
   evidencias    EvidenciaCultural[]
@@ -1155,6 +1180,8 @@ model InscripcionEventoCultural {
   tipoSnies        Int            @default(1)
   ip               String?        @db.VarChar(45)
   asistio          Boolean?
+  ipAsistencia     String?        @db.VarChar(45)
+  fechaAsistencia  DateTime?
   fechaInscripcion DateTime       @default(now())
 
   @@unique([eventoId, usuarioId])
@@ -1163,12 +1190,12 @@ model InscripcionEventoCultural {
 }
 
 model ConvocatoriaCultural {
-  id          String   @id @default(uuid())
-  titulo      String   @db.VarChar(150)
-  descripcion String?  @db.Text
-  cierra      DateTime @db.Date
-  cupo        Int?
-  estado      String   @default("Abierta") @db.VarChar(15)
+  id            String   @id @default(uuid())
+  titulo        String   @db.VarChar(150)
+  descripcion   String?  @db.Text
+  cierra        DateTime @db.Date
+  cupo          Int?
+  estado        String   @default("Abierta") @db.VarChar(15)
   fechaCreacion DateTime @default(now())
 
   postulaciones PostulacionCultural[]
@@ -1194,47 +1221,51 @@ model PostulacionCultural {
 }
 
 model PerfilCultural {
-  usuarioId        String  @id
-  usuario          Usuario @relation(fields: [usuarioId], references: [id])
-  tipoSnies        Int     @default(1)
-  documento        String? @db.VarChar(20)
-  programa         String? @db.VarChar(150)
-  caracterizacion  String? @db.VarChar(40)
+  usuarioId       String  @id
+  usuario         Usuario @relation(fields: [usuarioId], references: [id])
+  tipoSnies       Int     @default(1)
+  documento       String? @db.VarChar(20)
+  programa        String? @db.VarChar(150)
+  caracterizacion String? @db.VarChar(40)
 
   @@map("cultura_perfiles")
 }
 
 model EvidenciaCultural {
-  id              String          @id @default(uuid())
-  grupoId         String?
-  grupo           GrupoCultural?  @relation(fields: [grupoId], references: [id])
-  eventoId        String?
-  evento          EventoCultural? @relation(fields: [eventoId], references: [id])
-  archivo         String          @db.VarChar(120)
-  nombreOriginal  String          @db.VarChar(200)
-  mime            String          @db.VarChar(80)
-  tipo            String          @default("fotografia") @db.VarChar(20)
-  pausaId         String?
-  pausa           PausaCreativa?  @relation(fields: [pausaId], references: [id], onDelete: SetNull)
-  subidoPor       String?         @db.VarChar(120)
-  fecha           DateTime        @default(now())
+  id               String             @id @default(uuid())
+  grupoId          String?
+  grupo            GrupoCultural?     @relation(fields: [grupoId], references: [id])
+  eventoId         String?
+  evento           EventoCultural?    @relation(fields: [eventoId], references: [id])
+  archivo          String             @db.VarChar(120)
+  nombreOriginal   String             @db.VarChar(200)
+  mime             String             @db.VarChar(80)
+  tipo             String             @default("fotografia") @db.VarChar(20)
+  pausaId          String?
+  pausa            PausaCreativa?     @relation(fields: [pausaId], references: [id], onDelete: SetNull)
+  representacionId String?
+  representacion   RepresentacionRed? @relation(fields: [representacionId], references: [id], onDelete: SetNull)
+  subidoPor        String?            @db.VarChar(120)
+  fecha            DateTime           @default(now())
 
   @@map("cultura_evidencias")
 }
 
 // Redes ASIES y ASCUN: delegación, posición y histórico por estudiante y grupo.
 model RepresentacionRed {
-  id          String         @id @default(uuid())
-  red         String         @db.VarChar(10)
-  nombre      String         @db.VarChar(150)
-  modalidad   String?        @db.VarChar(120)
-  fecha       DateTime       @db.Date
-  grupoId     String?
-  grupo       GrupoCultural? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
-  posicion    String?        @db.VarChar(120)
-  fechaCreacion DateTime     @default(now())
+  id            String         @id @default(uuid())
+  red           String         @db.VarChar(10)
+  nombre        String         @db.VarChar(150)
+  modalidad     String?        @db.VarChar(120)
+  fecha         DateTime       @db.Date
+  grupoId       String?
+  grupo         GrupoCultural? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  posicion      String?        @db.VarChar(120)
+  fechaCreacion DateTime       @default(now())
 
   participantes ParticipanteRed[]
+  // Oficio de invitacion y demas soportes de la delegacion.
+  evidencias    EvidenciaCultural[]
 
   @@index([fecha])
   @@map("cultura_representaciones")
@@ -1254,13 +1285,13 @@ model ParticipanteRed {
 
 // Pausas creativas: sin inscripción previa. El impacto es un estimado.
 model PausaCreativa {
-  id                String   @id @default(uuid())
-  fecha             DateTime @db.Date
-  lugar             String   @db.VarChar(150)
-  tecnica           String   @db.VarChar(150)
-  impactoEstimado   Int
-  registradaPor     String?  @db.VarChar(120)
-  fechaCreacion     DateTime @default(now())
+  id              String   @id @default(uuid())
+  fecha           DateTime @db.Date
+  lugar           String   @db.VarChar(150)
+  tecnica         String   @db.VarChar(150)
+  impactoEstimado Int
+  registradaPor   String?  @db.VarChar(120)
+  fechaCreacion   DateTime @default(now())
 
   evidencias EvidenciaCultural[]
 
@@ -1270,17 +1301,17 @@ model PausaCreativa {
 
 // Apoyo artístico a mercadeo y admisiones.
 model SolicitudApoyo {
-  id                String         @id @default(uuid())
-  lugarDestino      String         @db.VarChar(150)
-  fecha             DateTime       @db.Date
-  hora              String         @db.VarChar(5)
-  grupoId           String?
-  grupo             GrupoCultural? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
-  detalle           String?        @db.Text
-  personalAsignado  String?        @db.VarChar(300)
-  estado            String         @default("Recibida") @db.VarChar(15)
-  solicitadaPor     String?        @db.VarChar(120)
-  fechaCreacion     DateTime       @default(now())
+  id               String         @id @default(uuid())
+  lugarDestino     String         @db.VarChar(150)
+  fecha            DateTime       @db.Date
+  hora             String         @db.VarChar(5)
+  grupoId          String?
+  grupo            GrupoCultural? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  detalle          String?        @db.Text
+  personalAsignado String?        @db.VarChar(300)
+  estado           String         @default("Recibida") @db.VarChar(15)
+  solicitadaPor    String?        @db.VarChar(120)
+  fechaCreacion    DateTime       @default(now())
 
   @@index([fecha])
   @@map("cultura_solicitudes_apoyo")
@@ -1292,4 +1323,67 @@ model RolOperativoCultural {
   rol   String @db.VarChar(20)
 
   @@map("cultura_roles")
+}
+
+// Inventario de Cultura: instrumentos, vestuario y equipos, con prestamos a
+// grupos o personas (por ejemplo, el vestuario de Danzas para el Global Fest).
+model ArticuloCultural {
+  id             String         @id @default(uuid())
+  nombre         String         @db.VarChar(120)
+  // instrumento, vestuario, equipo u otro.
+  categoria      String         @db.VarChar(20)
+  descripcion    String?        @db.Text
+  ubicacion      String?        @db.VarChar(120)
+  grupoId        String?
+  grupo          GrupoCultural? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  cantidadTotal  Int            @default(1)
+  cantidadDanada Int            @default(0)
+  activo         Boolean        @default(true)
+  fechaCreacion  DateTime       @default(now())
+
+  prestamos PrestamoCultural[]
+
+  @@map("cultura_inventario")
+}
+
+model PrestamoCultural {
+  id                      String           @id @default(uuid())
+  articuloId              String
+  articulo                ArticuloCultural @relation(fields: [articuloId], references: [id])
+  cantidad                Int
+  responsable             String           @db.VarChar(150)
+  responsableEmail        String?          @db.VarChar(120)
+  grupoId                 String?
+  grupo                   GrupoCultural?   @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  motivo                  String?          @db.VarChar(150)
+  fechaPrestamo           DateTime         @default(now())
+  fechaDevolucionEsperada DateTime         @db.Date
+  fechaDevolucion         DateTime?
+  devueltosDanados        Int?
+  registradoPor           String?          @db.VarChar(120)
+
+  @@index([articuloId])
+  @@map("cultura_prestamos")
+}
+
+// Pendientes de logistica y entregas: gestionar el bus, el informe SNIES del
+// 15 de noviembre, el inventario... Pueden ir ligados a un evento o a una
+// representacion para verlos en contexto.
+model TareaCultural {
+  id               String    @id @default(uuid())
+  titulo           String    @db.VarChar(150)
+  detalle          String?   @db.Text
+  // logistica, informe, inventario u otro.
+  categoria        String    @default("logistica") @db.VarChar(20)
+  fechaLimite      DateTime  @db.Date
+  responsable      String?   @db.VarChar(150)
+  eventoId         String?
+  representacionId String?
+  hecha            Boolean   @default(false)
+  fechaHecha       DateTime?
+  creadaPor        String?   @db.VarChar(120)
+  fechaCreacion    DateTime  @default(now())
+
+  @@index([fechaLimite])
+  @@map("cultura_pendientes")
 }

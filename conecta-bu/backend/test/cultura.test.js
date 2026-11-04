@@ -148,12 +148,17 @@ describe("Arte y Cultura", () => {
     expect(inscripcion.ip).toBeTruthy();
     expect(inscripcion.fechaInscripcion).toBeTruthy();
 
-    const marca = await api(ana.token).post(`/api/v1/cultura/grupos/${creado.id}/asistencia`);
+    const sinCodigo = await api(ana.token).post("/api/v1/cultura/asistencia", { codigo: "NOVALE" });
+    expect(sinCodigo.status).toBe(404);
+    const abierta = await api(personal.token).post(`/api/v1/cultura/admin/grupos/${creado.id}/asistencia/abrir`);
+    expect(abierta.status).toBe(200);
+    const marca = await api(ana.token).post("/api/v1/cultura/asistencia", { codigo: abierta.body.codigo.toLowerCase() });
     expect(marca.status).toBe(201);
     expect(marca.body.tipoSnies).toBe(2);
     expect(marca.body.ip).toBeTruthy();
     expect(marca.body.fechaHora).toBeTruthy();
-    expect((await api(ana.token).post(`/api/v1/cultura/grupos/${creado.id}/asistencia`)).status).toBe(409);
+    expect((await api(ana.token).post("/api/v1/cultura/asistencia", { codigo: abierta.body.codigo })).status).toBe(409);
+    expect((await api(luis.token).post("/api/v1/cultura/asistencia", { codigo: abierta.body.codigo })).status).toBe(409);
 
     const informe = await api(personal.token).get("/api/v1/cultura/admin/informe");
     expect(informe.status).toBe(200);

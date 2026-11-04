@@ -222,6 +222,8 @@ Como estudiante, quiero inscribirme a un grupo artístico, a un evento de la age
 - La convocatoria pide una motivación. Queda Recibida hasta que el personal la acepte o la rechace.
 - El personal publica grupos, marca asistencia de quienes están inscritos, adjunta la foto o el PDF de la planilla física y descarga el Excel de apoyo al SNIES.
 - Cada inscripción y cada asistencia guarda el usuario, la fecha y hora, y la dirección IP.
+- La asistencia propia se registra con un código que el personal abre en la sesión o el evento; vale dos horas o hasta cerrarlo, y el estudiante lo escribe con su cuenta.
+- El personal descarga el listado de asistencia en PDF y anota los asistentes sin cuenta, que entran como totales al resumen SNIES. Las asistencias a eventos también cuentan en el informe.
 - La persona indica si es estudiante (1), docente (2), administrativo (3) o egresado (4), según la ficha del área.
 
 La ficha posterior del área queda cubierta así: grupos representativos e inscripción (HU-01), redes ASIES y ASCUN con reconocimiento (HU-02), talleres con cupo y el aviso Sin cupos (HU-03), pausas creativas con impacto y foto (HU-04), fechas especiales con representación artística y varias franjas el mismo día (HU-05), apoyo a colegios y ferias (HU-06), asistencia con correo, hora, IP y búsqueda por cédula o correo (HU-07), evidencias clasificadas como fotografía o planilla (HU-08), Excel y CSV SNIES por fechas (HU-09), registro calificado por programa (HU-10), caracterización en el informe de inclusión (HU-11), roles de administrador, docente y monitor sobre el acceso que asigna el superadministrador (HU-12) e histórico por año, semestre o nombre (HU-13).

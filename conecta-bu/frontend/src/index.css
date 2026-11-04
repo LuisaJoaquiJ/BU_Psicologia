@@ -9,6 +9,17 @@
    para que Tailwind admita opacidades (bg-primary/10). Azul del escudo por
    defecto; cada tema de modulo lo cambia abajo. */
 :root {
+  /* Tokens de shadcn / cult-ui con la paleta de Conecta BU (canales RGB). */
+  --ui-background: 255 255 255;
+  --ui-foreground: 30 58 95;
+  --ui-card: 255 255 255;
+  --ui-secondary: 243 237 225;
+  --ui-muted: 243 245 249;
+  --ui-muted-foreground: 107 122 141;
+  --ui-accent-foreground: 255 255 255;
+  --ui-primary-foreground: 255 255 255;
+  --ui-destructive: 185 28 28;
+  --ui-border: 226 232 240;
   --primario: 30 58 95;
   --primario-hover: 22 44 73;
   --primario-claro: 243 237 225;
@@ -224,23 +235,36 @@
     transform: scale(0.985);
   }
 
-  /* Portal: los bloques .revela suben y aparecen al llegar a la pantalla
-     (PortalPage les pone .visible). Con movimiento reducido solo se funden. */
+  /* Portal: los bloques .revela entran al llegar a la pantalla y salen al
+     dejarla, en ambos sentidos del scroll. PortalPage pone .visible y anota en
+     data-salida por donde se fue el bloque, para que vuelva a entrar desde ese
+     mismo lado (al subir llega desde arriba, al bajar desde abajo).
+     Entrada lenta y suave; salida mas corta para no estorbar.
+     Con movimiento reducido solo se funden. */
   .portal .revela {
     transition:
-      opacity 500ms ease-out,
-      transform 700ms cubic-bezier(0.23, 1, 0.32, 1);
+      opacity 700ms cubic-bezier(0.23, 1, 0.32, 1),
+      transform 900ms cubic-bezier(0.23, 1, 0.32, 1),
+      filter 700ms cubic-bezier(0.23, 1, 0.32, 1);
   }
   .portal .revela:not(.visible) {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(40px) scale(0.97);
+    filter: blur(8px);
+    transition-duration: 400ms;
+    transition-delay: 0ms !important;
+  }
+  .portal .revela[data-salida="arriba"]:not(.visible) {
+    transform: translateY(-40px) scale(0.97);
   }
   @media (prefers-reduced-motion: reduce) {
     .portal .revela {
       transition: opacity 300ms ease;
     }
-    .portal .revela:not(.visible) {
+    .portal .revela:not(.visible),
+    .portal .revela[data-salida="arriba"]:not(.visible) {
       transform: none;
+      filter: none;
     }
   }
 
@@ -293,13 +317,13 @@
   --liquido-sombra: rgba(194, 78, 28, 0.32);
 }
 .tema-cultura {
-  --primario: 30 58 95;
-  --primario-hover: 22 44 73;
-  --primario-claro: 243 237 225;
-  --liquido-1: #3d6288;
-  --liquido-2: #1e3a5f;
-  --liquido-3: #162c49;
-  --liquido-sombra: rgba(30, 58, 95, 0.32);
+  --primario: 109 76 196;
+  --primario-hover: 88 60 163;
+  --primario-claro: 240 235 251;
+  --liquido-1: #8f72e0;
+  --liquido-2: #6d4cc4;
+  --liquido-3: #583ca3;
+  --liquido-sombra: rgba(109, 76, 196, 0.32);
 }
 .tema-super {
   --primario: 30 58 95;
@@ -327,5 +351,37 @@
   .panel-moderno main :is(section, article, div).bg-white.border.rounded-2xl {
     background: #ffffff;
     border-color: #b9c3d3;
+  }
+}
+
+/* Portal: las tarjetas de las dimensiones pasan solas de derecha a izquierda.
+   La pista lleva las tarjetas dos veces y avanza la mitad: al reiniciar no se
+   nota el corte. Se detiene al pasar el mouse o con el foco. */
+.cinta-dimensiones {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 4%, #000 96%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 4%, #000 96%, transparent 100%);
+}
+.cinta-pista {
+  animation: cinta 38s linear infinite;
+}
+.cinta-dimensiones:hover .cinta-pista,
+.cinta-dimensiones:focus-within .cinta-pista {
+  animation-play-state: paused;
+}
+@keyframes cinta {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cinta-dimensiones {
+    overflow-x: auto;
+  }
+  .cinta-pista {
+    animation: none;
   }
 }

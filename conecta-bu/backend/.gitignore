@@ -3,3 +3,6 @@ node_modules/
 dist/
 coverage/
 uploads/
+
+# Registro local de los datos de prueba de Cultura
+scripts/*.ids.json

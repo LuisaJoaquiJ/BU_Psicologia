@@ -1,11 +1,12 @@
 import { Route, Routes } from "react-router-dom";
-import { Barra } from "../comun/Barra";
+import { Navbar } from "../comunes/componentes/Navbar";
 import { AgendaCultura, ConvocatoriasCultura, GruposCultura, InicioCultura } from "./Paginas";
 
 export function MiCulturaPanel() {
   return (
-    <div className="tema-cultura min-h-screen fondo-panel panel-moderno">
-      <Barra />
+    // Misma barra que los demas modulos: arriba en pantalla grande y abajo en el celular.
+    <div className="tema-cultura min-h-screen fondo-panel panel-moderno pb-[calc(80px+env(safe-area-inset-bottom))] md:pb-0">
+      <Navbar modulo="cultura" />
       <Routes>
         <Route index element={<InicioCultura />} />
         <Route path="grupos" element={<GruposCultura />} />

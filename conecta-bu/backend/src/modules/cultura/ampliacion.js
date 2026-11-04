@@ -54,11 +54,12 @@ async function grupoONull(grupoId) {
 }
 
 async function listarRepresentaciones(filtro = {}) {
-  const [filas, participantes, grupos, usuarios] = await Promise.all([
+  const [filas, participantes, grupos, usuarios, evidencias] = await Promise.all([
     prisma.representacionRed.findMany({ orderBy: { fecha: "desc" } }),
     prisma.participanteRed.findMany(),
     prisma.grupoCultural.findMany(),
     prisma.usuario.findMany(),
+    prisma.evidenciaCultural.findMany(),
   ]);
   const grupoDe = new Map(grupos.map((g) => [g.id, g.nombre]));
   const usuarioDe = new Map(usuarios.map((u) => [u.id, u]));
@@ -69,6 +70,10 @@ async function listarRepresentaciones(filtro = {}) {
       ...f,
       fecha: iso(f.fecha),
       grupo: grupoDe.get(f.grupoId) || "",
+      // Oficio de invitacion y soportes de la delegacion.
+      documentos: evidencias
+        .filter((e) => e.representacionId === f.id)
+        .map((e) => ({ id: e.id, tipo: e.tipo, nombreOriginal: e.nombreOriginal, mime: e.mime })),
       participantes: participantes
         .filter((p) => p.representacionId === f.id)
         .map((p) => {
@@ -208,21 +213,33 @@ async function buscarInscritos(q) {
 async function registroCalificado(filtro = {}) {
   const desde = filtro.desde ? fechaDia(filtro.desde, "La fecha inicial") : null;
   const hasta = filtro.hasta ? fechaDia(filtro.hasta, "La fecha final") : null;
-  const [asistencias, perfiles, usuarios] = await Promise.all([
+  const [grupales, perfiles, usuarios, eventos, asistentesEvento, representaciones, participantesRed] = await Promise.all([
     prisma.asistenciaCultural.findMany({ where: { presente: true } }),
     prisma.perfilCultural.findMany(),
     prisma.usuario.findMany(),
+    prisma.eventoCultural.findMany(),
+    prisma.inscripcionEventoCultural.findMany({ where: { asistio: true } }),
+    prisma.representacionRed.findMany(),
+    prisma.participanteRed.findMany(),
   ]);
+  const fechaEvento = new Map(eventos.map((e) => [e.id, e.fecha]));
+  const fechaRepresentacion = new Map(representaciones.map((r) => [r.id, r.fecha]));
+  const asistencias = [
+    ...grupales,
+    ...asistentesEvento.map((a) => ({ usuarioId: a.usuarioId, fechaHora: a.fechaAsistencia || fechaEvento.get(a.eventoId) })),
+    ...participantesRed.map((p) => ({ usuarioId: p.usuarioId, fechaHora: fechaRepresentacion.get(p.representacionId) })),
+  ].filter((a) => a.fechaHora);
   const perfilDe = new Map(perfiles.map((p) => [p.usuarioId, p]));
   const usuarioDe = new Map(usuarios.map((u) => [u.id, u]));
   const programaPedido = String(filtro.programa || "").trim().toLowerCase();
+  const sinTildes = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const cuentas = new Map();
   for (const a of asistencias) {
     if (desde && new Date(a.fechaHora) < desde) continue;
     if (hasta && new Date(a.fechaHora).getTime() >= hasta.getTime() + 86400000) continue;
     const perfil = perfilDe.get(a.usuarioId);
     const programa = perfil?.programa || "Sin programa";
-    if (programaPedido && programa.toLowerCase() !== programaPedido) continue;
+    if (programaPedido && sinTildes(programa.toLowerCase()) !== sinTildes(programaPedido)) continue;
     const previo = cuentas.get(a.usuarioId) || { asistencias: 0 };
     cuentas.set(a.usuarioId, { asistencias: previo.asistencias + 1, programa, caracterizacion: perfil?.caracterizacion || "No registra" });
   }
@@ -293,6 +310,12 @@ async function asignarRol(email, rol) {
   if (!ROLES_OPERATIVOS.includes(rol)) throw new AppError(400, "El rol debe ser administrador, docente o monitor.");
   const acceso = await prisma.accesoModulo.findFirst({ where: { email: correo, modulo: "cultura" } });
   if (!acceso) throw new AppError(400, "Ese correo no está en la lista de Cultura. Pide al superadministrador que lo asigne primero.");
+  // Siempre debe quedar alguien que administre el area: sin un administrador
+  // nadie podria volver a asignar roles ni ver Redes, Apoyo o Informes.
+  if (rol !== "administrador") {
+    const otrosAdmin = (await listarEquipo()).filter((m) => m.rol === "administrador" && m.email !== correo);
+    if (!otrosAdmin.length) throw new AppError(409, "Arte y Cultura debe tener al menos un administrador. Asigna otro administrador antes de cambiar este rol.");
+  }
   const previo = await prisma.rolOperativoCultural.findFirst({ where: { email: correo } });
   if (previo) await prisma.rolOperativoCultural.update({ where: { email: correo }, data: { rol } });
   else await prisma.rolOperativoCultural.create({ data: { email: correo, rol } });
@@ -300,6 +323,10 @@ async function asignarRol(email, rol) {
 }
 
 module.exports = {
+  texto,
+  fechaDia,
+  entero,
+  grupoONull,
   rolDe,
   exigir,
   listarRepresentaciones,

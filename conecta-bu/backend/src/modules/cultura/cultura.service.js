@@ -3,6 +3,7 @@ const { AppError } = require("../../common/utils/AppError");
 const { hoyBogota } = require("../../common/utils/fechas");
 const { periodoActual, iso } = require("./periodo");
 const { tipoValido, nombreTipo, nombreCategoria, CATEGORIAS, CARACTERIZACIONES } = require("./catalogo");
+const { urlImagen } = require("./imagen");
 
 const MAX_GRUPOS = 2;
 
@@ -196,6 +197,9 @@ async function listarAgenda(usuarioId) {
         horaFin: e.horaFin,
         lugar: e.lugar,
         representacion: e.representacion,
+        categoriaId: e.categoria,
+        grupoId: e.grupoId,
+        imagenUrl: urlImagen(e),
         cupo: e.cupo,
         fechaLimite: iso(e.fechaLimite),
         cuposDisponibles: Math.max(0, e.cupo - activas.length),
@@ -276,7 +280,27 @@ function datosGrupo(body, previo) {
     horario,
     inscripcionesAbiertas: body.inscripcionesAbiertas !== undefined ? Boolean(body.inscripcionesAbiertas) : previo?.inscripcionesAbiertas ?? true,
     activo: body.activo !== undefined ? Boolean(body.activo) : previo?.activo ?? true,
+    ...datosSnies(body, previo),
   };
+}
+
+// Codigo de la actividad y cedula del responsable, como los pide el SNIES.
+function datosSnies(body, previo) {
+  const valor = (clave, max, etiqueta) => (body[clave] !== undefined ? (body[clave] ? texto(body[clave], max, etiqueta) : null) : previo?.[clave] ?? null);
+  return { codigoSnies: valor("codigoSnies", 30, "el código SNIES"), documentoResponsable: valor("documentoResponsable", 30, "la cédula del responsable") };
+}
+
+// Conteos de asistentes sin cuenta: para eventos de otros anos cargados desde el papel.
+function conteosDe(body, previo) {
+  const datos = {};
+  for (const clave of ["conteoEstudiantes", "conteoDocentes", "conteoAdministrativos", "conteoEgresados"]) {
+    if (body[clave] !== undefined && body[clave] !== "") {
+      const n = Number(body[clave]);
+      if (!Number.isInteger(n) || n < 0) throw new AppError(400, "Los conteos deben ser números enteros.");
+      datos[clave] = n;
+    } else if (previo) datos[clave] = previo[clave] ?? 0;
+  }
+  return datos;
 }
 
 function validarPeriodo(periodo) {
@@ -324,9 +348,19 @@ async function listarGruposAdmin(periodo) {
       .filter((i) => i.grupoId === g.id)
       .map((i) => {
         const u = personas.get(i.usuarioId);
-        return { usuarioId: i.usuarioId, nombre: u?.nombre || "", email: u?.emailInstitucional || "" };
+        return { usuarioId: i.usuarioId, nombre: u?.nombre || "", email: u?.emailInstitucional || "", tipoSnies: i.tipoSnies || 1, tipo: nombreTipo(i.tipoSnies || 1) };
       }),
+    porTipo: contarPorTipo(inscripciones.filter((i) => i.grupoId === g.id)),
   }));
+}
+
+function contarPorTipo(inscripciones) {
+  const cuenta = {};
+  for (const i of inscripciones) {
+    const nombre = nombreTipo(i.tipoSnies || 1);
+    cuenta[nombre] = (cuenta[nombre] || 0) + 1;
+  }
+  return cuenta;
 }
 
 async function registrarAsistencia(grupoId, body, registradaPor, ip) {
@@ -339,36 +373,17 @@ async function registrarAsistencia(grupoId, body, registradaPor, ip) {
   if (presentes.some((id) => !validos.has(id))) throw new AppError(400, "Solo se marca la asistencia de quienes están inscritos.");
   let sesion = await prisma.sesionCultural.findFirst({ where: { grupoId, fecha } });
   if (!sesion) sesion = await prisma.sesionCultural.create({ data: { grupoId, fecha, registradaPor } });
-  else await prisma.asistenciaCultural.deleteMany({ where: { sesionId: sesion.id } });
+  // Quien marco con su codigo no se pierde al guardar la lista del personal.
+  else await prisma.asistenciaCultural.deleteMany({ where: { sesionId: sesion.id, origen: "Personal" } });
   const ahora = new Date();
   const direccion = String(ip || "desconocida").slice(0, 45);
-  for (const usuarioId of presentes) {
+  const conCodigo = new Set((await prisma.asistenciaCultural.findMany({ where: { sesionId: sesion.id } })).map((a) => a.usuarioId));
+  for (const usuarioId of presentes.filter((id) => !conCodigo.has(id))) {
     await prisma.asistenciaCultural.create({
-      data: { sesionId: sesion.id, usuarioId, presente: true, tipoSnies: validos.get(usuarioId).tipoSnies || 1, ip: direccion, fechaHora: ahora },
+      data: { sesionId: sesion.id, usuarioId, presente: true, tipoSnies: validos.get(usuarioId).tipoSnies || 1, ip: direccion, origen: "Personal", fechaHora: ahora },
     });
   }
-  return { sesionId: sesion.id, presentes: presentes.length, fechaHora: ahora, ip: direccion };
-}
-
-async function marcarPropia(usuarioId, grupoId, ip) {
-  const inscripcion = await prisma.inscripcionCultural.findFirst({ where: { grupoId, usuarioId, estado: "Activa" } });
-  if (!inscripcion) throw new AppError(404, "Inscríbete al grupo antes de registrar la asistencia.");
-  const fecha = hoy();
-  let sesion = await prisma.sesionCultural.findFirst({ where: { grupoId, fecha } });
-  if (!sesion) sesion = await prisma.sesionCultural.create({ data: { grupoId, fecha, registradaPor: "asistencia-en-linea" } });
-  const ya = await prisma.asistenciaCultural.findFirst({ where: { sesionId: sesion.id, usuarioId } });
-  if (ya) throw new AppError(409, "Ya registraste tu asistencia de hoy en este grupo.");
-  const fila = await prisma.asistenciaCultural.create({
-    data: {
-      sesionId: sesion.id,
-      usuarioId,
-      presente: true,
-      tipoSnies: inscripcion.tipoSnies || 1,
-      ip: String(ip || "desconocida").slice(0, 45),
-      fechaHora: new Date(),
-    },
-  });
-  return { id: fila.id, fechaHora: fila.fechaHora, ip: fila.ip, tipoSnies: fila.tipoSnies };
+  return { sesionId: sesion.id, presentes: new Set([...presentes, ...conCodigo]).size, fechaHora: ahora, ip: direccion };
 }
 
 function datosEvento(body, previo) {
@@ -393,6 +408,8 @@ function datosEvento(body, previo) {
     representacion: body.representacion ? texto(body.representacion, 300, "la representación artística") : previo?.representacion || null,
     grupoId: body.grupoId === "" ? null : body.grupoId ?? previo?.grupoId ?? null,
     estado,
+    ...datosSnies(body, previo),
+    ...conteosDe(body, previo),
   };
 }
 
@@ -422,18 +439,43 @@ async function listarEventosAdmin() {
     prisma.eventoCultural.findMany({ orderBy: { fecha: "asc" } }),
     prisma.inscripcionEventoCultural.findMany({ where: { estado: "Activa" } }),
   ]);
-  return eventos.map((e) => ({
+  return eventos.map(({ imagen, ...e }) => ({
     ...e,
+    imagenUrl: urlImagen({ ...e, imagen }),
     fecha: iso(e.fecha),
     fechaLimite: iso(e.fechaLimite),
     inscritos: inscripciones.filter((i) => i.eventoId === e.id).length,
+    porTipo: contarPorTipo(inscripciones.filter((i) => i.eventoId === e.id)),
+    asistentes: inscripciones.filter((i) => i.eventoId === e.id && i.asistio).length,
   }));
+}
+
+// Agenda abierta al publico: el portal la muestra sin iniciar sesion.
+async function agendaPublica() {
+  const desde = hoy();
+  const [eventos, inscripciones] = await Promise.all([
+    prisma.eventoCultural.findMany({ where: { estado: "Publicado" }, orderBy: { fecha: "asc" } }),
+    prisma.inscripcionEventoCultural.findMany({ where: { estado: "Activa" } }),
+  ]);
+  return eventos
+    .filter((e) => e.fecha >= desde)
+    .slice(0, 6)
+    .map((e) => ({
+      id: e.id,
+      nombre: e.nombre,
+      fecha: iso(e.fecha),
+      horaInicio: e.horaInicio,
+      lugar: e.lugar,
+      categoria: nombreCategoria(e.categoria),
+      imagenUrl: urlImagen(e),
+      cuposDisponibles: Math.max(0, e.cupo - inscripciones.filter((i) => i.eventoId === e.id).length),
+    }));
 }
 
 async function marcarAsistenciaEvento(eventoId, usuarioId, asistio) {
   const inscripcion = await prisma.inscripcionEventoCultural.findFirst({ where: { eventoId, usuarioId, estado: "Activa" } });
   if (!inscripcion) throw new AppError(404, "Esa persona no está inscrita en el evento.");
-  return prisma.inscripcionEventoCultural.update({ where: { id: inscripcion.id }, data: { asistio: Boolean(asistio) } });
+  return prisma.inscripcionEventoCultural.update({ where: { id: inscripcion.id }, data: { asistio: Boolean(asistio), fechaAsistencia: asistio ? new Date() : null } });
 }
 
 function datosConvocatoria(body, previo) {
@@ -483,6 +525,12 @@ async function resolverPostulacion(id, estado) {
   return prisma.postulacionCultural.update({ where: { id }, data: { estado } });
 }
 
+// Programas que ya escribio la gente: el filtro de informes los ofrece al escribir.
+async function listarProgramas() {
+  const perfiles = await prisma.perfilCultural.findMany();
+  return [...new Set(perfiles.map((p) => String(p.programa || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+}
+
 async function listarAreas() {
   return prisma.areaCultural.findMany({ orderBy: { nombre: "asc" } });
 }
@@ -509,13 +557,18 @@ async function informeSnies(filtro = {}) {
   const { nombreTipo: tipo, nombreCategoria: cat } = require("./catalogo");
   const desde = filtro.desde ? fechaDia(filtro.desde, "La fecha inicial") : null;
   const hasta = filtro.hasta ? fechaDia(filtro.hasta, "La fecha final") : null;
-  const [asistencias, sesiones, grupos, areas, usuariosLista, perfiles] = await Promise.all([
+  const [asistencias, sesiones, grupos, areas, usuariosLista, perfiles, eventos, asistentesEvento, pausas, representaciones, participantesRed] = await Promise.all([
     prisma.asistenciaCultural.findMany(),
     prisma.sesionCultural.findMany(),
     prisma.grupoCultural.findMany(),
     prisma.areaCultural.findMany(),
     prisma.usuario.findMany(),
     prisma.perfilCultural.findMany(),
+    prisma.eventoCultural.findMany(),
+    prisma.inscripcionEventoCultural.findMany({ where: { asistio: true } }),
+    prisma.pausaCreativa.findMany(),
+    prisma.representacionRed.findMany(),
+    prisma.participanteRed.findMany(),
   ]);
   const sesionDe = new Map(sesiones.map((s) => [s.id, s]));
   const grupoDe = new Map(grupos.map((g) => [g.id, g]));
@@ -529,6 +582,9 @@ async function informeSnies(filtro = {}) {
     const usuario = usuarioDe.get(a.usuarioId);
     const perfil = perfilDe.get(a.usuarioId);
     return {
+      actividadId: grupo?.id || "",
+      codigoActividad: grupo?.codigoSnies || "",
+      documento: grupo?.documentoResponsable || "",
       actividad: grupo?.nombre || "",
       categoria: cat(area?.categoria),
       codigo: a.tipoSnies || 1,
@@ -542,7 +598,86 @@ async function informeSnies(filtro = {}) {
       usuarioId: a.usuarioId,
     };
   });
+  // Los eventos cuentan igual que las sesiones de los grupos.
+  const eventoDe = new Map(eventos.map((e) => [e.id, e]));
+  for (const a of asistentesEvento) {
+    const evento = eventoDe.get(a.eventoId);
+    const cuando = a.fechaAsistencia || evento?.fecha;
+    if (!evento || !dentroDelRango(cuando, desde, hasta)) continue;
+    const usuario = usuarioDe.get(a.usuarioId);
+    const perfil = perfilDe.get(a.usuarioId);
+    filas.push({
+      actividadId: evento.id,
+      codigoActividad: evento.codigoSnies || "",
+      documento: evento.documentoResponsable || "",
+      actividad: evento.nombre,
+      categoria: cat(evento.categoria),
+      codigo: a.tipoSnies || 1,
+      tipo: tipo(a.tipoSnies || 1),
+      nombre: usuario?.nombre || "",
+      correo: usuario?.emailInstitucional || "",
+      programa: perfil?.programa || "Sin programa",
+      caracterizacion: perfil?.caracterizacion || "No registra",
+      cuando: new Date(cuando).toISOString(),
+      ip: a.ipAsistencia || "",
+      usuarioId: a.usuarioId,
+    });
+  }
+  // Delegaciones a las redes: quienes representaron a la Universidad.
+  const representacionDe = new Map(representaciones.map((r) => [r.id, r]));
+  for (const p of participantesRed) {
+    const r = representacionDe.get(p.representacionId);
+    if (!r || !dentroDelRango(r.fecha, desde, hasta)) continue;
+    const usuario = usuarioDe.get(p.usuarioId);
+    const perfil = perfilDe.get(p.usuarioId);
+    const codigo = perfil?.tipoSnies || 1;
+    filas.push({
+      actividadId: r.id,
+      codigoActividad: "",
+      documento: "",
+      actividad: `${r.red}: ${r.nombre}`,
+      categoria: cat("representativo"),
+      codigo,
+      tipo: tipo(codigo),
+      nombre: usuario?.nombre || "",
+      correo: usuario?.emailInstitucional || "",
+      programa: perfil?.programa || "Sin programa",
+      caracterizacion: perfil?.caracterizacion || "No registra",
+      cuando: new Date(r.fecha).toISOString(),
+      ip: "",
+      usuarioId: p.usuarioId,
+    });
+  }
+
+  // Hoja SNIES: una fila por actividad y tipo de persona, con las personas sin
+  // repetir en el periodo (si alguien vino a diez sesiones, cuenta una vez).
+  const snies = new Map();
+  const filaSnies = (id, base, codigo) => {
+    const clave = `${id}|${codigo}`;
+    if (!snies.has(clave)) snies.set(clave, { ...base, codigo, tipo: tipo(codigo), personas: new Set(), sinCuenta: 0 });
+    return snies.get(clave);
+  };
+  for (const f of filas) filaSnies(f.actividadId, f, f.codigo).personas.add(f.usuarioId);
+  const sumarConteos = (id, base, fila) =>
+    [fila.conteoEstudiantes, fila.conteoDocentes, fila.conteoAdministrativos, fila.conteoEgresados].forEach((n, i) => {
+      if (n) filaSnies(id, base, i + 1).sinCuenta += n;
+    });
+  for (const s of sesiones) {
+    const g = grupoDe.get(s.grupoId);
+    if (g && dentroDelRango(s.fecha, desde, hasta)) sumarConteos(g.id, { actividad: g.nombre, categoria: cat(areaDe.get(g.areaId)?.categoria), codigoActividad: g.codigoSnies || "", documento: g.documentoResponsable || "" }, s);
+  }
+  for (const e of eventos) {
+    if (dentroDelRango(e.fecha, desde, hasta)) sumarConteos(e.id, { actividad: e.nombre, categoria: cat(e.categoria), codigoActividad: e.codigoSnies || "", documento: e.documentoResponsable || "" }, e);
+  }
+  for (const p of pausas) {
+    if (dentroDelRango(p.fecha, desde, hasta) && p.impactoEstimado) filaSnies(p.id, { actividad: `Pausa creativa: ${p.tecnica}`, categoria: cat("itinerante"), codigoActividad: "", documento: "" }, 1).sinCuenta += p.impactoEstimado;
+  }
+
   const libro = new ExcelJS.Workbook();
+  const hojaSnies = libro.addWorksheet("SNIES");
+  hojaSnies.addRow(["Cédula del responsable", "Código de la actividad", "Actividad", "Categoría", "Código del tipo", "Tipo de persona", "Cantidad"]);
+  for (const f of snies.values()) hojaSnies.addRow([f.documento, f.codigoActividad, f.actividad, f.categoria, f.codigo, f.tipo, f.personas.size + f.sinCuenta]);
+  hojaSnies.getRow(1).font = { bold: true };
   const detalle = libro.addWorksheet("ASISTENCIA");
   detalle.addRow(["Codigos de esta ficha de Cultura: 1 Estudiante, 2 Docente, 3 Administrativo, 4 Egresado. La plantilla SNIES que usa Salud numera egresado 2, docente 3 y administrativo 4. Confirmar antes de cargar al Ministerio."]);
   detalle.addRow(["Actividad", "Categoria", "Codigo SNIES", "Tipo de usuario", "Nombre", "Correo", "Programa", "Caracterizacion", "Fecha y hora", "IP", "ID de usuario"]);
@@ -554,6 +689,20 @@ async function informeSnies(filtro = {}) {
     const clave = `${f.actividad}|${f.codigo}`;
     cuentas.set(clave, { ...f, total: (cuentas.get(clave)?.total || 0) + 1 });
   }
+  // Asistentes sin cuenta: solo como totales, porque no se sabe quienes son.
+  const sumarSinCuenta = (actividad, categoria, fila) => {
+    [fila.conteoEstudiantes, fila.conteoDocentes, fila.conteoAdministrativos, fila.conteoEgresados].forEach((n, i) => {
+      if (!n) return;
+      const clave = `${actividad}|${i + 1}`;
+      const base = cuentas.get(clave) || { actividad, categoria, codigo: i + 1, tipo: tipo(i + 1), total: 0 };
+      cuentas.set(clave, { ...base, total: base.total + n });
+    });
+  };
+  for (const s of sesiones) {
+    const grupo = grupoDe.get(s.grupoId);
+    if (grupo && dentroDelRango(s.fecha, desde, hasta)) sumarSinCuenta(grupo.nombre, cat(areaDe.get(grupo.areaId)?.categoria), s);
+  }
+  for (const e of eventos) if (dentroDelRango(e.fecha, desde, hasta)) sumarSinCuenta(e.nombre, cat(e.categoria), e);
   for (const f of cuentas.values()) resumen.addRow([f.actividad, f.categoria, f.codigo, f.tipo, f.total]);
   const porPrograma = libro.addWorksheet("PROGRAMA");
   porPrograma.addRow(["Programa", "Estudiante", "Correo", "Asistencias confirmadas"]);
@@ -598,10 +747,11 @@ module.exports = {
   listarConvocatoriasAdmin,
   resolverPostulacion,
   listarAreas,
+  listarProgramas,
+  agendaPublica,
   resumenCultura,
   periodoActual,
   leerPerfil,
   guardarPerfil,
-  marcarPropia,
   informeSnies,
 };

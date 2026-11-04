@@ -10,11 +10,52 @@ function Aviso({ tono = "rojo", children }) {
 
 function Marco({ titulo, texto, children }) {
   return (
-    <main className="max-w-[1100px] mx-auto px-4 py-8">
-      <h1 className="m-0 text-3xl font-extrabold">{titulo}</h1>
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 lg:pt-10 pb-16">
+      <h1 className="m-0 font-sans text-[32px] sm:text-[40px] leading-[1.05] tracking-[-0.035em] font-extrabold text-primary-dark">{titulo}</h1>
       {texto && <p className="mt-2 mb-6 text-ink-500 max-w-2xl">{texto}</p>}
       {children}
     </main>
+  );
+}
+
+// Reemplaza la firma en el listado: quien esta en la sesion escribe el codigo que muestran ahi.
+function RegistrarAsistencia() {
+  const [codigo, setCodigo] = useState("");
+  const [error, setError] = useState("");
+  const [hecho, setHecho] = useState("");
+  async function enviar(e) {
+    e.preventDefault();
+    setError("");
+    setHecho("");
+    try {
+      const { data } = await http.post("/cultura/asistencia", { codigo });
+      setHecho(`Asistencia registrada: ${data.actividad}.`);
+      setCodigo("");
+    } catch (err) {
+      setError(mensajeError(err, "No fue posible registrar tu asistencia."));
+    }
+  }
+  return (
+    <section className="bg-white border rounded-2xl p-4 mb-6 max-w-md">
+      <h2 className="m-0 text-lg font-extrabold">Registra tu asistencia</h2>
+      <p className="m-0 mt-1 mb-3 text-sm text-ink-500">Escribe el código que muestran en la sesión o el evento.</p>
+      {error && <Aviso>{error}</Aviso>}
+      {hecho && <Aviso tono="verde">{hecho}</Aviso>}
+      <form onSubmit={enviar} className="flex gap-2">
+        <input
+          value={codigo}
+          onChange={(e) => setCodigo(e.target.value.toUpperCase())}
+          required
+          maxLength={8}
+          autoComplete="off"
+          aria-label="Código de la sesión"
+          className="border rounded-xl px-3 min-h-[44px] min-w-0 flex-1 font-mono tracking-[0.15em] uppercase"
+        />
+        <button type="submit" className="boton-liquido min-h-[44px] px-5 rounded-full font-bold shrink-0">
+          Registrar
+        </button>
+      </form>
+    </section>
   );
 }
 
@@ -38,6 +79,7 @@ export function InicioCultura() {
   return (
     <Marco titulo="Arte y Cultura" texto="Grupos artísticos del periodo, presentaciones y convocatorias de Bienestar. La asistencia queda con tu usuario, la hora y la dirección IP.">
       {aviso && <Aviso tono="verde">{aviso}</Aviso>}
+      <RegistrarAsistencia />
       <label className="text-sm font-semibold flex flex-col gap-1 max-w-sm mb-6">
         Tipo de usuario (código SNIES de esta ficha)
         <select className="border rounded-xl px-3 min-h-[44px]" value={perfil?.tipoSnies || 1} onChange={(e) => guardarTipo(e.target.value)}>
@@ -108,14 +150,9 @@ export function GruposCultura() {
     setError("");
     setAviso("");
     try {
-      const r =
-        tipo === "inscribir"
-          ? await http.post(`/cultura/grupos/${grupo.id}/inscripcion`)
-          : tipo === "asistencia"
-            ? await http.post(`/cultura/grupos/${grupo.id}/asistencia`)
-            : await http.delete(`/cultura/grupos/${grupo.id}/inscripcion`);
-      if (tipo !== "asistencia") setOferta(r.data);
-      setAviso(tipo === "inscribir" ? `Quedaste inscrito en ${grupo.nombre}.` : tipo === "asistencia" ? "Quedó registrada tu asistencia de hoy, con hora e IP." : `Te retiraste de ${grupo.nombre}.`);
+      const r = tipo === "inscribir" ? await http.post(`/cultura/grupos/${grupo.id}/inscripcion`) : await http.delete(`/cultura/grupos/${grupo.id}/inscripcion`);
+      setOferta(r.data);
+      setAviso(tipo === "inscribir" ? `Quedaste inscrito en ${grupo.nombre}.` : `Te retiraste de ${grupo.nombre}.`);
     } catch (err) {
       setError(mensajeError(err, "No fue posible completar la acción."));
     } finally {
@@ -145,9 +182,6 @@ export function GruposCultura() {
                 </div>
                 {grupo.inscrito ? (
                   <div className="flex gap-2">
-                    <button type="button" disabled={ocupado} onClick={() => accion(grupo, "asistencia")} className="boton-liquido min-h-[44px] px-4 rounded-full font-bold">
-                      Registrar asistencia
-                    </button>
                     <button type="button" disabled={ocupado} onClick={() => accion(grupo, "retirar")} className="min-h-[44px] px-4 rounded-full border font-bold">
                       Retirarme
                     </button>
@@ -171,60 +205,7 @@ export function GruposCultura() {
   );
 }
 
-export function AgendaCultura() {
-  const [eventos, setEventos] = useState(null);
-  const [error, setError] = useState("");
-  const [ocupado, setOcupado] = useState(false);
-  function cargar() {
-    http.get("/cultura/agenda").then((r) => setEventos(r.data)).catch(() => setError("No fue posible cargar la agenda."));
-  }
-  useEffect(cargar, []);
-  async function accion(evento, tipo) {
-    setOcupado(true);
-    setError("");
-    try {
-      const r = tipo === "inscribir" ? await http.post(`/cultura/agenda/${evento.id}/inscripcion`) : await http.delete(`/cultura/agenda/${evento.id}/inscripcion`);
-      setEventos(r.data);
-    } catch (err) {
-      setError(mensajeError(err, "No fue posible completar la acción."));
-    } finally {
-      setOcupado(false);
-    }
-  }
-  return (
-    <Marco titulo="Agenda cultural" texto="Presentaciones, muestras y talleres publicados por el área.">
-      {error && <Aviso>{error}</Aviso>}
-      <div className="grid gap-3">
-        {(eventos || []).map((evento) => (
-          <article key={evento.id} className="bg-white border rounded-2xl p-4 flex flex-wrap justify-between gap-3">
-            <div>
-              <h2 className="m-0 font-extrabold">{evento.nombre}</h2>
-              <p className="m-0 mt-1 text-sm text-ink-500">
-                {evento.fecha} · {evento.horaInicio}–{evento.horaFin}
-                {evento.lugar ? ` · ${evento.lugar}` : ""}
-              </p>
-              {evento.descripcion && <p className="m-0 mt-2 text-sm">{evento.descripcion}</p>}
-              {evento.representacion && <p className="m-0 mt-1 text-sm">Representación artística: {evento.representacion}</p>}
-              <p className="m-0 mt-1 text-sm">{evento.cuposDisponibles} cupos · inscripción hasta {evento.fechaLimite}</p>
-            </div>
-            {evento.inscrito ? (
-              <button type="button" disabled={ocupado} onClick={() => accion(evento, "cancelar")} className="min-h-[44px] px-4 rounded-full border font-bold">
-                Cancelar inscripción
-              </button>
-            ) : evento.cuposDisponibles < 1 ? (
-              <button type="button" disabled className="min-h-[44px] px-4 rounded-full border font-bold opacity-60">Sin cupos</button>
-            ) : (
-              <button type="button" disabled={ocupado || !evento.abierta} onClick={() => accion(evento, "inscribir")} className="boton-liquido min-h-[44px] px-4 rounded-full font-bold disabled:opacity-50">
-                Inscribirme
-              </button>
-            )}
-          </article>
-        ))}
-      </div>
-      {eventos && eventos.length === 0 && <p className="text-ink-500">No hay eventos publicados.</p>}
-    </Marco>
-  );
-}
+export { AgendaCultura } from "./AgendaCultura";
 
 export function ConvocatoriasCultura() {
   const [lista, setLista] = useState(null);
