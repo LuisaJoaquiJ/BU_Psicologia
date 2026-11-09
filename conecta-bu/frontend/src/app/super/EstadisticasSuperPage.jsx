@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { http } from "../../lib/api/http";
-import { Aviso, Encabezado } from "./comunes/componentes/ui";
+import { Aviso, Encabezado, Segmentos } from "./comunes/componentes/ui";
 import { COLORES_ESTADO, ETIQUETA_ESTADO } from "./comunes/componentes/graficas/Graficas";
 import {
   ActividadReciente,
@@ -56,21 +56,7 @@ function Panel({ titulo, subtitulo, accion, children, className = "" }) {
 
 // Interruptor pequeño de dos o mas opciones (tipo de grafica, modulo).
 function Interruptor({ opciones, valor, onCambio, etiqueta }) {
-  return (
-    <div role="group" aria-label={etiqueta} className="inline-flex bg-gray-100 rounded-full p-1 gap-0.5">
-      {opciones.map(([id, texto]) => (
-        <button
-          key={id}
-          type="button"
-          aria-pressed={valor === id}
-          onClick={() => onCambio(id)}
-          className={`px-3.5 min-h-[34px] rounded-full text-[13px] font-bold ${valor === id ? "bg-white text-primary-dark shadow-sm" : "text-ink-600 hover:text-primary"}`}
-        >
-          {texto}
-        </button>
-      ))}
-    </div>
-  );
+  return <Segmentos compacto etiqueta={etiqueta} opciones={opciones} valor={valor} alCambiar={onCambio} />;
 }
 
 const ICONOS_KPI = {

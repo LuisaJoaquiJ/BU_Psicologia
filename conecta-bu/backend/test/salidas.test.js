@@ -55,6 +55,29 @@ async function salidaPublicada(extra = {}) {
 }
 
 describe("Salidas con inscripción de estudiantes", () => {
+  test("el personal sube fotos para promocionar la salida y el estudiante las ve", async () => {
+    const est = crearUsuario("Estudiante", "est@uniautonoma.edu.co");
+    const salida = await salidaPublicada();
+    const JPG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+    expect((await request(app).post(`/api/v1/salud/salidas-inscripcion/${salida.id}/fotos`).set(auth(est.token)).attach("fotos", JPG, { filename: "a.jpg", contentType: "image/jpeg" })).status).toBe(403);
+    expect((await personal("post", `/${salida.id}/fotos`).attach("fotos", PDF, { filename: "a.pdf", contentType: "application/pdf" })).status).toBe(400);
+    const subida = await personal("post", `/${salida.id}/fotos`)
+      .attach("fotos", JPG, { filename: "portada.jpg", contentType: "image/jpeg" })
+      .attach("fotos", JPG, { filename: "grupo.jpg", contentType: "image/jpeg" });
+    expect(subida.status).toBe(201);
+    expect(subida.body.fotos).toHaveLength(2);
+
+    const vista = await estudianteApi(est, "get", "/salidas");
+    const foto = vista.body.salidas[0].fotos[0];
+    expect(vista.body.salidas[0].fotos).toHaveLength(2);
+    const archivo = await estudianteApi(est, "get", `/salidas/${salida.id}/fotos/${foto.id}/archivo`);
+    expect(archivo.status).toBe(200);
+    expect(archivo.headers["content-type"]).toMatch(/image\/jpeg/);
+
+    expect((await personal("delete", `/${salida.id}/fotos/${foto.id}`)).status).toBe(200);
+    expect((await personal("get", `/${salida.id}`)).body.salida.fotos).toHaveLength(1);
+  });
+
   test("solo el personal de Salud crea salidas, y el borrador no lo ve el estudiante", async () => {
     const est = crearUsuario("Estudiante", "est@uniautonoma.edu.co");
     expect((await request(app).post("/api/v1/salud/salidas-inscripcion").set(auth(est.token)).send(SALIDA)).status).toBe(403);

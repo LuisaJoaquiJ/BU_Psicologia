@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { http } from "../../../lib/api/http";
+import { useAvisos } from "../../../components/avisos/Avisos";
 import { Icono } from "../comunes/componentes/Iconos";
 import {
   POBLACION_TEXTO,
@@ -238,6 +239,7 @@ function FormularioClinico({ clinico, setClinico, actividad, catalogos }) {
 // Registro rapido de atenciones: cedula o codigo ->
 // Enter -> queda registrado. Funciona con lector de codigo de barras.
 export function RegistrarPage() {
+  const avisos = useAvisos();
   const catalogos = useCatalogos();
   const [params] = useSearchParams();
   const [actividades, setActividades] = useState(null);
@@ -297,6 +299,16 @@ export function RegistrarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actividades]);
 
+  // El registro ya quedo guardado: el aviso se va solo y la lista de la derecha lleva la cuenta.
+  useEffect(() => {
+    if (!exito) return undefined;
+    const t = setTimeout(() => setExito(null), 3500);
+    return () => clearTimeout(t);
+  }, [exito]);
+  useEffect(() => {
+    if (documento) setExito(null);
+  }, [documento]);
+
   function limpiar({ mantenerExito = true } = {}) {
     setDocumento("");
     setPersona(null);
@@ -317,6 +329,7 @@ export function RegistrarPage() {
       if (actividad.clinica) Object.assign(datos, clinico);
       const { data } = await http.post("/salud/atenciones", datos);
       setExito({ nombre: nombreCompleto(data.atencion.persona), actividad: actividad.nombre, id: data.atencion.id });
+      avisos.exito(`${nombreCompleto(data.atencion.persona)} quedó registrado(a) en ${actividad.nombre}.`);
       setRegistrados((r) => [data.atencion, ...r]);
       limpiar();
     } catch (err) {
@@ -685,15 +698,6 @@ export function RegistrarPage() {
                     {a.persona?.numeroDocumento} · {POBLACION_TEXTO[a.poblacion]}
                   </span>
                 </span>
-                <button
-                  type="button"
-                  onClick={() => deshacer(a)}
-                  title="Eliminar este registro"
-                  aria-label={`Eliminar el registro de ${nombreCompleto(a.persona)}`}
-                  className="w-9 h-9 rounded-full text-ink-500 hover:bg-red-50 hover:text-red-700 flex items-center justify-center shrink-0"
-                >
-                  <Icono nombre="deshacer" size={17} />
-                </button>
               </li>
             ))}
           </ul>

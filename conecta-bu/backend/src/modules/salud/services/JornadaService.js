@@ -4,6 +4,7 @@ const repos = require("../repositories");
 const { CATEGORIAS, TIPOS_DOCUMENTO, PROGRAMAS, normalizarPrograma } = require("../utils/catalogos");
 const { limpiarIdentificador, fechaISO, esConflictoUnico } = require("../utils/texto");
 const { atencionService } = require("./AtencionService");
+const automatizaciones = require("../../../integrations/automatizaciones");
 
 // Jornadas y campanas de Salud integral publicadas para los estudiantes: el
 // estudiante se inscribe (o cancela) y el personal marca la asistencia, que
@@ -124,6 +125,7 @@ class JornadaService {
     const inscripcion = previa
       ? await this.repos.inscripcionesActividad.actualizar(previa.id, { estado: OCUPAN_CUPO, personaId: persona.id, fechaInscripcion: new Date() })
       : await this.repos.inscripcionesActividad.crear({ actividadId, usuarioId: usuario.id, personaId: persona.id });
+    automatizaciones.jornadaInscripcion(usuario, actividad); // RF-013 (no bloquea)
     return { inscripcion };
   }
 
@@ -131,7 +133,10 @@ class JornadaService {
     const ins = await this.repos.inscripcionesActividad.deUsuarioEn(actividadId, usuario.id);
     if (!ins || ins.estado !== OCUPAN_CUPO) throw new AppError(404, "No estás inscrito(a) en esta jornada.");
     if (ins.asistio) throw new AppError(409, "Tu asistencia ya quedó registrada.");
-    return { inscripcion: await this.repos.inscripcionesActividad.actualizar(ins.id, { estado: "Cancelada" }) };
+    const inscripcion = await this.repos.inscripcionesActividad.actualizar(ins.id, { estado: "Cancelada" });
+    const actividad = await this.repos.actividades.buscarPorId(actividadId);
+    if (actividad) automatizaciones.jornadaCancelada(usuario, actividad); // RF-013 (no bloquea)
+    return { inscripcion };
   }
 
   // ---- Personal de Salud ----

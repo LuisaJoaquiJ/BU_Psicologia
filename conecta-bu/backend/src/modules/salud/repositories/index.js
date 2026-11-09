@@ -18,6 +18,7 @@ function reposCon(db) {
     cifras: new informes.CifrasRepository(db || prisma),
     salidas: new salidas.SalidaRepository(db),
     inscripcionesSalida: new salidas.InscripcionSalidaRepository(db),
+    fotosSalida: new salidas.FotoSalidaRepository(db),
     reportesSst: new sst.ReporteSstRepository(db),
     adjuntosSst: new sst.AdjuntoSstRepository(db),
   };

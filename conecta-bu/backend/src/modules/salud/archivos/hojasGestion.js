@@ -119,13 +119,13 @@ function hojaAtendidos(libro, periodo, matriz) {
   [7, 7, 11, 34, 34, 34, 13, 26, 30].forEach((w, i) => (hoja.getColumn(colTotal + 1 + i).width = w));
 }
 
-async function hojaFotografica(libro, periodo, evidencias, leerArchivo) {
+async function hojaFotografica(libro, periodo, evidencias, leerArchivo, nombreModulo = "SALUD INTEGRAL") {
   const hoja = libro.addWorksheet("REGISTRO FOTOGRÁFICO");
   hoja.getColumn(1).width = 3;
   hoja.getColumn(2).width = 52;
   hoja.getColumn(3).width = 3;
   hoja.getColumn(4).width = 52;
-  titulo(hoja, "B1:D1", `REGISTRO FOTOGRÁFICO · SALUD INTEGRAL · ${periodo}`);
+  titulo(hoja, "B1:D1", `REGISTRO FOTOGRÁFICO · ${nombreModulo} · ${periodo}`);
 
   const fotos = evidencias.filter((e) => ["image/jpeg", "image/png"].includes(e.tipoMime)).slice(0, 60);
   const otros = evidencias.filter((e) => !["image/jpeg", "image/png"].includes(e.tipoMime));

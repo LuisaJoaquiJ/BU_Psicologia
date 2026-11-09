@@ -71,7 +71,7 @@ function errorUnico(campos) {
 }
 
 function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
-  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [], docentesDeporte: [], eventosDeporte: [], inscripcionesEventoDeporte: [], alertasDeporte: [], implementos: [], prestamos: [], movimientosInv: [], salidas: [], inscripcionesSalida: [], bloqueos: [], inscripcionesActividad: [], areasCultura: [], gruposCultura: [], inscripcionesCultura: [], sesionesCultura: [], asistenciasCultura: [], eventosCultura: [], inscripcionesEventoCultura: [], convocatoriasCultura: [], postulacionesCultura: [], perfilesCultura: [], evidenciasCultura: [], representacionesCultura: [], participantesRed: [], pausasCultura: [], solicitudesApoyo: [], rolesCultura: [], articulosCultura: [], prestamosCultura: [], tareasCultura: [] };
+  const tablas = { personas: [], actividades: [], atenciones: [], evidencias: [], accesos: [], reportesSst: [], adjuntosSst: [], informes: [], historicos: [], disciplinas: [], gruposDeporte: [], inscripcionesDeporte: [], sesionesDeporte: [], asistenciasDeporte: [], horasDeporte: [], configDeporte: [], docentesDeporte: [], eventosDeporte: [], inscripcionesEventoDeporte: [], alertasDeporte: [], implementos: [], prestamos: [], movimientosInv: [], salidas: [], inscripcionesSalida: [], fotosSalida: [], bloqueos: [], inscripcionesActividad: [], areasCultura: [], gruposCultura: [], inscripcionesCultura: [], sesionesCultura: [], asistenciasCultura: [], eventosCultura: [], inscripcionesEventoCultura: [], convocatoriasCultura: [], postulacionesCultura: [], perfilesCultura: [], evidenciasCultura: [], representacionesCultura: [], participantesRed: [], pausasCultura: [], solicitudesApoyo: [], rolesCultura: [], articulosCultura: [], prestamosCultura: [], tareasCultura: [], notificaciones: [] };
   let consecutivoSst = 0;
 
   const usuarioPorId = (id) => {
@@ -141,6 +141,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     articulosCultura: {},
     prestamosCultura: {},
     tareasCultura: {},
+    notificaciones: {},
     adjuntosSst: {
       reporte: (r) => clonar(tablas.reportesSst.find((x) => x.id === r.reporteId)),
     },
@@ -175,6 +176,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     movimientosInv: [],
     salidas: [["reporteSstId"]],
     inscripcionesSalida: [["salidaId", "usuarioId"]],
+    fotosSalida: [],
     inscripcionesActividad: [["actividadId", "usuarioId"]],
     bloqueos: [],
     adjuntosSst: [],
@@ -197,6 +199,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     articulosCultura: [],
     prestamosCultura: [],
     tareasCultura: [],
+    notificaciones: [],
   };
 
   const defaults = {
@@ -254,6 +257,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       fechaRegistro: new Date(),
     }),
     evidencias: () => ({ descripcion: null, subidoPorId: null, fechaSubida: new Date() }),
+    fotosSalida: () => ({ fechaSubida: new Date() }),
     accesos: () => ({ asignadoPor: null, fechaAsignacion: new Date() }),
     reportesSst: () => ({
       consecutivo: ++consecutivoSst,
@@ -337,23 +341,24 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
     horasDeporte: () => ({ disciplinaId: null, registradoPor: null, fechaRegistro: new Date() }),
     configDeporte: () => ({ horasRequeridas: 40, maxGruposPorPeriodo: 2 }),
     areasCultura: () => ({ descripcion: null, categoria: "taller", activa: true }),
-    gruposCultura: () => ({ director: null, lugar: null, cupo: 20, inscripcionesAbiertas: true, activo: true, codigoSnies: null, documentoResponsable: null, fechaCreacion: new Date() }),
+    gruposCultura: () => ({ docenteEmail: null, monitoresEmails: [], latitud: null, longitud: null, radioM: 100, imagen: null, director: null, lugar: null, cupo: 20, inscripcionesAbiertas: true, activo: true, codigoSnies: null, documentoResponsable: null, fechaInicio: null, fechaFin: null, reportaSnies: true, fechaCreacion: new Date() }),
     inscripcionesCultura: () => ({ estado: "Activa", tipoSnies: 1, ip: null, fechaInscripcion: new Date(), fechaRetiro: null }),
     sesionesCultura: () => ({ registradaPor: null, fechaRegistro: new Date(), codigo: null, abiertaHasta: null, conteoEstudiantes: 0, conteoDocentes: 0, conteoAdministrativos: 0, conteoEgresados: 0 }),
-    asistenciasCultura: () => ({ presente: true, tipoSnies: 1, ip: null, origen: "Personal", fechaHora: new Date() }),
-    eventosCultura: () => ({ imagen: null, descripcion: null, lugar: null, categoria: "especial", representacion: null, grupoId: null, estado: "Borrador", fechaCreacion: new Date(), codigoSnies: null, documentoResponsable: null, codigo: null, abiertaHasta: null, conteoEstudiantes: 0, conteoDocentes: 0, conteoAdministrativos: 0, conteoEgresados: 0 }),
-    inscripcionesEventoCultura: () => ({ estado: "Activa", tipoSnies: 1, ip: null, asistio: null, fechaInscripcion: new Date() }),
-    convocatoriasCultura: () => ({ descripcion: null, cupo: null, estado: "Abierta", fechaCreacion: new Date() }),
-    postulacionesCultura: () => ({ estado: "Recibida", tipoSnies: 1, ip: null, fecha: new Date() }),
+    asistenciasCultura: () => ({ distanciaM: null, presente: true, tipoSnies: 1, ip: null, origen: "Personal", fechaHora: new Date() }),
+    eventosCultura: () => ({ responsablesEmails: [], latitud: null, longitud: null, radioM: 100, reportaSnies: true, imagen: null, descripcion: null, lugar: null, categoria: "especial", representacion: null, grupoId: null, estado: "Borrador", fechaCreacion: new Date(), codigoSnies: null, documentoResponsable: null, codigo: null, abiertaHasta: null, conteoEstudiantes: 0, conteoDocentes: 0, conteoAdministrativos: 0, conteoEgresados: 0 }),
+    inscripcionesEventoCultura: () => ({ distanciaM: null, estado: "Activa", tipoSnies: 1, ip: null, asistio: null, fechaInscripcion: new Date() }),
+    convocatoriasCultura: () => ({ grupoId: null, imagen: null, descripcion: null, cupo: null, estado: "Abierta", fechaCreacion: new Date() }),
+    postulacionesCultura: () => ({ audicionFecha: null, audicionHora: null, audicionLugar: null, observacion: null, estado: "Recibida", tipoSnies: 1, ip: null, fecha: new Date() }),
     perfilesCultura: () => ({ tipoSnies: 1, documento: null, programa: null, caracterizacion: "No registra" }),
     evidenciasCultura: () => ({ grupoId: null, eventoId: null, pausaId: null, representacionId: null, tipo: "fotografia", subidoPor: null, fecha: new Date() }),
     representacionesCultura: () => ({ modalidad: null, grupoId: null, posicion: null, fechaCreacion: new Date() }),
     participantesRed: () => ({}),
-    pausasCultura: () => ({ registradaPor: null, fechaCreacion: new Date() }),
+    pausasCultura: () => ({ horaInicio: null, horaFin: null, registradaPor: null, fechaCreacion: new Date() }),
     solicitudesApoyo: () => ({ grupoId: null, detalle: null, personalAsignado: null, estado: "Recibida", solicitadaPor: null, fechaCreacion: new Date() }),
     rolesCultura: () => ({ rol: "administrador" }),
     articulosCultura: () => ({ descripcion: null, ubicacion: null, grupoId: null, cantidadTotal: 1, cantidadDanada: 0, activo: true, fechaCreacion: new Date() }),
     prestamosCultura: () => ({ responsableEmail: null, grupoId: null, motivo: null, fechaPrestamo: new Date(), fechaDevolucion: null, devueltosDanados: null, registradoPor: null }),
+    notificaciones: () => ({ ruta: null, leida: false, fechaCreacion: new Date() }),
     tareasCultura: () => ({ detalle: null, categoria: "logistica", responsable: null, eventoId: null, representacionId: null, hecha: false, fechaHecha: null, creadaPor: null, fechaCreacion: new Date() }),
     historicos: () => ({ estudiantes: 0, docentes: 0, administrativos: 0, externos: 0, egresados: 0, enfermeria: null, poblacionGeneral: null }),
   };
@@ -495,6 +500,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       movimientoInventario: modelo("movimientosInv", "mov"),
       salidaConvocatoria: modelo("salidas", "salida"),
       inscripcionSalida: modelo("inscripcionesSalida", "insal"),
+      salidaFoto: modelo("fotosSalida", "fotosal"),
       inscripcionActividadSalud: modelo("inscripcionesActividad", "inact"),
       areaCultural: modelo("areasCultura", "area-cul"),
       grupoCultural: modelo("gruposCultura", "grupo-cul"),
@@ -515,6 +521,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       articuloCultural: modelo("articulosCultura", "art-cul"),
       prestamoCultural: modelo("prestamosCultura", "pre-cul"),
       tareaCultural: modelo("tareasCultura", "tar-cul"),
+      notificacion: modelo("notificaciones", "notif"),
     },
     reset() {
       tablas.personas = [];
@@ -542,6 +549,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       tablas.movimientosInv = [];
       tablas.salidas = [];
       tablas.inscripcionesSalida = [];
+      tablas.fotosSalida = [];
       tablas.inscripcionesActividad = [];
       tablas.bloqueos = [];
       tablas.areasCultura = [];
@@ -563,6 +571,7 @@ function crearModelosSalud({ obtenerUsuarios, siguienteId }) {
       tablas.articulosCultura = [];
       tablas.prestamosCultura = [];
       tablas.tareasCultura = [];
+      tablas.notificaciones = [];
       consecutivoSst = 0;
     },
     tablas,

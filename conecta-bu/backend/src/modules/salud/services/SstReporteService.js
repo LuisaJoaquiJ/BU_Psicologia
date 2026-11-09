@@ -5,6 +5,7 @@ const cat = require("../utils/sst");
 const { validarReporte, faltantes, validarTiposPermitidos, serializar } = require("../utils/sst/validacion");
 const { sstArchivoService } = require("./SstArchivoService");
 const { enmascarar, resolver } = require("../utils/sst/documentoProtegido");
+const notificaciones = require("../../notificaciones/service");
 
 // Salidas institucionales y reportes SST: cualquier persona de la
 // Institucion reporta con su cuenta y sigue el estado; el personal de Salud
@@ -55,6 +56,11 @@ class SstReporteService {
         reportadoPorId: usuario.id,
         adjuntos: { create: archivos.map((a) => this.archivos.datosAdjunto(a, usuario.id)) },
       });
+      notificaciones.avisarAlPersonal(
+        "salud",
+        { modulo: "salud", tipo: "reporte-sst", titulo: "Nuevo reporte SST", mensaje: `${cat.TIPOS[reporte.tipo]?.nombre || "Reporte"}: ${usuario?.nombre || "una persona"} lo registró y espera revisión.`, ruta: "/salud/salidas" },
+        { excepto: usuario?.emailInstitucional }
+      );
       return this.vista(reporte, usuario);
     } catch (err) {
       this.archivos.borrar(archivos);

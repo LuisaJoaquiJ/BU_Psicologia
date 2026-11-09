@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { http } from "../../../lib/api/http";
 import { useAuth } from "../../../lib/auth/AuthContext";
 import { fechaLarga } from "../comunes/lib/format";
+import { useArchivoProtegido } from "../comunes/lib/salud";
 import { Icono } from "../comunes/componentes/Iconos";
 import { Ventana } from "../comunes/componentes/Ventana";
 import { Aviso, Campo, Insignia, botonPrimario, botonSecundario, claseCampo, EstadoVacio, Esqueleto } from "../comunes/componentes/ui";
@@ -178,6 +179,7 @@ function TarjetaSalida({ salida, alInscribirse }) {
 
   return (
     <article className="bg-white border border-gray-200 rounded-xl p-5 sm:p-6 flex flex-col gap-4">
+      <GaleriaSalida salida={salida} />
       <div className="flex items-start gap-3">
         <span className="w-11 h-11 rounded-2xl bg-primary-light text-primary grid place-items-center shrink-0">
           <Icono nombre="bus" className="w-5 h-5" />
@@ -203,6 +205,40 @@ function TarjetaSalida({ salida, alInscribirse }) {
       {salida.descripcion && <p className="m-0 text-sm text-ink-700 whitespace-pre-line">{salida.descripcion}</p>}
       <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-end min-h-[44px]">{accion}</div>
     </article>
+  );
+}
+
+// Fotos que el personal subio para promocionar la salida.
+function FotoPromo({ salida, foto, grande, alElegir }) {
+  const url = useArchivoProtegido(`${API}/${salida.id}/fotos/${foto.id}/archivo`);
+  return (
+    <button
+      type="button"
+      onClick={() => alElegir(foto.id)}
+      aria-label={grande ? undefined : `Ver foto de ${salida.nombre}`}
+      className={`relative overflow-hidden bg-primary-light shrink-0 ${grande ? "w-full aspect-[16/9] rounded-2xl cursor-default" : "w-16 h-12 rounded-lg border-2 border-white"}`}
+    >
+      {url && <img src={url} alt={grande ? `Foto de ${salida.nombre}` : ""} className="absolute inset-0 w-full h-full object-cover" />}
+    </button>
+  );
+}
+
+function GaleriaSalida({ salida }) {
+  const fotos = salida.fotos || [];
+  const [actual, setActual] = useState(fotos[0]?.id);
+  if (!fotos.length) return null;
+  const mostrada = fotos.find((f) => f.id === actual) || fotos[0];
+  return (
+    <div className="flex flex-col gap-2">
+      <FotoPromo key={mostrada.id} salida={salida} foto={mostrada} grande alElegir={() => {}} />
+      {fotos.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {fotos.map((f) => (
+            <FotoPromo key={f.id} salida={salida} foto={f} alElegir={setActual} />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

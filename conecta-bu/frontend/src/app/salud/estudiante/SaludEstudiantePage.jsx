@@ -1,10 +1,11 @@
+import { AvisoFlotante } from "../../../components/avisos/Avisos";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { formatearFecha, formatearHora, fechaLarga } from "../comunes/lib/format";
 import { IMAGENES } from "../comunes/lib/imagenes";
 import { Icono } from "../comunes/componentes/Iconos";
-import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo, EstadoVacio, botonPrimario, botonSecundario } from "../comunes/componentes/ui";
+import { BandaInicio, botonBandaPrincipal, botonBandaSecundario, hoyLargo, EstadoVacio, botonPrimario, botonSecundario, Segmentos } from "../comunes/componentes/ui";
 
 // Salud integral para el estudiante (/mi-salud): horarios para agendar una
 // cita de salud y servicios de la Unidad de Salud.
@@ -88,24 +89,10 @@ export function SaludEstudiantePage() {
           </Link>
         </div>
         {servicios && servicios.length > 0 && (
-          <div className="flex gap-2 flex-wrap mb-5">
-            {[{ id: "", nombre: "Todos" }, ...servicios].map((s) => (
-              <button
-                key={s.id || "todos"}
-                type="button"
-                onClick={() => setServicioId(s.id)}
-                aria-pressed={servicioId === s.id}
-                className={`text-sm font-semibold rounded-full px-4 min-h-[40px] border ${
-                  servicioId === s.id ? "boton-liquido border-transparent" : "burbuja text-ink-600 hover:bg-white"
-                }`}
-              >
-                {s.nombre}
-              </button>
-            ))}
-          </div>
+          <Segmentos className="mb-5" etiqueta="Servicio" opciones={[{ id: "", nombre: "Todos" }, ...servicios].map((s) => [s.id, s.nombre])} valor={servicioId} alCambiar={setServicioId} />
         )}
-        {exito && <p className="text-sm text-[#0B6B61] bg-[#E3F4F1] rounded-xl p-3 mb-4">{exito}</p>}
-        {error && <p className="text-sm text-red-700 bg-red-50 rounded-xl p-3 mb-4">{error}</p>}
+        {exito && <AvisoFlotante tono="exito">{exito}</AvisoFlotante>}
+        {error && <AvisoFlotante tono="error">{error}</AvisoFlotante>}
         {!horarios && <div className="h-32 bg-white/60 border border-gray-200 rounded-xl animate-pulse" />}
         {horarios && visibles.length === 0 && (
           <EstadoVacio

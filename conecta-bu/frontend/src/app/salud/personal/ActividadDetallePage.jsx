@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { http } from "../../../lib/api/http";
+import { useAvisos } from "../../../components/avisos/Avisos";
 import { Icono } from "../comunes/componentes/Iconos";
 import { POBLACION_TEXTO, fechaCorta, hoyISO, mensajeError, nombreCompleto, useArchivoProtegido, useCatalogos } from "../comunes/lib/salud";
 import { FormularioActividad } from "./ActividadesPage";
@@ -252,6 +253,63 @@ function Inscritos({ actividad, onCambio }) {
   );
 }
 
+// Registro de asistentes sin salir de la actividad: escribe o escanea uno o varios
+// documentos/codigos (Enter o coma) y quedan registrados al instante.
+function RegistrarAsistentes({ actividad, onCambio }) {
+  const avisos = useAvisos();
+  const [texto, setTexto] = useState("");
+  const [fecha, setFecha] = useState(hoyISO());
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState("");
+  const [faltan, setFaltan] = useState([]);
+  const entrada = useRef(null);
+
+  async function registrar(e) {
+    e.preventDefault();
+    if (!texto.trim() || enviando) return;
+    setError("");
+    setEnviando(true);
+    try {
+      const { data } = await http.post("/salud/atenciones/lote", { actividadId: actividad.id, fecha, identificadores: texto });
+      const n = data.registrados.length;
+      if (n) avisos.exito(n === 1 ? `${data.registrados[0].nombre} quedó registrado(a).` : `Se registraron ${n} personas.`);
+      if (data.yaRegistrados.length) avisos.aviso(`${data.yaRegistrados.length === 1 ? `${data.yaRegistrados[0].nombre} ya estaba registrado(a)` : `${data.yaRegistrados.length} ya estaban registradas`} ese día.`);
+      setFaltan(data.noEncontrados);
+      setTexto("");
+      if (n) onCambio?.();
+    } catch (err) {
+      setError(mensajeError(err, "No fue posible registrar."));
+    } finally {
+      setEnviando(false);
+      setTimeout(() => entrada.current?.focus(), 0);
+    }
+  }
+
+  return (
+    <div id="registrar-asistentes" className="scroll-mt-24">
+    <Tarjeta titulo="Registrar asistentes" subtitulo="Escribe o escanea la cédula o el código y presiona Enter. Para varios, sepáralos con coma o espacio.">
+      <form onSubmit={registrar} className="grid gap-3 sm:grid-cols-[1fr_auto_auto] items-end">
+        <Campo etiqueta="Cédula o código">
+          <input ref={entrada} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Ej.: 1061731427" autoComplete="off" inputMode="text" className={claseCampo} />
+        </Campo>
+        <Campo etiqueta="Fecha">
+          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={claseCampo} />
+        </Campo>
+        <button disabled={enviando || !texto.trim()} className={`${botonPrimario} min-h-[48px]`}>
+          {enviando ? "Registrando…" : "Registrar"}
+        </button>
+      </form>
+      {error && <div className="mt-3"><Aviso>{error}</Aviso></div>}
+      {faltan.length > 0 && (
+        <p className="m-0 mt-3 text-sm rounded-xl bg-gold-light text-[#5C4206] px-4 py-3">
+          <strong>No encontré:</strong> {faltan.join(", ")}. Revisa que el documento o código esté bien escrito.
+        </p>
+      )}
+    </Tarjeta>
+    </div>
+  );
+}
+
 export function ActividadDetallePage() {
   const { id } = useParams();
   const catalogos = useCatalogos();
@@ -330,6 +388,12 @@ export function ActividadDetallePage() {
               <Insignia tono="gris">
                 {fechaCorta(actividad.fechaInicio)} – {fechaCorta(actividad.fechaFin)}
               </Insignia>
+              {actividad.horaInicio && (
+                <Insignia tono="gris">
+                  {actividad.horaInicio}
+                  {actividad.horaFin ? ` a ${actividad.horaFin}` : ""}
+                </Insignia>
+              )}
             </div>
           </div>
           <div className="flex gap-2.5 flex-wrap">
@@ -340,9 +404,17 @@ export function ActividadDetallePage() {
             <button type="button" onClick={cambiarActiva} className={botonSecundario}>
               {actividad.activa ? "Desactivar" : "Activar"}
             </button>
-            <Link to={`/salud/registrar?actividad=${actividad.id}`} className={botonDorado}>
+            <button
+              type="button"
+              onClick={() => {
+                const tarjeta = document.getElementById("registrar-asistentes");
+                tarjeta?.scrollIntoView({ behavior: "smooth", block: "start" });
+                setTimeout(() => tarjeta?.querySelector("input")?.focus({ preventScroll: true }), 350);
+              }}
+              className={botonDorado}
+            >
               Registrar asistentes
-            </Link>
+            </button>
           </div>
         </div>
       </div>
@@ -395,6 +467,7 @@ export function ActividadDetallePage() {
         </div>
       )}
 
+      {actividad.activa && <RegistrarAsistentes actividad={actividad} onCambio={cargar} />}
       {actividad.publicada && <Inscritos actividad={actividad} onCambio={cargar} />}
 
       <Tarjeta titulo="Evidencias" subtitulo="Fotos de la jornada, planillas firmadas y actas. Salen en el registro fotográfico del informe de gestión.">

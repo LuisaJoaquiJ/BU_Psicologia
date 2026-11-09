@@ -29,4 +29,13 @@ class InscripcionSalidaRepository extends BaseRepository {
   }
 }
 
-module.exports = { SalidaRepository, InscripcionSalidaRepository };
+class FotoSalidaRepository extends BaseRepository {
+  constructor(db) {
+    super("salidaFoto", db);
+  }
+  deSalidas(ids) {
+    return ids.length ? this.tabla.findMany({ where: { salidaId: { in: ids } }, orderBy: { fechaSubida: "asc" } }) : [];
+  }
+}
+
+module.exports = { SalidaRepository, InscripcionSalidaRepository, FotoSalidaRepository };

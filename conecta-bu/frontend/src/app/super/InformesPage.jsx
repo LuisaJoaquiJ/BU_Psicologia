@@ -43,6 +43,15 @@ function TarjetaInforme({ informe, alCambiar }) {
   }
 
   const r = informe.resumen || {};
+  // Cada modulo manda sus propios indicadores; los informes viejos de Salud solo traen el resumen.
+  const indicadores =
+    informe.indicadores ||
+    [
+      ["Atenciones", r.atenciones],
+      ["Personas atendidas", r.personas],
+      ["Actividades", r.actividades],
+      ["Cumplimiento de metas", r.cumplimientoPromedio === null || r.cumplimientoPromedio === undefined ? null : `${num(r.cumplimientoPromedio)} %`],
+    ].map(([titulo, valor]) => ({ titulo, valor }));
   return (
     <article className="bg-white border border-gray-200 rounded-xl p-5 sm:p-6 flex flex-col gap-4">
       <div className="flex items-start gap-4 flex-wrap">
@@ -52,7 +61,7 @@ function TarjetaInforme({ informe, alCambiar }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <Insignia tono={TONO[informe.estado]}>{TEXTO[informe.estado]}</Insignia>
-            <span className="text-xs font-bold text-ink-500">INFBI-002 · versión {informe.version}</span>
+            <span className="text-xs font-bold text-ink-500">{informe.modulo === "salud" ? "INFBI-002 · " : ""}versión {informe.version}</span>
           </div>
           <h2 className="m-0 mt-1.5 text-xl font-extrabold">
             Informe de gestión {informe.periodo} · {modulo?.nombre || informe.modulo}
@@ -73,15 +82,10 @@ function TarjetaInforme({ informe, alCambiar }) {
       </div>
 
       <dl className="m-0 grid gap-3 grid-cols-2 sm:grid-cols-4">
-        {[
-          ["Atenciones", num(r.atenciones)],
-          ["Personas atendidas", num(r.personas)],
-          ["Actividades", num(r.actividades)],
-          ["Cumplimiento de metas", r.cumplimientoPromedio === null || r.cumplimientoPromedio === undefined ? "—" : `${num(r.cumplimientoPromedio)} %`],
-        ].map(([t, v]) => (
-          <div key={t} className="burbuja rounded-2xl px-4 py-3">
-            <dt className="text-xs text-ink-500">{t}</dt>
-            <dd className="m-0 mt-0.5 font-display text-2xl font-semibold text-primary tabular-nums">{v}</dd>
+        {indicadores.map(({ titulo, valor }) => (
+          <div key={titulo} className="burbuja rounded-2xl px-4 py-3">
+            <dt className="text-xs text-ink-500">{titulo}</dt>
+            <dd className="m-0 mt-0.5 font-display text-2xl font-semibold text-primary tabular-nums">{typeof valor === "number" ? num(valor) : valor ?? "—"}</dd>
           </div>
         ))}
       </dl>
@@ -144,7 +148,7 @@ export function InformesPage() {
       <Encabezado
         kicker="Superadministrador"
         titulo="Informes de gestión"
-        descripcion="Los informes que envían los módulos (formato INFBI-002): proyecto, evaluación, relación de atendidos, estadísticas con gráficas y registro fotográfico. Descárgalos en PDF o Excel, apruébalos o devuélvelos con observaciones."
+        descripcion="Los informes que envían los módulos (Salud integral y Arte y Cultura): proyecto, evaluación, relación de atendidos, estadísticas con gráficas y registro fotográfico. Descárgalos en PDF o Excel, apruébalos o devuélvelos con observaciones."
       />
       <div className="flex gap-1.5 overflow-x-auto pb-1 mb-5" role="tablist">
         {PESTANAS.map((p) => (
