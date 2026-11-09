@@ -1,3 +1,6 @@
+import { AvisosProvider } from "./components/avisos/Avisos";
+import { NotificacionesProvider } from "./lib/notificaciones/NotificacionesContext";
+import { NotificacionesPage } from "./app/notificaciones/NotificacionesPage";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage } from "./app/login/LoginPage";
 import { PortalPage } from "./app/portal/PortalPage";
@@ -41,7 +44,8 @@ function DesarrolloHumano() {
 
 export default function App() {
   return (
-    <>
+    <AvisosProvider>
+    <NotificacionesProvider>
       <AyudaOrtografia />
       <AsistenteFlotante />
       <Routes>
@@ -176,8 +180,17 @@ export default function App() {
           }
         />
 
+        <Route
+          path="/notificaciones"
+          element={
+            <ProtectedRoute>
+              <NotificacionesPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </>
+    </NotificacionesProvider>
+    </AvisosProvider>
   );
 }
