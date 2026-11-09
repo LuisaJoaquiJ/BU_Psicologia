@@ -8,12 +8,14 @@ const { inicioDeCita } = require("../utils/agenda");
 const { MAX_LONGITUD, normalizar, filtroDeSeguridad, fechaTexto, horaTexto, limpiarHistorial } = require("../utils/asistenteSeguridad");
 const { PATRON_CITA, proponerHorarios, veniaAgendando } = require("../utils/asistenteAgenda");
 const { responderLocal } = require("../utils/asistenteRespuestas");
+const { contextoModulos, moduloEfectivo, responderModulos } = require("../utils/asistenteModulos");
 
 const REGLAS =
-  "Responde en español, de forma breve y amable, solo sobre los servicios de Desarrollo Humano / " +
-  "Orientación y el uso de Conecta BU. No hagas diagnósticos, no recomiendes medicamentos ni " +
+  "Responde en español, de forma breve y amable, sobre Conecta BU y sus módulos: Desarrollo Humano / " +
+  "Orientación, Deporte (grupos, horas, eventos), Salud (jornadas, campañas, salidas) y Arte y Cultura " +
+  "(talleres, grupos representativos por audición, agenda, convocatorias). No hagas diagnósticos, no recomiendes medicamentos ni " +
   "tratamientos y no tomes decisiones clínicas (RN-011); en esos casos orienta a agendar una cita. " +
-  "No inventes horarios, eventos ni enlaces: usa solo el contexto. Si el estudiante quiere una cita, " +
+  "No inventes horarios, eventos ni enlaces: usa solo el contexto. Si dice paginaActual, la persona está en ese módulo: entiende sus preguntas cortas en ese módulo. Si el estudiante quiere una cita, " +
   "dile que debajo de tu respuesta verá los horarios libres para agendar con un clic, o que puede " +
   "escribirte el día y la hora que prefiere. No puedes cancelar citas: eso se hace en «Mis citas».";
 
@@ -33,11 +35,12 @@ class AsistenteService {
   // datos; recibe solo datos de Orientacion y, del estudiante, sus propias
   // citas e inscripciones. Nunca notas del personal ni datos de otros.
   async contexto(usuario) {
-    const [servicios, horarios, eventos, citas] = await Promise.all([
+    const [servicios, horarios, eventos, citas, modulos] = await Promise.all([
       servicioService.activos(),
       citaService.disponibles(),
       eventoEstudianteService.publicados(usuario.id),
       citaService.mias(usuario.id),
+      contextoModulos(usuario),
     ]);
     const ahora = Date.now();
     const contexto = {
@@ -52,6 +55,7 @@ class AsistenteService {
         };
       }),
       horariosDisponibles: horarios.length,
+      modulos,
       eventos: eventos.slice(0, 6).map((e) => ({
         nombre: e.nombre,
         fecha: fechaTexto(e.fecha),
@@ -119,9 +123,9 @@ Pregunta: ${pregunta}`;
 
   // Si el estudiante pide una cita (o responde a los horarios ofrecidos), el
   // backend busca horarios reales; la IA no los puede inventar.
-  agenda(texto, contexto, historial) {
+  agenda(texto, contexto, historial, pagina) {
     const preguntaPorSuCita = /(mi cita|mis citas|tengo (una )?cita|cuando es mi|a que hora es mi)/.test(texto);
-    if (/cancel/.test(texto) || preguntaPorSuCita) return {};
+    if (/cancel/.test(texto) || preguntaPorSuCita || moduloEfectivo(texto, pagina)) return {};
     const { horarios, servicios } = contexto._interno;
     const seguimiento = veniaAgendando(historial) && !/(evento|taller|servicios)/.test(texto);
     if (!PATRON_CITA.test(texto) && !seguimiento) return {};
@@ -131,7 +135,8 @@ Pregunta: ${pregunta}`;
     return { opciones: proponerHorarios(texto, contexto, horarios, servicios, { forzar: true })?.opciones || null };
   }
 
-  async responder(usuario, preguntaCruda, historialCrudo) {
+  async responder(usuario, preguntaCruda, historialCrudo, paginaCruda) {
+    const pagina = ["cultura", "deporte", "salud", "orientacion"].includes(paginaCruda) ? paginaCruda : null;
     const pregunta = typeof preguntaCruda === "string" ? preguntaCruda.trim() : "";
     if (!pregunta) throw new AppError(400, "Escribe una pregunta para el asistente.");
     if (pregunta.length > MAX_LONGITUD) throw new AppError(400, `La pregunta no puede superar ${MAX_LONGITUD} caracteres.`);
@@ -141,11 +146,12 @@ Pregunta: ${pregunta}`;
     if (seguridad) return seguridad;
 
     const contexto = await this.contexto(usuario);
+    if (pagina) contexto.paginaActual = pagina;
     const historial = limpiarHistorial(historialCrudo);
-    const { directa, opciones } = this.agenda(texto, contexto, historial);
+    const { directa, opciones } = this.agenda(texto, contexto, historial, pagina);
     if (directa) return directa;
     const extra = opciones ? { opciones } : {};
-    const local = responderLocal(texto, contexto, usuario.nombre?.split(" ")[0]);
+    const local = responderModulos(texto, contexto.modulos, pagina) || responderLocal(texto, contexto, usuario.nombre?.split(" ")[0]);
 
     if (claveGemini()) {
       try {

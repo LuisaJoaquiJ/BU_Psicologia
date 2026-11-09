@@ -90,9 +90,9 @@ function responderLocal(textoNormalizado, contexto, nombre) {
 
   return {
     respuesta:
-      "No tengo una respuesta exacta para eso. Puedo ayudarte con: los servicios de Orientación, " +
-      "cómo agendar o cancelar una cita, y los eventos e inscripciones. Si necesitas hablar con alguien, " +
-      "agenda una cita con un profesional.",
+      "No tengo una respuesta exacta para eso. Puedo ayudarte con: citas de Orientación, grupos y horas de " +
+      "Deporte, jornadas y salidas de Salud, y talleres, agenda y convocatorias de Arte y Cultura. " +
+      "Pregúntame, por ejemplo, «¿qué talleres de cultura hay?» o «¿cuántas horas de deporte llevo?».",
     sugerencias: [SUGERENCIAS.servicios, SUGERENCIAS.agendar, SUGERENCIAS.eventos],
   };
 }

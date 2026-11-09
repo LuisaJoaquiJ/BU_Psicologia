@@ -10,7 +10,30 @@ const ACCIONES = [
   { titulo: "Servicios de Bienestar", detalle: "Qué puedes hacer en Conecta BU", texto: "¿Qué servicios ofrece Bienestar?" },
 ];
 
-const PREGUNTAS_SUGERIDAS = ["¿Cómo cancelo una cita?", "¿Dónde veo mis citas?", "¿Qué grupos de cultura hay?"];
+const ACCIONES_POR_MODULO = {
+  cultura: [
+    { titulo: "Grupos y talleres", detalle: "Qué hay y cómo entrar", texto: "¿Qué grupos de cultura hay?" },
+    { titulo: "Convocatorias", detalle: "Audiciones abiertas", texto: "¿Qué convocatorias hay abiertas?" },
+    { titulo: "Agenda cultural", detalle: "Próximos eventos", texto: "¿Qué eventos culturales hay?" },
+  ],
+  deporte: [
+    { titulo: "Grupos de deporte", detalle: "Horarios y cupos", texto: "¿Qué grupos de deporte hay?" },
+    { titulo: "Mis horas", detalle: "Cuántas llevo y cuántas faltan", texto: "¿Cuántas horas de deporte llevo?" },
+    { titulo: "Eventos deportivos", detalle: "Torneos y encuentros", texto: "¿Qué eventos deportivos hay?" },
+  ],
+  salud: [
+    { titulo: "Jornadas de salud", detalle: "Campañas y jornadas", texto: "¿Hay jornadas de salud?" },
+    { titulo: "Salidas", detalle: "Publicadas por la Unidad de Salud", texto: "¿Qué salidas hay publicadas?" },
+    { titulo: "Agendar una cita", detalle: "Orientación psicológica", texto: "Quiero agendar una cita" },
+  ],
+};
+
+const PREGUNTAS_POR_MODULO = {
+  cultura: ["¿Qué grupos de cultura hay?", "¿Qué convocatorias hay abiertas?", "¿Qué eventos culturales hay?"],
+  deporte: ["¿Qué grupos de deporte hay?", "¿Cuántas horas de deporte llevo?", "¿Qué eventos deportivos hay?"],
+  salud: ["¿Hay jornadas de salud?", "¿Qué salidas hay publicadas?", "¿Cómo me inscribo a una salida?"],
+  orientacion: ["¿Qué grupos de cultura hay?", "¿Cuántas horas de deporte llevo?", "¿Hay jornadas de salud?"],
+};
 
 // RF-014: conversacion del asistente de orientacion (la usan la pagina
 // completa y el boton flotante). Tambien agenda: el backend ofrece
@@ -36,7 +59,9 @@ function opcionElegida(texto, opciones) {
 
 // compacto: version para el panel del boton flotante. alNavegar: se llama al
 // seguir una sugerencia (p. ej. para cerrar el panel).
-export function AsistenteConversacion({ compacto = false, alNavegar }) {
+export function AsistenteConversacion({ compacto = false, modulo = "orientacion", alNavegar }) {
+  const acciones = ACCIONES_POR_MODULO[modulo] || ACCIONES;
+  const preguntasSugeridas = PREGUNTAS_POR_MODULO[modulo] || PREGUNTAS_POR_MODULO.orientacion;
   const { usuario } = useAuth();
   const primerNombre = usuario?.nombre?.split(" ")[0];
   const [mensajes, setMensajes] = useState([
@@ -107,7 +132,7 @@ export function AsistenteConversacion({ compacto = false, alNavegar }) {
         .filter((m) => !m.error)
         .slice(-12)
         .map((m) => ({ autor: m.autor, texto: m.texto }));
-      const res = await http.post("/asistente/consultas", { pregunta: contenido, historial });
+      const res = await http.post("/asistente/consultas", { pregunta: contenido, historial, modulo });
       setMensajes((m) => [
         ...m,
         {
@@ -139,15 +164,15 @@ export function AsistenteConversacion({ compacto = false, alNavegar }) {
       <div className={`flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto ${compacto ? "" : "bg-white rounded-2xl border border-gray-200 p-4 sm:p-6"}`}>
         {compacto && inicio && (
           <div className="flex flex-col items-center text-center pt-2">
-            <span className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-md" style={{ background: "conic-gradient(from 200deg, #E8740E, #C89B14, #E8740E)" }}>
+            <span className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-md" style={{ background: "linear-gradient(135deg, var(--liquido-1, #3d6288), var(--liquido-3, #162c49))" }}>
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /><path d="M20 3v4M22 5h-4M4 17v2M5 18H3" /></svg>
             </span>
             <p className="mt-3 mb-0 text-lg font-black text-[#1E3A5F]">Hola{primerNombre ? `, ${primerNombre}` : ""}, soy el asistente de Conecta BU</p>
-            <p className="mt-1 mb-0 text-sm max-w-[280px] text-[#6B7A8D]">Te oriento sobre Bienestar, los próximos eventos y te agendo una cita.</p>
+            <p className="mt-1 mb-0 text-sm max-w-[280px] text-[#6B7A8D]">Te oriento sobre Orientación, Deporte, Salud y Cultura, y te agendo una cita.</p>
             <div className="mt-5 w-full grid gap-2 text-left">
-              {ACCIONES.map((accion) => (
+              {acciones.map((accion) => (
                 <button key={accion.titulo} type="button" onClick={() => enviar(accion.texto)} className="flex items-center gap-3 rounded-2xl bg-white px-3.5 py-3 text-left border border-[#1E3A5F]/10 hover:shadow-md">
-                  <span className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-[#E8740E]" style={{ background: "rgba(232, 116, 14, 0.1)" }}>
+                  <span className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-primary bg-primary-light">
                     <Icono nombre="calendario" size={18} strokeWidth={2} />
                   </span>
                   <span className="min-w-0">
@@ -165,7 +190,7 @@ export function AsistenteConversacion({ compacto = false, alNavegar }) {
             <div
               className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-line ${
                 mensaje.autor === "estudiante"
-                  ? "bg-[#1E3A5F] text-white rounded-br-md"
+                  ? "boton-liquido rounded-br-md"
                   : mensaje.seguridad
                     ? "bg-amber-50 text-ink-900 border border-amber-200 rounded-bl-md"
                     : mensaje.exito
@@ -235,14 +260,14 @@ export function AsistenteConversacion({ compacto = false, alNavegar }) {
         )}
         {inicio && (
           <div className="grid gap-2">
-            {PREGUNTAS_SUGERIDAS.map((texto) => (
+            {preguntasSugeridas.map((texto) => (
               <button
                 key={texto}
                 type="button"
                 onClick={() => enviar(texto)}
                 className="flex items-center gap-3 rounded-2xl bg-white px-3.5 py-2.5 text-left text-[13px] font-medium border border-[#1E3A5F]/10 text-[#2C3E50] hover:shadow-md"
               >
-                <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-[#E8740E]" style={{ background: "rgba(232, 116, 14, 0.1)" }}>?</span>
+                <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-primary bg-primary-light">?</span>
                 {texto}
               </button>
             ))}
@@ -258,7 +283,7 @@ export function AsistenteConversacion({ compacto = false, alNavegar }) {
         }}
         className="mt-2 shrink-0"
       >
-        <div className="flex items-end gap-2 rounded-[22px] bg-white pl-4 pr-1.5 py-1.5 border border-[#1E3A5F]/10 focus-within:shadow-[0_0_0_3px_rgba(232,116,14,0.18)]">
+        <div className="flex items-end gap-2 rounded-[22px] bg-white pl-4 pr-1.5 py-1.5 border border-[#1E3A5F]/10 focus-within:shadow-[0_0_0_3px_rgb(var(--primario)/0.2)]">
           <input
             value={pregunta}
             onChange={(e) => setPregunta(e.target.value)}
@@ -271,8 +296,7 @@ export function AsistenteConversacion({ compacto = false, alNavegar }) {
             type="submit"
             disabled={enviando || !pregunta.trim()}
             aria-label="Enviar"
-            className="h-9 w-9 mb-0.5 rounded-full flex items-center justify-center text-white disabled:opacity-45 disabled:cursor-not-allowed"
-            style={{ background: "linear-gradient(135deg, #E8740E, #C89B14)" }}
+            className="boton-liquido h-9 w-9 mb-0.5 rounded-full flex items-center justify-center disabled:opacity-45 disabled:cursor-not-allowed"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m5 12 7-7 7 7" /><path d="M12 19V5" /></svg>
           </button>

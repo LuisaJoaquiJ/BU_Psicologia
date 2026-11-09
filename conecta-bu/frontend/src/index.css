@@ -385,3 +385,9 @@
     animation: none;
   }
 }
+
+/* Los contenedores de avisos que quedan vacios (el aviso sale flotante) no ocupan lugar. */
+[role="status"]:empty,
+[role="alert"]:empty {
+  display: none;
+}

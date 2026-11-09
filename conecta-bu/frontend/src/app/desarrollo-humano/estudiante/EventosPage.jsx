@@ -104,7 +104,7 @@ export function EventosPage() {
             <div className="p-6 flex flex-col gap-3 flex-1">
               <div className="flex items-start justify-between gap-3">
                 <h2 className="font-extrabold text-ink-900">{evento.nombre}</h2>
-                {inscritoEn(evento) && <span className="text-xs font-medium rounded-full px-3 py-1 bg-emerald-50 text-emerald-700 shrink-0">Inscrito/a</span>}
+                {inscritoEn(evento) && <span className="text-xs font-bold rounded-md px-2 py-0.5 bg-emerald-50 text-emerald-700 shrink-0 select-none">Inscrito/a</span>}
               </div>
               <div className="text-sm text-gray-500">
                 <p>{fechaLarga(evento.fecha)}</p>
