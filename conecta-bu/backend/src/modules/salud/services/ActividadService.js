@@ -3,6 +3,14 @@ const repos = require("../repositories");
 const { periodoDeFecha, rangoDePeriodo } = require("../utils/catalogos");
 const { enteroOpcional } = require("../utils/texto");
 const { validarPeriodo, validarActividad, indicadores } = require("../utils/registro");
+const notificaciones = require("../../notificaciones/service");
+
+// Una jornada o campana nueva para estudiantes (solo cuando se publica): se les avisa.
+function avisarJornada(actividad) {
+  if (!actividad?.publicada || actividad.permanente) return;
+  const fecha = new Date(actividad.fechaInicio).toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  return notificaciones.difundirAEstudiantes({ modulo: "salud", tipo: "jornada-publicada", titulo: "Nueva jornada de salud", mensaje: `${actividad.nombre}: ${fecha}${actividad.lugar ? ` · ${actividad.lugar}` : ""}.`, ruta: "/mi-salud/jornadas" });
+}
 
 // Actividades de la Unidad de Salud: servicios permanentes (atencion basica,
 // telemedicina...) y jornadas puntuales (feria de la salud, tamizajes,
@@ -54,7 +62,9 @@ class ActividadService {
     const conCodigo = datos.codigo !== undefined && datos.codigo !== "";
     limpio.codigo = conCodigo ? enteroOpcional(datos.codigo, "código", { min: 1 }) : await this.siguienteCodigo(limpio.periodo);
     try {
-      return await this.repos.actividades.crear(limpio);
+      const creada = await this.repos.actividades.crear(limpio);
+      await avisarJornada(creada);
+      return creada;
     } catch (err) {
       if (err?.code === "P2002") throw new AppError(409, `Ya existe una actividad con el código ${limpio.codigo} en ${limpio.periodo}.`);
       throw err;
@@ -69,7 +79,9 @@ class ActividadService {
     const fin = limpio.fechaFin || actual.fechaFin;
     if (new Date(inicio) > new Date(fin)) throw new AppError(400, "La fecha de inicio no puede ser posterior a la fecha final.");
     try {
-      return await this.repos.actividades.actualizar(id, limpio);
+      const nueva = await this.repos.actividades.actualizar(id, limpio);
+      if (!actual.publicada) await avisarJornada(nueva);
+      return nueva;
     } catch (err) {
       if (err?.code === "P2002") throw new AppError(409, "Ya existe otra actividad con ese código en el periodo.");
       throw err;

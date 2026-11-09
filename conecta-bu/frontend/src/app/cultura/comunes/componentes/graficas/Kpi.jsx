@@ -1,5 +1,6 @@
 import { Area, AreaChart, YAxis } from "recharts";
 import { Icono as IconoBase } from "../Iconos";
+import { Segmentos } from "../ui";
 
 // Selector de periodo y tarjetas de indicadores con su mini linea y su
 // cambio frente al periodo anterior.
@@ -15,23 +16,7 @@ export const PERIODOS = [
 ];
 
 export function SelectorPeriodo({ valor, onCambio }) {
-  return (
-    <div role="group" aria-label="Periodo" className="inline-flex vidrio-panel rounded-full p-1 gap-1">
-      {PERIODOS.map((p) => (
-        <button
-          key={p.id}
-          type="button"
-          aria-pressed={valor === p.id}
-          onClick={() => onCambio(p.id)}
-          className={`min-h-[40px] px-4 sm:px-5 rounded-full text-sm font-bold transition-colors ${
-            valor === p.id ? "boton-liquido" : "text-primary hover:bg-white/80"
-          }`}
-        >
-          {p.texto}
-        </button>
-      ))}
-    </div>
-  );
+  return <Segmentos etiqueta="Periodo" opciones={PERIODOS.map((p) => [p.id, p.texto])} valor={valor} alCambiar={onCambio} />;
 }
 
 // Tonos de las fichas de icono (fondo claro + icono oscuro del mismo tono).

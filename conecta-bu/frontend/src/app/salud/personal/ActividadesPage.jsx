@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { Icono } from "../comunes/componentes/Iconos";
 import { fechaCorta, mensajeError, refrescarCatalogos, useCatalogos } from "../comunes/lib/salud";
-import { claseCampoCorto, Aviso, Campo, Encabezado, Insignia, Tarjeta, Vacio, botonDorado, botonPrimario, botonSecundario, claseCampo } from "../comunes/componentes/ui";
+import { claseCampoCorto, Aviso, Campo, Encabezado, Insignia, Tarjeta, Vacio, botonDorado, botonPrimario, botonSecundario, claseCampo, Segmentos } from "../comunes/componentes/ui";
 
 const SEMAFORO = (c) => (c === null || c === undefined ? null : c >= 90 ? "verde" : c >= 60 ? "dorado" : "rojo");
 
@@ -78,6 +78,12 @@ export function FormularioActividad({ inicial = {}, catalogos, periodo, onGuarda
         <Campo etiqueta="Fecha final">
           <input type="date" value={String(form.fechaFin).slice(0, 10)} onChange={cambiar("fechaFin")} className={claseCampo} />
         </Campo>
+        <Campo etiqueta="Hora de inicio (opcional)">
+          <input type="time" value={form.horaInicio} onChange={cambiar("horaInicio")} className={claseCampo} />
+        </Campo>
+        <Campo etiqueta="Hora final (opcional)">
+          <input type="time" value={form.horaFin} onChange={cambiar("horaFin")} className={claseCampo} />
+        </Campo>
         <label className="flex gap-2.5 items-center text-sm font-semibold text-ink-600">
           <input type="checkbox" checked={form.permanente} onChange={cambiar("permanente")} className="w-4 h-4 accent-primary" />
           Servicio permanente (todo el periodo)
@@ -98,12 +104,6 @@ export function FormularioActividad({ inicial = {}, catalogos, periodo, onGuarda
           <div className="grid gap-3 sm:grid-cols-2 mt-4">
             <Campo etiqueta="Lugar" className="sm:col-span-2">
               <input value={form.lugar} onChange={cambiar("lugar")} className={claseCampo} placeholder="Ej. Bloque A, primer piso" />
-            </Campo>
-            <Campo etiqueta="Hora de inicio">
-              <input type="time" value={form.horaInicio} onChange={cambiar("horaInicio")} className={claseCampo} />
-            </Campo>
-            <Campo etiqueta="Hora final">
-              <input type="time" value={form.horaFin} onChange={cambiar("horaFin")} className={claseCampo} />
             </Campo>
             <Campo etiqueta="Cupos" ayuda="Vacío = sin límite.">
               <input type="number" min="1" value={form.cupos} onChange={cambiar("cupos")} className={claseCampo} />
@@ -248,21 +248,7 @@ export function ActividadesPage() {
       )}
 
       {categoriasConDatos.length > 1 && (
-        <div className="flex gap-2 flex-wrap mb-5">
-          {["", ...categoriasConDatos].map((c) => (
-            <button
-              key={c || "todas"}
-              type="button"
-              onClick={() => setCategoria(c)}
-              aria-pressed={categoria === c}
-              className={`text-sm font-semibold rounded-full px-4 min-h-[38px] border ${
-                categoria === c ? "boton-liquido border-transparent" : "burbuja text-ink-600 hover:bg-white"
-              }`}
-            >
-              {c ? catalogos?.categorias?.[c] : "Todas"}
-            </button>
-          ))}
-        </div>
+        <Segmentos className="mb-5" etiqueta="Categoría" opciones={["", ...categoriasConDatos].map((c) => [c, c ? catalogos?.categorias?.[c] : "Todas"])} valor={categoria} alCambiar={setCategoria} />
       )}
 
       {!actividades && <div className="h-40 bg-white/60 border border-gray-200 rounded-xl animate-pulse" />}
@@ -316,6 +302,7 @@ export function ActividadesPage() {
                   : ind.ultimaFecha
                     ? `Última jornada: ${fechaCorta(ind.ultimaFecha)}`
                     : "Sin jornadas registradas"}
+                {a.horaInicio ? ` · ${a.horaInicio}${a.horaFin ? ` a ${a.horaFin}` : ""}` : ""}
               </p>
             </Link>
           );

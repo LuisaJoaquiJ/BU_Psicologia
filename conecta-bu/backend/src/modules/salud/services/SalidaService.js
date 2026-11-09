@@ -3,11 +3,22 @@ const { AppError } = require("../../../common/utils/AppError");
 const repos = require("../repositories");
 const { ESTADOS_SALIDA, texto, iso, datosSalida, serializar, publicaInscripcion } = require("../utils/salidas");
 const { TIPOS } = require("../utils/sst");
+const automatizaciones = require("../../../integrations/automatizaciones");
 const { hoyBogota } = require("../../../common/utils/fechas");
+const notificaciones = require("../../notificaciones/service");
+
+// Una salida publicada abre inscripcion: se avisa a los estudiantes (una vez).
+function avisarSalida(salida) {
+  if (salida?.estado !== "Publicada") return;
+  const fecha = new Date(salida.fechaSalida).toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  const limite = new Date(salida.fechaLimiteInscripcion).toLocaleDateString("es-CO", { day: "numeric", month: "long", timeZone: "UTC" });
+  return notificaciones.difundirAEstudiantes({ modulo: "salud", tipo: "salida-publicada", titulo: "Nueva salida con inscripción abierta", mensaje: `${salida.nombre}${salida.destino ? ` a ${salida.destino}` : ""}: sale el ${fecha}. Inscríbete hasta el ${limite}.`, ruta: "/mi-salud/salidas" });
+}
 
 const DIA_MS = 24 * 60 * 60 * 1000;
 const { comprobanteService } = require("./ComprobanteService");
 const { generarListado } = require("../archivos/ListadoSalidaExcel");
+const { fotoSalidaService } = require("./FotoSalidaService");
 
 // Salidas con inscripcion: gestion del personal de Salud.
 class SalidaService {
@@ -36,17 +47,20 @@ class SalidaService {
   async listar() {
     const salidas = await this.repos.salidas.porFecha();
     const mapa = await this.conteos(salidas.map((s) => s.id));
-    return salidas.map((s) => serializar(s, mapa.get(s.id)));
+    const fotos = await fotoSalidaService.deSalidas(salidas.map((s) => s.id));
+    return salidas.map((s) => ({ ...serializar(s, mapa.get(s.id)), fotos: fotos.get(s.id) || [] }));
   }
 
   async obtener(id) {
     const salida = await this.obtenerOFallar(id);
-    return serializar(salida, (await this.conteos([id])).get(id));
+    return { ...serializar(salida, (await this.conteos([id])).get(id)), fotos: (await fotoSalidaService.deSalidas([id])).get(id) || [] };
   }
 
   async crear(cuerpo, usuario) {
     const estado = cuerpo.estado === "Publicada" ? "Publicada" : "Borrador";
-    return serializar(await this.repos.salidas.crear({ ...datosSalida(cuerpo), estado, creadaPor: usuario?.emailInstitucional || null }));
+    const creada = await this.repos.salidas.crear({ ...datosSalida(cuerpo), estado, creadaPor: usuario?.emailInstitucional || null });
+    await avisarSalida(creada);
+    return serializar(creada);
   }
 
   // Abre la inscripcion de estudiantes de una salida reportada en SST: crea
@@ -56,7 +70,7 @@ class SalidaService {
     const reporte = await this.repos.reportesSst.completo(reporteId);
     if (!reporte) throw new AppError(404, "El reporte no existe.");
     if (reporte.convocatoria) {
-      if (publicar && reporte.convocatoria.estado === "Borrador") await this.repos.salidas.actualizar(reporte.convocatoria.id, { estado: "Publicada" });
+      if (publicar && reporte.convocatoria.estado === "Borrador") await avisarSalida(await this.repos.salidas.actualizar(reporte.convocatoria.id, { estado: "Publicada" }));
       return { salida: await this.obtener(reporte.convocatoria.id), creada: false };
     }
     if (TIPOS[reporte.tipo]?.grupo !== "estudiantes") throw new AppError(409, "Solo las salidas con estudiantes abren inscripción.");
@@ -79,6 +93,7 @@ class SalidaService {
       fechaLimiteInscripcion: iso(limite),
     });
     const creada = await this.repos.salidas.crear({ ...datos, estado: publicar ? "Publicada" : "Borrador", reporteSstId: reporte.id, creadaPor: usuario?.emailInstitucional || null });
+    await avisarSalida(creada);
     return { salida: serializar(creada), creada: true };
   }
 
@@ -140,7 +155,12 @@ class SalidaService {
     const obs = texto(observacion, 1000);
     if (estado === "Rechazada" && !obs) throw new AppError(400, "Escribe el motivo del rechazo para que el estudiante sepa qué corregir.");
     const datos = { estado, observacion: obs, revisadoPor: usuario?.emailInstitucional || null, fechaRevision: new Date() };
-    return publicaInscripcion(await this.repos.inscripcionesSalida.actualizar(inscripcionId, datos));
+    const revisada = await this.repos.inscripcionesSalida.actualizar(inscripcionId, datos);
+    // Solo avisa cuando cambia la decision (no si se vuelve a guardar igual).
+    if (revisada.estado !== ins.estado || (revisada.observacion || null) !== (ins.observacion || null)) {
+      automatizaciones.salidaRevisada({ ...ins, ...revisada }, await this.obtenerOFallar(salidaId)); // RF-013 (no bloquea)
+    }
+    return publicaInscripcion(revisada);
   }
 
   async comprobanteDe(salidaId, inscripcionId) {

@@ -1,3 +1,4 @@
+import { useAvisos } from "../../../../components/avisos/Avisos";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Icono } from "./Iconos";
 
@@ -13,7 +14,6 @@ const Contexto = createContext(null);
 
 export function ConfirmarProvider({ children }) {
   const [pregunta, setPregunta] = useState(null);
-  const [avisos, setAvisos] = useState([]);
   const resolver = useRef(null);
 
   const confirmar = useCallback(
@@ -30,36 +30,13 @@ export function ConfirmarProvider({ children }) {
     setPregunta(null);
   }, []);
 
-  const avisar = useCallback((texto, tono = "exito") => {
-    const id = Date.now() + Math.random();
-    setAvisos((a) => [...a.slice(-2), { id, texto, tono }]);
-    setTimeout(() => setAvisos((a) => a.filter((x) => x.id !== id)), 4500);
-  }, []);
+  const global = useAvisos();
+  const avisar = useCallback((texto, tono = "exito") => global.mostrar(texto, tono === "error" ? "error" : "exito"), [global.mostrar]);
 
   return (
     <Contexto.Provider value={{ confirmar, avisar }}>
       {children}
       {pregunta && <VentanaConfirmar pregunta={pregunta} responder={responder} />}
-      <div aria-live="polite" className="fixed z-[70] bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-5 sm:translate-x-0 flex flex-col gap-2 w-[calc(100%-32px)] sm:w-[380px] pointer-events-none">
-        {avisos.map((a) => (
-          <div
-            key={a.id}
-            role="status"
-            className={`pointer-events-auto flex items-start gap-3 rounded-2xl px-4 py-3 shadow-xl border text-sm font-semibold animate-[entrarAviso_0.25s_ease-out] ${
-              a.tono === "error" ? "bg-red-50 border-red-200 text-red-800" : "bg-[#0B2347] border-[#0B2347] text-white"
-            }`}
-          >
-            <span className={`shrink-0 w-6 h-6 rounded-full grid place-items-center ${a.tono === "error" ? "bg-red-100" : "bg-[#1baf7a]"}`}>
-              <Icono nombre={a.tono === "error" ? "alerta" : "check"} size={14} strokeWidth={3} />
-            </span>
-            <span className="flex-1 pt-0.5">{a.texto}</span>
-            <button type="button" onClick={() => setAvisos((x) => x.filter((y) => y.id !== a.id))} aria-label="Cerrar aviso" className="opacity-70 hover:opacity-100">
-              <Icono nombre="cerrar" size={14} />
-            </button>
-          </div>
-        ))}
-      </div>
-      <style>{`@keyframes entrarAviso{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}`}</style>
     </Contexto.Provider>
   );
 }

@@ -12,6 +12,14 @@ function Chispa({ size = 18 }) {
   );
 }
 
+const MODULOS = [
+  { prefijos: ["/mi-cultura", "/cultura"], id: "cultura" },
+  { prefijos: ["/mi-salud", "/salud", "/reportes-sst"], id: "salud" },
+  { prefijos: ["/mi-deporte", "/deporte"], id: "deporte" },
+];
+// Modulo de la pagina actual: da el contexto de las preguntas del asistente.
+const moduloDe = (pathname) => MODULOS.find((m) => m.prefijos.some((p) => pathname === p || pathname.startsWith(`${p}/`))) || { id: "orientacion" };
+
 const aro = { background: "conic-gradient(from 200deg, #E8740E, #C89B14, #E8740E)" };
 
 // Mismo esquema que el asistente de NOVA: botón circular, saludo y panel
@@ -21,6 +29,7 @@ export function AsistenteFlotante() {
   const { pathname } = useLocation();
   const [abierto, setAbierto] = useState(false);
   const [saludo, setSaludo] = useState(true);
+  const modulo = moduloDe(pathname);
 
   useEffect(() => {
     if (!abierto) return undefined;
@@ -62,7 +71,7 @@ export function AsistenteFlotante() {
             </button>
           </header>
           <div className="flex-1 min-h-0 px-4 py-4 flex flex-col">
-            <AsistenteConversacion compacto />
+            <AsistenteConversacion compacto modulo={modulo.id} alNavegar={() => setAbierto(false)} />
           </div>
         </section>
       )}

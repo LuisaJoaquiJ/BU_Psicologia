@@ -17,6 +17,7 @@ router.get("/jornadas", soloEstudiante, manejar(e.jornadas));
 router.post("/jornadas/:id/inscripcion", soloEstudiante, manejar(e.inscribirseJornada));
 router.patch("/jornadas/:id/inscripcion/cancelar", soloEstudiante, manejar(e.cancelarJornada));
 router.get("/salidas", soloEstudiante, manejar(s.paraEstudiante));
+router.get("/salidas/:id/fotos/:fotoId/archivo", soloEstudiante, manejar(s.foto));
 router.post("/salidas/:id/inscripcion", soloEstudiante, comprobanteService.recibir, manejar(s.inscribirse));
 router.patch("/salidas/:id/inscripcion/cancelar", soloEstudiante, manejar(s.cancelar));
 

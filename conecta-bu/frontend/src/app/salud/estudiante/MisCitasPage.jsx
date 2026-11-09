@@ -4,7 +4,7 @@ import { http } from "../../../lib/api/http";
 import { fechaInputUTC, fechaLarga, formatearHora } from "../comunes/lib/format";
 import { Icono } from "../comunes/componentes/Iconos";
 import { CalendarioMes } from "../comunes/componentes/CalendarioMes";
-import { Aviso, Estado, Vacio, botonPrimario, botonSecundario, textoEstado } from "../comunes/componentes/ui";
+import { Aviso, Estado, Vacio, botonPrimario, botonSecundario, textoEstado, Segmentos } from "../comunes/componentes/ui";
 
 // HU-12: solo se cancela con al menos 24 horas de anticipacion (el backend
 // lo valida; aqui se avisa antes para no ofrecer un boton que va a fallar).
@@ -434,24 +434,7 @@ export function MisCitasPage() {
 
               {vista === "lista" ? (
                 <>
-                  <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar historial">
-                    {FILTROS.filter((f) => f.id === "todas" || conteo[f.id]).map((f) => (
-                      <button
-                        key={f.id}
-                        type="button"
-                        aria-pressed={filtro === f.id}
-                        onClick={() => setFiltro(f.id)}
-                        className={`min-h-[40px] px-4 rounded-full border text-sm font-bold inline-flex items-center gap-2 transition-colors ${
-                          filtro === f.id ? "bg-primary-dark border-primary-dark text-white" : "bg-white border-gray-200 text-ink-700 hover:border-primary/50"
-                        }`}
-                      >
-                        {f.texto}
-                        <span className={`min-w-[22px] h-[22px] px-1.5 rounded-full grid place-items-center text-[12px] tabular-nums ${filtro === f.id ? "bg-white/20" : "bg-gray-100"}`}>
-                          {conteo[f.id] || 0}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                  <Segmentos etiqueta="Filtrar historial" opciones={FILTROS.filter((f) => f.id === "todas" || conteo[f.id]).map((f) => [f.id, f.texto])} conteos={conteo} valor={filtro} alCambiar={setFiltro} />
                   {filtradas.length ? (
                     <ul className="list-none m-0 p-0 bg-white border border-gray-200 rounded-xl divide-y divide-gray-200">
                       {filtradas.map((c) => (

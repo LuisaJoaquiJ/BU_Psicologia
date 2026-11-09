@@ -39,7 +39,7 @@ class CifrasRepository {
         select: { id: true, fecha: true, poblacion: true, programa: true, actividadId: true, personaId: true, remitido: true },
       }),
       this.db.historicoSalud.findMany(),
-      this.db.evidenciaSalud.findMany({ where: { fecha: { gte: rango.desde, lte: rango.hasta } }, include: { actividad: true }, orderBy: { fecha: "asc" } }),
+      this.db.evidenciaSalud.findMany({ where: { OR: [{ fecha: { gte: rango.desde, lte: rango.hasta } }, { actividad: { periodo } }] }, include: { actividad: true }, orderBy: { fecha: "asc" } }),
       this.db.actividadSalud.findMany({ select: { id: true, categoria: true } }),
     ]);
     return { actividades, todas, historicos, evidencias, todasLasActividades };

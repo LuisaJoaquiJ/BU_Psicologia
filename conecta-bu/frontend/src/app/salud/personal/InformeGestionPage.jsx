@@ -4,6 +4,7 @@ import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Too
 import { CajaTip, EJE, GUIA, LINEA_EJE } from "../comunes/componentes/graficas/Base";
 import { http } from "../../../lib/api/http";
 import { Icono } from "../comunes/componentes/Iconos";
+import { EvidenciasInforme } from "../../../components/EvidenciasInforme";
 import { COLOR_POBLACION, descargar, mensajeError, useCatalogos } from "../comunes/lib/salud";
 import { Aviso, BarrasHorizontales, Campo, Insignia, Kpi, Tarjeta, Vacio, botonDorado, botonPrimario, botonSecundario, claseCampo, claseCampoCorto } from "../comunes/componentes/ui";
 
@@ -18,8 +19,34 @@ const PASOS = [
   { id: "evaluacion", titulo: "Evaluación", icono: "estrella" },
   { id: "actividades", titulo: "Avances por actividad", icono: "lista" },
   { id: "cifras", titulo: "Cifras y años anteriores", icono: "grafica" },
+  { id: "evidencias", titulo: "Evidencias y fotos", icono: "archivo" },
   { id: "enviar", titulo: "Revisar y enviar", icono: "check" },
 ];
+
+// Registro fotografico: las fotos y planillas suben a una actividad y entran solas al informe.
+function PasoEvidencias({ respuesta, editable, recargar }) {
+  const { cifras, revision } = respuesta;
+  const sinFotos = revision.avisos?.find((a) => a.tipo === "evidencias")?.actividades || [];
+  return (
+    <EvidenciasInforme
+      evidencias={cifras.evidencias}
+      destinos={cifras.actividades.map((a) => ({ valor: String(a.id), etiqueta: a.nombre }))}
+      destinoDe={(e) => String(e.actividadId)}
+      sinFotos={sinFotos}
+      editable={editable}
+      alCambiar={recargar}
+      rutaArchivo={(e) => `/salud/evidencias/${e.id}/archivo`}
+      subir={(actividadId, archivos, { descripcion, fecha }) => {
+        const datos = new FormData();
+        archivos.forEach((a) => datos.append("archivos", a));
+        if (descripcion) datos.append("descripcion", descripcion);
+        if (fecha) datos.append("fecha", fecha);
+        return http.post(`/salud/actividades/${actividadId}/evidencias`, datos);
+      }}
+      eliminar={(e) => http.delete(`/salud/evidencias/${e.id}`)}
+    />
+  );
+}
 
 const ESTADO = {
   Borrador: { tono: "dorado", texto: "Borrador" },
@@ -695,6 +722,7 @@ export function InformeGestionPage() {
             {paso === "evaluacion" && <PasoEvaluacion datos={datos} poner={poner} editable={editable} cifras={respuesta.cifras} />}
             {paso === "actividades" && <PasoActividades cifras={respuesta.cifras} recargar={() => cargar(true)} />}
             {paso === "cifras" && <PasoCifras cifras={respuesta.cifras} recargar={() => cargar(true)} />}
+            {paso === "evidencias" && <PasoEvidencias respuesta={respuesta} editable={editable} recargar={() => cargar(true)} />}
             {paso === "enviar" && <PasoEnviar informe={informe} revision={respuesta.revision} onEnviar={enviar} enviando={enviando} periodo={periodo} sucio={sucio} />}
           </div>
         </div>

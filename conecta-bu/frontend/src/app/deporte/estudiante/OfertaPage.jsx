@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Aviso, Insignia, Vacio, EstadoVacio, Esqueleto } from "../comunes/componentes/ui";
+import { Aviso, Insignia, Vacio, EstadoVacio, Esqueleto, Segmentos } from "../comunes/componentes/ui";
 import { useConfirmar } from "../comunes/componentes/Confirmar";
 import { Icono } from "../comunes/componentes/Iconos";
 import { FotoDeporte } from "../comunes/componentes/SelectorFoto";
@@ -112,24 +112,7 @@ export function OfertaPage() {
             </p>
           )}
         </div>
-        <div className="flex gap-1.5 flex-wrap" role="group" aria-label="Filtrar por tipo">
-          {[
-            ["", "Todas"],
-            ["Individual", "Individuales"],
-            ["Colectivo", "En equipo"],
-            ["Mental", "Mentales"],
-          ].map(([v, t]) => (
-            <button
-              key={t}
-              type="button"
-              aria-pressed={filtro === v}
-              onClick={() => setFiltro(v)}
-              className={`rounded-full px-4 min-h-[40px] text-sm font-bold ${filtro === v ? "boton-liquido" : "burbuja text-ink-600 hover:bg-white"}`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+        <Segmentos etiqueta="Filtrar por tipo" opciones={[["", "Todas"], ["Individual", "Individuales"], ["Colectivo", "En equipo"], ["Mental", "Mentales"]]} valor={filtro} alCambiar={setFiltro} />
       </div>
       <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6 flex flex-col gap-3">
         <div className="flex gap-3 flex-wrap items-center">

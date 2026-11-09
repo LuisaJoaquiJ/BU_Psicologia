@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../lib/auth/AuthContext";
 import { http } from "../../lib/api/http";
@@ -7,7 +7,25 @@ import { MODULOS, puedeAdministrar, rutaModulo } from "../../lib/modulos";
 import { fechaLarga, formatearHora } from "../../lib/format";
 import { Logo } from "../../components/Logo";
 import { Icono } from "../../components/Iconos";
+import { CampanaNotificaciones } from "../../components/CampanaNotificaciones";
 import { iniciales } from "../../components/Navbar";
+
+// Escena 3D de la portada: se descarga aparte, solo cuando se abre el portal.
+const EscenaPortada = lazy(() => import("./EscenaPortada"));
+
+// La escena va a la derecha del titulo: solo cabe desde 1024 px. En tableta y
+// celular el titulo ocupa todo el ancho, asi que ahi no se muestra ni se descarga.
+function usePantallaAncha() {
+  const consulta = "(min-width: 1024px)";
+  const [ancha, setAncha] = useState(() => typeof window !== "undefined" && window.matchMedia(consulta).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(consulta);
+    const cambiar = () => setAncha(mq.matches);
+    mq.addEventListener("change", cambiar);
+    return () => mq.removeEventListener("change", cambiar);
+  }, []);
+  return ancha;
+}
 
 const ROL_TEXTO = { Administrador: "Personal de Bienestar", SuperAdministrador: "Superadministrador", Estudiante: "Estudiante" };
 
@@ -35,8 +53,200 @@ const fechaDeEvento = (fecha) => {
   return { dia: f.getDate(), mes: f.toLocaleDateString("es-CO", { month: "short" }).replace(".", "") };
 };
 
+// --- MENUS DEL ENCABEZADO ---
+// Enlace del menu: ancla (#seccion) o enlace externo (tel:) con <a>; rutas del portal con <Link>.
+function EnlaceMenu({ to, alElegir, className, children }) {
+  if (to.startsWith("#") || to.startsWith("tel:")) {
+    return (
+      <a href={to} onClick={alElegir} className={className}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link to={to} onClick={alElegir} className={className}>
+      {children}
+    </Link>
+  );
+}
+
+const FILA_MENU = "flex items-center gap-3 rounded-2xl px-3 py-2.5 min-h-[52px] no-underline text-primary-dark hover:bg-primary-light/70 focus-visible:bg-primary-light/70 transition-colors";
+const PIE_MENU = "mt-1 flex items-center justify-between gap-2 rounded-2xl px-3 min-h-[44px] no-underline text-sm font-extrabold text-primary hover:bg-primary-light/70 transition-colors";
+
+// Un elemento del menu: el nombre lleva a la seccion y la flecha abre sus opciones
+// (con el mouse basta pasar por encima; con teclado o toque, la flecha).
+function ItemMenu({ id, href, texto, abierto, alAbrir, alSalir, alCerrar, alAlternar, ancho = "w-[min(380px,92vw)]", children }) {
+  return (
+    <div className="relative" onMouseEnter={() => alAbrir(id)} onMouseLeave={alSalir}>
+      <span className="inline-flex items-center rounded-full hover:bg-black/5 transition-colors">
+        <a href={href} onClick={alCerrar} className="pl-5 pr-1 min-h-[44px] inline-flex items-center rounded-l-full">
+          {texto}
+        </a>
+        <button
+          type="button"
+          aria-label={`Ver opciones de ${texto}`}
+          aria-expanded={abierto}
+          aria-haspopup="true"
+          onClick={() => alAlternar(id)}
+          className="pl-1 pr-3.5 min-h-[44px] inline-flex items-center rounded-r-full"
+        >
+          <Icono nombre="flecha" size={14} strokeWidth={2.6} className={`transition-transform duration-200 motion-reduce:transition-none ${abierto ? "-rotate-90" : "rotate-90"}`} />
+        </button>
+      </span>
+      {abierto && (
+        <div className="absolute left-1/2 top-full -translate-x-1/2 pt-3 z-10">
+          <div className={`${ancho} rounded-[28px] bg-white/95 backdrop-blur-2xl border border-white shadow-[0_24px_60px_-20px_rgba(11,35,71,0.4)] p-2 ${ENTRA}`}>{children}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MenusPortal({ eventos, rutaOrientacion, destinoEventos }) {
+  const { usuario } = useAuth();
+  const [abierto, setAbierto] = useState("");
+  const temporizador = useRef(null);
+  const caja = useRef(null);
+
+  const abrir = (id) => {
+    clearTimeout(temporizador.current);
+    setAbierto(id);
+  };
+  const salir = () => {
+    clearTimeout(temporizador.current);
+    temporizador.current = setTimeout(() => setAbierto(""), 150);
+  };
+  const cerrar = () => {
+    clearTimeout(temporizador.current);
+    setAbierto("");
+  };
+  const alternar = (id) => {
+    clearTimeout(temporizador.current);
+    setAbierto((a) => (a === id ? "" : id));
+  };
+
+  // Escape y clic fuera lo cierran.
+  useEffect(() => {
+    if (!abierto) return undefined;
+    const alTeclear = (e) => e.key === "Escape" && cerrar();
+    const alPulsar = (e) => caja.current && !caja.current.contains(e.target) && cerrar();
+    document.addEventListener("keydown", alTeclear);
+    document.addEventListener("mousedown", alPulsar);
+    return () => {
+      document.removeEventListener("keydown", alTeclear);
+      document.removeEventListener("mousedown", alPulsar);
+    };
+  }, [abierto]);
+  useEffect(() => () => clearTimeout(temporizador.current), []);
+
+  const propios = { abierto: false, alAbrir: abrir, alSalir: salir, alCerrar: cerrar, alAlternar: alternar };
+  const tramites = tramitesDe(usuario);
+  const proximos = (eventos || []).slice(0, 3);
+
+  return (
+    <nav ref={caja} aria-label="Portal" className="hidden md:flex items-center gap-1 text-[15px] font-bold text-primary-dark">
+      <ItemMenu {...propios} id="tramites" href="#tramites" texto="Trámites" abierto={abierto === "tramites"}>
+        <ul className="list-none m-0 p-0">
+          {tramites.map((t) => (
+            <li key={t.to}>
+              <EnlaceMenu to={t.to} alElegir={cerrar} className={FILA_MENU}>
+                <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${t.color}1F`, color: t.color }}>
+                  <Icono nombre={t.icono || "flecha"} size={18} strokeWidth={2.4} />
+                </span>
+                <span className="font-bold text-[15px] leading-snug">{t.texto}</span>
+              </EnlaceMenu>
+            </li>
+          ))}
+        </ul>
+        <EnlaceMenu to="#tramites" alElegir={cerrar} className={PIE_MENU}>
+          Ver todos los trámites <Icono nombre="flecha" size={16} strokeWidth={2.4} />
+        </EnlaceMenu>
+      </ItemMenu>
+
+      <ItemMenu {...propios} id="dimensiones" href="#dimensiones" texto="Dimensiones" abierto={abierto === "dimensiones"} ancho="w-[min(440px,92vw)]">
+        <ul className="list-none m-0 p-0">
+          {MODULOS.map((m) => {
+            const lista = m.estado === "disponible";
+            const to = lista ? rutaModulo(m, usuario) || "#dimensiones" : "#dimensiones";
+            return (
+              <li key={m.id}>
+                <EnlaceMenu to={to} alElegir={cerrar} className={FILA_MENU}>
+                  <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${COLOR[m.id]}1F`, color: COLOR[m.id] }}>
+                    <Icono nombre={m.icono} size={18} strokeWidth={2.4} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="font-bold text-[15px] leading-snug">{m.nombre}</span>
+                      {!lista && <span className="text-[11px] font-bold rounded-md bg-gray-100 text-ink-600 px-1.5 py-0.5 select-none">Próximamente</span>}
+                    </span>
+                    <span className="block text-[13px] font-normal leading-snug text-ink-500 line-clamp-1">{DIMENSION[m.id].texto}</span>
+                  </span>
+                </EnlaceMenu>
+              </li>
+            );
+          })}
+        </ul>
+        <EnlaceMenu to="#dimensiones" alElegir={cerrar} className={PIE_MENU}>
+          Conocer las dimensiones <Icono nombre="flecha" size={16} strokeWidth={2.4} />
+        </EnlaceMenu>
+      </ItemMenu>
+
+      <ItemMenu {...propios} id="agenda" href="#agenda" texto="Agenda" abierto={abierto === "agenda"}>
+        {eventos === null && <p className="m-0 px-3 py-3 text-sm font-normal text-ink-500">Cargando la agenda…</p>}
+        {eventos && proximos.length === 0 && <p className="m-0 px-3 py-3 text-sm font-normal text-ink-500">Aún no hay talleres ni eventos publicados.</p>}
+        {proximos.length > 0 && (
+          <ul className="list-none m-0 p-0">
+            {proximos.map((e) => {
+              const f = fechaDeEvento(e.fecha);
+              return (
+                <li key={e.id}>
+                  <EnlaceMenu to={e.destino || destinoEventos} alElegir={cerrar} className={FILA_MENU}>
+                    <span className="w-11 h-11 rounded-2xl bg-primary-light flex flex-col items-center justify-center leading-none shrink-0">
+                      <strong className="text-[17px] tabular-nums">{f.dia}</strong>
+                      <span className="text-[11px] font-bold text-accent">{f.mes}</span>
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-bold text-[15px] leading-snug truncate">{e.nombre}</span>
+                      <span className="block text-[13px] font-normal text-ink-500 tabular-nums">{formatearHora(e.horaInicio)}{e.lugar ? ` · ${e.lugar}` : ""}</span>
+                    </span>
+                  </EnlaceMenu>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <EnlaceMenu to="#agenda" alElegir={cerrar} className={PIE_MENU}>
+          Ver toda la agenda <Icono nombre="flecha" size={16} strokeWidth={2.4} />
+        </EnlaceMenu>
+      </ItemMenu>
+
+      <ItemMenu {...propios} id="ayuda" href="#ayuda" texto="Ayuda" abierto={abierto === "ayuda"}>
+        <ul className="list-none m-0 p-0">
+          {[
+            { to: "tel:123", icono: "telefono", color: "#B42318", texto: "Llamar a la línea 123", detalle: "Si es una emergencia" },
+            { to: rutaOrientacion, icono: "calendario", color: COLOR["desarrollo-humano"], texto: "Pedir una cita de orientación", detalle: "Acompañamiento psicológico" },
+            { to: "#ayuda", icono: "chat", color: COLOR.permanencia, texto: "Cómo usar Conecta BU", detalle: "Tres pasos para empezar" },
+          ].map((o) => (
+            <li key={o.texto}>
+              <EnlaceMenu to={o.to} alElegir={cerrar} className={FILA_MENU}>
+                <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${o.color}1F`, color: o.color }}>
+                  <Icono nombre={o.icono} size={18} strokeWidth={2.4} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-bold text-[15px] leading-snug">{o.texto}</span>
+                  <span className="block text-[13px] font-normal text-ink-500">{o.detalle}</span>
+                </span>
+              </EnlaceMenu>
+            </li>
+          ))}
+        </ul>
+      </ItemMenu>
+    </nav>
+  );
+}
+
 // --- HEADER FLOTANTE ---
-function Encabezado() {
+function Encabezado({ eventos, rutaOrientacion, destinoEventos }) {
   const { estaAutenticado, usuario, cerrarSesion } = useAuth();
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 lg:px-10 pt-4 transition-all duration-300">
@@ -50,18 +260,15 @@ function Encabezado() {
         <span className="sm:hidden">
           <Logo alto={40} subtitulo="" />
         </span>
-        <nav aria-label="Portal" className="hidden md:flex items-center gap-1 text-[15px] font-bold text-primary-dark">
-          {ENLACES_PORTAL.map(([href, texto]) => (
-            <a key={href} href={href} className="hover:bg-black/5 px-5 min-h-[44px] inline-flex items-center rounded-full transition-colors">{texto}</a>
-          ))}
-        </nav>
+        <MenusPortal eventos={eventos} rutaOrientacion={rutaOrientacion} destinoEventos={destinoEventos} />
         {estaAutenticado ? (
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <span className="hidden sm:block text-right leading-tight">
               <span className="block text-sm font-bold text-ink-900 truncate max-w-[220px]">{usuario?.nombre}</span>
               <span className="block text-xs text-ink-500">{ROL_TEXTO[usuario?.rol] || usuario?.rol}</span>
             </span>
-            <span className="w-10 h-10 rounded-full boton-liquido font-extrabold text-sm flex items-center justify-center shrink-0">
+            <CampanaNotificaciones />
+            <span className="w-10 h-10 rounded-full bg-primary-light text-primary-dark ring-1 ring-primary/25 select-none font-extrabold text-sm flex items-center justify-center shrink-0">
               {iniciales(usuario?.nombre)}
             </span>
             <button onClick={cerrarSesion} className="text-sm font-bold rounded-full px-4 min-h-[44px] text-primary hover:bg-black/5">Salir</button>
@@ -134,41 +341,75 @@ function ColumnasDimensiones({ usuario }) {
   };
 
   return (
-    <section aria-label="Dimensiones de Bienestar" style={retraso(160)} className={`${ENTRA} cinta-dimensiones -mx-4 sm:-mx-6 lg:-mx-10`}>
+    <div className="revela cinta-dimensiones -mx-4 sm:-mx-6 lg:-mx-10">
       <ul className="cinta-pista list-none m-0 py-6 px-4 sm:px-6 lg:px-10 flex gap-4 w-max">
         {MODULOS.map((m) => tarjeta(m, false))}
         {MODULOS.map((m) => tarjeta(m, true))}
       </ul>
-    </section>
+    </div>
   );
 }
 
 function HeroFullScreen() {
   const { usuario } = useAuth();
   const nombre = usuario?.nombre?.split(" ")[0];
+  const ancha = usePantallaAncha();
 
   return (
-    <div className="relative min-h-[100svh] flex flex-col justify-end pb-12 pt-28 bg-[#1E3A5F] overflow-x-clip">
+    <div className="relative min-h-[100svh] flex flex-col justify-center pt-28 pb-20 bg-[#1E3A5F] overflow-x-clip">
       <img src={IMAGENES.sede.src} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#1E3A5F] via-[#1E3A5F]/80 to-[#1E3A5F]/45" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
         <div className="absolute w-[520px] h-[520px] -left-40 top-10 rounded-full blur-3xl bg-[radial-gradient(circle,rgba(255,193,7,0.22)_0%,transparent_70%)]" />
         <div className="absolute w-[480px] h-[480px] -right-32 bottom-10 rounded-full blur-3xl bg-[radial-gradient(circle,rgba(235,104,52,0.18)_0%,transparent_70%)]" />
       </div>
+      {ancha && (
+        <Suspense fallback={null}>
+          <EscenaPortada />
+        </Suspense>
+      )}
 
-      <div className="relative max-w-[1800px] mx-auto w-full px-4 sm:px-6 lg:px-10 flex flex-col gap-12">
-        <section className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
-          <h1 className={`m-0 font-sans text-[clamp(44px,6vw,80px)] leading-[0.95] tracking-[-0.04em] font-extrabold text-white max-w-[12em] ${ENTRA}`}>
+      <div className="relative max-w-[1800px] mx-auto w-full px-4 sm:px-6 lg:px-10">
+        <section className="max-w-[min(100%,46rem)] lg:max-w-[52%] flex flex-col gap-6">
+          <h1 className={`m-0 font-sans text-[clamp(44px,6.2vw,92px)] leading-[0.95] tracking-[-0.04em] font-extrabold text-white [text-wrap:balance] ${ENTRA}`}>
             {nombre ? `Hola, ${nombre}` : "Cinco formas de cuidarte mientras estudias"}
           </h1>
-          <p style={retraso(60)} className={`m-0 text-lg sm:text-xl leading-snug text-white/90 max-w-[26em] [text-wrap:pretty] ${ENTRA}`}>
+          <p style={retraso(60)} className={`m-0 text-lg sm:text-xl leading-relaxed text-white/90 max-w-[30em] [text-wrap:pretty] ${ENTRA}`}>
             {nombre ? "Elige una dimensión o un trámite de los que más usas. Todo con tu cuenta institucional." : "Elige una dimensión de Bienestar Institucional. Con tu correo de la Uniautónoma pides citas, te inscribes y sigues tus horas."}
           </p>
+          <div style={retraso(120)} className={`flex flex-wrap gap-3 mt-2 ${ENTRA}`}>
+            <a href="#explorar" className="min-h-[52px] px-7 rounded-full bg-white text-primary-dark font-extrabold text-[16px] inline-flex items-center gap-2 no-underline shadow-[0_12px_30px_-10px_rgba(2,10,28,0.6)] transition-transform duration-200 ease-salida hover:-translate-y-0.5 motion-reduce:transition-none">
+              Ver las dimensiones <Icono nombre="flecha" size={18} strokeWidth={2.4} className="rotate-90" />
+            </a>
+            {usuario ? (
+              <a href="#tramites" className="min-h-[52px] px-7 rounded-full bg-white/10 border-[1.5px] border-white/40 text-white font-bold text-[16px] inline-flex items-center no-underline transition-colors duration-200 hover:bg-white/[0.18]">
+                ¿Qué necesitas hoy?
+              </a>
+            ) : (
+              <Link to="/login" className="min-h-[52px] px-7 rounded-full bg-white/10 border-[1.5px] border-white/40 text-white font-bold text-[16px] inline-flex items-center no-underline transition-colors duration-200 hover:bg-white/[0.18]">
+                Ingresar con mi correo
+              </Link>
+            )}
+          </div>
         </section>
-
-        <ColumnasDimensiones usuario={usuario} />
       </div>
     </div>
+  );
+}
+
+// Cinta de las cinco dimensiones, en su propia seccion bajo la portada.
+function Explorar() {
+  const { usuario } = useAuth();
+  return (
+    <section id="explorar" aria-labelledby="titulo-explorar" className="relative scroll-mt-24 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 pt-16 sm:pt-24">
+      <div className="revela flex flex-wrap items-end justify-between gap-x-10 gap-y-3 mb-4">
+        <h2 id="titulo-explorar" className="m-0 font-sans text-3xl sm:text-4xl font-extrabold tracking-tight text-primary-dark">
+          Explora Bienestar
+        </h2>
+        <p className="m-0 text-ink-500 max-w-[34em]">Toca una dimensión para entrar. Pasa el mouse sobre una tarjeta para detener la cinta.</p>
+      </div>
+      <ColumnasDimensiones usuario={usuario} />
+    </section>
   );
 }
 
@@ -506,8 +747,9 @@ export function PortalPage() {
 
   return (
     <div ref={raiz} className="portal relative isolate min-h-screen bg-[#F3EDE1] overflow-x-clip selection:bg-accent selection:text-white">
-      <Encabezado />
+      <Encabezado eventos={eventos} rutaOrientacion={rutaOrientacion} destinoEventos={destinoEventos} />
       <HeroFullScreen />
+      <Explorar />
       <Tramites />
       <Dimensiones />
       <Agenda eventos={eventos} error={error} destino={destinoEventos} onReintentar={cargarAgenda} />

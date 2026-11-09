@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { fechaLarga } from "../comunes/lib/format";
-import { descargar, mensajeError } from "../comunes/lib/salud";
+import { descargar, mensajeError, useArchivoProtegido } from "../comunes/lib/salud";
+import { useAvisos } from "../../../components/avisos/Avisos";
 import { Icono } from "../comunes/componentes/Iconos";
 import { BotonFlotante, Ventana } from "../comunes/componentes/Ventana";
 import { Aviso, Campo, Insignia, botonPrimario, botonSecundario, claseCampo } from "../comunes/componentes/ui";
@@ -169,10 +170,88 @@ function FormularioSalida({ inicial, alGuardar }) {
   );
 }
 
+// Fotos con las que se promociona la salida: las ve el estudiante al inscribirse.
+function FotoSalida({ salida, foto, alQuitar }) {
+  const url = useArchivoProtegido(`${API}/${salida.id}/fotos/${foto.id}/archivo`);
+  return (
+    <li className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-primary-light">
+      {url && <img src={url} alt={foto.nombre} className="absolute inset-0 w-full h-full object-cover" />}
+      <button
+        type="button"
+        onClick={() => alQuitar(foto)}
+        aria-label={`Quitar ${foto.nombre}`}
+        className="absolute top-2 right-2 w-9 h-9 rounded-full bg-white/90 text-red-700 hover:bg-white inline-flex items-center justify-center shadow"
+      >
+        <Icono nombre="cerrar" size={15} strokeWidth={2.4} />
+      </button>
+    </li>
+  );
+}
+
+function FotosSalida({ salida, alCambiar }) {
+  const avisos = useAvisos();
+  const entrada = useRef(null);
+  const [subiendo, setSubiendo] = useState(false);
+  const fotos = salida.fotos || [];
+
+  async function elegir(e) {
+    const lista = [...e.target.files];
+    e.target.value = "";
+    const validas = lista.filter((f) => ["image/jpeg", "image/png", "image/webp"].includes(f.type));
+    if (validas.length < lista.length) avisos.aviso("Se omitieron archivos que no son fotos JPG, PNG o WEBP.");
+    if (!validas.length) return;
+    const datos = new FormData();
+    validas.slice(0, 8).forEach((f) => datos.append("fotos", f));
+    setSubiendo(true);
+    try {
+      await http.post(`${API}/${salida.id}/fotos`, datos);
+      avisos.exito(`Se subieron ${Math.min(validas.length, 8)} ${validas.length === 1 ? "foto" : "fotos"}.`);
+      await alCambiar();
+    } catch (err) {
+      avisos.error(mensajeError(err, "No fue posible subir las fotos."));
+    } finally {
+      setSubiendo(false);
+    }
+  }
+
+  async function quitar(foto) {
+    if (!window.confirm("¿Quitar esta foto de la salida?")) return;
+    try {
+      await http.delete(`${API}/${salida.id}/fotos/${foto.id}`);
+      avisos.exito("Se quitó la foto.");
+      await alCambiar();
+    } catch (err) {
+      avisos.error(mensajeError(err, "No fue posible quitar la foto."));
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="m-0 text-sm text-ink-500">Los estudiantes ven estas fotos en la tarjeta de la salida. La primera es la portada. JPG, PNG o WEBP, hasta 8 MB cada una y 12 por salida.</p>
+      <div>
+        <input ref={entrada} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={elegir} className="sr-only" aria-label="Elegir fotos" />
+        <button type="button" disabled={subiendo} onClick={() => entrada.current?.click()} className={botonPrimario}>
+          {subiendo ? "Subiendo…" : "Agregar fotos"}
+        </button>
+      </div>
+      {fotos.length === 0 ? (
+        <p className="m-0 text-sm text-ink-500">Todavía no hay fotos. Agrega una o varias para promocionar la salida.</p>
+      ) : (
+        <ul className="list-none m-0 p-0 grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(160px,1fr))]">
+          {fotos.map((f) => (
+            <FotoSalida key={f.id} salida={salida} foto={f} alQuitar={quitar} />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function SalidasInscripcionPage() {
   const [params, setParams] = useSearchParams();
   const [salidas, setSalidas] = useState(null);
   const [formulario, setFormulario] = useState(params.get("nueva") ? { ...VACIA } : null);
+  const [fotosDe, setFotosDe] = useState(null);
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
 
@@ -297,6 +376,15 @@ export function SalidasInscripcionPage() {
                     {s.estado !== "Cancelada" && (
                       <button
                         type="button"
+                        onClick={() => setFotosDe(s.id)}
+                        className="min-h-[42px] px-3 rounded-full text-sm font-bold text-primary hover:bg-primary-light"
+                      >
+                        Fotos{s.fotos?.length ? ` (${s.fotos.length})` : ""}
+                      </button>
+                    )}
+                    {s.estado !== "Cancelada" && (
+                      <button
+                        type="button"
                         onClick={() => editar(s)}
                         className="min-h-[42px] px-3 rounded-full text-sm font-bold text-primary hover:bg-primary-light"
                       >
@@ -320,6 +408,11 @@ export function SalidasInscripcionPage() {
         ) : null,
       )}
 
+      {fotosDe && salidas?.find((x) => x.id === fotosDe) && (
+        <Ventana titulo="Fotos de la salida" alCerrar={() => setFotosDe(null)}>
+          <FotosSalida salida={salidas.find((x) => x.id === fotosDe)} alCambiar={cargar} />
+        </Ventana>
+      )}
       {!formulario && <BotonFlotante onClick={() => setFormulario({ ...VACIA })}>Nueva salida</BotonFlotante>}
       {formulario && (
         <Ventana titulo={formulario.id ? "Editar salida" : "Nueva salida"} alCerrar={cerrar}>

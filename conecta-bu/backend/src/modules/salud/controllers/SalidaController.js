@@ -1,6 +1,7 @@
 const { BaseController } = require("./BaseController");
 const { salidaService } = require("../services/SalidaService");
 const { inscripcionSalidaService } = require("../services/InscripcionSalidaService");
+const { fotoSalidaService } = require("../services/FotoSalidaService");
 
 // Salidas con inscripcion: personal de Salud y estudiantes.
 class SalidaController extends BaseController {
@@ -25,6 +26,13 @@ class SalidaController extends BaseController {
   listado = async (req, res) => {
     const { buffer, nombre } = await salidaService.listado(req.params.id, { todos: req.query.todos === "1" });
     this.archivo(res, buffer, nombre, "xlsx");
+  };
+
+  subirFotos = async (req, res) => this.creado(res, { fotos: await fotoSalidaService.agregar(req.params.id, req.files) });
+  eliminarFoto = async (req, res) => this.ok(res, await fotoSalidaService.eliminar(req.params.id, req.params.fotoId));
+  foto = async (req, res) => {
+    const { ruta, nombre, tipo } = await fotoSalidaService.archivo(req.params.id, req.params.fotoId);
+    this.enviarArchivo(res, ruta, nombre, { tipo });
   };
 
   // ---- Estudiante ----

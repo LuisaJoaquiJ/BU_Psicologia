@@ -132,10 +132,23 @@ export function FormularioNoDisponible({ api = "/admin", fechaInicial, alGuardar
             <input type="checkbox" checked={v.varios} onChange={set("varios")} className="w-5 h-5 accent-[#19407B]" />
             Son varios días seguidos
           </label>
-          <label className="flex items-center gap-2.5 min-h-[44px] text-sm font-bold cursor-pointer">
-            <input type="checkbox" checked={v.todoElDia} onChange={set("todoElDia")} className="w-5 h-5 accent-[#19407B]" />
-            Todo el día
-          </label>
+          <div role="radiogroup" aria-label="Horas" className="inline-flex rounded-full bg-gray-100 p-1">
+            {[
+              [true, "Todo el día"],
+              [false, "Solo unas horas"],
+            ].map(([valor, texto]) => (
+              <button
+                key={texto}
+                type="button"
+                role="radio"
+                aria-checked={v.todoElDia === valor}
+                onClick={() => setV((x) => ({ ...x, todoElDia: valor }))}
+                className={`min-h-[40px] px-4 rounded-full text-sm font-bold transition-colors ${v.todoElDia === valor ? "bg-white text-primary-dark shadow-sm" : "text-ink-500 hover:text-ink-900"}`}
+              >
+                {texto}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Campo etiqueta={v.varios ? "Desde" : "Día"}>
@@ -157,6 +170,7 @@ export function FormularioNoDisponible({ api = "/admin", fechaInicial, alGuardar
             </>
           )}
         </div>
+        {!v.todoElDia && v.varios && <p className="m-0 text-sm text-ink-500">Ese horario se repite cada día del rango.</p>}
       </section>
 
       {afectadas.length > 0 && (

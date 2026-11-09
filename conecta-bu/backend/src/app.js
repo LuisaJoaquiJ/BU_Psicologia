@@ -35,6 +35,8 @@ app.get("/api/v1/health", (req, res) => {
 });
 
 app.use("/api/v1/auth", authRoutes);
+// Centro de notificaciones (todas las dimensiones).
+app.use("/api/v1/notificaciones", require("./modules/notificaciones").router);
 // Desarrollo Humano y Orientacion.
 app.use("/api/v1/admin", desarrollo.admin);
 app.use("/api/v1/servicios", desarrollo.servicios);

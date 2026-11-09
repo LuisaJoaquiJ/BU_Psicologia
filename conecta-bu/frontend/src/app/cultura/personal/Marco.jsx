@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { http } from "../../../lib/api/http";
-import { Aviso as AvisoBase, Encabezado, Insignia, claseCampo } from "../comunes/componentes/ui";
+import { Aviso as AvisoBase, Encabezado, Insignia, claseCampo, Segmentos } from "../comunes/componentes/ui";
 import { BotonFlotante, Ventana } from "../comunes/componentes/Ventana";
 import { Icono } from "../comunes/componentes/Iconos";
 
@@ -32,7 +32,8 @@ export function useVentana() {
   return { abierto, abrir: () => setAbierto(true), cerrar: () => setAbierto(false) };
 }
 
-export function Desplegable({ titulo, boton, control, error, children }) {
+export function Desplegable({ titulo, boton, control, error, children, visible = true }) {
+  if (!visible) return null;
   return (
     <>
       <BotonFlotante onClick={control.abrir}>{boton}</BotonFlotante>
@@ -54,59 +55,72 @@ export const coincide = (texto, ...campos) => {
   return !q || campos.some((c) => String(c || "").toLowerCase().includes(q));
 };
 
-// Barra de filtros de las listas: busqueda, selectores, pastillas y cuantos se ven.
+// Barra de filtros de las listas: buscador en una sola linea y, al lado, un
+// boton "Filtros" que despliega los selectores y las pastillas solo cuando se
+// necesitan. El boton dice cuantos filtros estan activos.
 //   pastillas / selectores: [{ etiqueta, valor, alCambiar, opciones: [[id, texto]] }]
 export function Filtros({ buscar, alBuscar, placeholder = "Buscar", selectores = [], pastillas = [], total, visibles, alLimpiar }) {
-  const hayFiltro = Boolean(buscar) || [...selectores, ...pastillas].some((f) => f.valor !== f.opciones[0][0]);
+  const [abierto, setAbierto] = useState(false);
+  const opciones = [...selectores, ...pastillas];
+  const activos = opciones.filter((f) => f.valor !== f.opciones[0][0]).length;
+  const hayFiltro = Boolean(buscar) || activos > 0;
   return (
-    <section aria-label="Filtros" className="vidrio-panel rounded-[22px] p-4 mb-5 flex flex-col gap-3">
-      <div className="flex flex-wrap gap-3 items-end">
-        <label className="flex-[1_1_260px] min-w-0 text-sm font-semibold">
+    <section aria-label="Filtros" className="mb-5 flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="flex-[1_1_220px] min-w-0 max-w-[460px]">
           <span className="sr-only">{placeholder}</span>
           <span className="relative block">
-            <Icono nombre="buscar" size={18} strokeWidth={2} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500" />
-            <input type="search" value={buscar} onChange={(e) => alBuscar(e.target.value)} placeholder={placeholder} className={`${campo} w-full pl-10`} />
+            <Icono nombre="buscar" size={16} strokeWidth={2} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500" />
+            <input type="search" value={buscar} onChange={(e) => alBuscar(e.target.value)} placeholder={placeholder} className="w-full min-h-[42px] rounded-full bg-white/90 border border-white pl-10 pr-4 text-sm text-ink-900 placeholder:text-ink-400 shadow-[0_4px_14px_-8px_rgba(11,35,71,0.25)] focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/20" />
           </span>
         </label>
-        {selectores.map((s) => (
-          <label key={s.etiqueta} className="text-sm font-semibold flex flex-col gap-1">
-            {s.etiqueta}
-            <select value={s.valor} onChange={(e) => s.alCambiar(e.target.value)} className={campo}>
-              {s.opciones.map(([id, texto]) => (
-                <option key={id} value={id}>
-                  {texto}
-                </option>
-              ))}
-            </select>
-          </label>
-        ))}
-      </div>
-      {pastillas.map((p) => (
-        <div key={p.etiqueta} role="group" aria-label={p.etiqueta} className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-semibold text-ink-500 mr-1">{p.etiqueta}</span>
-          {p.opciones.map(([id, texto]) => (
-            <button
-              key={id}
-              type="button"
-              aria-pressed={p.valor === id}
-              onClick={() => p.alCambiar(id)}
-              className={`min-h-[38px] px-4 rounded-full text-sm font-bold ${p.valor === id ? "boton-liquido" : "burbuja text-ink-600 hover:bg-white"}`}
-            >
-              {texto}
-            </button>
-          ))}
-        </div>
-      ))}
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-ink-500">
-        <span aria-live="polite">
-          Mostrando <strong className="text-ink-900 tabular-nums">{visibles}</strong> de <span className="tabular-nums">{total}</span>
+        {opciones.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setAbierto((v) => !v)}
+            aria-expanded={abierto}
+            className={`min-h-[42px] px-4 rounded-full text-sm font-bold inline-flex items-center gap-2 transition-colors ${abierto || activos ? "boton-liquido" : "bg-white/90 border border-white text-primary-dark hover:bg-white shadow-[0_4px_14px_-8px_rgba(11,35,71,0.25)]"}`}
+          >
+            <Icono nombre="lista" size={16} strokeWidth={2.2} />
+            Filtros
+            {activos > 0 && <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-white text-primary text-xs font-extrabold grid place-items-center tabular-nums">{activos}</span>}
+          </button>
+        )}
+        <span aria-live="polite" className="text-sm text-ink-500 tabular-nums">
+          {visibles === total ? `${total} en total` : `${visibles} de ${total}`}
         </span>
         {hayFiltro && (
-          <button type="button" onClick={alLimpiar} className="min-h-[36px] px-3 rounded-full font-bold text-primary hover:bg-white">
+          <button type="button" onClick={alLimpiar} className="min-h-[36px] px-2 rounded-full text-sm font-bold text-primary hover:underline underline-offset-4">
             Quitar filtros
           </button>
         )}
       </div>
+      {abierto && opciones.length > 0 && (
+        <div className="vidrio-panel rounded-[18px] p-3 flex flex-col gap-2.5">
+          {selectores.length > 0 && (
+            <div className="flex flex-wrap gap-3">
+              {selectores.map((sel) => (
+                <label key={sel.etiqueta} className="text-sm font-semibold inline-flex items-center gap-2">
+                  {sel.etiqueta}
+                  <select value={sel.valor} onChange={(e) => sel.alCambiar(e.target.value)} className={`${campo} min-h-[38px] py-1`}>
+                    {sel.opciones.map(([id, texto]) => (
+                      <option key={id} value={id}>
+                        {texto}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+          )}
+          {pastillas.map((p) => (
+            <div key={p.etiqueta} role="group" aria-label={p.etiqueta} className="flex flex-wrap items-center gap-1.5">
+              <span className="text-sm font-semibold text-ink-500 w-[110px] shrink-0">{p.etiqueta}</span>
+              <Segmentos opciones={p.opciones} valor={p.valor} alCambiar={p.alCambiar} />
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

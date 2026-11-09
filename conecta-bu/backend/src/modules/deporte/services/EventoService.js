@@ -4,6 +4,14 @@ const repos = require("../repositories");
 const imagenes = require("./ImagenService");
 const disciplinas = require("./DisciplinaService");
 const u = require("../utils");
+const notificaciones = require("../../notificaciones/service");
+
+// Avisa a los estudiantes que hay un evento deportivo nuevo (solo al publicarse, una vez).
+function avisarPublicado(evento) {
+  if (evento?.estado !== "Publicado") return;
+  const fecha = new Date(evento.fecha).toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  return notificaciones.difundirAEstudiantes({ modulo: "deporte", tipo: "evento-publicado", titulo: "Nuevo evento deportivo", mensaje: `${evento.nombre}: ${fecha}${evento.lugar ? ` · ${evento.lugar}` : ""}.`, ruta: "/mi-deporte/eventos" });
+}
 
 // Eventos deportivos puntuales (F-02 PISU: RF-002, RF-018, RF-020): la
 // coordinacion los crea y toma la asistencia; el estudiante se inscribe.
@@ -49,6 +57,7 @@ class EventoService {
     if (data.disciplinaId) await disciplinas.exigirExistente(data.disciplinaId);
     if (data.fecha < hoyBogota()) throw new AppError(400, "La fecha del evento ya pasó.");
     const evento = await repos.eventos.crear({ ...data, creadoPor: usuario?.emailInstitucional || null });
+    await avisarPublicado(evento);
     return this.detalle(evento.id);
   }
 
@@ -60,7 +69,8 @@ class EventoService {
       const inscritos = (await this.inscritosPorEvento([id])).get(id) || 0;
       if (data.cupo < inscritos) throw new AppError(409, `El evento ya tiene ${inscritos} inscritos; el cupo no puede ser menor.`);
     }
-    await repos.eventos.actualizar(id, data);
+    const nuevo = await repos.eventos.actualizar(id, data);
+    if (actual.estado !== "Publicado") await avisarPublicado(nuevo || { ...actual, ...data });
     return this.detalle(id);
   }
 

@@ -1,7 +1,9 @@
+import { AvisoFlotante } from "../../../components/avisos/Avisos";
 import { useEffect, useMemo, useState } from "react";
 import { http } from "../../../lib/api/http";
 import { IMAGENES, urlDelServidor } from "../../../lib/imagenes";
 import { Icono } from "../comunes/componentes/Iconos";
+import { Segmentos } from "../comunes/componentes/ui";
 import { hoyISO, mensajeError } from "../comun/formato";
 
 // Foto de cada tipo de evento cuando el area todavia no sube la suya.
@@ -25,14 +27,17 @@ function hora(hhmm) {
 const diasHasta = (iso) => Math.round((fecha(iso) - fecha(hoyISO())) / 86400000);
 const cuando = (iso) => {
   const n = diasHasta(iso);
-  return n === 0 ? "Hoy" : n === 1 ? "Mañana" : n < 7 ? `En ${n} días` : null;
+  return n < 0 ? null : n === 0 ? "Hoy" : n === 1 ? "Mañana" : n < 7 ? `En ${n} días` : null;
 };
+// En el historial, lo que ya paso se marca como realizado.
+const etiquetaCuando = (e) => (e.terminado ? "Realizado" : cuando(e.fecha));
 
 const FILTROS = [
   ["todos", "Todos"],
-  ["semana", "Esta semana"],
-  ["mes", "Este mes"],
-  ["mios", "Mis inscripciones"],
+  ["semana", "Semana"],
+  ["mes", "Mes"],
+  ["mios", "Inscrito"],
+  ["historial", "Mi historial"],
 ];
 
 // Si la foto subida no carga, se cambia una vez por la del tipo de evento.
@@ -79,21 +84,74 @@ function Cupos({ evento, claro }) {
   );
 }
 
-function Accion({ evento, ocupado, alInscribir, alCancelar, claro }) {
+const aMinutos = (h) => {
+  const [hh, mm] = String(h || "").split(":").map(Number);
+  return Number.isInteger(hh) && Number.isInteger(mm) ? hh * 60 + mm : null;
+};
+// Misma regla del servidor: se marca desde 15 minutos antes hasta 15 despues del final.
+function momentoDeMarcar(evento) {
+  if (String(evento.fecha).slice(0, 10) !== hoyISO()) return "otro-dia";
+  const d = new Date(Date.now() - 5 * 3600 * 1000);
+  const ahora = d.getUTCHours() * 60 + d.getUTCMinutes();
+  const inicio = aMinutos(evento.horaInicio);
+  const fin = aMinutos(evento.horaFin);
+  if (inicio === null || fin === null) return "otro-dia";
+  if (ahora < inicio - 15) return "antes";
+  if (ahora > fin + 15) return "despues";
+  return "abierta";
+}
+const horaCorta = (h, resta = 0) => {
+  const m = aMinutos(h) - resta;
+  return hora(`${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
+};
+
+function Accion({ evento, ocupado, alInscribir, alCancelar, alMarcar, claro }) {
+  // Ya se realizo: solo queda saber si se asistio.
+  if (evento.terminado) {
+    return evento.asistio ? (
+      <span className={`inline-flex items-center gap-1.5 text-sm font-bold cursor-default select-none ${claro ? "text-white" : "text-emerald-800"}`}>
+        <Icono nombre="check" size={16} strokeWidth={2.6} />
+        Asististe
+      </span>
+    ) : (
+      <span className={`inline-flex items-center text-sm font-bold cursor-default select-none ${claro ? "text-white/85" : "text-ink-500"}`}>No asististe</span>
+    );
+  }
   if (evento.inscrito) {
+    const momento = momentoDeMarcar(evento);
+    if (evento.asistio) {
+      return (
+        <span className={`inline-flex items-center gap-1.5 text-sm font-bold cursor-default select-none ${claro ? "text-white" : "text-emerald-800"}`}>
+          <Icono nombre="check" size={16} strokeWidth={2.6} />
+          Asististe
+        </span>
+      );
+    }
+    if (momento === "abierta") {
+      return (
+        <div className="flex flex-col gap-1.5">
+          <button type="button" disabled={ocupado} onClick={() => alMarcar(evento)} className={`min-h-[48px] px-5 rounded-full font-extrabold inline-flex items-center gap-2 disabled:opacity-60 ${claro ? "bg-white text-primary-dark" : "boton-liquido"}`}>
+            <Icono nombre="ubicacion" size={18} strokeWidth={2.2} />
+            {ocupado ? "Buscando tu ubicación…" : "Marcar mi asistencia"}
+          </button>
+          <span className={`text-[13px] ${claro ? "text-white/80" : "text-ink-500"}`}>Debes estar en el lugar del evento.</span>
+        </div>
+      );
+    }
     return (
       <div className="flex flex-wrap items-center gap-2">
-        <span className={`inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-full text-sm font-bold ${claro ? "bg-white/20 text-white" : "bg-emerald-50 text-emerald-800"}`}>
+        <span className={`inline-flex items-center gap-1.5 text-sm font-bold cursor-default select-none ${claro ? "text-white" : "text-emerald-800"}`}>
           <Icono nombre="check" size={16} strokeWidth={2.6} />
           Inscrito
         </span>
-        <button type="button" disabled={ocupado} onClick={() => alCancelar(evento)} className={`min-h-[40px] px-3 rounded-full text-sm font-semibold ${claro ? "text-white/85 hover:bg-white/15" : "text-ink-500 hover:bg-white"}`}>
-          Cancelar
+        <button type="button" disabled={ocupado} onClick={() => alCancelar(evento)} className={`min-h-[40px] px-3 rounded-full text-sm font-semibold ${claro ? "text-red-200 hover:bg-white/15" : "text-red-700 hover:bg-red-50"}`}>
+          Cancelar inscripción
         </button>
+        {momento === "antes" && <span className={`text-[13px] ${claro ? "text-white/80" : "text-ink-500"}`}>Podrás marcar tu asistencia desde las {horaCorta(evento.horaInicio, 15)}.</span>}
       </div>
     );
   }
-  if (evento.cuposDisponibles < 1) return <span className={`inline-flex min-h-[44px] items-center px-4 rounded-full text-sm font-bold ${claro ? "bg-white/20 text-white" : "burbuja text-ink-500"}`}>Sin cupos</span>;
+  if (evento.cuposDisponibles < 1) return <span className={`inline-flex items-center text-sm font-bold cursor-default select-none ${claro ? "text-white/85" : "text-ink-500"}`}>Sin cupos</span>;
   return (
     <button
       type="button"
@@ -158,40 +216,63 @@ export function AgendaCultura() {
   }
 
   const tipos = useMemo(() => [...new Map((eventos || []).map((e) => [e.categoriaId, e.categoria])).entries()], [eventos]);
+  const enHistorial = filtro === "historial";
   const visibles = (eventos || []).filter((e) => {
+    if (enHistorial) return e.terminado && (!tipo || e.categoriaId === tipo);
+    if (e.terminado) return false;
     const n = diasHasta(e.fecha);
     const pasaFiltro = filtro === "todos" || (filtro === "semana" && n < 7) || (filtro === "mes" && n < 31) || (filtro === "mios" && e.inscrito);
     return pasaFiltro && (!tipo || e.categoriaId === tipo);
   });
-  const [destacado, ...resto] = visibles;
-  const props = { ocupado, alInscribir: (e) => accion(e, true), alCancelar: (e) => accion(e, false) };
+  // El historial va en tarjetas iguales, sin una destacada.
+  const [destacado, ...resto] = enHistorial ? [null, ...visibles] : visibles;
+  const ERRORES_UBICACION = {
+    1: "Permite el acceso a tu ubicación en el navegador para poder marcar tu asistencia.",
+    2: "No pudimos saber dónde estás. Activa el GPS e inténtalo de nuevo.",
+    3: "Tardamos demasiado en ubicarte. Sal a un lugar abierto e inténtalo de nuevo.",
+  };
+  // Marca la asistencia a este evento con la ubicacion actual.
+  function marcar(evento) {
+    setError("");
+    setAviso("");
+    if (!navigator.geolocation) {
+      setError("Este navegador no permite usar la ubicación. Prueba con otro o avisa al responsable.");
+      return;
+    }
+    setOcupado(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          await http.post("/cultura/asistencia/ubicacion", { latitud: pos.coords.latitude, longitud: pos.coords.longitude, precision: pos.coords.accuracy, eventoId: evento.id });
+          setEventos((await http.get("/cultura/agenda")).data);
+          setAviso(`Quedó tu asistencia en ${evento.nombre}.`);
+        } catch (err) {
+          setError(mensajeError(err, "No fue posible registrar tu asistencia."));
+        } finally {
+          setOcupado(false);
+        }
+      },
+      (err) => {
+        setError(ERRORES_UBICACION[err.code] || "No pudimos obtener tu ubicación.");
+        setOcupado(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  }
+  const props = { ocupado, alInscribir: (e) => accion(e, true), alCancelar: (e) => accion(e, false), alMarcar: marcar };
 
   return (
     <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 lg:pt-10 pb-16">
       <h1 className="m-0 font-sans text-[32px] sm:text-[40px] leading-[1.05] tracking-[-0.035em] font-extrabold text-primary-dark">Agenda cultural</h1>
-      <p className="mt-2 mb-6 text-ink-500 max-w-2xl">Presentaciones, muestras y fechas especiales. Inscríbete y el día del evento registra tu asistencia con el código que te muestran.</p>
+      <p className="mt-2 mb-4 text-ink-500 max-w-2xl">Presentaciones, muestras y fechas especiales. Cuando empiece un evento en el que estás inscrito, marca tu asistencia desde su tarjeta. En Mi historial ves los que ya se realizaron.</p>
 
-      <div className="flex flex-col gap-3 mb-6">
-        <div role="group" aria-label="Cuándo" className="flex flex-wrap gap-2">
-          {FILTROS.map(([id, texto]) => (
-            <button key={id} type="button" aria-pressed={filtro === id} onClick={() => setFiltro(id)} className={`min-h-[40px] px-4 rounded-full text-sm font-bold ${filtro === id ? "boton-liquido" : "burbuja text-ink-600 hover:bg-white"}`}>
-              {texto}
-            </button>
-          ))}
-        </div>
-        {tipos.length > 1 && (
-          <div role="group" aria-label="Tipo de evento" className="flex flex-wrap gap-2">
-            {[["", "Todos los tipos"], ...tipos].map(([id, texto]) => (
-              <button key={id || "todos"} type="button" aria-pressed={tipo === id} onClick={() => setTipo(id)} className={`min-h-[36px] px-3.5 rounded-full text-[13px] font-semibold ${tipo === id ? "bg-primary-dark text-white" : "text-ink-600 hover:bg-white"}`}>
-                {texto}
-              </button>
-            ))}
-          </div>
-        )}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-5">
+        <Segmentos compacto className="!p-0.5" etiqueta="Cuándo" opciones={FILTROS} valor={filtro} alCambiar={setFiltro} />
+        {tipos.length > 1 && <Segmentos compacto className="!p-0.5" etiqueta="Tipo de evento" opciones={[["", "Todos los tipos"], ...tipos]} valor={tipo} alCambiar={setTipo} />}
       </div>
 
-      {error && <p className="m-0 mb-4 text-sm border rounded-xl px-4 py-3 bg-red-50 text-red-700 border-red-100">{error}</p>}
-      {aviso && <p className="m-0 mb-4 text-sm border rounded-xl px-4 py-3 bg-emerald-50 text-emerald-800 border-emerald-100">{aviso}</p>}
+      {error && <AvisoFlotante tono="error">{error}</AvisoFlotante>}
+      {aviso && <AvisoFlotante tono="exito">{aviso}</AvisoFlotante>}
 
       {!eventos && !error && (
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3" role="status" aria-label="Cargando la agenda">
@@ -206,8 +287,9 @@ export function AgendaCultura() {
           <span className="w-14 h-14 rounded-full bg-primary-light text-primary grid place-items-center">
             <Icono nombre="calendario" size={26} strokeWidth={2} />
           </span>
-          <p className="m-0 text-lg font-extrabold text-primary-dark">{eventos.length ? "No hay eventos con este filtro" : "Pronto habrá nuevos eventos"}</p>
-          {eventos.length > 0 && (
+          <p className="m-0 text-lg font-extrabold text-primary-dark">{enHistorial ? "Todavía no tienes eventos anteriores" : eventos.some((e) => !e.terminado) ? "No hay eventos con este filtro" : "Pronto habrá nuevos eventos"}</p>
+          {enHistorial && <p className="m-0 text-ink-500 max-w-md">Aquí quedan los eventos en los que te inscribes, con tu asistencia.</p>}
+          {!enHistorial && eventos.some((e) => !e.terminado) && (
             <button type="button" onClick={() => { setFiltro("todos"); setTipo(""); }} className="min-h-[40px] px-4 rounded-full burbuja text-primary-dark font-bold">
               Ver todos
             </button>
@@ -216,22 +298,22 @@ export function AgendaCultura() {
       )}
 
       {destacado && (
-        <article className="relative overflow-hidden rounded-[30px] min-h-[380px] sm:min-h-[420px] flex flex-col justify-end mb-6 shadow-[0_24px_60px_-24px_rgba(11,35,71,0.55)]">
+        <article className="relative overflow-hidden rounded-[26px] min-h-[240px] sm:min-h-[280px] flex flex-col justify-end mb-5 shadow-[0_24px_60px_-24px_rgba(11,35,71,0.55)]">
           <Foto evento={destacado} />
           <span aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(14,18,34,0.05)_15%,rgba(14,18,34,0.55)_55%,rgba(14,18,34,0.92)_100%)]" />
           <div className="absolute top-5 left-5 flex items-start gap-3">
             <Fecha iso={destacado.fecha} />
-            <span className="mt-1 inline-flex items-center rounded-full bg-white/90 text-primary-dark px-3 py-1 text-xs font-bold">{destacado.categoria}</span>
-            {cuando(destacado.fecha) && <span className="mt-1 inline-flex items-center rounded-full boton-liquido px-3 py-1 text-xs font-bold">{cuando(destacado.fecha)}</span>}
+            <span className="mt-1 inline-flex items-center rounded-md bg-black/65 text-white px-2.5 py-1 text-[13px] font-bold backdrop-blur-sm select-none">{destacado.categoria}</span>
+            {etiquetaCuando(destacado) && <span className="mt-1 inline-flex items-center rounded-md bg-white text-primary-dark px-2.5 py-1 text-[13px] font-extrabold ring-1 ring-black/10 shadow-[0_2px_8px_rgba(0,0,0,0.25)] select-none">{etiquetaCuando(destacado)}</span>}
           </div>
-          <div className="relative p-6 sm:p-8 grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] items-end text-white">
-            <div className="flex flex-col gap-3 min-w-0">
-              <h2 className="m-0 font-sans text-[28px] sm:text-[38px] leading-[1.05] tracking-[-0.03em] font-extrabold text-white">{destacado.nombre}</h2>
-              {destacado.descripcion && <p className="m-0 text-white/85 max-w-[46em] line-clamp-2">{destacado.descripcion}</p>}
+          <div className="relative p-5 sm:p-6 grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] items-end text-white">
+            <div className="flex flex-col gap-2 min-w-0">
+              <h2 className="m-0 font-sans text-[24px] sm:text-[30px] leading-[1.08] tracking-[-0.03em] font-extrabold text-white">{destacado.nombre}</h2>
+              {destacado.descripcion && <p className="m-0 text-white/85 max-w-[46em] line-clamp-1">{destacado.descripcion}</p>}
               <Datos evento={destacado} claro />
             </div>
-            <div className="flex flex-col gap-4 lg:items-stretch">
-              <Cupos evento={destacado} claro />
+            <div className="flex flex-col gap-3 lg:items-stretch">
+              {!destacado.terminado && <Cupos evento={destacado} claro />}
               <Accion evento={destacado} {...props} claro />
             </div>
           </div>
@@ -246,14 +328,14 @@ export function AgendaCultura() {
                 <Foto evento={e} />
                 <span aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(14,18,34,0)_50%,rgba(14,18,34,0.45)_100%)]" />
                 <Fecha iso={e.fecha} className="absolute top-3 left-3" />
-                <span className="absolute top-3 right-3 inline-flex items-center rounded-full bg-white/90 text-primary-dark px-3 py-1 text-xs font-bold">{e.categoria}</span>
-                {cuando(e.fecha) && <span className="absolute bottom-3 left-3 inline-flex items-center rounded-full boton-liquido px-3 py-1 text-xs font-bold">{cuando(e.fecha)}</span>}
+                <span className="absolute top-3 right-3 inline-flex items-center rounded-md bg-black/65 text-white px-2.5 py-1 text-[13px] font-bold backdrop-blur-sm select-none">{e.categoria}</span>
+                {etiquetaCuando(e) && <span className="absolute bottom-3 left-3 inline-flex items-center rounded-md bg-white text-primary-dark px-2.5 py-1 text-[13px] font-extrabold ring-1 ring-black/10 shadow-[0_2px_8px_rgba(0,0,0,0.25)] select-none">{etiquetaCuando(e)}</span>}
               </div>
               <div className="p-5 flex flex-col gap-3 flex-1">
                 <h2 className="m-0 font-sans text-lg font-extrabold leading-snug text-primary-dark">{e.nombre}</h2>
                 <Datos evento={e} />
                 <div className="mt-auto pt-2 flex flex-col gap-3">
-                  <Cupos evento={e} />
+                  {!e.terminado && <Cupos evento={e} />}
                   <Accion evento={e} {...props} />
                 </div>
               </div>

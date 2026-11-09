@@ -35,8 +35,8 @@ describe("Historias de Cultura", () => {
     };
   }
 
-  async function grupo() {
-    const area = await prisma.areaCultural.create({ data: { nombre: `Band ${Date.now()}${Math.random()}`, categoria: "representativo" } });
+  async function grupo(categoria = "representativo") {
+    const area = await prisma.areaCultural.create({ data: { nombre: `Band ${Date.now()}${Math.random()}`, categoria } });
     return prisma.grupoCultural.create({
       data: {
         areaId: area.id,
@@ -76,11 +76,18 @@ describe("Historias de Cultura", () => {
   test("la pausa, el apoyo y la busqueda por cedula quedan registrados", async () => {
     const pausa = await api(personal.token).post("/api/v1/cultura/admin/pausas", {
       fecha: dentroDe(1),
+      horaInicio: "10:00",
+      horaFin: "11:30",
       lugar: "Cafetería",
       tecnica: "Origami",
       impactoEstimado: 25,
     });
     expect(pausa.status).toBe(201);
+    expect(pausa.body).toMatchObject({ horaInicio: "10:00", horaFin: "11:30" });
+    const sinHora = await api(personal.token).post("/api/v1/cultura/admin/pausas", { fecha: dentroDe(1), lugar: "Cafetería", tecnica: "Origami", impactoEstimado: 5 });
+    expect(sinHora.status).toBe(400);
+    const alReves = await api(personal.token).post("/api/v1/cultura/admin/pausas", { fecha: dentroDe(1), horaInicio: "11:00", horaFin: "10:00", lugar: "Cafetería", tecnica: "Origami", impactoEstimado: 5 });
+    expect(alReves.body.message).toBe("La hora de fin debe ser posterior a la de inicio.");
 
     const apoyo = await api(personal.token).post("/api/v1/cultura/admin/apoyo", {
       lugarDestino: "Colegio San José",
@@ -93,7 +100,7 @@ describe("Historias de Cultura", () => {
 
     const perfil = await api(ana.token).put("/api/v1/cultura/perfil", { documento: "1061731427", programa: "Derecho", caracterizacion: "Afro" });
     expect(perfil.status).toBe(200);
-    const creado = await grupo();
+    const creado = await grupo("taller"); // a los representativos se entra por audicion
     expect((await api(ana.token).post(`/api/v1/cultura/grupos/${creado.id}/inscripcion`)).status).toBe(200);
     const hallados = await api(personal.token).get("/api/v1/cultura/admin/inscritos?q=1061731427");
     expect(hallados.status).toBe(200);

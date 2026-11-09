@@ -4,7 +4,7 @@ import { http } from "../../lib/api/http";
 import { Icono } from "./comunes/componentes/Iconos";
 import { useConfirmar } from "./comunes/componentes/Confirmar";
 import { fechaCorta, mensajeError } from "./comunes/lib/salud";
-import { Aviso, Campo, Encabezado, Insignia, Tarjeta, Vacio, botonPrimario, claseCampo } from "./comunes/componentes/ui";
+import { Aviso, Campo, Encabezado, Insignia, Tarjeta, Vacio, botonPrimario, claseCampo, Segmentos } from "./comunes/componentes/ui";
 
 const COLOR = { "desarrollo-humano": "dorado", salud: "verde", deporte: "azul", cultura: "morado" };
 // El acceso de los docentes de Deporte depende de su ficha: se cambia desde
@@ -155,21 +155,7 @@ export function AccesosPage() {
       <Tarjeta
         titulo={`Personal con acceso (${visibles.length})`}
         acciones={
-          <div className="flex gap-1.5 flex-wrap">
-            {[["", "Todos"], ...Object.entries(modulos)].map(([id, nombre]) => (
-              <button
-                key={id || "todos"}
-                type="button"
-                onClick={() => setFiltro(id)}
-                aria-pressed={filtro === id}
-                className={`text-sm font-semibold rounded-full px-3.5 min-h-[36px] border ${
-                  filtro === id ? "boton-liquido border-transparent" : "burbuja text-ink-600 hover:bg-white"
-                }`}
-              >
-                {nombre}
-              </button>
-            ))}
-          </div>
+          <Segmentos compacto etiqueta="Módulo" opciones={[["", "Todos"], ...Object.entries(modulos)]} valor={filtro} alCambiar={setFiltro} />
         }
       >
         {datos && visibles.length === 0 && <Vacio>No hay personal asignado{filtro ? " a este módulo" : ""}.</Vacio>}

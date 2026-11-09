@@ -1,3 +1,5 @@
+import { AvisoFlotante } from "../../../components/avisos/Avisos";
+import { Segmentos } from "../comunes/componentes/ui";
 import { useEffect, useMemo, useState } from "react";
 import { http } from "../../../lib/api/http";
 import { formatearFecha, fechaLarga } from "../comunes/lib/format";
@@ -192,21 +194,7 @@ function AnalisisDetallado() {
 
       {/* Filtros: una sola fila arriba; afectan a todo el panel */}
       <div className="flex items-end gap-3 flex-wrap mb-7" role="group" aria-label="Periodo">
-        <div className="flex gap-1.5 flex-wrap bg-white border border-gray-200 rounded-full p-1">
-          {PRESETS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => elegirPreset(p.id)}
-              aria-pressed={preset === p.id}
-              className={`text-sm font-semibold rounded-full px-4 min-h-[38px] transition-colors ${
-                preset === p.id ? "boton-liquido" : "text-ink-600 hover:bg-gray-50"
-              }`}
-            >
-              {p.texto}
-            </button>
-          ))}
-        </div>
+        <Segmentos opciones={PRESETS.map((p) => [p.id, p.texto])} valor={preset} alCambiar={elegirPreset} />
         {preset === "personalizado" && (
           <form
             onSubmit={(e) => {
@@ -230,7 +218,7 @@ function AnalisisDetallado() {
         )}
       </div>
 
-      {error && <p className="text-sm text-red-700 bg-red-50 rounded-xl p-3 mb-6">{error}</p>}
+      {error && <AvisoFlotante tono="error">{error}</AvisoFlotante>}
       {!datos && !error && <p className="text-ink-500">Cargando estadísticas...</p>}
 
       {datos && (

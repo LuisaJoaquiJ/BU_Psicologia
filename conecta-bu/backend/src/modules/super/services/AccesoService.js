@@ -2,6 +2,11 @@ const { config } = require("../../../config/env");
 const { AppError } = require("../../../common/utils/AppError");
 const { MODULOS } = require("../../../common/utils/modulos");
 const repos = require("../repositories");
+const notificaciones = require("../../notificaciones/service");
+
+// Panel al que entra el personal de cada dimension.
+const PANEL = { "desarrollo-humano": "/admin", salud: "/salud", deporte: "/deporte", cultura: "/cultura", "deporte-docente": "/deporte-docente" };
+const aviso = (correo, modulo, titulo, mensaje) => notificaciones.crearPorCorreo(correo, { modulo: modulo === "deporte-docente" ? "deporte" : modulo, tipo: "acceso", titulo, mensaje, ruta: PANEL[modulo] || "/" });
 
 // El superadministrador decide, por correo, que personal entra a cada
 // modulo. Los modulos son independientes: tener acceso a Desarrollo humano
@@ -46,7 +51,8 @@ class AccesoService {
     };
   }
 
-  async asignar({ email, modulo }, asignadoPor) {
+  // avisar: false cuando quien llama (p. ej. la coordinacion de Cultura) ya manda su propio aviso.
+  async asignar({ email, modulo }, asignadoPor, { avisar = true } = {}) {
     const correo = normalizarEmail(email);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) throw new AppError(400, "Escribe un correo válido.");
     this.exigirInstitucional(correo);
@@ -56,6 +62,7 @@ class AccesoService {
     // Si la persona ya inicio sesion como estudiante, pasa a ser personal.
     const usuario = await this.repos.usuarios.porCorreo(correo);
     if (usuario && usuario.rol?.nombre === "Estudiante") await this.cambiarRol(usuario, "Administrador");
+    if (avisar) await aviso(correo, modulo, "Te dieron acceso a un panel", `Ya puedes entrar al panel de ${MODULOS[modulo]}.`);
     return acceso;
   }
 
@@ -71,14 +78,17 @@ class AccesoService {
     }
     this.exigirInstitucional(acceso.email);
     await this.exigirSinRepetir(acceso.email, modulo);
-    return this.repos.accesos.actualizar(id, { modulo, asignadoPor: asignadoPor || null, fechaAsignacion: new Date() });
+    const cambiado = await this.repos.accesos.actualizar(id, { modulo, asignadoPor: asignadoPor || null, fechaAsignacion: new Date() });
+    await aviso(acceso.email, modulo, "Cambió tu acceso", `Ahora entras al panel de ${MODULOS[modulo]}.`);
+    return cambiado;
   }
 
   // Sin ningun modulo asignado, el personal vuelve a ser estudiante.
-  async quitar(id) {
+  async quitar(id, { avisar = true } = {}) {
     const acceso = await this.repos.accesos.buscarPorId(id);
     if (!acceso) throw new AppError(404, "El acceso no existe.");
     await this.repos.accesos.eliminar(id);
+    if (avisar) await aviso(acceso.email, acceso.modulo, "Te quitaron un acceso", `Ya no tienes acceso al panel de ${MODULOS[acceso.modulo] || acceso.modulo}.`);
     if ((await this.repos.accesos.contar({ email: acceso.email })) === 0) {
       const usuario = await this.repos.usuarios.porCorreo(acceso.email);
       if (usuario && usuario.rol?.nombre === "Administrador") await this.cambiarRol(usuario, "Estudiante");

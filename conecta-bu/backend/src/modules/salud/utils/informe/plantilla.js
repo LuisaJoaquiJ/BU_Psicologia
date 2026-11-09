@@ -27,6 +27,6 @@ const FORMATO = {
   proceso: "DIRECCIONAMIENTO ESTRATÉGICO",
 };
 
-const NOMBRE_PROYECTO = { salud: "SALUD INTEGRAL" };
+const NOMBRE_PROYECTO = { salud: "SALUD INTEGRAL", cultura: "ARTE Y CULTURA" };
 
 module.exports = { PLANTILLA_SALUD, FORMATO, NOMBRE_PROYECTO };

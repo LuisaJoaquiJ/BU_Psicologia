@@ -1,3 +1,4 @@
+import { CampanaNotificaciones } from "../../../../components/CampanaNotificaciones";
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../../../../lib/auth/AuthContext";
@@ -32,9 +33,11 @@ export function iniciales(nombre = "") {
   );
 }
 
+// Navegacion: no es un boton. El lugar actual lleva fondo suave, texto oscuro y una
+// marca debajo (no depende solo del color); los botones de accion son los que tienen degradado.
 const clasePildora = ({ isActive }) =>
-  `whitespace-nowrap rounded-full px-4 py-2.5 transition-colors ${
-    isActive ? "boton-liquido" : "text-ink-600 hover:bg-white/80 hover:text-primary"
+  `relative whitespace-nowrap rounded-xl px-4 py-2.5 transition-colors after:absolute after:left-4 after:right-4 after:-bottom-px after:h-[3px] after:rounded-full after:transition-opacity ${
+    isActive ? "bg-primary-light/70 text-primary-dark after:bg-primary after:opacity-100" : "text-ink-600 hover:bg-white/80 hover:text-primary after:opacity-0"
   }`;
 
 // Celular: barra inferior fija con iconos, al alcance del pulgar. Hasta cinco
@@ -147,7 +150,8 @@ export function Navbar({ modulo = "cultura" }) {
             <Icono nombre="cuadricula" size={16} strokeWidth={2} />
             <span className="hidden sm:inline xl:hidden 2xl:inline">Cambiar de dimensión</span>
           </Link>
-          <span className="w-10 h-10 rounded-full boton-liquido font-extrabold text-sm flex items-center justify-center shrink-0" title={usuario?.nombre}>
+          <CampanaNotificaciones />
+          <span className="w-10 h-10 rounded-full bg-primary-light text-primary-dark ring-1 ring-primary/25 font-extrabold text-sm flex items-center justify-center shrink-0 select-none" title={usuario?.nombre}>
             {iniciales(usuario?.nombre)}
           </span>
           <button

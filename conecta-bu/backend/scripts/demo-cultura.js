@@ -52,14 +52,15 @@ const PERSONAL = [
 ];
 
 // Grupos del periodo: [area, nombre, director, lugar, cupo, horario, codigo SNIES, inscritos (indices)]
+// Nadie queda en mas de 2 grupos (el limite del periodo) ni con horarios cruzados.
 const GRUPOS = [
   ["Guitarra", "Taller de guitarra", "Mauricio Hoyos", "Salón de música 2", 20, [{ dia: 1, inicio: "14:00", fin: "16:00" }, { dia: 3, inicio: "14:00", fin: "16:00" }], "CUL-TG-01", [0, 1, 3, 5, 7, 9, 13]],
-  ["Piano", "Taller de piano", "Mauricio Hoyos", "Salón de música 1", 8, [{ dia: 2, inicio: "10:00", fin: "12:00" }], "CUL-TP-02", [2, 4, 8, 10, 11, 12, 6, 0]],
-  ["Ritmos latinos", "Ritmos latinos", "Paola Castillo", "Coliseo", 25, [{ dia: 4, inicio: "17:00", fin: "19:00" }], "CUL-RL-03", [2, 4, 6, 8, 12]],
+  ["Piano", "Taller de piano", "Mauricio Hoyos", "Salón de música 1", 8, [{ dia: 2, inicio: "10:00", fin: "12:00" }], "CUL-TP-02", [0, 2, 4, 6, 8, 10, 11, 12]],
+  ["Ritmos latinos", "Ritmos latinos", "Paola Castillo", "Coliseo", 25, [{ dia: 4, inicio: "17:00", fin: "19:00" }], "CUL-RL-03", [2, 12]],
   ["Expresión corporal y oralidad", "Expresión corporal y oralidad", "Paola Castillo", "Auditorio", 15, [{ dia: 5, inicio: "08:00", fin: "10:00" }], "CUL-EC-04", [5, 9, 11]],
   ["Uniautónoma Band", "Uniautónoma Band", "Mauricio Hoyos", "Salón de música 2", 12, [{ dia: 2, inicio: "16:00", fin: "18:00" }, { dia: 4, inicio: "16:00", fin: "18:00" }], "CUL-RB-05", [1, 3, 7, 13]],
-  ["Synapsis", "Teatro Sinapsis", "Paola Castillo", "Auditorio", 15, [{ dia: 3, inicio: "17:00", fin: "19:00" }], "CUL-RT-06", [0, 5, 8, 9]],
-  ["Grupo de danzas folclóricas", "Grupo de danzas folclóricas", "Paola Castillo", "Coliseo", 20, [{ dia: 1, inicio: "17:00", fin: "19:00" }, { dia: 5, inicio: "15:00", fin: "17:00" }], "CUL-RD-07", [2, 4, 6, 10]],
+  ["Synapsis", "Teatro Sinapsis", "Paola Castillo", "Auditorio", 15, [{ dia: 3, inicio: "17:00", fin: "19:00" }], "CUL-RT-06", [6, 8]],
+  ["Grupo de danzas folclóricas", "Grupo de danzas folclóricas", "Paola Castillo", "Coliseo", 20, [{ dia: 1, inicio: "17:00", fin: "19:00" }, { dia: 5, inicio: "15:00", fin: "17:00" }], "CUL-RD-07", [4, 10]],
 ];
 
 // PDF minimo y valido para el oficio de ejemplo.
@@ -126,6 +127,9 @@ async function cargar() {
     });
     ids.grupos.push(g.id);
     gruposCreados.set(nombre, g);
+    // Quien dirige y quien apoya cada grupo (el equipo de demostracion).
+    const equipoDe = { "Taller de guitarra": ["demo.docente.guitarra@uniautonoma.edu.co", ["demo.monitor.cultura@uniautonoma.edu.co"]], "Grupo de danzas folclóricas": ["demo.docente.danzas@uniautonoma.edu.co", []] }[nombre];
+    if (equipoDe) await prisma.grupoCultural.update({ where: { id: g.id }, data: { docenteEmail: equipoDe[0], monitoresEmails: equipoDe[1] } });
     for (const i of inscritos) {
       await prisma.inscripcionCultural.create({ data: { grupoId: g.id, usuarioId: estudiantes[i].id, tipoSnies: estudiantes[i].tipo, ip: ip(), fechaInscripcion: fecha(-40 + i) } });
     }
@@ -168,8 +172,8 @@ async function cargar() {
   guardar();
 
   // Convocatorias con postulaciones.
-  const audiciones = await prisma.convocatoriaCultural.create({ data: { titulo: "Audiciones Uniautónoma Band 2026-2", descripcion: "Buscamos voz, bajo y batería. Trae una canción preparada.", cierra: fecha(10), cupo: 6, estado: "Abierta" } });
-  const casting = await prisma.convocatoriaCultural.create({ data: { titulo: "Casting Teatro Sinapsis: obra de fin de año", descripcion: "Papeles para la muestra de diciembre.", cierra: fecha(-5), cupo: 8, estado: "Cerrada" } });
+  const audiciones = await prisma.convocatoriaCultural.create({ data: { titulo: "Audiciones Uniautónoma Band 2026-2", descripcion: "Buscamos voz, bajo y batería. Trae una canción preparada.", cierra: fecha(10), cupo: 6, estado: "Abierta", grupoId: gruposCreados.get("Uniautónoma Band").id } });
+  const casting = await prisma.convocatoriaCultural.create({ data: { titulo: "Casting Teatro Sinapsis: obra de fin de año", descripcion: "Papeles para la muestra de diciembre.", cierra: fecha(-5), cupo: 8, estado: "Cerrada", grupoId: gruposCreados.get("Teatro Sinapsis").id } });
   ids.convocatorias.push(audiciones.id, casting.id);
   const postular = (c, i, motivacion, estado) => prisma.postulacionCultural.create({ data: { convocatoriaId: c.id, usuarioId: estudiantes[i].id, motivacion, estado, tipoSnies: estudiantes[i].tipo, ip: ip() } });
   await postular(audiciones, 6, "Canto desde el colegio y quiero representar a la universidad.", "Recibida");
@@ -199,8 +203,8 @@ async function cargar() {
   guardar();
 
   // Pausas creativas (arte itinerante).
-  for (const [n, lugar, tecnica, impacto] of [[-20, "Cafetería", "Origami", 18], [-13, "Biblioteca", "Dibujo a ciegas", 12], [-6, "Plazoleta central", "Pintura en piedra", 25], [-2, "Cafetería", "Pulseras tejidas", 15]]) {
-    const p = await prisma.pausaCreativa.create({ data: { fecha: fecha(n), lugar, tecnica, impactoEstimado: impacto, registradaPor: MARCA } });
+  for (const [n, horaInicio, horaFin, lugar, tecnica, impacto] of [[-20, "10:00", "11:30", "Cafetería", "Origami", 18], [-13, "14:00", "15:00", "Biblioteca", "Dibujo a ciegas", 12], [-6, "12:00", "13:30", "Plazoleta central", "Pintura en piedra", 25], [-2, "10:30", "12:00", "Cafetería", "Pulseras tejidas", 15]]) {
+    const p = await prisma.pausaCreativa.create({ data: { fecha: fecha(n), horaInicio, horaFin, lugar, tecnica, impactoEstimado: impacto, registradaPor: MARCA } });
     ids.pausas.push(p.id);
   }
 

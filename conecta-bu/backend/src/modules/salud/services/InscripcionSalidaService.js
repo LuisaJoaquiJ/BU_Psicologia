@@ -6,6 +6,8 @@ const { PROGRAMAS } = require("../utils/catalogos");
 const { OCUPAN_CUPO, TIPOS_DOCUMENTO, iso, texto, serializar, publicaInscripcion } = require("../utils/salidas");
 const { comprobanteService } = require("./ComprobanteService");
 const { salidaService } = require("./SalidaService");
+const { fotoSalidaService } = require("./FotoSalidaService");
+const automatizaciones = require("../../../integrations/automatizaciones");
 
 // Salidas para el estudiante: las ve, se inscribe y cancela.
 class InscripcionSalidaService {
@@ -20,6 +22,7 @@ class InscripcionSalidaService {
     const hoy = hoyBogota();
     const vigentes = (await this.repos.salidas.porFecha({ estado: { in: ["Publicada", "Cerrada"] } })).filter((s) => s.fechaRegreso >= hoy);
     const mapa = await this.salidas.conteos(vigentes.map((s) => s.id));
+    const fotos = await fotoSalidaService.deSalidas(vigentes.map((s) => s.id));
     const mias = await this.repos.inscripcionesSalida.deUsuario(usuario.id);
     const miaDe = (id) => mias.find((m) => m.salidaId === id);
     const todas = await this.repos.salidas.listarPorIds(mias.map((m) => m.salidaId));
@@ -29,7 +32,7 @@ class InscripcionSalidaService {
     return {
       programas: PROGRAMAS.map((p) => p.nombre),
       misDatos: persona ? { tipoDocumento: persona.tipoDocumento, documento: persona.numeroDocumento, programa: persona.programa, celular: persona.telefono } : null,
-      salidas: vigentes.map((s) => ({ ...serializar(s, mapa.get(s.id)), miInscripcion: miaDe(s.id) ? publicaInscripcion(miaDe(s.id)) : null })),
+      salidas: vigentes.map((s) => ({ ...serializar(s, mapa.get(s.id)), fotos: fotos.get(s.id) || [], miInscripcion: miaDe(s.id) ? publicaInscripcion(miaDe(s.id)) : null })),
       misInscripciones: mias
         .map((m) => ({ ...publicaInscripcion(m), salida: resumen(todas.find((x) => x.id === m.salidaId)) }))
         .sort((a, b) => String(b.salida?.fechaSalida).localeCompare(String(a.salida?.fechaSalida))),
@@ -77,10 +80,16 @@ class InscripcionSalidaService {
         fechaRevision: null,
         ...(archivo ? { comprobante: path.basename(archivo.path), comprobanteNombre: texto(archivo.originalname, 200) } : {}),
       };
-      if (!existente) return publicaInscripcion(await this.repos.inscripcionesSalida.crear({ ...comun, salidaId, usuarioId: usuario.id }));
-      // Se vuelve a inscribir despues de cancelar o de un rechazo.
-      if (archivo && existente.comprobante) await this.comprobantes.borrar(existente.comprobante);
-      return publicaInscripcion(await this.repos.inscripcionesSalida.actualizar(existente.id, { ...comun, fechaInscripcion: new Date() }));
+      let guardada;
+      if (!existente) {
+        guardada = await this.repos.inscripcionesSalida.crear({ ...comun, salidaId, usuarioId: usuario.id });
+      } else {
+        // Se vuelve a inscribir despues de cancelar o de un rechazo.
+        if (archivo && existente.comprobante) await this.comprobantes.borrar(existente.comprobante);
+        guardada = await this.repos.inscripcionesSalida.actualizar(existente.id, { ...comun, fechaInscripcion: new Date() });
+      }
+      automatizaciones.salidaInscripcion(usuario, salida); // RF-013 (no bloquea)
+      return publicaInscripcion(guardada);
     } catch (err) {
       if (archivo) await this.comprobantes.borrar(path.basename(archivo.path));
       throw err;
@@ -92,7 +101,9 @@ class InscripcionSalidaService {
     const ins = await this.repos.inscripcionesSalida.deUsuarioEnSalida(salidaId, usuario.id);
     if (!ins || ins.estado === "Cancelada") throw new AppError(404, "No tienes una inscripción activa en esta salida.");
     if (salida.fechaSalida <= hoyBogota()) throw new AppError(409, "La salida ya empezó: comunícate con la Unidad de Salud.");
-    return publicaInscripcion(await this.repos.inscripcionesSalida.actualizar(ins.id, { estado: "Cancelada" }));
+    const cancelada = await this.repos.inscripcionesSalida.actualizar(ins.id, { estado: "Cancelada" });
+    automatizaciones.salidaCancelada(usuario, salida); // RF-013 (no bloquea)
+    return publicaInscripcion(cancelada);
   }
 }
 

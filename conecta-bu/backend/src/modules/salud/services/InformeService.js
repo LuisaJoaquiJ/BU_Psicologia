@@ -7,6 +7,7 @@ const { PLANTILLA_SALUD } = require("../utils/informe/plantilla");
 const { MODULO, EDITABLES, serializar, datosEditables } = require("../utils/informe/edicion");
 const { reporteService } = require("./ReporteService");
 const { informeArchivoService } = require("./InformeArchivoService");
+const notificaciones = require("../../notificaciones/service");
 
 // Informe de gestion (INFBI-002): el modulo lo prepara por periodo y lo envia
 // al superadministrador. Mientras es borrador las cifras se calculan en vivo;
@@ -99,6 +100,7 @@ class InformeService {
       fechaEnvio: new Date(),
       datosEnviados: cifras,
     });
+    await notificaciones.avisarASuperadministradores({ modulo: "salud", tipo: "informe", titulo: "Informe de gestión recibido", mensaje: `Salud Integral envió su informe de gestión ${per} para revisión.`, ruta: "/super/informes" });
     return this.obtener(per);
   }
 

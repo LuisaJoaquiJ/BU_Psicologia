@@ -87,6 +87,7 @@ function armarCifras(periodo, { actividades, todas, historicos, evidencias, toda
       })),
     evidencias: evidencias.map((e) => ({
       id: e.id,
+      actividadId: e.actividadId ?? e.actividad?.id ?? null,
       actividad: e.actividad?.nombre || "",
       fecha: datos.fechaISO(e.fecha),
       descripcion: e.descripcion,

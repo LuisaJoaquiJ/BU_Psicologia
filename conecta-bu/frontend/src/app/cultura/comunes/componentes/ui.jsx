@@ -1,3 +1,5 @@
+import { AvisoFlotante, textoPlano } from "../../../../components/avisos/Avisos";
+import { useLayoutEffect, useRef, useState } from "react";
 import { BarrasH } from "./graficas/Barras";
 import { Icono } from "./Iconos";
 // Piezas de interfaz compartidas por las pantallas de Salud integral.
@@ -15,6 +17,56 @@ export const botonDorado =
   "inline-flex items-center justify-center gap-2 boton-liquido font-semibold text-[15px] px-5 min-h-[44px] rounded-full transition-transform duration-200 ease-salida hover:-translate-y-px motion-reduce:hover:translate-y-0 disabled:opacity-60";
 export const botonSecundario =
   "inline-flex items-center justify-center gap-2 burbuja text-primary-dark font-semibold text-sm px-4 min-h-[42px] rounded-full transition-[transform,background-color] duration-200 ease-salida hover:bg-white hover:-translate-y-px motion-reduce:hover:translate-y-0 disabled:opacity-60";
+
+// Filtros y vistas: eligen que se ve, no hacen nada. Control segmentado con un indicador
+// blanco que se desliza hasta la opcion elegida (no es un boton de accion).
+// opciones: [[id, texto, icono?]]. Los botones son de texto; el fondo lo pone el indicador.
+export const segmentos = "relative inline-flex flex-wrap items-center gap-0.5 p-1 rounded-[14px] bg-primary-light/60 ring-1 ring-primary/10 backdrop-blur-sm";
+export function Segmentos({ opciones, valor, alCambiar, etiqueta, className = "", compacto = false }) {
+  const caja = useRef(null);
+  const [marca, setMarca] = useState(null);
+  useLayoutEffect(() => {
+    const medir = () => {
+      const el = caja.current?.querySelector('[aria-pressed="true"]');
+      setMarca(el ? { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight } : null);
+    };
+    medir();
+    if (typeof ResizeObserver === "undefined" || !caja.current) return undefined;
+    const ro = new ResizeObserver(medir);
+    ro.observe(caja.current);
+    return () => ro.disconnect();
+  }, [valor, opciones.length]);
+  return (
+    <div ref={caja} role="group" aria-label={etiqueta} className={`${segmentos} ${className}`}>
+      {marca && (
+        <span
+          aria-hidden="true"
+          className="absolute top-0 left-0 rounded-[10px] bg-white shadow-[0_1px_2px_rgba(31,17,71,0.12),0_6px_14px_-4px_rgba(31,17,71,0.2)] transition-[transform,width,height] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none"
+          style={{ width: marca.w, height: marca.h, transform: `translate(${marca.x}px, ${marca.y}px)` }}
+        />
+      )}
+      {opciones.map(([id, texto, icono]) => (
+        <button
+          key={id || "todos"}
+          type="button"
+          aria-pressed={valor === id}
+          onClick={() => alCambiar(id)}
+          className={`relative z-10 ${compacto ? "min-h-[32px] px-3" : "min-h-[36px] px-4"} rounded-[10px] text-[13px] font-bold inline-flex items-center gap-1.5 transition-colors duration-200 active:scale-[0.97] motion-reduce:active:scale-100 ${
+            valor === id ? "text-primary-dark" : "text-ink-600 hover:text-primary-dark"
+          }`}
+        >
+          {icono && <Icono nombre={icono} size={16} strokeWidth={2.2} />}
+          {texto}
+        </button>
+      ))}
+    </div>
+  );
+}
+// Acciones que quitan, rechazan o cancelan: en rojo, para no confundirlas con las demas.
+export const botonPeligro =
+  "inline-flex items-center justify-center gap-2 border border-red-300 text-red-700 bg-white/70 font-bold text-sm px-4 min-h-[44px] rounded-full hover:bg-red-50 transition-colors disabled:opacity-60";
+export const botonPeligroTexto =
+  "inline-flex items-center justify-center min-h-[44px] px-3 rounded-full text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60";
 
 export function Encabezado({ kicker, titulo, descripcion, acciones }) {
   return (
@@ -67,10 +119,13 @@ const TONOS = {
 };
 
 export function Insignia({ tono = "azul", children, className = "" }) {
-  return <span className={`inline-flex items-center gap-1 text-xs font-bold rounded-full px-2.5 py-1 ${TONOS[tono]} ${className}`}>{children}</span>;
+  return <span className={`inline-flex items-center gap-1 text-xs font-bold rounded-md px-2 py-0.5 select-none cursor-default ${TONOS[tono]} ${className}`}>{children}</span>;
 }
 
 export function Aviso({ tono = "rojo", children }) {
+  // El resultado de una accion (error o exito) sale como aviso flotante, a la vista aunque se este lejos del tope.
+  const texto = textoPlano(children);
+  if (texto && (tono === "rojo" || tono === "verde")) return <AvisoFlotante tono={tono === "rojo" ? "error" : "exito"}>{texto}</AvisoFlotante>;
   const estilos = {
     rojo: "text-red-700 bg-red-50 border-red-100",
     verde: "text-[#0B6B61] bg-[#E3F4F1] border-[#C8EBE3]",

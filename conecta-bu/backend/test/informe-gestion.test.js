@@ -218,3 +218,16 @@ describe("Informes recibidos por el superadministrador", () => {
     expect((await api("put", `/informes/${periodo}`).send({ logros: "x" })).status).toBe(409);
   });
 });
+
+describe("Evidencias en el informe de gestión de Salud", () => {
+  test("entran las de las actividades del periodo aunque su fecha caiga fuera del semestre", async () => {
+    const actividad = (await api("post", "/actividades").send({ nombre: "Jornada de vacunación", categoria: "PromocionPrevencion", meta: 1 })).body.actividad;
+    // Una foto con la fecha del semestre y otra subida con una fecha de otro año (por error al digitar).
+    const hoy = new Date(Date.now() - 5 * 3600e3).toISOString().slice(0, 10);
+    await prisma.evidenciaSalud.create({ data: { actividadId: actividad.id, fecha: new Date(`${hoy}T00:00:00.000Z`), nombreArchivo: "dentro.jpg", ruta: "x/dentro.jpg", tipoMime: "image/jpeg", tamanoBytes: 10 } });
+    await prisma.evidenciaSalud.create({ data: { actividadId: actividad.id, fecha: new Date("2020-03-10T00:00:00.000Z"), nombreArchivo: "otro-anio.jpg", ruta: "x/otro-anio.jpg", tipoMime: "image/jpeg", tamanoBytes: 10 } });
+    const { cifras } = (await api("get", `/informes/${periodo}`)).body;
+    expect(cifras.kpis.evidencias).toBe(2);
+    expect(cifras.evidencias.map((e) => e.nombreArchivo).sort()).toEqual(["dentro.jpg", "otro-anio.jpg"]);
+  });
+});
