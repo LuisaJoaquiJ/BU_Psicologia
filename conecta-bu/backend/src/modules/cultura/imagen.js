@@ -6,68 +6,87 @@ const { prisma } = require("../../config/prisma");
 const { config } = require("../../config/env");
 const { AppError } = require("../../common/utils/AppError");
 
-// Foto de portada de los eventos de la agenda. Es publica (la ve el portal),
-// a diferencia de las evidencias: no debe llevar listados ni datos de personas.
+// Fotos de portada de los eventos de la agenda y de las convocatorias. Son
+// publicas (las ven el portal y los estudiantes), a diferencia de las
+// evidencias: no deben llevar listados ni datos de personas.
 const FORMATOS = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp" };
 const MAX_MB = 5;
-const carpeta = () => path.join(config.saludUploadsDir, "cultura", "eventos");
 
-const subir = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => fs.mkdir(carpeta(), { recursive: true }, (err) => cb(err, carpeta())),
-    filename: (req, file, cb) => cb(null, `${crypto.randomUUID()}${FORMATOS[file.mimetype]}`),
-  }),
-  limits: { fileSize: MAX_MB * 1024 * 1024, files: 1 },
-  fileFilter: (req, file, cb) => (FORMATOS[file.mimetype] ? cb(null, true) : cb(new AppError(400, "La foto debe ser JPG, PNG o WEBP."))),
-}).single("imagen");
-
-function recibir(req, res, next) {
-  subir(req, res, (err) => {
-    if (!err) return next();
-    if (err.code === "LIMIT_FILE_SIZE") return next(new AppError(400, `La foto no puede pesar más de ${MAX_MB} MB.`));
-    next(err instanceof AppError ? err : new AppError(400, "No fue posible recibir la foto."));
-  });
-}
-
-// Solo nombres generados aqui (uuid + extension): nadie puede pedir otro archivo.
-const rutaDe = (nombre) => (nombre && /^[0-9a-f-]{36}\.(jpg|png|webp)$/.test(nombre) ? path.join(carpeta(), nombre) : null);
-const borrar = (nombre) => {
-  const ruta = rutaDe(nombre);
-  return ruta ? fs.promises.unlink(ruta).catch(() => {}) : Promise.resolve();
+// tipo: carpeta en uploads/cultura, modelo de Prisma y como se nombra en los mensajes.
+const TIPOS = {
+  eventos: { modelo: "eventoCultural", nombre: "el evento" },
+  convocatorias: { modelo: "convocatoriaCultural", nombre: "la convocatoria" },
+  grupos: { modelo: "grupoCultural", nombre: "el grupo" },
 };
 
-// La URL cambia al reemplazar la foto, para que el navegador no muestre la anterior.
-const urlImagen = (evento) => (evento?.imagen ? `/api/v1/cultura/publico/imagenes/eventos/${evento.id}?v=${evento.imagen.slice(0, 8)}` : null);
+function crear(tipo) {
+  const { modelo, nombre } = TIPOS[tipo];
+  const carpeta = () => path.join(config.saludUploadsDir, "cultura", tipo);
 
-async function guardar(eventoId, archivo) {
-  if (!archivo) throw new AppError(400, "Adjunta una foto.");
-  const evento = await prisma.eventoCultural.findUnique({ where: { id: eventoId } });
-  if (!evento) {
-    await fs.promises.unlink(archivo.path).catch(() => {});
-    throw new AppError(404, "No se encontró el evento.");
+  const subir = multer({
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => fs.mkdir(carpeta(), { recursive: true }, (err) => cb(err, carpeta())),
+      filename: (req, file, cb) => cb(null, `${crypto.randomUUID()}${FORMATOS[file.mimetype]}`),
+    }),
+    limits: { fileSize: MAX_MB * 1024 * 1024, files: 1 },
+    fileFilter: (req, file, cb) => (FORMATOS[file.mimetype] ? cb(null, true) : cb(new AppError(400, "La foto debe ser JPG, PNG o WEBP."))),
+  }).single("imagen");
+
+  function recibir(req, res, next) {
+    subir(req, res, (err) => {
+      if (!err) return next();
+      if (err.code === "LIMIT_FILE_SIZE") return next(new AppError(400, `La foto no puede pesar más de ${MAX_MB} MB.`));
+      next(err instanceof AppError ? err : new AppError(400, "No fue posible recibir la foto."));
+    });
   }
-  const actualizado = await prisma.eventoCultural.update({ where: { id: eventoId }, data: { imagen: path.basename(archivo.path) } });
-  await borrar(evento.imagen);
-  return { imagenUrl: urlImagen(actualizado) };
+
+  // Solo nombres generados aqui (uuid + extension): nadie puede pedir otro archivo.
+  const rutaDe = (archivo) => (archivo && /^[0-9a-f-]{36}\.(jpg|png|webp)$/.test(archivo) ? path.join(carpeta(), archivo) : null);
+  const borrar = (archivo) => {
+    const ruta = rutaDe(archivo);
+    return ruta ? fs.promises.unlink(ruta).catch(() => {}) : Promise.resolve();
+  };
+
+  // La URL cambia al reemplazar la foto, para que el navegador no muestre la anterior.
+  const urlImagen = (fila) => (fila?.imagen ? `/api/v1/cultura/publico/imagenes/${tipo}/${fila.id}?v=${fila.imagen.slice(0, 8)}` : null);
+
+  async function guardar(id, archivo) {
+    if (!archivo) throw new AppError(400, "Adjunta una foto.");
+    const fila = await prisma[modelo].findUnique({ where: { id } });
+    if (!fila) {
+      await fs.promises.unlink(archivo.path).catch(() => {});
+      throw new AppError(404, `No se encontró ${nombre}.`);
+    }
+    const actualizado = await prisma[modelo].update({ where: { id }, data: { imagen: path.basename(archivo.path) } });
+    await borrar(fila.imagen);
+    return { imagenUrl: urlImagen(actualizado) };
+  }
+
+  async function quitar(id) {
+    const fila = await prisma[modelo].findUnique({ where: { id } });
+    if (!fila) throw new AppError(404, `No se encontró ${nombre}.`);
+    await prisma[modelo].update({ where: { id }, data: { imagen: null } });
+    await borrar(fila.imagen);
+    return { imagenUrl: null };
+  }
+
+  async function servir(req, res) {
+    const fila = await prisma[modelo].findUnique({ where: { id: req.params.id } });
+    const ruta = rutaDe(fila?.imagen);
+    if (!ruta) return res.status(404).json({ message: `${nombre[0].toUpperCase()}${nombre.slice(1)} no tiene foto.` });
+    res.set("Cross-Origin-Resource-Policy", "cross-origin");
+    res.set("Cache-Control", "public, max-age=86400");
+    return res.sendFile(ruta, (err) => {
+      if (err && !res.headersSent) res.status(404).json({ message: "No se encontró la foto." });
+    });
+  }
+
+  return { recibir, guardar, quitar, servir, urlImagen };
 }
 
-async function quitar(eventoId) {
-  const evento = await prisma.eventoCultural.findUnique({ where: { id: eventoId } });
-  if (!evento) throw new AppError(404, "No se encontró el evento.");
-  await prisma.eventoCultural.update({ where: { id: eventoId }, data: { imagen: null } });
-  await borrar(evento.imagen);
-  return { imagenUrl: null };
-}
+const eventos = crear("eventos");
+const convocatorias = crear("convocatorias");
+const grupos = crear("grupos");
 
-async function servir(req, res) {
-  const evento = await prisma.eventoCultural.findUnique({ where: { id: req.params.id } });
-  const ruta = rutaDe(evento?.imagen);
-  if (!ruta) return res.status(404).json({ message: "El evento no tiene foto." });
-  res.set("Cross-Origin-Resource-Policy", "cross-origin");
-  res.set("Cache-Control", "public, max-age=86400");
-  return res.sendFile(ruta, (err) => {
-    if (err && !res.headersSent) res.status(404).json({ message: "No se encontró la foto." });
-  });
-}
-
-module.exports = { recibir, guardar, quitar, servir, urlImagen };
+// Las funciones sueltas siguen siendo las de los eventos (como antes).
+module.exports = { ...eventos, eventos, convocatorias, grupos };

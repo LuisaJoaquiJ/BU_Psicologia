@@ -82,4 +82,11 @@ async function archivo(id) {
   return { absoluta, evidencia };
 }
 
-module.exports = { recibir, guardar, listar, archivo };
+// Quita una evidencia (fila y archivo); sirve para corregir una foto subida por error.
+async function eliminar(id) {
+  const { absoluta, evidencia } = await archivo(id);
+  await prisma.evidenciaCultural.delete({ where: { id: evidencia.id } });
+  await fs.promises.unlink(absoluta).catch(() => {});
+}
+
+module.exports = { recibir, guardar, listar, archivo, eliminar };

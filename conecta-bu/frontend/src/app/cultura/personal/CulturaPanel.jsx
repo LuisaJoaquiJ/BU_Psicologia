@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { PanelLayout } from "../comunes/componentes/AdminLayout";
 import { ConfirmarProvider } from "../comunes/componentes/Confirmar";
+import { RolCultura } from "./rol";
 import { InicioPersonal } from "./Inicio";
 import { AgendaPersonal, ConvocatoriasPersonal, GruposPersonal } from "./Paginas";
 import { InventarioPersonal, PendientesPersonal } from "./Logistica";
@@ -52,8 +53,9 @@ export function CulturaPanel() {
 
   return (
     <ConfirmarProvider>
+      <RolCultura.Provider value={rol || "monitor"}>
       <PanelLayout menu={menu} panel="cultura">
-        <Routes>
+        {!rol ? <p className="p-8 text-ink-500">Cargando…</p> : <Routes>
           <Route index element={<InicioPersonal rol={rol || "administrador"} />} />
           <Route path="grupos" element={<Pagina><GruposPersonal /></Pagina>} />
           <Route path="agenda" element={<Pagina><AgendaPersonal /></Pagina>} />
@@ -66,8 +68,9 @@ export function CulturaPanel() {
           <Route path="informes" element={<Pagina>{soloAdmin(<InformesPersonal />)}</Pagina>} />
           <Route path="historico" element={<Pagina><HistoricoPersonal /></Pagina>} />
           <Route path="equipo" element={<Pagina>{soloAdmin(<EquipoPersonal />)}</Pagina>} />
-        </Routes>
+        </Routes>}
       </PanelLayout>
+      </RolCultura.Provider>
     </ConfirmarProvider>
   );
 }

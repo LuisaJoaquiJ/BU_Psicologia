@@ -38,6 +38,7 @@ model Usuario {
   asistenciasCitaSaludRegistradas AsistenciaCitaSalud[]       @relation("registradoPorCitaSalud")
   asistenciasEventoRegistradas    AsistenciaEvento[]          @relation("registradoPorEvento")
   alertas                         AlertaInApp[]
+  notificaciones                  Notificacion[]
   historial                       HistorialEstado[]
   atencionesSaludRegistradas      AtencionSalud[]             @relation("atencionSaludRegistradaPor")
   evidenciasSaludSubidas          EvidenciaSalud[]            @relation("evidenciaSaludSubidaPor")
@@ -309,6 +310,23 @@ model AlertaInApp {
   fechaCreacion DateTime   @default(now())
 
   @@map("alertas_in_app")
+}
+
+// Centro de notificaciones: avisos dentro de la plataforma para cada persona.
+model Notificacion {
+  id            String   @id @default(uuid())
+  usuarioId     String
+  usuario       Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  modulo        String   @db.VarChar(30)
+  tipo          String   @db.VarChar(40)
+  titulo        String   @db.VarChar(150)
+  mensaje       String   @db.VarChar(500)
+  ruta          String?  @db.VarChar(200)
+  leida         Boolean  @default(false)
+  fechaCreacion DateTime @default(now())
+
+  @@index([usuarioId, leida, fechaCreacion])
+  @@map("notificaciones")
 }
 
 model HistorialEstado {
@@ -998,9 +1016,24 @@ model SalidaConvocatoria {
   fechaActualizacion     DateTime    @updatedAt
 
   inscripciones InscripcionSalida[]
+  fotos         SalidaFoto[]
 
   @@index([estado, fechaSalida])
   @@map("salud_salidas")
+}
+
+// Fotos con las que se promociona una salida (las ven los estudiantes al inscribirse).
+model SalidaFoto {
+  id             String             @id @default(uuid())
+  salidaId       String
+  salida         SalidaConvocatoria @relation(fields: [salidaId], references: [id], onDelete: Cascade)
+  archivo        String             @db.VarChar(60)
+  nombreOriginal String             @db.VarChar(255)
+  tipoMime       String             @db.VarChar(100)
+  fechaSubida    DateTime           @default(now())
+
+  @@index([salidaId])
+  @@map("salud_salidas_fotos")
 }
 
 model InscripcionSalida {
@@ -1057,6 +1090,13 @@ model GrupoCultural {
   nombre                String       @db.VarChar(80)
   director              String?      @db.VarChar(150)
   lugar                 String?      @db.VarChar(150)
+  // Ubicacion del sitio: de ahi se marca la asistencia (radio en metros).
+  latitud               Float?
+  longitud              Float?
+  radioM                Int          @default(100)
+  // Equipo a cargo: el docente dirige (decide audiciones, sesiones y ubicacion) y los monitores toman asistencia.
+  docenteEmail          String?      @db.VarChar(120)
+  monitoresEmails       Json         @default("[]")
   cupo                  Int          @default(20)
   // [{ dia: 1 (lunes) a 7 (domingo), inicio: "HH:mm", fin: "HH:mm" }]
   horario               Json
@@ -1065,6 +1105,13 @@ model GrupoCultural {
   // Lo que pide el SNIES de cada actividad: su codigo y la cedula de quien la dirige.
   codigoSnies           String?      @db.VarChar(30)
   documentoResponsable  String?      @db.VarChar(30)
+  // Fechas opcionales del taller cuando no dura todo el periodo.
+  fechaInicio           DateTime?    @db.Date
+  fechaFin              DateTime?    @db.Date
+  // false para actividades internas que no se reportan al SNIES (siguen en gestion e historico).
+  reportaSnies          Boolean      @default(true)
+  // Foto de portada (publica): uuid + extension en uploads/cultura/grupos.
+  imagen                String?      @db.VarChar(255)
   fechaCreacion         DateTime     @default(now())
 
   inscripciones    InscripcionCultural[]
@@ -1074,6 +1121,7 @@ model GrupoCultural {
   representaciones RepresentacionRed[]
   solicitudes      SolicitudApoyo[]
   articulos        ArticuloCultural[]
+  convocatorias    ConvocatoriaCultural[]
   prestamos        PrestamoCultural[]
 
   @@index([periodo])
@@ -1128,8 +1176,9 @@ model AsistenciaCultural {
   presente  Boolean        @default(true)
   tipoSnies Int            @default(1)
   ip        String?        @db.VarChar(45)
-  // Codigo: la persona lo escribio con su cuenta. Personal: la marco el equipo.
+  // Codigo / Ubicacion: la persona la marco con su cuenta. Personal: la marco el equipo.
   origen    String         @default("Personal") @db.VarChar(10)
+  distanciaM Int?
   fechaHora DateTime       @default(now())
 
   @@unique([sesionId, usuarioId])
@@ -1150,11 +1199,19 @@ model EventoCultural {
   representacion        String?        @db.VarChar(300)
   grupoId               String?
   grupo                 GrupoCultural? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  // Ubicacion del sitio: de ahi se marca la asistencia (radio en metros).
+  latitud               Float?
+  longitud              Float?
+  radioM                Int            @default(100)
+  // Personas del equipo a cargo del evento (al menos una); si es de un grupo, tambien cuenta su equipo.
+  responsablesEmails    Json           @default("[]")
   estado                String         @default("Borrador") @db.VarChar(15)
   fechaCreacion         DateTime       @default(now())
   codigoSnies           String?        @db.VarChar(30)
   documentoResponsable  String?        @db.VarChar(30)
   // Foto de portada (publica): uuid + extension en uploads/cultura/eventos.
+  // false para eventos internos que no se reportan al SNIES.
+  reportaSnies          Boolean        @default(true)
   imagen                String?        @db.VarChar(255)
   codigo                String?        @db.VarChar(8)
   abiertaHasta          DateTime?
@@ -1181,6 +1238,7 @@ model InscripcionEventoCultural {
   ip               String?        @db.VarChar(45)
   asistio          Boolean?
   ipAsistencia     String?        @db.VarChar(45)
+  distanciaM       Int?
   fechaAsistencia  DateTime?
   fechaInscripcion DateTime       @default(now())
 
@@ -1190,13 +1248,18 @@ model InscripcionEventoCultural {
 }
 
 model ConvocatoriaCultural {
-  id            String   @id @default(uuid())
-  titulo        String   @db.VarChar(150)
-  descripcion   String?  @db.Text
-  cierra        DateTime @db.Date
+  id            String         @id @default(uuid())
+  titulo        String         @db.VarChar(150)
+  descripcion   String?        @db.Text
+  cierra        DateTime       @db.Date
   cupo          Int?
-  estado        String   @default("Abierta") @db.VarChar(15)
-  fechaCreacion DateTime @default(now())
+  estado        String         @default("Abierta") @db.VarChar(15)
+  // Foto de portada (publica): uuid + extension en uploads/cultura/convocatorias.
+  imagen        String?        @db.VarChar(255)
+  // Grupo representativo al que da entrada (audicion): al aceptar, el estudiante queda inscrito.
+  grupoId       String?
+  grupo         GrupoCultural? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  fechaCreacion DateTime       @default(now())
 
   postulaciones PostulacionCultural[]
 
@@ -1211,6 +1274,10 @@ model PostulacionCultural {
   usuario        Usuario              @relation(fields: [usuarioId], references: [id])
   motivacion     String               @db.Text
   estado         String               @default("Recibida") @db.VarChar(15)
+  audicionFecha  DateTime?            @db.Date
+  audicionHora   String?              @db.VarChar(5)
+  audicionLugar  String?              @db.VarChar(120)
+  observacion    String?              @db.VarChar(300)
   tipoSnies      Int                  @default(1)
   ip             String?              @db.VarChar(45)
   fecha          DateTime             @default(now())
@@ -1287,6 +1354,9 @@ model ParticipanteRed {
 model PausaCreativa {
   id              String   @id @default(uuid())
   fecha           DateTime @db.Date
+  // Hora de la pausa ("HH:mm"); las registradas antes de pedirla quedan vacias.
+  horaInicio      String?  @db.VarChar(5)
+  horaFin         String?  @db.VarChar(5)
   lugar           String   @db.VarChar(150)
   tecnica         String   @db.VarChar(150)
   impactoEstimado Int

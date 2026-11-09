@@ -1,17 +1,22 @@
 jest.mock("../src/config/prisma", () => require("./mocks/prisma.mock"));
 const request = require("supertest");
+const { configurarEntorno, crearUsuario, auth } = require("./helpers");
+// Una prueba mueve el reloj al proximo martes: la sesion de prueba dura mas.
+configurarEntorno({ JWT_EXPIRES_IN: "30d" });
 const { app } = require("../src/app");
 const { prisma } = require("./mocks/prisma.mock");
-const { configurarEntorno, crearUsuario, auth } = require("./helpers");
 const { hoyBogota } = require("../src/common/utils/fechas");
 const { periodoActual } = require("../src/modules/cultura/periodo");
 
-configurarEntorno();
 
 function dentroDe(dias) {
   const base = hoyBogota();
   return new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate() + dias)).toISOString().slice(0, 10);
 }
+
+
+// Algunas pruebas fijan la hora (Date.now) para caer dentro de la sesion.
+afterEach(() => jest.restoreAllMocks());
 
 describe("Arte y Cultura", () => {
   let ana;
@@ -140,6 +145,11 @@ describe("Arte y Cultura", () => {
   });
 
   test("la inscripcion y la asistencia guardan tipo, hora e IP", async () => {
+    // El codigo solo se abre durante la sesion: el grupo es los martes 14:00-16:00.
+    const real = Date.now();
+    const martes = new Date(real - 5 * 3600e3);
+    martes.setUTCDate(martes.getUTCDate() + ((2 - martes.getUTCDay() + 7) % 7));
+    jest.spyOn(Date, "now").mockReturnValue(Date.parse(`${martes.toISOString().slice(0, 10)}T19:30:00.000Z`)); // 14:30 en Bogota
     const creado = await grupo({ nombre: "Piano" });
     const alta = await api(ana.token).post(`/api/v1/cultura/grupos/${creado.id}/inscripcion`, { tipoSnies: 2 });
     expect(alta.status).toBe(200);

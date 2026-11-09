@@ -1,3 +1,4 @@
+import { CampanaNotificaciones } from "../../../../components/CampanaNotificaciones";
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../../../lib/auth/AuthContext";
@@ -27,7 +28,7 @@ function leerPlegado() {
 const claseEnlace = (plegado) => ({ isActive }) =>
   `relative flex items-center gap-3 rounded-2xl px-3 min-h-[44px] text-sm font-medium transition-colors ${plegado ? "lg:justify-center lg:px-0" : ""} ${
     isActive
-      ? "boton-liquido font-semibold"
+      ? "bg-primary-light text-primary-dark font-semibold before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-[3px] before:rounded-full before:bg-primary"
       : "text-ink-600 hover:bg-white/80 hover:text-ink-900"
   }`;
 
@@ -84,7 +85,8 @@ export function PanelLayout({ menu, panel, children }) {
           <Icono nombre="menu" size={22} />
         </button>
         <span className="font-display font-semibold text-[15px] tracking-tight text-ink-900 truncate">{datos.nombre}</span>
-        <span className="w-9 h-9 rounded-full boton-liquido font-semibold text-xs flex items-center justify-center shrink-0">{iniciales(usuario?.nombre)}</span>
+        <CampanaNotificaciones />
+        <span className="w-9 h-9 rounded-full bg-primary-light text-primary-dark ring-1 ring-primary/25 font-bold text-xs flex items-center justify-center shrink-0 select-none">{iniciales(usuario?.nombre)}</span>
       </header>
 
       {abierto && <div className="lg:hidden fixed inset-0 z-40 bg-ink-900/30" onClick={() => setAbierto(false)} aria-hidden="true" />}
@@ -132,7 +134,13 @@ export function PanelLayout({ menu, panel, children }) {
             <span className="text-sm font-semibold text-ink-900 truncate">{datos.nombre}</span>
             <span className="text-xs text-ink-500 truncate">{datos.subtitulo || (panel === "super" ? "Conecta BU" : "Panel del personal")}</span>
           </span>
+          {!plegado && <CampanaNotificaciones className="ml-auto -mr-1.5" />}
         </div>
+        {plegado && (
+          <div className="hidden lg:flex justify-center -mt-2 mb-3">
+            <CampanaNotificaciones />
+          </div>
+        )}
 
         <nav className="menu-desliza flex-1 overflow-y-auto px-3 pt-1 pb-6 flex flex-col gap-0.5">
           <p className={`m-0 px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500 ${oculto}`}>Menú</p>
@@ -157,7 +165,7 @@ export function PanelLayout({ menu, panel, children }) {
             </Link>
           )}
           <div className={`flex items-center gap-2.5 px-2 pt-2 ${plegado ? "lg:flex-col lg:px-0" : ""}`}>
-            <span title={plegado ? usuario?.nombre : undefined} className="w-9 h-9 rounded-full boton-liquido font-semibold text-xs flex items-center justify-center shrink-0">
+            <span title={plegado ? usuario?.nombre : undefined} className="w-9 h-9 rounded-full bg-primary-light text-primary-dark ring-1 ring-primary/25 font-bold text-xs flex items-center justify-center shrink-0 select-none">
               {iniciales(usuario?.nombre)}
             </span>
             <span className={`flex flex-col leading-tight min-w-0 flex-1 ${oculto}`}>
