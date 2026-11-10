@@ -181,3 +181,7 @@ Ve todos los módulos. Su menú tiene **Inicio**, **Estadísticas**, **Informes*
 | Bitácora de pruebas | `docs/BITACORA-DE-PRUEBAS.md` |
 | Historias de usuario que se cumplen | `docs/HISTORIAS-DE-USUARIO.md` |
 | Pruebas automáticas de la API | `backend/test/` |
+| Plan y ejecución de pruebas | `docs/entregables/PLAN-Y-EJECUCION-DE-PRUEBAS.md` |
+| Manual técnico y de arquitectura | `docs/entregables/MANUAL-TECNICO-Y-ARQUITECTURA.md` |
+| Manual de usuario, flujo completo | `docs/entregables/MANUAL-DE-USUARIO.md` |
+| Acumulado de cortes | `docs/entregables/ACUMULADO-DE-DOCUMENTACION.md` |
