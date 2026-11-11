@@ -5,6 +5,18 @@ const { reposCon } = require("../repositories");
 const { bloqueoService } = require("./BloqueoService");
 const { fechaHorario, horaHorario } = require("../utils/agenda");
 
+// La cita más reciente del horario, solo con el nombre: el personal distingue
+// un cupo reservado de uno cerrado a mano. `citas` no sale en la respuesta.
+function resumirCita(horario) {
+  const lista = Array.isArray(horario.citas) ? horario.citas : [];
+  const cita = lista[0] || null;
+  const { citas, ...resto } = horario;
+  return {
+    ...resto,
+    cita: cita ? { id: cita.id, estado: cita.estado, estudiante: cita.usuario?.nombre || null } : null,
+  };
+}
+
 // Horarios de atencion que publica el personal de Desarrollo Humano
 // (RF-007 / HU-13, HU-14).
 class HorarioService {
@@ -53,8 +65,8 @@ class HorarioService {
     const where = {};
     if (fecha) where.fecha = fechaHorario(fecha);
     if (servicioId) where.servicioId = servicioId;
-    const horarios = await this.repos.horarios.buscar(where);
-    return horarios.filter((h) => !h.sinCita);
+    const horarios = await this.repos.horarios.paraGestion(where);
+    return horarios.filter((h) => !h.sinCita).map(resumirCita);
   }
 
   // RF-007 / HU-14: modifica un horario que no tiene una cita activa.

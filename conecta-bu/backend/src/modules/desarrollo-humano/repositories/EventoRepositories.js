@@ -17,6 +17,18 @@ class EventoRepository extends BaseRepository {
   listarConConteo(where = {}) {
     return this.tabla.findMany({ where, include: CONTEO_INSCRITOS, orderBy: ORDEN });
   }
+  // Igual que el listado, más la asistencia de cada inscrito confirmado
+  // para el resumen de la pantalla (no se devuelve la lista de personas).
+  listarConAsistencia(where = {}) {
+    return this.tabla.findMany({
+      where,
+      orderBy: ORDEN,
+      include: {
+        ...CONTEO_INSCRITOS,
+        inscripciones: { where: { estado: "Confirmada" }, include: { asistencia: true } },
+      },
+    });
+  }
   crearConConteo(data) {
     return this.tabla.create({ data, include: CONTEO_INSCRITOS });
   }

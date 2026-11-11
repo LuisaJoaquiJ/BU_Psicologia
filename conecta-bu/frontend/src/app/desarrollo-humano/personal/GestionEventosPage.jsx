@@ -2,10 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { fechaInputUTC, fechaLarga, formatearHora, horaInputUTC } from "../comunes/lib/format";
-import { imagenDeEvento, respaldoDeFoto, imagenParaEvento, urlDelServidor } from "../comunes/lib/imagenes";
-import { Aviso, Estado, Vacio, botonPrimario, botonSecundario, claseCampo } from "../comunes/componentes/ui";
+import { urlDelServidor } from "../comunes/lib/imagenes";
+import { Aviso, Segmentos, botonPrimario, botonSecundario, claseCampo } from "../comunes/componentes/ui";
 import { Icono } from "../comunes/componentes/Iconos";
-import { BotonFlotante, Ventana } from "../comunes/componentes/Ventana";
 
 // RF-009: talleres y eventos de Desarrollo Humano. Un solo formulario sirve
 // para crear, duplicar y editar, con vista previa en vivo de cómo lo verán
@@ -164,7 +163,7 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
   return (
     <section
       aria-label={modo === "editar" ? "Editar evento" : "Nuevo taller o evento"}
-      className={`flex gap-7 flex-wrap items-start ${enVentana ? "" : "mb-10"}`}
+      className="flex flex-col gap-4"
     >
       <form
         noValidate
@@ -172,7 +171,7 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
           e.preventDefault();
           guardar(modo === "editar" ? undefined : "Publicado");
         }}
-        className="flex-[999_1_540px] min-w-0 bg-white rounded-xl p-5 sm:p-7 flex flex-col gap-[18px]"
+        className={`flex flex-col gap-[18px] ${enVentana ? "" : "bg-white rounded-xl p-5 sm:p-7"}`}
       >
         {!enVentana && (
           <div className="flex justify-between items-start gap-3 flex-wrap">
@@ -411,118 +410,144 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
         {error && <Aviso>{error}</Aviso>}
         {intentado && Object.keys(errores).length > 0 && <Aviso>Revisa los campos marcados en rojo para continuar.</Aviso>}
 
-        <div className="flex gap-2.5 flex-wrap justify-end pt-1.5 border-t border-[#EEF2F7]">
+        <aside aria-label="Vista previa">
+          <p className="m-0 mb-2 text-[11px] font-bold tracking-[0.08em] uppercase text-ink-500">Así lo verán los estudiantes</p>
+          <div className="rounded-xl border border-dashed border-gray-300 bg-cream/60 p-4 flex flex-col gap-2.5">
+            <div className="flex gap-1.5 flex-wrap">
+              <span className="text-xs font-bold rounded-full px-2.5 py-1 bg-[#E4EAF4] text-primary-dark">{v.modalidad === "Hibrida" ? "Híbrida" : v.modalidad}</span>
+              <span className="text-xs font-bold rounded-full px-2.5 py-1 bg-[#E3F4F1] text-[#0B6B61]">Cupos disponibles</span>
+            </div>
+            {foto.vista && <img src={foto.vista} alt="" className="w-full h-[88px] object-cover rounded-lg" />}
+            <div className="flex items-center gap-3">
+              <span className="w-12 h-12 rounded-xl bg-primary-dark text-white flex flex-col items-center justify-center shrink-0 leading-none">
+                <b className="text-base">{v.fecha ? Number(v.fecha.slice(8)) : "—"}</b>
+                <span className="text-[9px] font-bold uppercase">{v.fecha ? ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic."][Number(v.fecha.slice(5, 7)) - 1] : ""}</span>
+              </span>
+              <b className="text-ink-900">{v.nombre.trim() || "Nombre del evento"}</b>
+            </div>
+            <p className="m-0 text-sm text-ink-500 inline-flex items-center gap-1.5">
+              <Icono nombre="ubicacion" size={14} />
+              {v.modalidad === "Virtual" ? "Virtual" : v.lugar || "Lugar por definir"}
+              {v.fecha ? ` · ${horaTexto(v.horaInicio)} a ${horaTexto(v.horaFin)}` : ""}
+            </p>
+            <div className="h-1.5 rounded-full bg-white overflow-hidden"><div className="h-full bg-teal" style={{ width: "0%" }} /></div>
+            <span className="text-xs text-ink-500">0 de {v.cupos || 0} cupos</span>
+            {limite && <p className="m-0 text-xs text-ink-500">Inscripciones hasta el {fechaLarga(limite).toLowerCase()}.</p>}
+          </div>
+        </aside>
+
+        <div className="flex flex-col gap-2 pt-1.5 border-t border-[#EEF2F7]">
           {modo === "editar" ? (
-            <button type="button" onClick={() => guardar()} disabled={!!enviando} className={botonPrimario}>
-              {enviando ? "Guardando…" : "Guardar cambios"}
-            </button>
+            <>
+              <button type="button" onClick={() => guardar()} disabled={!!enviando} className={`${botonPrimario} w-full`}>
+                {enviando ? "Guardando…" : "Guardar cambios"}
+              </button>
+              <button type="button" onClick={alCancelar} className={`${botonSecundario} w-full`}>Cancelar</button>
+            </>
           ) : (
             <>
-              <button type="button" onClick={() => guardar("Borrador")} disabled={!!enviando} className={botonSecundario}>
-                {enviando === "Borrador" ? "Guardando…" : "Guardar como borrador"}
-              </button>
-              <button type="button" onClick={() => guardar("Publicado")} disabled={!!enviando} className={botonPrimario}>
+              <button type="button" onClick={() => guardar("Publicado")} disabled={!!enviando} className={`${botonPrimario} w-full`}>
                 {enviando === "Publicado" ? "Publicando…" : "Publicar ahora"}
+              </button>
+              <button type="button" onClick={() => guardar("Borrador")} disabled={!!enviando} className={`${botonSecundario} w-full`}>
+                {enviando === "Borrador" ? "Guardando…" : "Guardar como borrador"}
               </button>
             </>
           )}
         </div>
       </form>
-
-      {/* Vista previa en vivo */}
-      <aside aria-label="Vista previa" className="flex-[1_1_340px] min-w-0 lg:sticky lg:top-4">
-        <p className="m-0 mb-2.5 text-sm font-extrabold text-ink-600">Así lo verán los estudiantes</p>
-        <article className="bg-white rounded-xl overflow-hidden shadow-[0_16px_40px_rgba(11,35,71,0.12)]">
-          <img src={foto.vista || imagenParaEvento(inicial.id || "nuevo-evento").src} alt="" className="w-full h-[180px] object-cover" />
-          <div className="p-5 flex flex-col gap-2">
-            <p className="m-0 text-sm font-extrabold text-primary tabular-nums">
-              {v.fecha ? `${fechaLarga(v.fecha)} · ${horaTexto(v.horaInicio)} a ${horaTexto(v.horaFin)}` : "Elige una fecha"}
-            </p>
-            <h3 className="m-0 text-[22px] font-extrabold tracking-tight text-primary-dark">{v.nombre.trim() || "Nombre del evento"}</h3>
-            <p className="m-0 text-ink-500">
-              {v.modalidad === "Virtual" ? "Virtual" : `${v.lugar || "Lugar por definir"}${v.modalidad === "Hibrida" ? " y virtual" : ""}`} ·{" "}
-              <span className="tabular-nums">{v.cupos}</span> cupos
-            </p>
-            <p className="m-0 text-ink-600 whitespace-pre-line">{v.descripcion.trim() || "Aquí aparecerá la descripción."}</p>
-            {limite && <p className="mt-1 mb-0 text-sm text-ink-500">Inscripciones abiertas hasta el {fechaLarga(limite).toLowerCase()}.</p>}
-            <span className="mt-1.5 inline-flex justify-center items-center min-h-[46px] rounded-full boton-liquido font-extrabold">Inscribirme</span>
-          </div>
-        </article>
-      </aside>
     </section>
   );
 }
 
+
+const MESES_CORTOS = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic."];
+const BADGE = {
+  Publicado: ["bg-[#E3F4F1] text-[#0B6B61]", "Publicado"],
+  Borrador: ["bg-gray-100 text-ink-600", "Borrador"],
+  Cerrado: ["bg-red-50 text-red-700", "Inscripciones cerradas"],
+  Cancelado: ["bg-gray-100 text-ink-600", "Cancelado"],
+};
+
+function cajaFecha(iso) {
+  const d = new Date(iso);
+  return { dia: d.getUTCDate(), mes: MESES_CORTOS[d.getUTCMonth()] };
+}
+
 function FilaEvento({ evento, ocupado, onEstado, onEditar, onDuplicar, onEliminar }) {
   const inscritos = evento._count?.inscripciones ?? 0;
+  const resumen = evento.asistenciaResumen || { asistieron: 0, noAsistieron: 0, sinRegistrar: 0 };
   const principal = ACCION_PRINCIPAL[evento.estado];
   const porcentaje = Math.min(100, Math.round((inscritos / Math.max(1, evento.cupos)) * 100));
+  const quedan = Math.max(0, evento.cupos - inscritos);
+  const fecha = cajaFecha(evento.fecha);
+  const pasado = fechaInputUTC(evento.fecha) < hoyLocal();
+  const badge = BADGE[evento.estado] || ["bg-gray-100 text-ink-600", evento.estado];
+  const lugar = evento.modalidad === "Virtual" ? "Virtual" : `${evento.lugar || "Lugar por definir"}${evento.modalidad === "Hibrida" ? " y virtual" : ""}`;
+  const cierre = pasado
+    ? resumen.sinRegistrar
+      ? `Evento realizado · ${resumen.sinRegistrar} ${resumen.sinRegistrar === 1 ? "asistencia" : "asistencias"} por registrar`
+      : "Evento realizado"
+    : evento.fechaLimiteInscripcion
+      ? `Inscripciones hasta el ${fechaLarga(evento.fechaLimiteInscripcion).toLowerCase()}`
+      : "";
   return (
-    <li className="px-5 py-4 flex items-center justify-between flex-wrap gap-x-6 gap-y-3">
-      <img
-        src={imagenDeEvento(evento).src}
-        alt=""
-        onError={respaldoDeFoto(evento)}
-        className="hidden sm:block w-[88px] h-[64px] object-cover rounded-xl shrink-0"
-      />
-      <div className="min-w-0 flex-[1_1_320px]">
+    <article className="rounded-xl border border-gray-200 bg-white p-4 grid gap-3 sm:grid-cols-[64px_minmax(0,1fr)_200px] sm:items-center">
+      <div className={`w-16 h-16 rounded-xl flex flex-col items-center justify-center leading-none ${evento.estado === "Publicado" ? "bg-primary-dark text-white" : "bg-gray-100 text-ink-600"}`}>
+        <b className="text-xl">{fecha.dia}</b>
+        <span className="text-[10px] font-bold uppercase tracking-wide mt-1">{fecha.mes}</span>
+      </div>
+      <div className="min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <strong className="text-ink-900">{evento.nombre}</strong>
-          <Estado estado={evento.estado} />
+          <span className={`text-xs font-bold rounded-full px-2.5 py-0.5 ${badge[0]}`}>{badge[1]}</span>
         </div>
-        <p className="m-0 text-sm text-ink-500 tabular-nums">
-          {fechaLarga(evento.fecha)} · {formatearHora(evento.horaInicio)} a {formatearHora(evento.horaFin)}
-          {evento.modalidad === "Virtual" ? " · Virtual" : evento.lugar ? ` · ${evento.lugar}${evento.modalidad === "Hibrida" ? " y virtual" : ""}` : ""}
+        <p className="m-0 mt-1 text-sm text-ink-500">
+          {fechaLarga(evento.fecha)} · {formatearHora(evento.horaInicio)} a {formatearHora(evento.horaFin)} · {lugar}
         </p>
-        <div className="mt-2 flex items-center gap-2.5 max-w-[360px]">
-          <div className="flex-1 h-1.5 rounded-full bg-primary-light overflow-hidden">
-            <div className="h-full bg-primary" style={{ width: `${porcentaje}%` }} />
-          </div>
-          <span className="text-[13px] font-bold text-ink-600 tabular-nums whitespace-nowrap">
-            {inscritos} de {evento.cupos} inscritos
-          </span>
+        {cierre && <p className="m-0 mt-0.5 text-xs text-ink-500">{cierre}</p>}
+      </div>
+      <div className="min-w-0">
+        <p className="m-0 text-sm"><b>{inscritos}</b> de {evento.cupos} inscritos</p>
+        <div className="mt-1.5 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+          <div className={`h-full ${quedan <= 6 && inscritos > 0 ? "bg-accent" : "bg-teal"}`} style={{ width: `${porcentaje}%` }} />
         </div>
       </div>
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="sm:col-span-2 sm:col-start-2 flex items-center gap-2 flex-wrap border-t border-dashed border-gray-200 pt-3">
         <Link to={`/admin/eventos/${evento.id}/inscritos`} className={botonSecundario}>
-          Inscritos y asistencia
+          <Icono nombre="usuarios" size={15} strokeWidth={2} />
+          Ver inscritos
         </Link>
+        {evento.estado !== "Cancelado" && (
+          <button type="button" onClick={() => onEditar(evento)} className="inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-full text-sm font-bold text-primary hover:bg-primary-light">
+            <Icono nombre="editar" size={15} strokeWidth={2} />
+            Editar
+          </button>
+        )}
         {principal && (
-          <button onClick={() => onEstado(evento, principal.estado)} disabled={ocupado} className={botonPrimario}>
-            {principal.label}
+          <button type="button" onClick={() => onEstado(evento, principal.estado)} disabled={ocupado} className={evento.estado === "Borrador" ? botonPrimario : "inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-full text-sm font-bold text-primary hover:bg-primary-light disabled:opacity-50"}>
+            {evento.estado === "Publicado" && <Icono nombre="alerta" size={15} strokeWidth={2} />}
+            {principal.label === "Publicar" ? "Publicar ahora" : principal.label}
           </button>
         )}
         <details className="relative">
-          <summary className="list-none cursor-pointer inline-flex items-center gap-1 min-h-[44px] px-3.5 rounded-full font-bold text-primary hover:bg-primary-light">
+          <summary className="list-none cursor-pointer inline-flex items-center gap-1 min-h-[40px] px-3 rounded-full text-sm font-bold text-primary hover:bg-primary-light">
             Más
-            <Icono nombre="derecha" size={16} strokeWidth={2.2} className="rotate-90" />
+            <Icono nombre="derecha" size={14} strokeWidth={2.2} className="rotate-90" />
           </summary>
           <div className="absolute right-0 z-10 mt-1 w-56 bg-white rounded-xl shadow-[0_16px_40px_rgba(11,35,71,0.18)] p-1.5 flex flex-col">
-            {evento.estado !== "Cancelado" && (
-              <button onClick={() => onEditar(evento)} className="text-left min-h-[44px] px-3 rounded-lg font-bold hover:bg-cream">
-                Editar
-              </button>
-            )}
-            <button onClick={() => onDuplicar(evento)} className="text-left min-h-[44px] px-3 rounded-lg font-bold hover:bg-cream">
-              Duplicar para otra fecha
-            </button>
+            <button type="button" onClick={() => onDuplicar(evento)} className="text-left min-h-[40px] px-3 rounded-lg font-bold hover:bg-cream">Duplicar para otra fecha</button>
             {evento.estado === "Publicado" && (
-              <button onClick={() => onEstado(evento, "Borrador")} className="text-left min-h-[44px] px-3 rounded-lg font-bold hover:bg-cream">
-                Volver a borrador
-              </button>
+              <button type="button" onClick={() => onEstado(evento, "Borrador")} className="text-left min-h-[40px] px-3 rounded-lg font-bold hover:bg-cream">Volver a borrador</button>
             )}
             {evento.estado !== "Cancelado" && (
-              <button onClick={() => onEstado(evento, "Cancelado")} className="text-left min-h-[44px] px-3 rounded-lg font-bold hover:bg-cream">
-                Cancelar evento
-              </button>
+              <button type="button" onClick={() => onEstado(evento, "Cancelado")} className="text-left min-h-[40px] px-3 rounded-lg font-bold hover:bg-cream">Cancelar evento</button>
             )}
-            <button onClick={() => onEliminar(evento)} className="text-left min-h-[44px] px-3 rounded-lg font-bold text-red-700 hover:bg-red-50">
-              Eliminar
-            </button>
+            <button type="button" onClick={() => onEliminar(evento)} className="text-left min-h-[40px] px-3 rounded-lg font-bold text-red-700 hover:bg-red-50">Eliminar</button>
           </div>
         </details>
       </div>
-    </li>
+    </article>
   );
 }
 
@@ -534,11 +559,13 @@ function hoyLocal() {
 export function GestionEventosPage() {
   const [params, setParams] = useSearchParams();
   const [eventos, setEventos] = useState(null);
-  const [formulario, setFormulario] = useState(params.get("nuevo") ? { modo: "crear", inicial: { ...VACIO } } : null);
+  const [formulario, setFormulario] = useState({ modo: "crear", inicial: { ...VACIO }, clave: "nuevo" });
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
   const [accionando, setAccionando] = useState(null);
-  const arriba = useRef(null);
+  const [filtro, setFiltro] = useState("");
+  const [q, setQ] = useState("");
+  const formRef = useRef(null);
 
   function cargarEventos() {
     return http
@@ -549,15 +576,20 @@ export function GestionEventosPage() {
 
   useEffect(() => {
     cargarEventos();
+    if (params.get("nuevo") === "1") {
+      setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function abrir(modo, inicial) {
     setMensaje("");
-    setFormulario({ modo, inicial, clave: Date.now() });
+    setFormulario({ modo, inicial, clave: `${modo}-${inicial.id || "nuevo"}-${Date.now()}` });
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   const cerrarFormulario = useCallback(() => {
-    setFormulario(null);
+    setFormulario({ modo: "crear", inicial: { ...VACIO }, clave: `nuevo-${Date.now()}` });
     if (params.get("nuevo")) setParams({}, { replace: true });
   }, [params, setParams]);
 
@@ -631,7 +663,6 @@ export function GestionEventosPage() {
       setMensaje("Evento eliminado.");
     } catch (err) {
       const msj = err.response?.data?.message || "";
-      // RF-009, flujo alternativo: con inscripciones activas el backend pide confirmación.
       if (err.response?.status === 409 && window.confirm(`${msj}\n\n¿Deseas eliminarlo de todas formas?`)) {
         try {
           await http.delete(`/admin/eventos/${evento.id}`, { params: { confirmar: true } });
@@ -648,30 +679,85 @@ export function GestionEventosPage() {
     }
   }
 
+  const lista = eventos || [];
+  const publicados = lista.filter((e) => e.estado === "Publicado");
+  const borradores = lista.filter((e) => e.estado === "Borrador");
+  const abiertos = publicados.reduce((a, e) => a + (e._count?.inscripciones ?? 0), 0);
+  const cuposAbiertos = publicados.reduce((a, e) => a + (e.cupos || 0), 0);
+  const cerrados = lista.filter((e) => e.estado === "Cerrado");
+  const baseAsist = cerrados.reduce((a, e) => a + ((e.asistenciaResumen?.asistieron || 0) + (e.asistenciaResumen?.noAsistieron || 0)), 0);
+  const asistOk = cerrados.reduce((a, e) => a + (e.asistenciaResumen?.asistieron || 0), 0);
+  const promedio = baseAsist ? Math.round((asistOk / baseAsist) * 100) : null;
+  const texto = q.trim().toLowerCase();
+  const visibles = lista
+    .filter((e) => !filtro || e.estado === filtro)
+    .filter((e) => !texto || `${e.nombre} ${e.lugar || ""}`.toLowerCase().includes(texto))
+    .sort((a, b) => {
+      const fa = fechaInputUTC(a.fecha);
+      const fb = fechaInputUTC(b.fecha);
+      const hoy = hoyLocal();
+      const pa = fa < hoy;
+      const pb = fb < hoy;
+      if (pa !== pb) return pa ? 1 : -1;
+      return pa ? fb.localeCompare(fa) : fa.localeCompare(fb);
+    });
+
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8 pb-32" ref={arriba}>
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
       <div className="flex justify-between items-end gap-4 flex-wrap mb-6">
         <div>
+          <p className="m-0 mb-1 text-[11px] font-bold tracking-[0.14em] uppercase text-accent">Panel del personal · Desarrollo Humano</p>
           <h1 className="m-0 text-[30px] sm:text-[38px] leading-tight font-extrabold">Talleres y eventos</h1>
-          <p className="mt-1 mb-0 text-ink-500">
-            Tus talleres y eventos con sus inscripciones. Para crear uno, usa el botón <strong className="text-ink-700">Nuevo evento</strong>.
-          </p>
+          <p className="mt-1 mb-0 text-ink-500">Crea talleres, publícalos y revisa quién se inscribió.</p>
         </div>
+        <button type="button" onClick={() => { cerrarFormulario(); formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }); }} className={botonPrimario}>
+          <Icono nombre="mas" size={16} strokeWidth={2.4} />
+          Nuevo evento
+        </button>
       </div>
 
-      {mensaje && (
-        <div className="mb-5" role="status">
-          <Aviso tono="verde">{mensaje}</Aviso>
-        </div>
-      )}
-      {error && (
-        <div className="mb-5 whitespace-pre-line">
-          <Aviso>{error}</Aviso>
-        </div>
-      )}
+      {mensaje && <div className="mb-4" role="status"><Aviso tono="verde">{mensaje}</Aviso></div>}
+      {error && <div className="mb-4 whitespace-pre-line"><Aviso>{error}</Aviso></div>}
 
-      {formulario && (
-        <Ventana titulo={formulario.modo === "editar" ? "Editar evento" : "Nuevo taller o evento"} alCerrar={cerrarFormulario}>
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
+        <Kpi titulo="Publicados" valor={publicados.length} detalle="Visibles para los estudiantes" />
+        <Kpi titulo="Borradores" valor={borradores.length} detalle="Aún no visibles" />
+        <Kpi titulo="Inscritos en eventos abiertos" valor={abiertos} detalle={`de ${cuposAbiertos} cupos`} />
+        <Kpi titulo="Asistencia promedio" valor={promedio === null ? "—" : `${promedio} %`} detalle="Eventos cerrados del periodo" />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px] items-start">
+        <section className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 flex flex-col gap-4">
+          <div className="flex justify-between items-center gap-3 flex-wrap">
+            <Segmentos
+              etiqueta="Filtrar eventos"
+              valor={filtro}
+              alCambiar={setFiltro}
+              opciones={[["", "Todos"], ["Publicado", "Publicados"], ["Borrador", "Borradores"], ["Cerrado", "Cerrados"]]}
+              conteos={{ "": lista.length, Publicado: publicados.length, Borrador: borradores.length, Cerrado: cerrados.length }}
+            />
+            <label className={`${claseCampo} !w-[240px] inline-flex items-center gap-2 !px-3`}>
+              <Icono nombre="buscar" size={16} className="text-ink-500 shrink-0" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar evento" aria-label="Buscar evento" className="w-full bg-transparent outline-none text-[15px]" />
+            </label>
+          </div>
+          {!eventos && !error && <p className="m-0 text-ink-500">Cargando eventos…</p>}
+          {eventos && visibles.length === 0 && (
+            <div className="py-10 text-center">
+              <p className="m-0 font-extrabold text-ink-900">{lista.length === 0 ? "Todavía no hay talleres ni eventos" : "Ningún evento coincide con ese filtro"}</p>
+              <p className="m-0 mt-1 text-sm text-ink-500">{lista.length === 0 ? "Crea el primero; puedes guardarlo como borrador y publicarlo cuando esté listo." : "Prueba con otro estado o borra la búsqueda."}</p>
+            </div>
+          )}
+          <div className="flex flex-col gap-3">
+            {visibles.map((e) => (
+              <FilaEvento key={e.id} evento={e} ocupado={accionando === e.id} onEstado={cambiarEstado} onEditar={editar} onDuplicar={duplicar} onEliminar={eliminar} />
+            ))}
+          </div>
+        </section>
+
+        <aside ref={formRef} className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 xl:sticky xl:top-4">
+          <h2 className="m-0 text-lg font-extrabold">{formulario.modo === "editar" ? "Editar evento" : "Nuevo taller o evento"}</h2>
+          <p className="mt-1 mb-4 text-sm text-ink-500">Completa lo básico; puedes guardarlo como borrador.</p>
           <Formulario
             key={formulario.clave}
             enVentana
@@ -679,57 +765,24 @@ export function GestionEventosPage() {
             inicial={formulario.inicial}
             eventos={eventos}
             alCancelar={cerrarFormulario}
-            alGuardar={async (texto) => {
+            alGuardar={async (textoAviso) => {
               cerrarFormulario();
               await cargarEventos();
-              setMensaje(texto);
+              setMensaje(textoAviso);
             }}
           />
-        </Ventana>
-      )}
-
-      {!formulario && <BotonFlotante onClick={() => abrir("crear", { ...VACIO })}>Nuevo evento</BotonFlotante>}
-
-      {!eventos && !error && <p className="text-ink-500">Cargando eventos…</p>}
-      {eventos && eventos.length === 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 px-6 py-12 text-center flex flex-col items-center gap-3">
-          <span className="w-14 h-14 rounded-2xl bg-primary-light text-primary flex items-center justify-center">
-            <Icono nombre="estrella" size={28} strokeWidth={2} />
-          </span>
-          <p className="m-0 text-lg font-extrabold text-ink-900">Todavía no hay talleres ni eventos</p>
-          <p className="m-0 text-ink-500 max-w-[36em]">Crea el primero; puedes guardarlo como borrador y publicarlo cuando esté listo.</p>
-          <button type="button" onClick={() => abrir("crear", { ...VACIO })} className={`${botonPrimario} mt-2`}>
-            Nuevo evento
-          </button>
-        </div>
-      )}
-      {eventos &&
-        eventos.length > 0 &&
-        [
-          ["Próximos", eventos.filter((e) => fechaInputUTC(e.fecha) >= hoyLocal()).sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)))],
-          ["Anteriores", eventos.filter((e) => fechaInputUTC(e.fecha) < hoyLocal()).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)))],
-        ].map(([titulo, lista]) =>
-          lista.length ? (
-            <section key={titulo} aria-label={titulo} className="mb-8">
-              <h2 className="m-0 mb-3 text-xl font-extrabold">
-                {titulo} <span className="text-base font-semibold text-ink-500">({lista.length})</span>
-              </h2>
-              <ul className="list-none m-0 p-0 bg-white rounded-xl border border-gray-200 divide-y divide-[#EEF2F7]">
-                {lista.map((e) => (
-                  <FilaEvento
-                    key={e.id}
-                    evento={e}
-                    ocupado={accionando === e.id}
-                    onEstado={cambiarEstado}
-                    onEditar={editar}
-                    onDuplicar={duplicar}
-                    onEliminar={eliminar}
-                  />
-                ))}
-              </ul>
-            </section>
-          ) : null,
-        )}
+        </aside>
+      </div>
     </main>
+  );
+}
+
+function Kpi({ titulo, valor, detalle }) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-4">
+      <p className="m-0 text-[13px] text-ink-500">{titulo}</p>
+      <p className="mt-1 mb-0 text-[32px] leading-none font-extrabold tabular-nums text-ink-900">{valor}</p>
+      {detalle && <p className="mt-2 mb-0 text-xs text-ink-500">{detalle}</p>}
+    </div>
   );
 }
