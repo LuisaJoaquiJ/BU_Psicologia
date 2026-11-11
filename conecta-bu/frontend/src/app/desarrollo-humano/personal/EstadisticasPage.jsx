@@ -25,18 +25,20 @@ const PRESETS = [
   ["personalizado", "Personalizado"],
 ];
 
+function hoyBogota() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(new Date());
+}
+// El periodo y la semana resaltada usan el día en Colombia, no la fecha UTC
+// (después de las 7 p. m. allá, UTC ya es el día siguiente).
 function isoHace(dias) {
-  const d = new Date();
-  d.setDate(d.getDate() - dias);
+  const d = new Date(`${hoyBogota()}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - dias);
   return d.toISOString().slice(0, 10);
 }
 function lunesDe(iso) {
   const d = new Date(`${iso}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
   return d.toISOString().slice(0, 10);
-}
-function hoyBogota() {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(new Date());
 }
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 function etiquetaSemana(iso) {

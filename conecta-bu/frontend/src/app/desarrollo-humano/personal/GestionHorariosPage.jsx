@@ -76,14 +76,25 @@ function seCruzan(a0, a1, b0, b1) {
   return a0 < b1 && b0 < a1;
 }
 
-// Huecos nuevos: un turno por cada duración que cabe entre desde y hasta, sin pisar lo ya publicado de ese servicio.
-function slotsNuevos({ hoy, dias, desde, hasta, duracion, semanas, servicioId, horarios }) {
+// Un bloqueo cubre el día completo o solo el tramo de horas que se cruza.
+function caeEnBloqueo(fecha, ini, fin, bloqueos) {
+  return (bloqueos || []).some((b) => {
+    if (fecha < b.fechaInicio || fecha > b.fechaFin) return false;
+    if (b.todoElDia || !b.horaInicio || !b.horaFin) return true;
+    return seCruzan(minutos(horaInputUTC(b.horaInicio)), minutos(horaInputUTC(b.horaFin)), ini, fin);
+  });
+}
+
+// Huecos nuevos: un turno por cada duración que cabe entre desde y hasta,
+// sin pisar lo ya publicado ni el tiempo marcado como no disponible.
+function slotsNuevos({ hoy, dias, desde, hasta, duracion, semanas, servicioId, horarios, bloqueos }) {
   const ini = minutos(desde);
   const fin = minutos(hasta);
   if (!servicioId || !dias.length || !(fin > ini) || !duracion) return [];
   const lista = [];
   for (const fecha of fechasProgramadas(hoy, dias, semanas)) {
     for (let t = ini; t + duracion <= fin; t += duracion) {
+      if (caeEnBloqueo(fecha, t, t + duracion, bloqueos)) continue;
       const cruza = (horarios || []).some((h) => {
         if ((h.servicioId || h.servicio?.id) !== servicioId) return false;
         if (String(h.fecha).slice(0, 10) !== fecha) return false;
@@ -247,8 +258,8 @@ export function GestionHorariosPage({ api = "/admin" }) {
 
   const servicioActual = servicioVarias || servicios[0]?.id || "";
   const previstos = useMemo(
-    () => slotsNuevos({ hoy: hoyStr, dias, desde, hasta, duracion, semanas, servicioId: servicioActual, horarios }),
-    [hoyStr, dias, desde, hasta, duracion, semanas, servicioActual, horarios],
+    () => slotsNuevos({ hoy: hoyStr, dias, desde, hasta, duracion, semanas, servicioId: servicioActual, horarios, bloqueos }),
+    [hoyStr, dias, desde, hasta, duracion, semanas, servicioActual, horarios, bloqueos],
   );
 
   async function quitarBloqueo(b) {
@@ -285,23 +296,26 @@ export function GestionHorariosPage({ api = "/admin" }) {
     setEnviando(true);
     let creadas = 0;
     let repetidas = 0;
+    let bloqueados = 0;
     let fallidas = 0;
     for (let i = 0; i < previstos.length; i += 5) {
       const lote = await Promise.allSettled(previstos.slice(i, i + 5).map((datos) => http.post(`${api}/horarios`, datos)));
       for (const r of lote) {
         if (r.status === "fulfilled") creadas += 1;
+        else if (r.reason?.response?.data?.codigo === "HORARIO_EN_BLOQUEO") bloqueados += 1;
         else if (r.reason?.response?.status === 409) repetidas += 1;
         else fallidas += 1;
       }
     }
     setEnviando(false);
     await cargarHorarios();
-    if (!creadas && fallidas) {
-      setError("No pudimos publicar los horarios. Revisa tu conexión e intenta de nuevo.");
+    if (!creadas && (fallidas || bloqueados) && !repetidas) {
+      setError(bloqueados ? "Esas horas caen en un tiempo no disponible. Quítalo o elige otro rango." : "No pudimos publicar los horarios. Revisa tu conexión e intenta de nuevo.");
       return;
     }
     const partes = [`Publicaste ${creadas} ${creadas === 1 ? "horario" : "horarios"}. Los estudiantes ya los pueden pedir.`];
     if (repetidas) partes.push(`${repetidas} ya existían y no se repitieron.`);
+    if (bloqueados) partes.push(`${bloqueados} caen en un tiempo no disponible y no se publicaron.`);
     if (fallidas) partes.push(`${fallidas} no se pudieron crear.`);
     setAviso(partes.join(" "));
   }
@@ -332,14 +346,15 @@ export function GestionHorariosPage({ api = "/admin" }) {
     }
   }
 
-  async function alternarDisponibilidad(horario) {
+  async function alternarDisponibilidad(horario, accion) {
     setError("");
     setAccionando(horario.id);
+    const cerrar = accion === "cerrar";
     try {
-      if (horario.ocupado) await http.patch(`${api}/horarios/${horario.id}/habilitar`);
-      else await http.patch(`${api}/horarios/${horario.id}/deshabilitar`, {});
+      if (cerrar) await http.patch(`${api}/horarios/${horario.id}/deshabilitar`, {});
+      else await http.patch(`${api}/horarios/${horario.id}/habilitar`);
       await cargarHorarios();
-      setAviso(horario.ocupado ? "El horario volvió a estar libre para reservar." : "El horario quedó cerrado: ya no se puede reservar.");
+      setAviso(cerrar ? "El horario quedó cerrado: ya no se puede reservar." : "El horario volvió a estar libre para reservar.");
     } catch (err) {
       const mensaje = err.response?.data?.message || "";
       if (err.response?.status === 409 && mensaje.toLowerCase().includes("confirma")) {
@@ -536,16 +551,16 @@ export function GestionHorariosPage({ api = "/admin" }) {
                           </button>
                         )}
                         {c.cerrar && (
-                          <button type="button" onClick={() => alternarDisponibilidad(h)} disabled={accionando === h.id} className={btnTexto}>
+                          <button type="button" onClick={() => alternarDisponibilidad(h, "cerrar")} disabled={accionando === h.id} className={btnTexto}>
                             <Icono nombre="alerta" size={14} strokeWidth={2} />
                             Cerrar
                           </button>
                         )}
                         {c.reabrir && (
-                          <button type="button" onClick={() => alternarDisponibilidad(h)} disabled={accionando === h.id} className={btnTexto}>Reabrir</button>
+                          <button type="button" onClick={() => alternarDisponibilidad(h, "reabrir")} disabled={accionando === h.id} className={btnTexto}>Reabrir</button>
                         )}
-                        {c.tipo === "cita" && h.cita?.estado === "Agendada" && (
-                          <button type="button" onClick={() => alternarDisponibilidad(h)} disabled={accionando === h.id} className={btnTexto}>Cerrar</button>
+                        {c.agendada && (
+                          <button type="button" onClick={() => alternarDisponibilidad(h, "cerrar")} disabled={accionando === h.id} className={btnTexto}>Cerrar</button>
                         )}
                       </div>
                     </div>
@@ -657,7 +672,7 @@ export function GestionHorariosPage({ api = "/admin" }) {
                     </select>
                   </label>
                 </div>
-                <p className="m-0 -mt-2 text-xs text-ink-500">{etiquetaRango}. Los huecos que ya están publicados no se cuentan.</p>
+                <p className="m-0 -mt-2 text-xs text-ink-500">{etiquetaRango}. No se cuentan los huecos ya publicados ni los que caen en un tiempo no disponible.</p>
                 <button type="button" onClick={() => setPintar(true)} className={`${btnTexto} self-start`}>Elegir horas sueltas en la semana</button>
                 <PieFormulario texto={previa} tono={previstos.length ? "ok" : "muted"} cancelar={() => { setDias([1, 3, 5]); setDesde("08:00"); setHasta("12:00"); setDuracion(45); setSemanas(2); }} enviar={enviando ? "Publicando…" : "Publicar horarios"} enviando={enviando || !previstos.length} onEnviar={publicarVarias} />
               </div>
