@@ -25,19 +25,20 @@ export const btnContorno =
 export function srcDeEvento(evento) {
   if (!evento) return "";
   if (evento.imagenUrl) return urlDelServidor(evento.imagenUrl);
-  if (evento.imagen && evento.id) return `/api/v1/eventos/${evento.id}/imagen?v=${String(evento.imagen).slice(0, 8)}`;
+  if (evento.imagen && evento.id) return urlDelServidor(`/api/v1/eventos/${evento.id}/imagen?v=${String(evento.imagen).slice(0, 8)}`);
   return "";
 }
 
 // Foto del evento o, si no tiene, un recuadro con la paleta del módulo.
+// El fallo queda atado a esa URL: al elegir otra foto se vuelve a intentar.
 export function FotoEvento({ src, className = "", alt = "" }) {
-  const [falla, setFalla] = useState(false);
-  if (!src || falla) {
+  const [rota, setRota] = useState("");
+  if (!src || rota === src) {
     return (
       <span className={`grid place-items-center bg-primary-dark text-gold ${className}`} aria-hidden="true">
         <Icono nombre="imagen" size={22} strokeWidth={1.8} />
       </span>
     );
   }
-  return <img src={src} alt={alt} className={`object-cover ${className}`} onError={() => setFalla(true)} />;
+  return <img src={src} alt={alt} className={`object-cover ${className}`} onError={() => setRota(src)} />;
 }
