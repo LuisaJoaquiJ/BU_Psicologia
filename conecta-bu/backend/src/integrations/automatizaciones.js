@@ -89,6 +89,30 @@ function citaCancelada(usuario, cita, modulo, { porPersonal = false } = {}) {
   }
 }
 
+// El personal movio la cita. Se avisa al estudiante y al resto del equipo.
+function citaReprogramada(usuario, cita, { excepto } = {}) {
+  notificar("cita.reprogramada", { estudiante: datosEstudiante(usuario), cita: datosCita(cita) });
+  const h = cita.horario;
+  avisar(usuario.id, {
+    modulo: "desarrollo-humano",
+    tipo: "cita",
+    titulo: "Cita reprogramada",
+    mensaje: `Tu cita de ${h?.servicio?.nombre || "orientación"} quedó para el ${fechaLarga(h?.fecha)} a las ${horaCorta(h?.horaInicio)}.`,
+    ruta: "/estudiante/mis-citas",
+  });
+  avisos.avisarAlPersonal(
+    "desarrollo-humano",
+    {
+      modulo: "desarrollo-humano",
+      tipo: "cita-reprogramada",
+      titulo: "Una cita se reprogramó",
+      mensaje: `La cita de ${usuario.nombre} (${h?.servicio?.nombre || "orientación"}) quedó para el ${fechaLarga(h?.fecha)} a las ${horaCorta(h?.horaInicio)}.`,
+      ruta: "/admin/citas",
+    },
+    { excepto },
+  );
+}
+
 function inscripcionEvento(usuario, inscripcion) {
   notificar("evento.inscripcion", {
     estudiante: datosEstudiante(usuario),
@@ -208,6 +232,7 @@ function eventoPublicado(evento) {
 module.exports = {
   citaAgendada,
   citaCancelada,
+  citaReprogramada,
   inscripcionEvento,
   inscripcionCancelada,
   eventoPublicado,
