@@ -31,7 +31,22 @@ class EventoService {
       exigirEstadoValido(estado);
       where.estado = estado;
     }
-    return (await this.repos.eventos.listarConConteo(where)).map(this.imagenes.conUrl);
+    const eventos = await this.repos.eventos.listarConAsistencia(where);
+    return eventos.map((evento) => {
+      const filas = evento.inscripciones || [];
+      const asistieron = filas.filter((i) => i.asistencia?.asistio === true).length;
+      const noAsistieron = filas.filter((i) => i.asistencia?.asistio === false).length;
+      const inscritos = evento._count?.inscripciones ?? filas.length;
+      const { inscripciones, ...resto } = evento;
+      return this.imagenes.conUrl({
+        ...resto,
+        asistenciaResumen: {
+          asistieron,
+          noAsistieron,
+          sinRegistrar: Math.max(0, inscritos - asistieron - noAsistieron),
+        },
+      });
+    });
   }
 
   // RN-007: no se puede dejar menos cupos que estudiantes inscritos.
