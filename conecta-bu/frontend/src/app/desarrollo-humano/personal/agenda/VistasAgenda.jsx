@@ -419,6 +419,14 @@ export function VistaLista({ grupos, hoy, ahoraMin, bloqueos, registrando, onReg
   );
 }
 
+function rangoBloqueo(b) {
+  if (!b || b.todoElDia || !b.horaInicio || !b.horaFin) return null;
+  const ini = minutosUTC(b.horaInicio);
+  const fin = minutosUTC(b.horaFin);
+  if (ini == null || fin == null || fin <= ini) return null;
+  return { ini, fin };
+}
+
 export function VistaSemana({ lunes, citas, bloqueos, hoy, ahoraMin, activaId, onAbrir }) {
   const dias = diasVisibles(lunes, citas, bloqueos);
   const { desde, hasta } = limitesHoras(citas.filter((c) => dias.some((d) => isoDe(d) === dia(c))));
@@ -456,7 +464,8 @@ export function VistaSemana({ lunes, citas, bloqueos, hoy, ahoraMin, activaId, o
             const esHoy = iso === hoy;
             const delDia = citas.filter((c) => dia(c) === iso);
             const puestos = colocar(delDia);
-            const bloqueo = bloqueosDelDia(bloqueos, iso)[0];
+            const delBloqueo = bloqueosDelDia(bloqueos, iso);
+            const todoElDia = delBloqueo.some((b) => b.todoElDia || !rangoBloqueo(b));
             const ahora = esHoy && ahoraMin > desde && ahoraMin < hasta ? ((ahoraMin - desde) / 60) * ALTO_HORA : null;
             return (
               <div
@@ -464,20 +473,36 @@ export function VistaSemana({ lunes, citas, bloqueos, hoy, ahoraMin, activaId, o
                 className="relative border-l border-gray-200"
                 style={{
                   height: alto,
-                  backgroundColor: bloqueo?.todoElDia ? "#FFF8E8" : esHoy ? "#FFFBEF" : "#fff",
+                  backgroundColor: todoElDia ? "#FFF8E8" : esHoy ? "#FFFBEF" : "#fff",
                   backgroundImage: "repeating-linear-gradient(to bottom, transparent 0 63px, #E8E8EC 63px 64px)",
                 }}
               >
-                {bloqueo && (
-                  <div className="pointer-events-none absolute inset-x-1 top-1 z-[1] truncate rounded-md bg-[#FFF6E0] px-2 py-1 text-[11px] font-bold text-[#7A5405]">
-                    No disponible · {bloqueo.motivo}
+                {todoElDia && (
+                  <div className="pointer-events-none absolute inset-x-1 top-1 z-0 truncate rounded-md bg-[#FFF6E0]/95 px-2 py-1 text-[11px] font-bold text-[#7A5405]" title={delBloqueo.map((b) => b.motivo).join(", ")}>
+                    {delBloqueo.map((b) => b.motivo).join(" · ")}
                   </div>
                 )}
+                {delBloqueo.map((b) => {
+                  const rango = rangoBloqueo(b);
+                  if (!rango) return null;
+                  const ini = Math.max(rango.ini, desde);
+                  const finH = Math.min(rango.fin, hasta);
+                  if (finH <= ini) return null;
+                  return (
+                    <div
+                      key={b.id}
+                      className="pointer-events-none absolute inset-x-1 z-0 overflow-hidden rounded-md bg-[#FFF6E0]/90 px-1 text-[11px] font-bold leading-4 text-[#7A5405]"
+                      style={{ top: ((ini - desde) / 60) * ALTO_HORA, height: ((finH - ini) / 60) * ALTO_HORA }}
+                    >
+                      {b.motivo}
+                    </div>
+                  );
+                })}
                 {puestos.map(({ cita, ini, fin, col, cols }) => {
                   const clave = claveVisual(cita, hoy, ahoraMin);
                   const estilo = ESTILOS[clave];
-                  const top = ((ini - desde) / 60) * ALTO_HORA + 2;
-                  const height = Math.max(((fin - ini) / 60) * ALTO_HORA - 4, 28);
+                  const top = ((ini - desde) / 60) * ALTO_HORA + 1;
+                  const height = Math.max(((fin - ini) / 60) * ALTO_HORA - 2, 0);
                   const ancho = `calc((100% - 8px) / ${cols})`;
                   return (
                     <button
@@ -486,7 +511,7 @@ export function VistaSemana({ lunes, citas, bloqueos, hoy, ahoraMin, activaId, o
                       data-cita-ancla={cita.id}
                       onClick={(e) => onAbrir(cita, e.currentTarget)}
                       aria-label={`${formatearHora(cita.horario?.horaInicio)}, ${cita.usuario?.nombre}, ${estilo.texto}`}
-                      className={`absolute overflow-hidden rounded-lg border-0 border-l-4 px-2 py-1 text-left shadow-sm hover:brightness-95 ${estilo.bloque} ${activaId === cita.id ? "outline outline-2 outline-offset-1 outline-primary-dark" : ""}`}
+                      className={`absolute z-[1] overflow-hidden rounded-lg border-0 border-l-4 px-2 py-1 text-left shadow-sm hover:brightness-95 ${estilo.bloque} ${activaId === cita.id ? "outline outline-2 outline-offset-1 outline-primary-dark" : ""}`}
                       style={{ top, height, width: ancho, left: `calc(4px + ${col} * (100% - 8px) / ${cols})` }}
                     >
                       <span className={`block truncate text-[12.5px] font-extrabold ${clave === "cancelada" ? "line-through" : ""}`}>{cita.usuario?.nombre}</span>
@@ -533,7 +558,7 @@ export function VistaMes({ mes, citas, bloqueos, hoy, ahoraMin, onElegirDia }) {
           const delDia = citas.filter((c) => dia(c) === iso);
           const activas = delDia.filter((c) => c.estado !== "Cancelada");
           const porRegistrar = delDia.filter((c) => esPorRegistrar(c, hoy, ahoraMin)).length;
-          const bloqueo = bloqueosDelDia(bloqueos, iso)[0];
+          const delBloqueo = bloqueosDelDia(bloqueos, iso);
           return (
             <button
               key={iso}
@@ -558,7 +583,11 @@ export function VistaMes({ mes, citas, bloqueos, hoy, ahoraMin, onElegirDia }) {
                 </span>
               )}
               {porRegistrar > 0 && <span className="rounded-full bg-[#FFF6E0] px-1.5 py-0.5 text-[11px] font-bold text-[#7A5405]">{porRegistrar} por registrar</span>}
-              {bloqueo && !porRegistrar && <span className="truncate text-[11px] font-bold text-[#8A4B00]">{bloqueo.motivo}</span>}
+              {delBloqueo.map((b) => (
+                <span key={b.id} className="max-w-full truncate text-[11px] font-bold text-[#8A4B00]">
+                  {b.motivo}
+                </span>
+              ))}
             </button>
           );
         })}

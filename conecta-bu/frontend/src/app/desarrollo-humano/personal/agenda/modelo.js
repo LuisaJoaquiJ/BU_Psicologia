@@ -222,7 +222,7 @@ export function hora12(minutos, { conSufijo = true } = {}) {
   const h12 = h % 12 || 12;
   if (!conSufijo) return `${h12}:${mm}`;
   if (h === 12 && m === 0) return "12 m.";
-  const sufijo = h < 12 ? "a. m." : h === 12 ? "m." : "p. m.";
+  const sufijo = h < 12 ? "a. m." : "p. m.";
   if (m === 0) return `${h12} ${sufijo}`;
   return `${h12}:${mm} ${sufijo}`;
 }

@@ -54,6 +54,7 @@ export function AgendaAdminPage({ api = "/admin" }) {
   const [registrando, setRegistrando] = useState(false);
   const [cuando, setCuando] = useState(fechaInicial ? "dia" : "proximas");
   const [fecha, setFecha] = useState(fechaInicial || ahoraBogota().iso);
+  const [foco, setFoco] = useState(fechaInicial || ahoraBogota().iso);
   const [estado, setEstado] = useState("todas");
   const [servicio, setServicio] = useState("");
   const [buscar, setBuscar] = useState("");
@@ -75,6 +76,12 @@ export function AgendaAdminPage({ api = "/admin" }) {
     setMini(null);
   }, []);
   useClicFuera(Boolean(detalle || mini), cerrarFlotantes);
+  useEffect(() => {
+    if (!detalle && !mini) return undefined;
+    const alDesplazar = () => cerrarFlotantes();
+    window.addEventListener("scroll", alDesplazar, true);
+    return () => window.removeEventListener("scroll", alDesplazar, true);
+  }, [detalle, mini, cerrarFlotantes]);
 
   const cargar = useCallback(
     () =>
@@ -167,35 +174,46 @@ export function AgendaAdminPage({ api = "/admin" }) {
     setBuscar("");
   }
 
+  function enfocar(iso) {
+    setFoco(iso);
+    setFecha(iso);
+    setSemana(isoDe(lunesDe(iso)));
+    const d = parseISO(iso);
+    setMes(new Date(d.getFullYear(), d.getMonth(), 1));
+  }
+
   function irAFecha(iso) {
     cerrarFlotantes();
-    if (vista === "lista") {
-      setCuando("dia");
-      setFecha(iso);
-    } else if (vista === "semana") {
-      setSemana(isoDe(lunesDe(iso)));
-    } else {
-      setSemana(isoDe(lunesDe(iso)));
-      setVista("semana");
-    }
+    enfocar(iso);
+    if (vista === "lista") setCuando("dia");
+    else if (vista === "mes") setVista("semana");
   }
 
   function mover(direccion) {
     cerrarFlotantes();
-    if (vista === "semana") setSemana(isoDe(addDias(lunes, direccion * 7)));
-    else setMes(new Date(mes.getFullYear(), mes.getMonth() + direccion, 1));
+    if (vista === "semana") enfocar(isoDe(addDias(lunes, direccion * 7)));
+    else enfocar(isoDe(new Date(mes.getFullYear(), mes.getMonth() + direccion, 1)));
   }
 
   function irHoy() {
     cerrarFlotantes();
     const h = ahoraBogota().iso;
-    setSemana(isoDe(lunesDe(h)));
-    const d = parseISO(h);
-    setMes(new Date(d.getFullYear(), d.getMonth(), 1));
-    if (vista === "lista") {
-      setCuando("proximas");
-      setFecha(h);
+    enfocar(h);
+    if (vista === "lista") setCuando("proximas");
+  }
+
+  function cambiarVista(v) {
+    cerrarFlotantes();
+    if (v === "semana") setSemana(isoDe(lunesDe(foco)));
+    if (v === "mes") {
+      const d = parseISO(foco);
+      setMes(new Date(d.getFullYear(), d.getMonth(), 1));
     }
+    if (v === "lista" && vista !== "lista") {
+      setCuando("dia");
+      setFecha(foco);
+    }
+    setVista(v);
   }
 
   function abrirDetalle(cita, el) {
@@ -366,10 +384,7 @@ export function AgendaAdminPage({ api = "/admin" }) {
             <Segmentos
               etiqueta="Vista"
               valor={vista}
-              alCambiar={(v) => {
-                cerrarFlotantes();
-                setVista(v);
-              }}
+              alCambiar={cambiarVista}
               opciones={[
                 ["lista", "Lista", "lista"],
                 ["semana", "Semana", "cuadricula"],
@@ -418,7 +433,7 @@ export function AgendaAdminPage({ api = "/admin" }) {
             ahoraMin={ahoraMin}
             onElegirDia={(iso) => {
               cerrarFlotantes();
-              setSemana(isoDe(lunesDe(iso)));
+              enfocar(iso);
               setVista("semana");
             }}
           />
