@@ -5,6 +5,7 @@ import { fechaInputUTC, fechaLarga, formatearHora, horaInputUTC } from "../comun
 import { urlDelServidor } from "../comunes/lib/imagenes";
 import { Aviso, Segmentos, botonPrimario, botonSecundario, claseCampo } from "../comunes/componentes/ui";
 import { Icono } from "../comunes/componentes/Iconos";
+import { FotoEvento, btnTexto, srcDeEvento } from "./controlesDh";
 
 // RF-009: talleres y eventos de Desarrollo Humano. Un solo formulario sirve
 // para crear, duplicar y editar, con vista previa en vivo de cómo lo verán
@@ -67,11 +68,6 @@ function erroresDe(v) {
   else if (lim && v.fecha && lim > v.fecha) e.limite = "Las inscripciones no pueden cerrar después del evento.";
   return e;
 }
-
-const chip = (activo) =>
-  `min-h-[44px] px-4 rounded-full border-[1.5px] font-extrabold transition-colors ${
-    activo ? "border-transparent boton-liquido" : "border-[#D3DBE8] bg-white text-primary hover:border-primary"
-  }`;
 
 function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana = false }) {
   const [v, setV] = useState(inicial);
@@ -239,27 +235,17 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
         {(mostrar("fecha") || mostrar("horas")) && <p className="-mt-2 m-0 text-sm font-bold text-red-700">{errores.fecha || errores.horas}</p>}
 
         <div className="flex flex-col gap-1.5">
-          <span className="font-extrabold" id="modalidad-etiqueta">
-            Modalidad
-          </span>
-          <div className="flex gap-2 flex-wrap" role="radiogroup" aria-labelledby="modalidad-etiqueta">
-            {[
+          <span className="font-extrabold">Modalidad</span>
+          <Segmentos
+            etiqueta="Modalidad"
+            valor={v.modalidad}
+            alCambiar={(id) => setV((x) => ({ ...x, modalidad: id }))}
+            opciones={[
               ["Presencial", "Presencial"],
               ["Virtual", "Virtual"],
               ["Hibrida", "Híbrida"],
-            ].map(([id, texto]) => (
-              <button
-                key={id}
-                type="button"
-                role="radio"
-                aria-checked={v.modalidad === id}
-                onClick={() => setV((x) => ({ ...x, modalidad: id }))}
-                className={chip(v.modalidad === id)}
-              >
-                {texto}
-              </button>
-            ))}
-          </div>
+            ]}
+          />
         </div>
         {v.modalidad !== "Presencial" && (
           <label className="flex flex-col gap-1.5 font-extrabold">
@@ -302,7 +288,7 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
                 type="button"
                 aria-label="Cinco cupos menos"
                 onClick={() => setV((x) => ({ ...x, cupos: Math.max(1, Number(x.cupos) - 5) }))}
-                className="w-12 h-12 rounded-xl border-[1.5px] border-[#D3DBE8] text-primary text-xl font-extrabold hover:border-primary"
+                className="grid h-12 w-12 place-items-center rounded-xl border border-gray-200 bg-white text-xl font-extrabold text-primary hover:bg-primary-light"
               >
                 −
               </button>
@@ -318,7 +304,7 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
                 type="button"
                 aria-label="Cinco cupos más"
                 onClick={() => setV((x) => ({ ...x, cupos: Number(x.cupos) + 5 }))}
-                className="w-12 h-12 rounded-xl border-[1.5px] border-[#D3DBE8] text-primary text-xl font-extrabold hover:border-primary"
+                className="grid h-12 w-12 place-items-center rounded-xl border border-gray-200 bg-white text-xl font-extrabold text-primary hover:bg-primary-light"
               >
                 +
               </button>
@@ -328,17 +314,16 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
 
         <div>
           <p className="m-0 mb-2 font-extrabold">Las inscripciones cierran</p>
-          <div role="group" aria-label="Cierre de inscripciones" className="flex gap-2 flex-wrap">
-            {[
+          <Segmentos
+            etiqueta="Cierre de inscripciones"
+            valor={v.cierre}
+            alCambiar={(id) => setV((x) => ({ ...x, cierre: id }))}
+            opciones={[
               ["antes", "Un día antes"],
               ["mismo", "El mismo día"],
               ["otra", "Otra fecha"],
-            ].map(([k, t]) => (
-              <button key={k} type="button" aria-pressed={v.cierre === k} onClick={() => setV((x) => ({ ...x, cierre: k }))} className={chip(v.cierre === k)}>
-                {t}
-              </button>
-            ))}
-          </div>
+            ]}
+          />
           {v.cierre === "otra" && (
             <input
               type="date"
@@ -413,11 +398,11 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
         <aside aria-label="Vista previa">
           <p className="m-0 mb-2 text-[11px] font-bold tracking-[0.08em] uppercase text-ink-500">Así lo verán los estudiantes</p>
           <div className="rounded-xl border border-dashed border-gray-300 bg-cream/60 p-4 flex flex-col gap-2.5">
+            <FotoEvento src={foto.vista || (foto.quitar ? "" : srcDeEvento(inicial))} alt="" className="h-28 w-full rounded-lg" />
             <div className="flex gap-1.5 flex-wrap">
               <span className="text-xs font-bold rounded-full px-2.5 py-1 bg-[#E4EAF4] text-primary-dark">{v.modalidad === "Hibrida" ? "Híbrida" : v.modalidad}</span>
               <span className="text-xs font-bold rounded-full px-2.5 py-1 bg-[#E3F4F1] text-[#0B6B61]">Cupos disponibles</span>
             </div>
-            {foto.vista && <img src={foto.vista} alt="" className="w-full h-[88px] object-cover rounded-lg" />}
             <div className="flex items-center gap-3">
               <span className="w-12 h-12 rounded-xl bg-primary-dark text-white flex flex-col items-center justify-center shrink-0 leading-none">
                 <b className="text-base">{v.fecha ? Number(v.fecha.slice(8)) : "—"}</b>
@@ -492,11 +477,12 @@ function FilaEvento({ evento, ocupado, onEstado, onEditar, onDuplicar, onElimina
       ? `Inscripciones hasta el ${fechaLarga(evento.fechaLimiteInscripcion).toLowerCase()}`
       : "";
   return (
-    <article className="rounded-xl border border-gray-200 bg-white p-4 grid gap-3 sm:grid-cols-[64px_minmax(0,1fr)_200px] sm:items-center">
+    <article className="rounded-xl border border-gray-200 bg-white p-4 grid gap-3 sm:grid-cols-[64px_72px_minmax(0,1fr)_190px] sm:items-center">
       <div className={`w-16 h-16 rounded-xl flex flex-col items-center justify-center leading-none ${evento.estado === "Publicado" ? "bg-primary-dark text-white" : "bg-gray-100 text-ink-600"}`}>
         <b className="text-xl">{fecha.dia}</b>
         <span className="text-[10px] font-bold uppercase tracking-wide mt-1">{fecha.mes}</span>
       </div>
+      <FotoEvento src={srcDeEvento(evento)} alt={evento.nombre ? `Foto de ${evento.nombre}` : ""} className="h-16 w-16 rounded-xl" />
       <div className="min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <strong className="text-ink-900">{evento.nombre}</strong>
@@ -513,25 +499,25 @@ function FilaEvento({ evento, ocupado, onEstado, onEditar, onDuplicar, onElimina
           <div className={`h-full ${quedan <= 6 && inscritos > 0 ? "bg-accent" : "bg-teal"}`} style={{ width: `${porcentaje}%` }} />
         </div>
       </div>
-      <div className="sm:col-span-2 sm:col-start-2 flex items-center gap-2 flex-wrap border-t border-dashed border-gray-200 pt-3">
+      <div className="sm:col-span-2 sm:col-start-3 flex items-center gap-2 flex-wrap border-t border-dashed border-gray-200 pt-3">
         <Link to={`/admin/eventos/${evento.id}/inscritos`} className={botonSecundario}>
           <Icono nombre="usuarios" size={15} strokeWidth={2} />
           Ver inscritos
         </Link>
         {evento.estado !== "Cancelado" && (
-          <button type="button" onClick={() => onEditar(evento)} className="inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-full text-sm font-bold text-primary hover:bg-primary-light">
+          <button type="button" onClick={() => onEditar(evento)} className={btnTexto}>
             <Icono nombre="editar" size={15} strokeWidth={2} />
             Editar
           </button>
         )}
         {principal && (
-          <button type="button" onClick={() => onEstado(evento, principal.estado)} disabled={ocupado} className={evento.estado === "Borrador" ? botonPrimario : "inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-full text-sm font-bold text-primary hover:bg-primary-light disabled:opacity-50"}>
+          <button type="button" onClick={() => onEstado(evento, principal.estado)} disabled={ocupado} className={evento.estado === "Borrador" ? botonPrimario : btnTexto}>
             {evento.estado === "Publicado" && <Icono nombre="alerta" size={15} strokeWidth={2} />}
             {principal.label === "Publicar" ? "Publicar ahora" : principal.label}
           </button>
         )}
         <details className="relative">
-          <summary className="list-none cursor-pointer inline-flex items-center gap-1 min-h-[40px] px-3 rounded-full text-sm font-bold text-primary hover:bg-primary-light">
+          <summary className={`${btnTexto} cursor-pointer list-none`}>
             Más
             <Icono nombre="derecha" size={14} strokeWidth={2.2} className="rotate-90" />
           </summary>
@@ -541,7 +527,7 @@ function FilaEvento({ evento, ocupado, onEstado, onEditar, onDuplicar, onElimina
               <button type="button" onClick={() => onEstado(evento, "Borrador")} className="text-left min-h-[40px] px-3 rounded-lg font-bold hover:bg-cream">Volver a borrador</button>
             )}
             {evento.estado !== "Cancelado" && (
-              <button type="button" onClick={() => onEstado(evento, "Cancelado")} className="text-left min-h-[40px] px-3 rounded-lg font-bold hover:bg-cream">Cancelar evento</button>
+              <button type="button" onClick={() => onEstado(evento, "Cancelado")} className="text-left min-h-[40px] px-3 rounded-lg font-bold text-red-700 hover:bg-red-50">Cancelar evento</button>
             )}
             <button type="button" onClick={() => onEliminar(evento)} className="text-left min-h-[40px] px-3 rounded-lg font-bold text-red-700 hover:bg-red-50">Eliminar</button>
           </div>

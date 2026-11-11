@@ -1,5 +1,5 @@
 import { AvisoFlotante } from "../../../components/avisos/Avisos";
-import { Segmentos, claseCampo } from "../comunes/componentes/ui";
+import { Segmentos, botonPrimario, botonSecundario, claseCampo } from "../comunes/componentes/ui";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { http } from "../../../lib/api/http";
@@ -212,11 +212,11 @@ export function EstadisticasPage() {
               <option key={id} value={id}>{texto}</option>
             ))}
           </select>
-          <button type="button" onClick={() => descargar("xlsx")} disabled={!datos || Boolean(descargando)} className="inline-flex items-center gap-2 boton-liquido font-semibold text-sm px-4 min-h-[44px] rounded-full disabled:opacity-60">
+          <button type="button" onClick={() => descargar("xlsx")} disabled={!datos || Boolean(descargando)} className={botonPrimario}>
             <Icono nombre="descarga" size={16} strokeWidth={2.2} />
             {descargando === "xlsx" ? "Generando…" : "Descargar informe del periodo"}
           </button>
-          <button type="button" onClick={() => descargar("pdf")} disabled={!datos || Boolean(descargando)} className="inline-flex items-center gap-2 burbuja text-primary-dark font-semibold text-sm px-4 min-h-[44px] rounded-full disabled:opacity-60">
+          <button type="button" onClick={() => descargar("pdf")} disabled={!datos || Boolean(descargando)} className={botonSecundario}>
             {descargando === "pdf" ? "Generando…" : "PDF"}
           </button>
         </div>
@@ -242,7 +242,7 @@ export function EstadisticasPage() {
             Hasta
             <input type="date" value={rango.hasta} onChange={(e) => setRango({ ...rango, hasta: e.target.value })} className={claseCampo} />
           </label>
-          <button type="submit" className="text-sm font-bold bg-gold text-primary-dark rounded-full px-4 min-h-[44px]">Aplicar</button>
+          <button type="submit" className={botonPrimario}>Aplicar</button>
         </form>
       )}
 

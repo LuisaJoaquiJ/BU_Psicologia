@@ -3,7 +3,8 @@ import { Link, useParams } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { Icono } from "../comunes/componentes/Iconos";
 import { formatearHora, fechaLarga } from "../comunes/lib/format";
-import { Aviso, Segmentos, botonPrimario, botonSecundario, claseCampo } from "../comunes/componentes/ui";
+import { Aviso, Segmentos, botonSecundario, claseCampo } from "../comunes/componentes/ui";
+import { FotoEvento, btnPositivo, btnPeligro, srcDeEvento } from "./controlesDh";
 
 // RF-011 / RN-010: inscritos confirmados y su asistencia. La lista se descarga
 // en el navegador con los datos que ya devolvió el listado; no hay otro endpoint.
@@ -156,7 +157,9 @@ export function EventoInscritosPage() {
 
       {evento && (
         <div className="mt-4 flex flex-col gap-5">
-          <section className={`${card} p-4 sm:p-5 flex gap-4 flex-wrap items-start`}>
+          <section className={`${card} overflow-hidden`}>
+            <FotoEvento src={srcDeEvento(evento)} alt="" className="h-40 w-full" />
+            <div className="flex gap-4 flex-wrap items-start p-4 sm:p-5">
             <div className="w-[72px] h-[72px] rounded-xl bg-primary-dark text-white flex flex-col items-center justify-center shrink-0 leading-none">
               <b className="text-[26px]">{fecha.dia}</b>
               <span className="text-[11px] font-bold uppercase tracking-wide mt-1 opacity-80">{fecha.mes}</span>
@@ -179,6 +182,7 @@ export function EventoInscritosPage() {
               <Icono nombre="descarga" size={16} strokeWidth={2.2} />
               Descargar lista
             </button>
+            </div>
           </section>
 
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
@@ -214,7 +218,7 @@ export function EventoInscritosPage() {
                   <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar inscrito" aria-label="Buscar inscrito" className="w-full bg-transparent outline-none text-[15px]" />
                 </label>
                 {puedeRegistrar && (
-                  <button type="button" onClick={() => marcarTodos(sinRegistrar)} disabled={marcando || sinRegistrar.length === 0} className={botonPrimario}>
+                  <button type="button" onClick={() => marcarTodos(sinRegistrar)} disabled={marcando || sinRegistrar.length === 0} className={`${btnPositivo} min-h-[44px] px-4`}>
                     <Icono nombre="check" size={16} strokeWidth={2.4} />
                     {marcando ? "Marcando…" : "Marcar sin registrar como asistieron"}
                   </button>
@@ -258,15 +262,15 @@ export function EventoInscritosPage() {
                         <td className="py-3 pr-3"><span className={`text-xs font-bold rounded-full px-2.5 py-1 ${clase}`}>{texto}</span></td>
                         <td className="py-3">
                           {puedeRegistrar ? (
-                            <div className="flex justify-end gap-1.5">
+                            <div className="flex justify-end gap-2">
                               <button
                                 type="button"
                                 aria-pressed={est === "at"}
                                 onClick={() => registrar(inscripcion.id, true)}
                                 disabled={registrando === inscripcion.id || est === "at"}
-                                className={`inline-flex items-center gap-1 min-h-[36px] px-3 rounded-full text-sm font-bold border disabled:opacity-60 ${est === "at" ? "bg-[#E3F4F1] text-[#0B6B61] border-[#0E6B4A]" : "bg-white text-[#0B6B61] border-[#C8EBE3] hover:bg-[#E3F4F1]"}`}
+                                className={btnPositivo}
                               >
-                                <Icono nombre="check" size={14} strokeWidth={2.4} />
+                                <Icono nombre="check" size={16} strokeWidth={2.4} />
                                 Asistió
                               </button>
                               <button
@@ -274,9 +278,9 @@ export function EventoInscritosPage() {
                                 aria-pressed={est === "na"}
                                 onClick={() => registrar(inscripcion.id, false)}
                                 disabled={registrando === inscripcion.id || est === "na"}
-                                className={`inline-flex items-center gap-1 min-h-[36px] px-3 rounded-full text-sm font-bold border disabled:opacity-60 ${est === "na" ? "bg-red-50 text-red-700 border-red-600" : "bg-white text-red-700 border-red-200 hover:bg-red-50"}`}
+                                className={btnPeligro}
                               >
-                                <Icono nombre="cerrar" size={14} strokeWidth={2.4} />
+                                <Icono nombre="cerrar" size={16} strokeWidth={2.4} />
                                 No asistió
                               </button>
                             </div>

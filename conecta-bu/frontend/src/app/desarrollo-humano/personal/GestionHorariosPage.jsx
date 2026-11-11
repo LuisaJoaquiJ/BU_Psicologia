@@ -3,7 +3,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { Icono } from "../comunes/componentes/Iconos";
 import { formatearHora, fechaInputUTC, horaInputUTC, fechaLarga } from "../comunes/lib/format";
-import { Aviso, botonPrimario, botonSecundario, claseCampo } from "../comunes/componentes/ui";
+import { Aviso, Segmentos, botonPrimario, botonSecundario, claseCampo } from "../comunes/componentes/ui";
+import { btnTexto } from "./controlesDh";
 import { PublicarSemana } from "./PublicarSemana";
 import { Ventana } from "../comunes/componentes/Ventana";
 import { FormularioNoDisponible, textoBloqueo } from "./NoDisponible";
@@ -22,8 +23,6 @@ const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "
 const MESES_CORTOS = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic."];
 
 const card = "bg-white border border-gray-200 rounded-xl";
-const btnTexto = "inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-full text-sm font-bold text-primary hover:bg-primary-light disabled:opacity-50";
-
 function hoyLocal() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -170,19 +169,19 @@ function CalendarioDias({ hoy, seleccionado, conHorario, onSeleccionar }) {
               onClick={() => onSeleccionar(iso)}
               aria-pressed={sel}
               aria-current={esHoy ? "date" : undefined}
-              className={`relative h-10 rounded-[10px] text-sm font-bold tabular-nums ${
-                sel ? "bg-primary-dark text-white" : esHoy ? "text-primary-dark ring-2 ring-accent" : tiene ? "text-ink-900 hover:bg-primary-light" : "text-ink-500 hover:bg-gray-50"
+              className={`relative h-10 rounded-lg text-sm font-bold tabular-nums ${
+                sel ? "bg-primary-dark text-white" : esHoy ? "bg-accent text-white" : tiene ? "text-ink-900 hover:bg-primary-light" : "text-ink-500 hover:bg-primary-light"
               }`}
             >
               {n}
-              {tiene && <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${sel ? "bg-gold" : "bg-[#0E6B4A]"}`} />}
+              {tiene && <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${sel || esHoy ? "bg-gold" : "bg-primary"}`} />}
             </button>
           );
         })}
       </div>
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-500">
         <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#0E6B4A]" />Con horarios publicados</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded-[4px] ring-2 ring-accent" />Hoy</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded-[4px] bg-accent" />Hoy</span>
       </div>
     </section>
   );
@@ -562,17 +561,16 @@ export function GestionHorariosPage({ api = "/admin" }) {
                 <h2 className="m-0 text-lg font-extrabold">Agregar horario</h2>
                 <p className="m-0 mt-1 text-sm text-ink-500">{ayuda}</p>
               </div>
-              <div role="tablist" aria-label="Forma de agregar" className="inline-flex flex-wrap rounded-full bg-primary-light/60 p-1 gap-1">
-                {[
+              <Segmentos
+                etiqueta="Forma de agregar"
+                valor={modo}
+                alCambiar={setModo}
+                opciones={[
                   ["varias", "Varias horas"],
                   ["una", "Una sola hora"],
                   ["ausente", "No estaré disponible"],
-                ].map(([id, texto]) => (
-                  <button key={id} role="tab" type="button" aria-selected={modo === id} onClick={() => setModo(id)} className={`min-h-[36px] px-3 rounded-full text-sm font-bold ${modo === id ? "bg-white text-primary-dark shadow-sm" : "text-ink-600 hover:text-primary-dark"}`}>
-                    {texto}
-                  </button>
-                ))}
-              </div>
+                ]}
+              />
             </div>
 
             {modo === "ausente" ? (
@@ -624,7 +622,7 @@ export function GestionHorariosPage({ api = "/admin" }) {
                     <span className="text-sm font-bold text-ink-600">Días de la semana</span>
                     <div className="flex gap-1.5" role="group" aria-label="Días de la semana">
                       {DIAS_SEM.map(([id, letra, nombre]) => (
-                        <button key={id} type="button" aria-pressed={dias.includes(id)} aria-label={nombre} onClick={() => alternarDia(id)} className={`w-10 h-10 rounded-[10px] border font-bold ${dias.includes(id) ? "bg-primary-dark text-white border-primary-dark" : "bg-white text-primary-dark border-gray-300 hover:border-primary"}`}>
+                        <button key={id} type="button" aria-pressed={dias.includes(id)} aria-label={nombre} onClick={() => alternarDia(id)} className={`w-10 h-10 rounded-lg border font-bold ${dias.includes(id) ? "bg-primary-dark text-white border-primary-dark" : "border-gray-200 bg-white text-ink-900 hover:bg-primary-light"}`}>
                           {letra}
                         </button>
                       ))}
