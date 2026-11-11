@@ -54,4 +54,27 @@ describe("Reprogramar una cita", () => {
     await expect(agendaService.reprogramar(admin.usuario.id, agendada.id, ocupado.id)).rejects.toThrow(/no está disponible/);
     expect((await prisma.citaDesarrollo.findUnique({ where: { id: agendada.id } })).horarioId).not.toBe(ocupado.id);
   });
+
+  test("si la cita deja de estar agendada a mitad de camino, libera el horario nuevo y no la mueve", async () => {
+    const { usuario } = crearUsuario("Estudiante", "est@uniautonoma.edu.co");
+    const admin = crearUsuario("Administrador", "psico@uniautonoma.edu.co");
+    const actual = prisma.__seedHorario({ fecha: dia(2), horaInicio: hora(9), horaFin: hora(10), ocupado: true });
+    const libre = prisma.__seedHorario({ fecha: dia(3), horaInicio: hora(15), horaFin: hora(16) });
+    const cita = await prisma.citaDesarrollo.create({ data: { usuarioId: usuario.id, horarioId: actual.id, estado: "Agendada" } });
+    const original = prisma.citaDesarrollo.updateMany.bind(prisma.citaDesarrollo);
+    prisma.citaDesarrollo.updateMany = async (args) => {
+      await prisma.citaDesarrollo.update({ where: { id: cita.id }, data: { estado: "Cancelada" } });
+      return original(args);
+    };
+    try {
+      await expect(agendaService.reprogramar(admin.usuario.id, cita.id, libre.id)).rejects.toThrow(/ya no se puede reprogramar/);
+      expect((await prisma.horarioDesarrollo.findUnique({ where: { id: libre.id } })).ocupado).toBe(false);
+      expect((await prisma.horarioDesarrollo.findUnique({ where: { id: actual.id } })).ocupado).toBe(true);
+      const queda = await prisma.citaDesarrollo.findUnique({ where: { id: cita.id } });
+      expect(queda.estado).toBe("Cancelada");
+      expect(queda.horarioId).toBe(actual.id);
+    } finally {
+      prisma.citaDesarrollo.updateMany = original;
+    }
+  });
 });

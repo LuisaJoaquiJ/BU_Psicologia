@@ -429,7 +429,9 @@ function rangoBloqueo(b) {
 
 export function VistaSemana({ lunes, citas, bloqueos, hoy, ahoraMin, activaId, onAbrir }) {
   const dias = diasVisibles(lunes, citas, bloqueos);
-  const { desde, hasta } = limitesHoras(citas.filter((c) => dias.some((d) => isoDe(d) === dia(c))));
+  const citasSemana = citas.filter((c) => dias.some((d) => isoDe(d) === dia(c)));
+  const bloqueosSemana = bloqueos.filter((b) => dias.some((d) => isoDe(d) >= b.fechaInicio && isoDe(d) <= b.fechaFin));
+  const { desde, hasta } = limitesHoras(citasSemana, bloqueosSemana);
   const alto = ((hasta - desde) / 60) * ALTO_HORA;
   const horas = [];
   for (let h = desde / 60 + 1; h < hasta / 60; h += 1) horas.push(h);

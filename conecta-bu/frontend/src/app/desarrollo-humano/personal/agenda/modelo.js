@@ -304,13 +304,21 @@ export function diasVisibles(lunes, citas, bloqueos) {
   return Array.from({ length: n }, (_, i) => addDias(lunes, i));
 }
 
-export function limitesHoras(citas) {
+export function limitesHoras(citas, bloqueos = []) {
   let desde = 8 * 60;
   let hasta = 18 * 60;
-  for (const c of citas) {
-    const { ini, fin } = rangoHora(c);
+  const ampliar = (ini, fin) => {
+    if (ini == null || fin == null || fin <= ini) return;
     desde = Math.min(desde, Math.floor(ini / 60) * 60);
     hasta = Math.max(hasta, Math.ceil(fin / 60) * 60);
+  };
+  for (const c of citas) {
+    const { ini, fin } = rangoHora(c);
+    ampliar(ini, fin);
+  }
+  for (const b of bloqueos) {
+    if (b.todoElDia) continue;
+    ampliar(minutosUTC(b.horaInicio), minutosUTC(b.horaFin));
   }
   desde = Math.max(0, desde);
   hasta = Math.min(24 * 60, Math.max(hasta, desde + 60));

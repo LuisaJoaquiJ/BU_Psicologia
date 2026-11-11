@@ -86,8 +86,12 @@ class AgendaService {
       }
       const ocupado = await r.horarios.ocuparSiLibre(nuevo.id);
       if (ocupado.count === 0) throw new AppError(409, "Ese horario ya no está disponible. Elige otro.");
+      const movida = await r.citas.moverSiSigueAhi(cita.id, cita.horarioId, nuevo.id);
+      if (movida.count === 0) {
+        await r.horarios.actualizar(nuevo.id, { ocupado: false });
+        throw new AppError(409, "Esta cita ya no se puede reprogramar. Actualiza la agenda.");
+      }
       await r.horarios.actualizar(cita.horarioId, { ocupado: false });
-      await r.citas.actualizar(cita.id, { horarioId: nuevo.id });
       await r.historial.crear({
         citaId: cita.id,
         estadoAnterior: "Agendada",

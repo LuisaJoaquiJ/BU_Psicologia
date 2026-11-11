@@ -477,7 +477,7 @@ export function AgendaAdminPage({ api = "/admin" }) {
               setMensaje(`Quedó registrada la atención de ${cita.usuario?.nombre || "el estudiante"} (${cita.horario?.servicio?.nombre}).`);
               setVista("lista");
               setCuando("dia");
-              setFecha(dia(cita));
+              enfocar(dia(cita));
               setEstado("todas");
               setServicio("");
               setBuscar("");
