@@ -114,8 +114,28 @@ export function mesPrevio(isoHoy) {
   return { clave: `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`, nombre: MES[prev.getMonth()] };
 }
 
-// "Por registrar": agendada y la hora de inicio ya pasó (hoy en Bogotá o un día anterior).
-export function esPorRegistrar(cita, hoy, ahoraMin) {
+// El personal puede corregir un cierre automático durante 7 días (mismo plazo del backend).
+export const DIAS_CORRECCION_CIERRE = 7;
+
+export function cierreVigente(cita, ahora = new Date()) {
+  if (!cita?.cerradaAutomaticamente) return false;
+  const cerrado = new Date(cita.cerradaAutomaticamente).getTime();
+  if (Number.isNaN(cerrado)) return false;
+  return ahora.getTime() <= cerrado + DIAS_CORRECCION_CIERRE * 864e5;
+}
+
+// Instante real de inicio: la hora de pared guardada en UTC, en el reloj de Bogotá.
+function inicioReal(cita) {
+  const d = dia(cita);
+  const ini = minutosUTC(cita.horario?.horaInicio);
+  if (!d || ini == null) return null;
+  const [y, m, day] = d.split("-").map(Number);
+  return Date.UTC(y, m - 1, day, Math.floor(ini / 60), ini % 60) + 5 * 60 * 60 * 1000;
+}
+
+// "Por registrar": agendada cuya hora ya pasó, o cerrada por el sistema y aún corregible.
+export function esPorRegistrar(cita, hoy, ahoraMin, ahora = new Date()) {
+  if (cierreVigente(cita, ahora)) return true;
   if (cita?.estado !== "Agendada") return false;
   const d = dia(cita);
   if (!d || d > hoy) return false;
@@ -124,17 +144,26 @@ export function esPorRegistrar(cita, hoy, ahoraMin) {
   return ini != null && ini <= ahoraMin;
 }
 
-// La pantalla ya dejaba marcar asistencia de cualquier cita agendada de hoy
-// o de un día anterior, aunque la hora todavía no llegue.
-export function puedeRegistrar(cita, hoy) {
+// Asistencia de una cita agendada de hoy o de un día anterior, y de las que
+// el sistema cerró y todavía están dentro de los 7 días.
+export function puedeRegistrar(cita, hoy, ahora = new Date()) {
+  if (cierreVigente(cita, ahora)) return true;
   return cita?.estado === "Agendada" && dia(cita) <= hoy;
 }
 
-export function claveVisual(cita, hoy, ahoraMin) {
+// Solo una cita agendada que todavía no empieza. Una ya iniciada se registra, no se mueve.
+export function puedeReprogramar(cita, ahora = new Date()) {
+  if (!cita || cita.estado !== "Agendada" || cita.horario?.sinCita || cita.cerradaAutomaticamente) return false;
+  const inicio = inicioReal(cita);
+  return inicio != null && inicio > ahora.getTime();
+}
+
+export function claveVisual(cita, hoy, ahoraMin, ahora = new Date()) {
+  if (cita.cerradaAutomaticamente) return "cerrada";
   if (cita.estado === "Cancelada") return "cancelada";
   if (cita.estado === "Atendida") return "atendida";
   if (cita.estado === "NoAsistio") return "noasistio";
-  if (esPorRegistrar(cita, hoy, ahoraMin)) return "registrar";
+  if (esPorRegistrar(cita, hoy, ahoraMin, ahora)) return "registrar";
   return "agendada";
 }
 
@@ -152,6 +181,13 @@ export const ESTILOS = {
     badge: "bg-[#FFF6E0] text-[#7A5405]",
     bloque: "bg-[#FFF6E0] text-[#7A5405] border-[#E0B03A]",
     punto: "bg-[#E0B03A]",
+  },
+  cerrada: {
+    texto: "Cerrada automáticamente",
+    leyenda: "Cerrada automáticamente",
+    badge: "bg-[#EEF1F6] text-[#3D4C63]",
+    bloque: "bg-[#EEF1F6] text-[#3D4C63] border-[#6B7A8D]",
+    punto: "bg-[#6B7A8D]",
   },
   atendida: {
     texto: "Asistió",
@@ -176,7 +212,7 @@ export const ESTILOS = {
   },
 };
 
-export const ORDEN_LEYENDA = ["agendada", "registrar", "atendida", "noasistio", "cancelada"];
+export const ORDEN_LEYENDA = ["agendada", "registrar", "cerrada", "atendida", "noasistio", "cancelada"];
 
 export function hora12(minutos, { conSufijo = true } = {}) {
   if (minutos == null) return "";

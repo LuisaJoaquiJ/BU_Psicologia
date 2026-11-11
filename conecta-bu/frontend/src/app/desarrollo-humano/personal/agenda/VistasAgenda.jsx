@@ -24,6 +24,8 @@ import {
   nombreMes,
   parseISO,
   puedeRegistrar,
+  puedeReprogramar,
+  cierreVigente,
   rangoHora,
   servicioCorto,
   tasaMes,
@@ -110,7 +112,7 @@ function Linea({ icono, children }) {
   );
 }
 
-export function DetalleCita({ cita, hoy, ahoraMin, registrando, onRegistrar, onCerrar }) {
+export function DetalleCita({ cita, hoy, ahoraMin, registrando, onRegistrar, onReprogramar, onCerrar }) {
   const clave = claveVisual(cita, hoy, ahoraMin);
   const { ini, fin } = rangoHora(cita);
   const correo = correoDe(cita);
@@ -140,13 +142,24 @@ export function DetalleCita({ cita, hoy, ahoraMin, registrando, onRegistrar, onC
       {clave === "registrar" && (
         <p className="m-0 rounded-xl border border-[#F2C46D] bg-[#FFF6E0] px-3 py-2 text-sm text-[#7A5405]">¿El estudiante vino a la cita? Regístralo aquí.</p>
       )}
-      <div className="border-t border-gray-200 pt-3">
+      {clave === "cerrada" && (
+        <p className="m-0 rounded-xl border border-[#D5DCE6] bg-[#EEF1F6] px-3 py-2 text-sm text-[#3D4C63]">
+          El sistema la marcó como no asistió porque nadie registró la asistencia.
+          {puedeRegistrar(cita, hoy) ? " Puedes corregirlo durante 7 días." : " Ya pasó el plazo de 7 días para corregirla."}
+        </p>
+      )}
+      <div className="flex flex-col gap-2 border-t border-gray-200 pt-3">
         {puedeRegistrar(cita, hoy) ? (
           <BotonesAsistencia cita={cita} registrando={registrando} onRegistrar={onRegistrar} grande />
         ) : cita.estado === "Cancelada" ? (
           <p className="m-0 text-sm text-ink-500">Horario liberado</p>
         ) : (
-          <p className="m-0 text-sm text-ink-500">Inicio {hora12(ini)} · fin {hora12(fin)}</p>
+          !puedeReprogramar(cita) && <p className="m-0 text-sm text-ink-500">Inicio {hora12(ini)} · fin {hora12(fin)}</p>
+        )}
+        {puedeReprogramar(cita) && (
+          <button type="button" onClick={() => onReprogramar(cita)} className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full border border-primary bg-white px-3 text-sm font-bold text-primary hover:bg-primary-light">
+            <Icono nombre="editar" size={16} strokeWidth={2.2} /> Reprogramar
+          </button>
         )}
       </div>
     </>
@@ -170,6 +183,7 @@ export function KpiAgenda({ hoy, ahoraMin, citas, semana, listo = true }) {
   }).length;
   const deSemana = citas.filter((c) => dia(c) >= semana.desde && dia(c) <= semana.hasta && c.estado !== "Cancelada").length;
   const porRegistrar = citas.filter((c) => esPorRegistrar(c, hoy, ahoraMin)).length;
+  const cerradas = citas.filter((c) => cierreVigente(c)).length;
   const previo = mesPrevio(hoy);
   const actual = tasaMes(citas, hoy.slice(0, 7));
   const anterior = tasaMes(citas, previo.clave);
@@ -178,7 +192,12 @@ export function KpiAgenda({ hoy, ahoraMin, citas, semana, listo = true }) {
     <section aria-label="Resumen de la agenda" className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <Tarjeta titulo="Citas hoy" valor={deHoy.length} detalle={masTarde ? `${masTarde} pendiente${masTarde > 1 ? "s" : ""} esta tarde` : "Sin citas pendientes"} />
       <Tarjeta titulo="Esta semana" valor={deSemana} detalle={semana.texto} />
-      <Tarjeta titulo="Por registrar" valor={porRegistrar} detalle="Marca si el estudiante asistió" destacado />
+      <Tarjeta
+        titulo="Por registrar"
+        valor={porRegistrar}
+        detalle={cerradas ? `Marca la asistencia · ${cerradas} ${cerradas === 1 ? "la cerró" : "las cerró"} el sistema` : "Marca si el estudiante asistió"}
+        destacado
+      />
       <Tarjeta
         titulo="Asistencia del mes"
         valor={actual == null ? "Sin datos" : `${actual} %`}
@@ -207,7 +226,7 @@ function Tarjeta({ titulo, valor, detalle, destacado, detalleClase = "" }) {
   );
 }
 
-export function AvisoRegistrar({ cantidad, onVer }) {
+export function AvisoRegistrar({ cantidad, cerradas = 0, onVer }) {
   if (!cantidad) return null;
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-[#F2C46D] bg-[#FFF6E0] px-4 py-3 text-sm" role="status">
@@ -218,7 +237,11 @@ export function AvisoRegistrar({ cantidad, onVer }) {
         <strong className="text-[#7A5405]">
           Tienes {cantidad} {cantidad === 1 ? "cita" : "citas"} por registrar.
         </strong>{" "}
-        <span className="text-ink-600">Registra la asistencia para que las estadísticas estén al día.</span>
+        <span className="text-ink-600">
+          {cerradas
+            ? `${cerradas === 1 ? "Una la cerró" : `${cerradas} las cerró`} el sistema; puedes corregirlas durante 7 días.`
+            : "Registra la asistencia para que las estadísticas estén al día."}
+        </span>
       </p>
       <button type="button" onClick={onVer} className="min-h-[40px] rounded-full border border-gray-200 bg-white px-4 text-sm font-bold text-ink-900 hover:bg-gray-50">
         Ver por registrar
@@ -318,7 +341,7 @@ function NotaBloqueo({ bloqueo }) {
   );
 }
 
-export function VistaLista({ grupos, hoy, ahoraMin, bloqueos, registrando, onRegistrar, onVer, vacio }) {
+export function VistaLista({ grupos, hoy, ahoraMin, bloqueos, registrando, onRegistrar, onReprogramar, onVer, vacio }) {
   if (!grupos.length) return vacio;
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
@@ -370,17 +393,18 @@ export function VistaLista({ grupos, hoy, ahoraMin, bloqueos, registrando, onReg
                       <span>
                         <InsigniaEstado clave={clave} />
                       </span>
-                      <div>
-                        {puedeRegistrar(c, hoy) ? (
-                          <BotonesAsistencia cita={c} registrando={registrando} onRegistrar={onRegistrar} />
-                        ) : c.estado === "Cancelada" ? (
-                          <p className="m-0 text-right text-sm text-ink-500">Horario liberado</p>
-                        ) : (
-                          <p className="m-0 text-right">
-                            <button type="button" data-cita-ancla={c.id} onClick={(e) => onVer(c, e.currentTarget)} className="min-h-[40px] px-2 text-sm font-bold text-primary hover:underline">
-                              Ver
-                            </button>
-                          </p>
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        {puedeRegistrar(c, hoy) && <BotonesAsistencia cita={c} registrando={registrando} onRegistrar={onRegistrar} />}
+                        {puedeReprogramar(c) && (
+                          <button type="button" onClick={() => onReprogramar(c)} className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full px-2 text-sm font-bold text-primary hover:underline">
+                            <Icono nombre="editar" size={15} strokeWidth={2.2} /> Reprogramar
+                          </button>
+                        )}
+                        {!puedeRegistrar(c, hoy) && !puedeReprogramar(c) && c.estado === "Cancelada" && <p className="m-0 text-sm text-ink-500">Horario liberado</p>}
+                        {!puedeRegistrar(c, hoy) && !puedeReprogramar(c) && c.estado !== "Cancelada" && (
+                          <button type="button" data-cita-ancla={c.id} onClick={(e) => onVer(c, e.currentTarget)} className="min-h-[40px] px-2 text-sm font-bold text-primary hover:underline">
+                            Ver
+                          </button>
                         )}
                       </div>
                     </div>
@@ -539,6 +563,48 @@ export function VistaMes({ mes, citas, bloqueos, hoy, ahoraMin, onElegirDia }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+export function SelectorHorarios({ horarios, eligiendo, onElegir }) {
+  if (!horarios) return <p className="m-0 text-ink-500">Buscando horarios libres…</p>;
+  if (!horarios.length) return <p className="m-0 text-ink-500">No hay horarios libres de este servicio que todavía no empiecen.</p>;
+  const grupos = [];
+  const ordenados = [...horarios].sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)) || String(a.horaInicio).localeCompare(String(b.horaInicio)));
+  for (const h of ordenados) {
+    const clave = String(h.fecha).slice(0, 10);
+    if (!grupos.length || grupos.at(-1).dia !== clave) grupos.push({ dia: clave, horarios: [] });
+    grupos.at(-1).horarios.push(h);
+  }
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="m-0 text-sm text-ink-500">Mismo servicio, en un horario libre que todavía no empieza. El horario actual queda libre.</p>
+      {grupos.map((g) => (
+        <section key={g.dia}>
+          <h3 className="m-0 mb-2 text-sm font-extrabold">{fechaLarga(`${g.dia}T12:00:00Z`)}</h3>
+          <ul className="m-0 flex list-none flex-col gap-2 p-0">
+            {g.horarios.map((h) => (
+              <li key={h.id}>
+                <button
+                  type="button"
+                  disabled={eligiendo}
+                  onClick={() => onElegir(h.id)}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left hover:border-primary disabled:opacity-60"
+                >
+                  <span>
+                    <span className="block font-bold text-ink-900">
+                      {formatearHora(h.horaInicio)} – {formatearHora(h.horaFin)}
+                    </span>
+                    <span className="block text-sm text-ink-500">{h.servicio?.nombre}</span>
+                  </span>
+                  <span className="text-sm font-bold text-primary">Elegir</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
     </div>
   );
 }

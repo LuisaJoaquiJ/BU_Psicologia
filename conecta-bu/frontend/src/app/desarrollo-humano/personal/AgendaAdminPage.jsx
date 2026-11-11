@@ -12,6 +12,7 @@ import {
   KpiAgenda,
   Leyenda,
   MiniCalendario,
+  SelectorHorarios,
   VistaLista,
   VistaMes,
   VistaSemana,
@@ -25,6 +26,7 @@ import {
   addDias,
   dia,
   diasVisibles,
+  cierreVigente,
   esPorRegistrar,
   fechaLegible,
   isoDe,
@@ -63,6 +65,9 @@ export function AgendaAdminPage({ api = "/admin" }) {
   });
   const [detalle, setDetalle] = useState(null);
   const [mini, setMini] = useState(null);
+  const [reprogramando, setReprogramando] = useState(null);
+  const [libres, setLibres] = useState(null);
+  const [eligiendo, setEligiendo] = useState(false);
   const [reloj, setReloj] = useState(() => ahoraBogota());
 
   const cerrarFlotantes = useCallback(() => {
@@ -134,6 +139,7 @@ export function AgendaAdminPage({ api = "/admin" }) {
   if (cuando === "pasadas" || cuando === "registrar") visibles.reverse();
   const enCalendario = base.filter((c) => estado === "todas" || c.estado === estado);
   const porRegistrar = todas.filter((c) => esPorRegistrar(c, hoy, ahoraMin)).length;
+  const cerradas = todas.filter((c) => cierreVigente(c)).length;
   const semanaKpi = rangoSemanaActual(hoy);
 
   const grupos = [];
@@ -195,6 +201,38 @@ export function AgendaAdminPage({ api = "/admin" }) {
   function abrirDetalle(cita, el) {
     setMini(null);
     setDetalle({ id: cita.id, ancla: anclaDe(el) });
+  }
+
+  async function abrirReprogramar(cita) {
+    cerrarFlotantes();
+    setError("");
+    setReprogramando(cita);
+    setLibres(null);
+    try {
+      const res = await http.get(`${api}/citas/horarios-libres`, { params: { citaId: cita.id } });
+      setLibres(res.data.horarios);
+    } catch (err) {
+      setReprogramando(null);
+      setError(err.response?.data?.message || "No pudimos cargar los horarios libres.");
+    }
+  }
+
+  async function confirmarReprogramar(horarioId) {
+    if (!reprogramando) return;
+    setError("");
+    setMensaje("");
+    setEligiendo(true);
+    try {
+      await http.patch(`${api}/citas/${reprogramando.id}/reprogramar`, { horarioId });
+      const nombre = reprogramando.usuario?.nombre?.split(" ")[0] || "el estudiante";
+      setMensaje(`Quedó reprogramada la cita de ${nombre}.`);
+      setReprogramando(null);
+      await cargar();
+    } catch (err) {
+      setError(err.response?.data?.message || "No pudimos reprogramar la cita. Elige otro horario.");
+    } finally {
+      setEligiendo(false);
+    }
   }
 
   const vacio = (
@@ -264,7 +302,7 @@ export function AgendaAdminPage({ api = "/admin" }) {
       </div>
 
       <KpiAgenda hoy={hoy} ahoraMin={ahoraMin} citas={todas} semana={semanaKpi} listo={Boolean(citas)} />
-      <AvisoRegistrar cantidad={citas ? porRegistrar : 0} onVer={verPorRegistrar} />
+      <AvisoRegistrar cantidad={citas ? porRegistrar : 0} cerradas={citas ? cerradas : 0} onVer={verPorRegistrar} />
 
       {mensaje && (
         <div className="mb-4" role="status">
@@ -366,7 +404,7 @@ export function AgendaAdminPage({ api = "/admin" }) {
         {!citas && <p className="m-0 text-ink-500">Cargando citas…</p>}
 
         {citas && vista === "lista" && (
-          <VistaLista grupos={grupos} hoy={hoy} ahoraMin={ahoraMin} bloqueos={bloqueos} registrando={registrando} onRegistrar={registrar} onVer={abrirDetalle} vacio={vacio} />
+          <VistaLista grupos={grupos} hoy={hoy} ahoraMin={ahoraMin} bloqueos={bloqueos} registrando={registrando} onRegistrar={registrar} onReprogramar={abrirReprogramar} onVer={abrirDetalle} vacio={vacio} />
         )}
         {citas && vista === "semana" && (
           <VistaSemana lunes={lunes} citas={enCalendario} bloqueos={bloqueos} hoy={hoy} ahoraMin={ahoraMin} activaId={detalle?.id} onAbrir={abrirDetalle} />
@@ -390,7 +428,7 @@ export function AgendaAdminPage({ api = "/admin" }) {
 
       {citaAbierta && detalle?.ancla && (
         <Flotante ancla={detalle.ancla} etiqueta="Detalle de la cita">
-          <DetalleCita cita={citaAbierta} hoy={hoy} ahoraMin={ahoraMin} registrando={registrando} onRegistrar={registrar} onCerrar={() => setDetalle(null)} />
+          <DetalleCita cita={citaAbierta} hoy={hoy} ahoraMin={ahoraMin} registrando={registrando} onRegistrar={registrar} onReprogramar={abrirReprogramar} onCerrar={() => setDetalle(null)} />
         </Flotante>
       )}
       {mini && (
@@ -401,6 +439,12 @@ export function AgendaAdminPage({ api = "/admin" }) {
           seleccionado={vista === "lista" && cuando === "dia" ? fecha : null}
           onElegir={irAFecha}
         />
+      )}
+
+      {reprogramando && (
+        <Ventana titulo={`Reprogramar a ${reprogramando.usuario?.nombre || "el estudiante"}`} alCerrar={() => !eligiendo && setReprogramando(null)} ancho="sm:max-w-[560px]">
+          <SelectorHorarios horarios={libres} eligiendo={eligiendo} onElegir={confirmarReprogramar} />
+        </Ventana>
       )}
 
       {!sinCita && (

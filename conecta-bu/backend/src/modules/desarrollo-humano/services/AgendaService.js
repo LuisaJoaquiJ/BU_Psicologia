@@ -4,13 +4,18 @@ const { config } = require("../../../config/env");
 const { aFechaUTC, aHoraUTC, hoyBogota } = require("../../../common/utils/fechas");
 const repos = require("../repositories");
 const { reposCon } = require("../repositories");
-const { DURACIONES, horaBogota, texto } = require("../utils/agenda");
+const { DURACIONES, horaBogota, inicioDeCita, texto } = require("../utils/agenda");
+const { cierreCorregible } = require("./CierreService");
+const { bloqueoService } = require("./BloqueoService");
+const { citaService } = require("./CitaService");
 
 // Agenda del personal de Desarrollo Humano: citas de todos los estudiantes,
 // registro de asistencia (RF-008) y atencion sin cita.
 class AgendaService {
-  constructor(r = repos) {
+  constructor(r = repos, bloqueos = bloqueoService, citasEstudiante = citaService) {
     this.repos = r;
+    this.bloqueos = bloqueos;
+    this.citasEstudiante = citasEstudiante;
   }
 
   // RF-008 / HU-15: filtros opcionales por fecha, servicio y estado.
@@ -34,9 +39,62 @@ class AgendaService {
       // "No asistio" sin registro es el cierre automatico: el personal aun puede corregirlo.
       if (!["Agendada", "NoAsistio"].includes(cita.estado)) throw new AppError(409, "Solo se puede registrar asistencia de una cita que este agendada.");
       if (await r.asistencias.deCita(citaId)) throw new AppError(409, "Ya se registro la asistencia de esta cita.");
-      const actualizada = await r.citas.cambiarEstado(citaId, asistio ? "Atendida" : "NoAsistio");
+      // El cierre automatico deja la cita en No asistio sin registro. Se puede
+      // corregir durante 7 dias; confirmar "no asistio" la deja como registro manual.
+      if (cita.cerradaAutomaticamente && !cierreCorregible(cita.cerradaAutomaticamente)) {
+        throw new AppError(409, "Pasaron 7 días desde el cierre automático. Ya no se puede corregir esta cita.");
+      }
+      await r.citas.actualizar(citaId, { estado: asistio ? "Atendida" : "NoAsistio", cerradaAutomaticamente: null });
       await r.asistencias.crear({ citaId, asistio: Boolean(asistio), registradoPorId: adminId });
-      return actualizada;
+      return r.citas.completa(citaId);
+    });
+  }
+
+  // Horarios a los que se puede mover una cita agendada que aun no empieza:
+  // los mismos que veria el estudiante, del mismo servicio.
+  async horariosLibres(citaId) {
+    const cita = await this.repos.citas.completa(String(citaId || ""));
+    if (!cita) throw new AppError(404, "Cita no encontrada.");
+    this.exigirReprogramable(cita);
+    const libres = await this.citasEstudiante.disponibles();
+    return libres.filter((h) => h.servicioId === cita.horario.servicioId && h.id !== cita.horarioId);
+  }
+
+  exigirReprogramable(cita) {
+    if (cita.estado !== "Agendada") throw new AppError(409, "Solo se puede reprogramar una cita que sigue agendada.");
+    if (cita.horario?.sinCita) throw new AppError(409, "Una atención sin cita no se reprograma.");
+    if (cita.cerradaAutomaticamente) throw new AppError(409, "Esta cita ya la cerró el sistema. Registra la asistencia en lugar de reprogramarla.");
+    if (inicioDeCita(cita.horario) <= new Date()) {
+      throw new AppError(409, "Esta cita ya empezó. Registra la asistencia en lugar de reprogramarla.");
+    }
+  }
+
+  // Mueve la cita a otro horario libre del mismo servicio. Libera el anterior.
+  reprogramar(adminId, citaId, horarioId) {
+    return prisma.$transaction(async (tx) => {
+      const r = reposCon(tx);
+      const cita = await r.citas.completa(String(citaId || ""));
+      if (!cita) throw new AppError(404, "Cita no encontrada.");
+      this.exigirReprogramable(cita);
+      if (!horarioId || horarioId === cita.horarioId) throw new AppError(400, "Elige otro horario.");
+
+      const nuevo = await r.horarios.buscarPorId(String(horarioId));
+      if (!nuevo) throw new AppError(404, "El horario seleccionado no existe.");
+      if (nuevo.servicioId !== cita.horario.servicioId) throw new AppError(409, "La cita se reprograma en un horario del mismo servicio.");
+      if (nuevo.sinCita || inicioDeCita(nuevo) <= new Date() || (await this.bloqueos.queCruza(nuevo.fecha, nuevo.horaInicio, nuevo.horaFin))) {
+        throw new AppError(409, "Ese horario ya no está disponible. Elige otro.");
+      }
+      const ocupado = await r.horarios.ocuparSiLibre(nuevo.id);
+      if (ocupado.count === 0) throw new AppError(409, "Ese horario ya no está disponible. Elige otro.");
+      await r.horarios.actualizar(cita.horarioId, { ocupado: false });
+      await r.citas.actualizar(cita.id, { horarioId: nuevo.id });
+      await r.historial.crear({
+        citaId: cita.id,
+        estadoAnterior: "Agendada",
+        estadoNuevo: "Reprogramada",
+        usuarioId: adminId,
+      });
+      return r.citas.completa(cita.id);
     });
   }
 
