@@ -10,7 +10,9 @@ const router = Router();
 router.use(authMiddleware, requireModulo("desarrollo-humano"));
 
 router.get("/", manejar(c.listar)); // RF-008 / HU-15
+router.get("/horarios-libres", manejar(c.horariosLibres));
 router.patch("/:id/asistencia", requireFields(["asistio"]), manejar(c.asistencia)); // HU-16
+router.patch("/:id/reprogramar", requireFields(["horarioId"]), manejar(c.reprogramar));
 // Atencion sin cita: el estudiante llega sin cita y se le atiende.
 router.get("/estudiantes", manejar(c.estudiantes));
 router.post("/sin-cita", manejar(c.sinCita));

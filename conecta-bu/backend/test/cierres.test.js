@@ -61,12 +61,27 @@ describe("Cierres automáticos", () => {
     const c2 = await prisma.citaDesarrollo.create({ data: { usuarioId: usuario.id, horarioId: reciente.id, estado: "Agendada" } });
 
     expect((await ejecutarCierres(ahora)).citasDesarrollo).toBe(1);
-    expect((await prisma.citaDesarrollo.findUnique({ where: { id: c1.id } })).estado).toBe("NoAsistio");
+    const cerrada = await prisma.citaDesarrollo.findUnique({ where: { id: c1.id } });
+    expect(cerrada.estado).toBe("NoAsistio");
+    expect(cerrada.cerradaAutomaticamente).toBeTruthy();
     expect((await prisma.citaDesarrollo.findUnique({ where: { id: c2.id } })).estado).toBe("Agendada"); // aun dentro de las 24 h
+    expect((await prisma.citaDesarrollo.findUnique({ where: { id: c2.id } })).cerradaAutomaticamente).toBeFalsy();
 
     // El personal registra tarde que si vino: corrige el cierre automatico.
     const corregida = await agendaService.registrarAsistencia(admin.usuario.id, c1.id, true);
     expect(corregida.estado).toBe("Atendida");
+    expect(corregida.cerradaAutomaticamente).toBeNull();
     await expect(agendaService.registrarAsistencia(admin.usuario.id, c1.id, false)).rejects.toThrow();
+  });
+
+  test("el personal ya no corrige un cierre automático después de 7 días", async () => {
+    const { usuario } = crearUsuario("Estudiante", "est2@uniautonoma.edu.co");
+    const admin = crearUsuario("Administrador", "psico2@uniautonoma.edu.co");
+    const horario = prisma.__seedHorario({ fecha: dia(-20), horaInicio: hora(9), horaFin: hora(10), ocupado: true });
+    const cita = await prisma.citaDesarrollo.create({
+      data: { usuarioId: usuario.id, horarioId: horario.id, estado: "NoAsistio", cerradaAutomaticamente: new Date(Date.now() - 8 * 864e5) },
+    });
+    await expect(agendaService.registrarAsistencia(admin.usuario.id, cita.id, true)).rejects.toThrow(/7 días/);
+    expect((await prisma.citaDesarrollo.findUnique({ where: { id: cita.id } })).estado).toBe("NoAsistio");
   });
 });

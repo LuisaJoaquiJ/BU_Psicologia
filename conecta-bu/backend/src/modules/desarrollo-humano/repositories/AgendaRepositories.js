@@ -74,6 +74,14 @@ class CitaRepository extends BaseRepository {
   cambiarEstado(id, estado, include = CITA_COMPLETA) {
     return this.tabla.update({ where: { id }, data: { estado }, include });
   }
+  // Solo mueve la cita si sigue agendada en el horario que leimos. Si otra
+  // peticion la cancelo o ya la reprogramo, no pisa ese cambio.
+  moverSiSigueAhi(id, horarioAnteriorId, horarioNuevoId) {
+    return this.tabla.updateMany({
+      where: { id, estado: "Agendada", horarioId: horarioAnteriorId },
+      data: { horarioId: horarioNuevoId },
+    });
+  }
 }
 
 class AsistenciaCitaRepository extends BaseRepository {

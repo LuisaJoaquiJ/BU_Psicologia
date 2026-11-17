@@ -1,143 +1,116 @@
-import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { Icono } from "../comunes/componentes/Iconos";
-import { iniciales } from "../comunes/componentes/Navbar";
-import { fechaLarga, formatearHora } from "../comunes/lib/format";
-import { Aviso, claseCampo } from "../comunes/componentes/ui";
+import { Aviso, Segmentos, botonSecundario } from "../comunes/componentes/ui";
 import { BotonFlotante, Ventana } from "../comunes/componentes/Ventana";
 import { FormularioSinCita } from "./AtencionSinCita";
-import { CalendarioMes, SelectorVista } from "../comunes/componentes/CalendarioMes";
+import {
+  AvisoRegistrar,
+  DetalleCita,
+  Flotante,
+  KpiAgenda,
+  Leyenda,
+  MiniCalendario,
+  SelectorHorarios,
+  VistaLista,
+  VistaMes,
+  VistaSemana,
+  anclaDe,
+  useClicFuera,
+} from "./agenda/VistasAgenda";
+import {
+  CUANDO,
+  ESTADOS,
+  ahoraBogota,
+  addDias,
+  dia,
+  diasVisibles,
+  cierreVigente,
+  esPorRegistrar,
+  fechaLegible,
+  isoDe,
+  lunesDe,
+  nombreMes,
+  parseISO,
+  rangoSemanaActual,
+  sinTildes,
+  tituloSemana,
+} from "./agenda/modelo";
 
-// Fecha de hoy en la hora local del navegador (Bogota). toISOString() da la
-// fecha UTC, que despues de las 7 p. m. ya es la de manana.
-function hoyISO() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+const campo =
+  "border border-[#DCE3EE] rounded-xl px-3 min-h-[40px] text-sm text-ink-900 bg-white/90 shadow-[inset_0_1px_2px_rgba(11,35,71,0.05)]";
 
-const dia = (c) => String(c.horario?.fecha || "").slice(0, 10);
-const orden = (a, b) => (dia(a) + String(a.horario?.horaInicio)).localeCompare(dia(b) + String(b.horario?.horaInicio));
-const sinTildes = (t) =>
-  String(t || "")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
-
-// "Cuándo": la pregunta principal. Cada opcion dice en palabras que muestra.
-const CUANDO = [
-  { id: "proximas", texto: "Próximas", ayuda: "de hoy en adelante", filtro: (c, hoy) => dia(c) >= hoy && c.estado !== "Cancelada" },
-  { id: "registrar", texto: "Por registrar", ayuda: "ya pasaron y falta decir si asistió", filtro: (c, hoy) => dia(c) < hoy && c.estado === "Agendada" },
-  { id: "pasadas", texto: "Pasadas", ayuda: "antes de hoy", filtro: (c, hoy) => dia(c) < hoy },
-  { id: "dia", texto: "Un día", ayuda: "", filtro: (c, hoy, fecha) => dia(c) === fecha },
-  { id: "todas", texto: "Todas", ayuda: "sin importar la fecha", filtro: () => true },
-];
-
-// Estado de la cita, con nombres en lenguaje sencillo.
-const ESTADOS = [
-  { id: "todas", texto: "Todos los estados" },
-  { id: "Agendada", texto: "Agendadas", punto: "#2a78d6" },
-  { id: "Atendida", texto: "Asistieron", punto: "#0d9488" },
-  { id: "NoAsistio", texto: "No asistieron", punto: "#d97706" },
-  { id: "Cancelada", texto: "Canceladas", punto: "#9AA3B5" },
-];
-const INSIGNIA = {
-  Agendada: ["Agendada", "bg-[#E3EEFB] text-[#1C5CAB]"],
-  Atendida: ["Asistió", "bg-[#DDF3EA] text-[#0E6B4A]"],
-  NoAsistio: ["No asistió", "bg-[#FFF1DC] text-[#8A4B00]"],
-  Cancelada: ["Cancelada", "bg-gray-100 text-ink-600"],
-};
-
-function FilaCita({ cita, hoy, registrando, onRegistrar }) {
-  const puedeRegistrar = cita.estado === "Agendada" && dia(cita) <= hoy;
-  const [texto, clase] = INSIGNIA[cita.estado] || [cita.estado, "bg-gray-100 text-ink-600"];
-  return (
-    <li className="px-5 py-3.5 flex items-center justify-between flex-wrap gap-x-6 gap-y-2.5">
-      <div className="flex items-center gap-4 min-w-0">
-        <span className="w-[104px] shrink-0 whitespace-nowrap font-extrabold text-ink-900 tabular-nums">{formatearHora(cita.horario?.horaInicio)}</span>
-        <span className="flex items-center gap-3 min-w-0">
-          <span className="w-10 h-10 rounded-full bg-primary-light text-primary font-extrabold text-sm flex items-center justify-center shrink-0">
-            {iniciales(cita.usuario?.nombre)}
-          </span>
-          <span className="min-w-0">
-            <span className="block font-bold text-ink-900 truncate">{cita.usuario?.nombre}</span>
-            <span className="block text-sm text-ink-500 truncate">
-              {cita.horario?.servicio?.nombre}
-              {cita.horario?.sinCita && <span className="ml-1.5 font-bold text-[#8A4B00]">· Sin cita</span>}
-            </span>
-          </span>
-        </span>
-      </div>
-      {puedeRegistrar ? (
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-ink-500 mr-1">¿Asistió?</span>
-          <button
-            type="button"
-            disabled={registrando}
-            onClick={() => onRegistrar(cita, true)}
-            className="min-h-[44px] px-4 rounded-full boton-liquido text-sm font-extrabold disabled:opacity-60"
-          >
-            Sí
-          </button>
-          <button
-            type="button"
-            disabled={registrando}
-            onClick={() => onRegistrar(cita, false)}
-            className="min-h-[44px] px-4 rounded-full burbuja text-primary text-sm font-extrabold hover:bg-white disabled:opacity-60"
-          >
-            No
-          </button>
-        </div>
-      ) : (
-        <span className={`text-xs font-bold rounded-full px-3 py-1.5 ${clase}`}>{texto}</span>
-      )}
-    </li>
-  );
-}
-
-// RF-008 · HU-15, HU-16: citas del modulo, con filtros sencillos (cuando,
-// estado, servicio y nombre) y el registro de asistencia en la misma fila.
+// RF-008 · HU-15, HU-16: citas del módulo, con lista, semana y mes, y el
+// registro de asistencia en la misma fila (el mismo PATCH de siempre).
 export function AgendaAdminPage({ api = "/admin" }) {
   const [params, setParams] = useSearchParams();
-  // ?sincita=1 (desde el inicio) abre de una vez el registro de atencion sin cita.
   const [sinCita, setSinCita] = useState(Boolean(params.get("sincita")));
   const fechaInicial = /^\d{4}-\d{2}-\d{2}$/.test(params.get("fecha") || "") ? params.get("fecha") : "";
   const [citas, setCitas] = useState(null);
+  const [bloqueos, setBloqueos] = useState([]);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [registrando, setRegistrando] = useState(false);
   const [cuando, setCuando] = useState(fechaInicial ? "dia" : "proximas");
-  const [fecha, setFecha] = useState(fechaInicial || hoyISO());
+  const [fecha, setFecha] = useState(fechaInicial || ahoraBogota().iso);
+  const [foco, setFoco] = useState(fechaInicial || ahoraBogota().iso);
   const [estado, setEstado] = useState("todas");
   const [servicio, setServicio] = useState("");
   const [buscar, setBuscar] = useState("");
-  const [vista, setVista] = useState(fechaInicial ? "lista" : "calendario");
-  const [diaSel, setDiaSel] = useState(fechaInicial || hoyISO());
-  const [bloqueos, setBloqueos] = useState([]);
+  const [vista, setVista] = useState("lista");
+  const [semana, setSemana] = useState(() => isoDe(lunesDe(ahoraBogota().iso)));
+  const [mes, setMes] = useState(() => {
+    const h = parseISO(ahoraBogota().iso);
+    return new Date(h.getFullYear(), h.getMonth(), 1);
+  });
+  const [detalle, setDetalle] = useState(null);
+  const [mini, setMini] = useState(null);
+  const [reprogramando, setReprogramando] = useState(null);
+  const [libres, setLibres] = useState(null);
+  const [eligiendo, setEligiendo] = useState(false);
+  const [reloj, setReloj] = useState(() => ahoraBogota());
 
-  const cargar = () =>
-    http
-      .get(`${api}/citas`)
-      .then((res) => {
-        setCitas(res.data.citas);
-        setError("");
-      })
-      .catch((err) => {
-        setCitas([]);
-        setError(
-          err.response?.data?.message
-            ? `No pudimos cargar las citas: ${err.response.data.message}`
-            : "No pudimos cargar las citas. Revisa que el servidor esté encendido y tu conexión.",
-        );
-      });
+  const cerrarFlotantes = useCallback(() => {
+    setDetalle(null);
+    setMini(null);
+  }, []);
+  useClicFuera(Boolean(detalle || mini), cerrarFlotantes);
+  useEffect(() => {
+    if (!detalle && !mini) return undefined;
+    const alDesplazar = () => cerrarFlotantes();
+    window.addEventListener("scroll", alDesplazar, true);
+    return () => window.removeEventListener("scroll", alDesplazar, true);
+  }, [detalle, mini, cerrarFlotantes]);
+
+  const cargar = useCallback(
+    () =>
+      http
+        .get(`${api}/citas`)
+        .then((res) => {
+          setCitas(res.data.citas);
+          setError("");
+        })
+        .catch((err) => {
+          setCitas([]);
+          setError(
+            err.response?.data?.message
+              ? `No pudimos cargar las citas: ${err.response.data.message}`
+              : "No pudimos cargar las citas. Revisa que el servidor esté encendido y tu conexión.",
+          );
+        }),
+    [api],
+  );
 
   useEffect(() => {
     cargar();
     http
       .get(`${api}/horarios/bloqueos`)
-      .then((res) => setBloqueos(res.data.bloqueos))
+      .then((res) => setBloqueos(res.data.bloqueos || []))
       .catch(() => setBloqueos([]));
     if (params.get("sincita")) setParams({}, { replace: true });
+    const id = setInterval(() => setReloj(ahoraBogota()), 60_000);
+    return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -156,175 +129,198 @@ export function AgendaAdminPage({ api = "/admin" }) {
     }
   }
 
-  const hoy = hoyISO();
-  const todas = useMemo(() => [...(citas || [])].sort(orden), [citas]);
-  const servicios = useMemo(() => [...new Set(todas.map((c) => c.horario?.servicio?.nombre).filter(Boolean))].sort(), [todas]);
-  const opcion = CUANDO.find((o) => o.id === cuando);
-
-  // Filtros en cadena: cuando -> estado -> servicio -> nombre.
-  const porCuando = todas.filter((c) => opcion.filtro(c, hoy, fecha));
-  const porServicio = porCuando.filter((c) => !servicio || c.horario?.servicio?.nombre === servicio);
-  const porNombre = porServicio.filter((c) => !buscar || sinTildes(c.usuario?.nombre).includes(sinTildes(buscar)));
-  const visibles = porNombre.filter((c) => estado === "todas" || c.estado === estado);
-  // Las pasadas se leen de la mas reciente a la mas antigua.
-  if (cuando === "pasadas" || cuando === "registrar") visibles.reverse();
-
-  // Calendario: todas las fechas, con los filtros de servicio, estudiante y estado.
-  const enCalendario = todas
-    .filter((c) => !servicio || c.horario?.servicio?.nombre === servicio)
-    .filter((c) => !buscar || sinTildes(c.usuario?.nombre).includes(sinTildes(buscar)))
-    .filter((c) => estado === "todas" || c.estado === estado);
-  const TONO_CAL = {
-    Agendada: ["azul", "agendada", "agendadas"],
-    Atendida: ["verde", "asistió", "asistieron"],
-    NoAsistio: ["rojo", "no asistió", "no asistieron"],
-    Cancelada: ["gris", "cancelada", "canceladas"],
-  };
-  const marcas = {};
-  for (const c of enCalendario) {
-    const d = dia(c);
-    marcas[d] ||= {};
-    marcas[d][c.estado] = (marcas[d][c.estado] || 0) + 1;
-  }
-  const marcasCal = Object.fromEntries(
-    Object.entries(marcas).map(([d, conteo]) => [
-      d,
-      ["Agendada", "Atendida", "NoAsistio", "Cancelada"]
-        .filter((e) => conteo[e])
-        .map((e) => ({ texto: `${conteo[e]} ${conteo[e] === 1 ? TONO_CAL[e][1] : TONO_CAL[e][2]}`, tono: TONO_CAL[e][0] })),
-    ]),
+  const hoy = reloj.iso;
+  const ahoraMin = reloj.minutos;
+  const ctx = useMemo(() => ({ hoy, ahoraMin, fecha }), [hoy, ahoraMin, fecha]);
+  const todas = useMemo(
+    () => [...(citas || [])].sort((a, b) => (dia(a) + String(a.horario?.horaInicio)).localeCompare(dia(b) + String(b.horario?.horaInicio))),
+    [citas],
   );
-  for (const b of bloqueos) {
-    for (let d = new Date(`${b.fechaInicio}T12:00:00`); ; d.setDate(d.getDate() + 1)) {
-      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      if (k > b.fechaFin) break;
-      (marcasCal[k] ||= []).unshift({ texto: b.motivo, tono: "ambar" });
-    }
-  }
-  const citasDelDia = enCalendario.filter((c) => dia(c) === diaSel);
-  const bloqueosDelDia = bloqueos.filter((b) => b.fechaInicio <= diaSel && b.fechaFin >= diaSel);
+  const servicios = useMemo(() => [...new Set(todas.map((c) => c.horario?.servicio?.nombre).filter(Boolean))].sort(), [todas]);
+  const q = sinTildes(buscar);
+  const coincide = (c) => !q || sinTildes(c.usuario?.nombre).includes(q) || sinTildes(c.usuario?.emailInstitucional).includes(q);
+  const base = todas.filter((c) => (!servicio || c.horario?.servicio?.nombre === servicio) && coincide(c));
+  const opcion = CUANDO.find((o) => o.id === cuando) || CUANDO[0];
+  const deCuando = base.filter((c) => opcion.filtro(c, ctx));
+  const visibles = deCuando.filter((c) => estado === "todas" || c.estado === estado);
+  if (cuando === "pasadas" || cuando === "registrar") visibles.reverse();
+  const enCalendario = base.filter((c) => estado === "todas" || c.estado === estado);
+  const porRegistrar = todas.filter((c) => esPorRegistrar(c, hoy, ahoraMin)).length;
+  const cerradas = todas.filter((c) => cierreVigente(c)).length;
+  const semanaKpi = rangoSemanaActual(hoy);
 
-  const contarCuando = (o) => todas.filter((c) => o.filtro(c, hoy, fecha)).length;
-  const contarEstado = (id) => porNombre.filter((c) => id === "todas" || c.estado === id).length;
-  const hayFiltrosExtra = cuando !== "proximas" || estado !== "todas" || servicio || buscar;
-  const porRegistrar = todas.filter((c) => dia(c) < hoy && c.estado === "Agendada").length;
-
-  // Agrupadas por dia.
   const grupos = [];
   for (const c of visibles) {
-    if (!grupos.length || grupos.at(-1).dia !== dia(c)) grupos.push({ dia: dia(c), fecha: c.horario?.fecha, citas: [] });
+    if (!grupos.length || grupos.at(-1).dia !== dia(c)) grupos.push({ dia: dia(c), citas: [] });
     grupos.at(-1).citas.push(c);
   }
 
-  // Frase que dice en palabras lo que se esta viendo.
-  const resumen = (() => {
-    const n = visibles.length;
-    const cuandoFrase = {
-      proximas: "de hoy en adelante",
-      registrar: "que ya pasaron y esperan registro de asistencia",
-      pasadas: "anteriores a hoy",
-      dia: `del ${fechaLarga(`${fecha}T12:00:00Z`).toLowerCase()}`,
-      todas: "en total",
-    }[cuando];
-    const estadoFrase = {
-      todas: "",
-      Agendada: "que siguen agendadas",
-      Atendida: "en las que el estudiante asistió",
-      NoAsistio: "en las que el estudiante no asistió",
-      Cancelada: "canceladas",
-    }[estado];
-    return [
-      `${n} ${n === 1 ? "cita" : "citas"}`,
-      cuandoFrase,
-      estadoFrase,
-      servicio && `de ${servicio}`,
-      buscar && `de estudiantes con «${buscar}» en el nombre`,
-    ]
-      .filter(Boolean)
-      .join(" ");
-  })();
+  const conteos = Object.fromEntries(CUANDO.map((o) => [o.id, base.filter((c) => o.filtro(c, ctx)).length]));
+  const universoEstado = vista === "lista" ? deCuando : base;
+  const contarEstado = (id) => universoEstado.filter((c) => id === "todas" || c.estado === id).length;
+  const hayFiltros = cuando !== "proximas" || estado !== "todas" || servicio || buscar;
+  const lunes = parseISO(semana);
+  const tituloCal =
+    vista === "semana" ? tituloSemana(lunes, diasVisibles(lunes, enCalendario, bloqueos)) : `${nombreMes(mes.getMonth())} de ${mes.getFullYear()}`;
+  const citaAbierta = detalle ? todas.find((c) => c.id === detalle.id) : null;
+  const hoyTexto = fechaLegible(hoy);
+
+  function verPorRegistrar() {
+    cerrarFlotantes();
+    setVista("lista");
+    setCuando("registrar");
+    setEstado("todas");
+    setServicio("");
+    setBuscar("");
+  }
+
+  function enfocar(iso) {
+    setFoco(iso);
+    setFecha(iso);
+    setSemana(isoDe(lunesDe(iso)));
+    const d = parseISO(iso);
+    setMes(new Date(d.getFullYear(), d.getMonth(), 1));
+  }
+
+  function irAFecha(iso) {
+    cerrarFlotantes();
+    enfocar(iso);
+    if (vista === "lista") setCuando("dia");
+    else if (vista === "mes") setVista("semana");
+  }
+
+  function mover(direccion) {
+    cerrarFlotantes();
+    if (vista === "semana") enfocar(isoDe(addDias(lunes, direccion * 7)));
+    else enfocar(isoDe(new Date(mes.getFullYear(), mes.getMonth() + direccion, 1)));
+  }
+
+  function irHoy() {
+    cerrarFlotantes();
+    const h = ahoraBogota().iso;
+    enfocar(h);
+    if (vista === "lista") setCuando("proximas");
+  }
+
+  function cambiarVista(v) {
+    cerrarFlotantes();
+    if (v === "semana") setSemana(isoDe(lunesDe(foco)));
+    if (v === "mes") {
+      const d = parseISO(foco);
+      setMes(new Date(d.getFullYear(), d.getMonth(), 1));
+    }
+    if (v === "lista" && vista !== "lista") {
+      setCuando("dia");
+      setFecha(foco);
+    }
+    setVista(v);
+  }
+
+  function abrirDetalle(cita, el) {
+    setMini(null);
+    setDetalle({ id: cita.id, ancla: anclaDe(el) });
+  }
+
+  async function abrirReprogramar(cita) {
+    cerrarFlotantes();
+    setError("");
+    setReprogramando(cita);
+    setLibres(null);
+    try {
+      const res = await http.get(`${api}/citas/horarios-libres`, { params: { citaId: cita.id } });
+      setLibres(res.data.horarios);
+    } catch (err) {
+      setReprogramando(null);
+      setError(err.response?.data?.message || "No pudimos cargar los horarios libres.");
+    }
+  }
+
+  async function confirmarReprogramar(horarioId) {
+    if (!reprogramando) return;
+    setError("");
+    setMensaje("");
+    setEligiendo(true);
+    try {
+      await http.patch(`${api}/citas/${reprogramando.id}/reprogramar`, { horarioId });
+      const nombre = reprogramando.usuario?.nombre?.split(" ")[0] || "el estudiante";
+      setMensaje(`Quedó reprogramada la cita de ${nombre}.`);
+      setReprogramando(null);
+      await cargar();
+    } catch (err) {
+      setError(err.response?.data?.message || "No pudimos reprogramar la cita. Elige otro horario.");
+    } finally {
+      setEligiendo(false);
+    }
+  }
+
+  const vacio = (
+    <div className="rounded-xl border border-gray-200 bg-white px-6 py-10 text-center">
+      <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-primary-light text-primary">
+        <Icono nombre="calendario" size={28} strokeWidth={2} />
+      </span>
+      {todas.length === 0 ? (
+        <>
+          <p className="m-0 text-lg font-extrabold text-ink-900">Todavía no hay citas en este módulo</p>
+          <p className="mx-auto mt-2 mb-0 max-w-[38em] text-ink-500">
+            Aquí aparecen las citas que los estudiantes piden en tus horarios publicados. Si ya hay citas y no salen, revisa que el servicio de la cita pertenezca a este módulo.
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="m-0 text-lg font-extrabold text-ink-900">Ninguna cita coincide con estos filtros</p>
+          <p className="m-0 mt-2 text-ink-500">
+            En total hay {todas.length} {todas.length === 1 ? "cita" : "citas"} en este módulo.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setCuando("todas");
+              setEstado("todas");
+              setServicio("");
+              setBuscar("");
+            }}
+            className="mt-3 min-h-[44px] rounded-full px-5 font-bold boton-liquido"
+          >
+            Ver todas las citas
+          </button>
+        </>
+      )}
+    </div>
+  );
 
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8 pb-24">
-      <h1 className="m-0 text-[30px] sm:text-[38px] leading-tight font-extrabold">Citas</h1>
-      <p className="mt-1 mb-6 text-ink-500 max-w-[48em]">
-        Quién pidió cita contigo y si asistió. Si alguien llega sin cita y lo atiendes, regístralo con{" "}
-        <strong className="text-ink-900">Atender sin cita</strong>.
-      </p>
-
-      {porRegistrar > 0 && cuando !== "registrar" && (
-        <button
-          type="button"
-          onClick={() => {
-            setCuando("registrar");
-            setEstado("todas");
-          }}
-          className="mb-5 w-full flex items-center justify-between gap-3 rounded-2xl bg-[#FFF6E0] border border-[#F2C46D] text-[#7A5405] px-5 py-3.5 text-left font-bold hover:brightness-[0.98]"
-        >
-          <span>
-            {porRegistrar} {porRegistrar === 1 ? "cita ya pasó y falta" : "citas ya pasaron y falta"} registrar si el estudiante asistió.
-          </span>
-          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-            Registrar ahora <Icono nombre="flecha" size={16} strokeWidth={2.2} />
-          </span>
-        </button>
-      )}
-
-      {/* Filtros: cuatro listas desplegables en una sola fila */}
-      <div className="mb-4">
-        <SelectorVista vista={vista} setVista={setVista} />
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 items-end">
-        {vista === "lista" && (
-          <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
-            ¿Cuándo?
-            <select value={cuando} onChange={(e) => setCuando(e.target.value)} className={claseCampo}>
-              {CUANDO.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.id === "dia" ? "Un día en particular…" : `${o.texto} (${contarCuando(o)})`}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {vista === "lista" && cuando === "dia" && (
-          <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
-            Día
-            <input type="date" value={fecha} onChange={(e) => e.target.value && setFecha(e.target.value)} className={claseCampo} />
-          </label>
-        )}
-        <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
-          Estado
-          <select value={estado} onChange={(e) => setEstado(e.target.value)} className={claseCampo}>
-            {ESTADOS.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.texto} ({contarEstado(e.id)})
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
-          Servicio
-          <select value={servicio} onChange={(e) => setServicio(e.target.value)} className={claseCampo}>
-            <option value="">Todos los servicios</option>
-            {servicios.map((x) => (
-              <option key={x} value={x}>
-                {x}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink-900">
-          Estudiante
-          <span className="relative">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500">
-              <Icono nombre="buscar" size={18} />
+    <main className="mx-auto max-w-[1440px] px-4 py-8 pb-24 sm:px-6 lg:px-10">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="m-0 mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-accent">Panel del personal · Desarrollo Humano</p>
+          <h1 className="m-0 text-[30px] font-extrabold leading-tight sm:text-[38px]">Agenda de citas</h1>
+          <p className="mt-1 mb-0 max-w-[48em] text-ink-500">
+            Citas de los estudiantes con el equipo de Desarrollo Humano. Hoy es {hoyTexto.charAt(0).toLowerCase()}
+            {hoyTexto.slice(1)}.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="relative">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-500">
+              <Icono nombre="buscar" size={16} />
             </span>
-            <input type="search" value={buscar} onChange={(e) => setBuscar(e.target.value)} placeholder="Buscar por nombre" className={`${claseCampo} pl-10`} />
-          </span>
-        </label>
+            <input
+              type="search"
+              value={buscar}
+              onChange={(e) => setBuscar(e.target.value)}
+              placeholder="Buscar estudiante"
+              aria-label="Buscar estudiante"
+              className={`${campo} w-[240px] max-w-full rounded-full pl-9`}
+            />
+          </label>
+          <Link to="/admin/horarios" className={`${botonSecundario} no-underline`}>
+            <Icono nombre="reloj" size={16} strokeWidth={2.2} /> Mis horarios
+          </Link>
+        </div>
       </div>
+
+      <KpiAgenda hoy={hoy} ahoraMin={ahoraMin} citas={todas} semana={semanaKpi} listo={Boolean(citas)} />
+      <AvisoRegistrar cantidad={citas ? porRegistrar : 0} cerradas={citas ? cerradas : 0} onVer={verPorRegistrar} />
 
       {mensaje && (
         <div className="mb-4" role="status">
@@ -337,144 +333,140 @@ export function AgendaAdminPage({ api = "/admin" }) {
         </div>
       )}
 
-      {citas && vista === "lista" && (
-        <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
-          <p className="m-0 font-bold text-ink-900" aria-live="polite">
-            Mostrando {resumen}
-          </p>
-          {hayFiltrosExtra && (
+      <section className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          {vista === "lista" ? (
+            <Segmentos etiqueta="Cuándo" valor={cuando} alCambiar={setCuando} opciones={CUANDO.map((o) => [o.id, o.texto])} conteos={conteos} />
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" aria-label="Anterior" onClick={() => mover(-1)} className="grid h-10 w-10 place-items-center rounded-full burbuja text-primary hover:bg-white">
+                <Icono nombre="izquierda" size={18} strokeWidth={2.2} />
+              </button>
+              <button type="button" aria-label="Siguiente" onClick={() => mover(1)} className="grid h-10 w-10 place-items-center rounded-full burbuja text-primary hover:bg-white">
+                <Icono nombre="derecha" size={18} strokeWidth={2.2} />
+              </button>
+              <button type="button" onClick={irHoy} className="min-h-[40px] rounded-full px-4 text-sm font-bold text-primary burbuja hover:bg-white">
+                Hoy
+              </button>
+              <h2 className="m-0 text-lg font-extrabold">{tituloCal}</h2>
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <select aria-label="Estado" value={estado} onChange={(e) => setEstado(e.target.value)} className={`${campo} w-auto`}>
+              {ESTADOS.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.texto} ({contarEstado(e.id)})
+                </option>
+              ))}
+            </select>
+            <select aria-label="Servicio" value={servicio} onChange={(e) => setServicio(e.target.value)} className={`${campo} w-auto max-w-[220px]`}>
+              <option value="">Todos los servicios</option>
+              {servicios.map((x) => (
+                <option key={x} value={x}>
+                  {x}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
-              onClick={() => {
-                setCuando("proximas");
-                setEstado("todas");
-                setServicio("");
-                setBuscar("");
+              data-abre
+              onClick={(e) => {
+                if (mini) setMini(null);
+                else {
+                  setDetalle(null);
+                  setMini({ ancla: anclaDe(e.currentTarget) });
+                }
               }}
-              className="min-h-[40px] px-3 text-sm font-bold text-primary-soft hover:underline"
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-gray-200 bg-white px-3 text-sm font-bold text-ink-900 hover:bg-gray-50"
             >
-              Quitar filtros
+              <Icono nombre="calendario" size={16} strokeWidth={2} /> Ir a una fecha
             </button>
-          )}
+            <Segmentos
+              etiqueta="Vista"
+              valor={vista}
+              alCambiar={cambiarVista}
+              opciones={[
+                ["lista", "Lista", "lista"],
+                ["semana", "Semana", "cuadricula"],
+                ["mes", "Mes", "calendario"],
+              ]}
+            />
+          </div>
         </div>
-      )}
 
-      {!citas && <p className="text-ink-500">Cargando citas…</p>}
-
-      {citas && vista === "calendario" && (
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(340px,1fr)] items-start">
-          <CalendarioMes
-            marcas={marcasCal}
-            seleccionado={diaSel}
-            onSeleccionar={setDiaSel}
-            leyenda={[
-              ["azul", "Agendadas"],
-              ["verde", "Asistieron"],
-              ["rojo", "No asistieron"],
-              ["gris", "Canceladas"],
-              ["ambar", "No disponible"],
-            ]}
-          />
-          <section aria-label={fechaLarga(`${diaSel}T12:00:00Z`)} className="bg-white rounded-xl border border-gray-200 overflow-hidden xl:sticky xl:top-4">
-            <h2
-              className={`m-0 px-5 py-3.5 text-base font-extrabold flex items-center justify-between gap-3 border-b border-white/80 ${diaSel === hoy ? "bg-white/70 text-ink-900" : "bg-white/40 text-ink-900"}`}
-            >
-              <span>
-                {fechaLarga(`${diaSel}T12:00:00Z`)}
-                {diaSel === hoy && <span className="ml-2 align-middle inline-flex items-center rounded-full bg-[#1E9E9A] text-white text-xs font-bold px-2.5 py-0.5">Hoy</span>}
-              </span>
-              <span className={`text-sm font-semibold tabular-nums text-ink-500`}>
-                {citasDelDia.length} {citasDelDia.length === 1 ? "cita" : "citas"}
-              </span>
-            </h2>
-            {bloqueosDelDia.map((b) => (
-              <p key={b.id} className="m-0 px-5 py-3 bg-[#FFF1DC] text-[#5C4206] text-sm">
-                <strong>No disponible: {b.motivo}</strong> · {b.todoElDia ? "todo el día" : `${formatearHora(b.horaInicio)} a ${formatearHora(b.horaFin)}`}
-              </p>
-            ))}
-            {citasDelDia.length === 0 ? (
-              <p className="m-0 px-5 py-8 text-center text-ink-500">
-                No hay citas este día{estado !== "todas" || servicio || buscar ? " con estos filtros" : ""}.
-              </p>
-            ) : (
-              <ul className="list-none m-0 p-0 divide-y divide-[#EEF2F7]">
-                {[...citasDelDia].sort(orden).map((c) => (
-                  <FilaCita key={c.id} cita={c} hoy={hoy} registrando={registrando} onRegistrar={registrar} />
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
-      )}
-
-      {citas && vista === "lista" && visibles.length === 0 && !error && (
-        <div className="bg-white rounded-xl border border-gray-200 px-6 py-10 text-center flex flex-col items-center gap-3">
-          <span className="w-14 h-14 rounded-2xl bg-primary-light text-primary flex items-center justify-center">
-            <Icono nombre="calendario" size={28} strokeWidth={2} />
-          </span>
-          {todas.length === 0 ? (
-            <>
-              <p className="m-0 text-lg font-extrabold text-ink-900">Todavía no hay citas en este módulo</p>
-              <p className="m-0 text-ink-500 max-w-[38em]">
-                Aquí aparecen las citas que los estudiantes piden en tus horarios publicados. Si ya hay citas y no salen, revisa que el servicio de la cita
-                pertenezca a este módulo.
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="m-0 text-lg font-extrabold text-ink-900">Ninguna cita coincide con estos filtros</p>
-              <p className="m-0 text-ink-500">
-                En total hay {todas.length} {todas.length === 1 ? "cita" : "citas"} en este módulo.
-              </p>
+        {vista === "lista" && (
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="m-0 text-sm font-bold text-ink-900" aria-live="polite">
+              {cuando === "dia" ? `Mostrando las citas del ${fechaLegible(fecha).toLowerCase()}.` : `Mostrando ${visibles.length} ${visibles.length === 1 ? "cita" : "citas"}.`}
+            </p>
+            {hayFiltros && (
               <button
                 type="button"
                 onClick={() => {
-                  setCuando("todas");
+                  setCuando("proximas");
                   setEstado("todas");
                   setServicio("");
                   setBuscar("");
                 }}
-                className="mt-1 min-h-[44px] px-5 rounded-full boton-liquido font-bold"
+                className="min-h-[36px] text-sm font-bold text-primary hover:underline"
               >
-                Ver todas las citas
+                Quitar filtros
               </button>
-            </>
-          )}
-        </div>
+            )}
+          </div>
+        )}
+
+        {!citas && <p className="m-0 text-ink-500">Cargando citas…</p>}
+
+        {citas && vista === "lista" && (
+          <VistaLista grupos={grupos} hoy={hoy} ahoraMin={ahoraMin} bloqueos={bloqueos} registrando={registrando} onRegistrar={registrar} onReprogramar={abrirReprogramar} onVer={abrirDetalle} vacio={vacio} />
+        )}
+        {citas && vista === "semana" && (
+          <VistaSemana lunes={lunes} citas={enCalendario} bloqueos={bloqueos} hoy={hoy} ahoraMin={ahoraMin} activaId={detalle?.id} onAbrir={abrirDetalle} />
+        )}
+        {citas && vista === "mes" && (
+          <VistaMes
+            mes={mes}
+            citas={enCalendario}
+            bloqueos={bloqueos}
+            hoy={hoy}
+            ahoraMin={ahoraMin}
+            onElegirDia={(iso) => {
+              cerrarFlotantes();
+              enfocar(iso);
+              setVista("semana");
+            }}
+          />
+        )}
+        {citas && vista !== "lista" && <Leyenda />}
+      </section>
+
+      {citaAbierta && detalle?.ancla && (
+        <Flotante ancla={detalle.ancla} etiqueta="Detalle de la cita">
+          <DetalleCita cita={citaAbierta} hoy={hoy} ahoraMin={ahoraMin} registrando={registrando} onRegistrar={registrar} onReprogramar={abrirReprogramar} onCerrar={() => setDetalle(null)} />
+        </Flotante>
+      )}
+      {mini && (
+        <MiniCalendario
+          ancla={mini.ancla}
+          hoy={hoy}
+          citas={enCalendario}
+          seleccionado={vista === "lista" && cuando === "dia" ? fecha : null}
+          onElegir={irAFecha}
+        />
       )}
 
-      <div className="flex flex-col gap-4">
-        {vista === "lista" &&
-          grupos.map((g) => (
-            <section key={g.dia} aria-label={fechaLarga(g.fecha)} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <h2
-                className={`m-0 px-5 py-3 text-base font-extrabold flex items-center justify-between gap-3 ${
-                  g.dia === hoy ? "bg-primary-dark text-white" : "bg-gray-50 text-ink-900"
-                }`}
-              >
-                <span>
-                  {fechaLarga(g.fecha)}
-                  {g.dia === hoy && <span className="ml-2 text-cyan">· Hoy</span>}
-                </span>
-                <span className={`text-sm font-semibold tabular-nums ${g.dia === hoy ? "text-[#B9C7DE]" : "text-ink-500"}`}>
-                  {g.citas.length} {g.citas.length === 1 ? "cita" : "citas"}
-                </span>
-              </h2>
-              <ul className="list-none m-0 p-0 divide-y divide-[#EEF2F7]">
-                {g.citas.map((c) => (
-                  <FilaCita key={c.id} cita={c} hoy={hoy} registrando={registrando} onRegistrar={registrar} />
-                ))}
-              </ul>
-            </section>
-          ))}
-      </div>
+      {reprogramando && (
+        <Ventana titulo={`Reprogramar a ${reprogramando.usuario?.nombre || "el estudiante"}`} alCerrar={() => !eligiendo && setReprogramando(null)} ancho="sm:max-w-[560px]">
+          <SelectorHorarios horarios={libres} eligiendo={eligiendo} onElegir={confirmarReprogramar} />
+        </Ventana>
+      )}
 
       {!sinCita && (
         <BotonFlotante icono="persona" onClick={() => setSinCita(true)}>
           Atender sin cita
         </BotonFlotante>
       )}
-
       {sinCita && (
         <Ventana titulo="Atención sin cita" alCerrar={() => setSinCita(false)}>
           <FormularioSinCita
@@ -483,9 +475,9 @@ export function AgendaAdminPage({ api = "/admin" }) {
               setSinCita(false);
               setError("");
               setMensaje(`Quedó registrada la atención de ${cita.usuario?.nombre || "el estudiante"} (${cita.horario?.servicio?.nombre}).`);
+              setVista("lista");
               setCuando("dia");
-              setFecha(dia(cita));
-              setDiaSel(dia(cita));
+              enfocar(dia(cita));
               setEstado("todas");
               setServicio("");
               setBuscar("");

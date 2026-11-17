@@ -125,6 +125,10 @@ model CitaDesarrollo {
   horarioId          String
   horario            HorarioDesarrollo @relation(fields: [horarioId], references: [id])
   estado             EstadoCita        @default(Agendada)
+  // Momento en que el cierre automatico la paso a No asistio, porque nadie
+  // registro la asistencia. Nulo si no la cerro el sistema, o si el personal
+  // ya confirmo (asistio o no). Distinto de un "no asistio" marcado a mano.
+  cerradaAutomaticamente DateTime?
   fechaAgendamiento  DateTime          @default(now())
   observaciones      String?           @db.Text
   fechaActualizacion DateTime          @updatedAt

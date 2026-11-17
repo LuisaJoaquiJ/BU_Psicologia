@@ -104,6 +104,17 @@ function crearAgenda({ sufijo, obtenerUsuarios, siguienteId }) {
         citas = lista;
         return attachCita(actualizada);
       },
+      updateMany: async ({ where, data }) => {
+        let count = 0;
+        citas = citas.map((c) => {
+          if (where.id && c.id !== where.id) return c;
+          if (where.estado && c.estado !== where.estado) return c;
+          if (where.horarioId && c.horarioId !== where.horarioId) return c;
+          count += 1;
+          return { ...c, ...data, fechaActualizacion: new Date() };
+        });
+        return { count };
+      },
     },
     [`asistenciaCita${sufijo}`]: {
       findUnique: async ({ where }) => clone(asistencias.find((a) => a.citaId === where.citaId)) || null,
