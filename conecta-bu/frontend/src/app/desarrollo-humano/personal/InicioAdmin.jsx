@@ -271,7 +271,7 @@ export function InicioAdmin() {
       .map((c) => ({ a: "/admin/citas", titulo: `Atender a ${c.usuario?.nombre?.split(" ")[0] || "tu estudiante"}`, detalle: `${formatearHora(c.horario?.horaInicio)} · ${c.horario?.servicio?.nombre || "Cita"}` })),
     ...(pendientes.length ? [{ a: "/admin/citas", titulo: "Registrar asistencia de citas", detalle: `${plural(pendientes.length, "cita pasada espera", "citas pasadas esperan")} registro` }] : []),
     ...registrables.slice(0, 2).map((e) => ({ a: `/admin/eventos/${e.id}/inscritos`, titulo: "Registrar asistencia", detalle: `${e.nombre} · ${plural(e.sinRegistrar, "inscrito", "inscritos")} sin registrar` })),
-    ...(libresSemana.length === 0 ? [{ a: "/admin/horarios?agregar=1", titulo: "Publicar horarios de la semana", detalle: "No hay horarios libres para agendar" }] : []),
+    ...(libresSemana.length === 0 ? [{ a: "/admin/horarios", titulo: "Revisar el horario de la semana", detalle: "No quedan horas libres para agendar" }] : []),
     ...(conCupos ? [{ a: "/admin/eventos", titulo: `Difundir ${conCupos.nombre}`, detalle: `${plural(conCupos._count?.inscripciones ?? 0, "inscrito", "inscritos")} de ${conCupos.cupos} cupos` }] : []),
   ].slice(0, 4);
 
@@ -301,7 +301,7 @@ export function InicioAdmin() {
                 to="/admin/horarios?agregar=1"
                 className="min-h-[50px] inline-flex items-center px-6 rounded-full bg-[linear-gradient(100deg,#7FE8FF_0%,#3FD0C9_55%,#1E9E9A_100%)] text-[#071A38] font-extrabold text-[15px] no-underline transition hover:-translate-y-px hover:shadow-[0_10px_28px_rgba(127,232,255,0.45)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               >
-                Publicar horario
+                Cerrar un horario
               </Link>
               <Link to="/admin/eventos?nuevo=1" className="min-h-[50px] inline-flex items-center px-[22px] rounded-full bg-white/10 border-[1.5px] border-white/35 text-white font-bold text-[15px] no-underline hover:bg-white/[0.18]">
                 Nuevo evento

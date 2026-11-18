@@ -368,7 +368,7 @@ export function GestionHorariosPage({ api = "/admin" }) {
   const [params, setParams] = useSearchParams();
   // ?agregar=1 (desde "Publicar horario" del inicio) abre el panel de una vez.
   const [panelAbierto, setPanelAbierto] = useState(params.get("agregar") === "1");
-  const [modoPanel, setModoPanel] = useState("semana");
+  const [modoPanel, setModoPanel] = useState("ausente");
   const [aviso, setAviso] = useMensajeTemporal(5000);
   const [vista, setVista] = useState("calendario");
   const [filtro, setFiltro] = useState("todos");
@@ -576,8 +576,8 @@ export function GestionHorariosPage({ api = "/admin" }) {
         <p className="m-0 mb-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#19407B]">Desarrollo Humano · Agenda</p>
         <h1 className="m-0 text-[30px] sm:text-[38px] leading-tight font-extrabold text-ink-900">Mis horarios de atención</h1>
         <p className="mt-2 mb-0 text-ink-500 max-w-[46em] leading-relaxed">
-          Estas son las horas que los estudiantes pueden reservar. Para publicar más o marcar un tiempo en que no atiendes, usa el botón{" "}
-          <strong className="text-ink-900">Agregar horario</strong>.
+          Las citas están abiertas de lunes a viernes, de 8:00 a. m. a 12:00 p. m. y de 1:00 p. m. a 6:00 p. m. No hace falta publicarlas: cierra el día o las horas en las que no puedes atender con{" "}
+          <strong className="text-ink-900">Cerrar un horario</strong>.
         </p>
       </header>
 
@@ -711,18 +711,17 @@ export function GestionHorariosPage({ api = "/admin" }) {
                 <span className="w-12 h-12 rounded-2xl bg-[#19407B]/[0.08] text-[#19407B] flex items-center justify-center">
                   <Icono nombre="calendario" size={22} strokeWidth={2} />
                 </span>
-                <p className="m-0 font-extrabold text-ink-900">Sin horarios este día</p>
-                <p className="m-0 text-sm text-ink-500 max-w-[24em]">Los estudiantes no podrán reservar en esta fecha hasta que publiques un horario.</p>
-                {diaElegido >= hoyStr && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setForm((f) => ({ ...f, fecha: diaElegido }));
-                      abrirPanel("una");
-                    }}
-                    className={`${botonSecundario} mt-1`}
-                  >
-                    Agregar un horario este día
+                <p className="m-0 font-extrabold text-ink-900">
+                  {[0, 6].includes(new Date(`${diaElegido}T12:00:00Z`).getUTCDay()) ? "Este día no hay citas" : "Sin horas abiertas este día"}
+                </p>
+                <p className="m-0 text-sm text-ink-500 max-w-[24em]">
+                  {[0, 6].includes(new Date(`${diaElegido}T12:00:00Z`).getUTCDay())
+                    ? "La atención es de lunes a viernes."
+                    : "Si cerraste este día, quita el bloqueo para que las horas vuelvan a ofrecerse."}
+                </p>
+                {diaElegido >= hoyStr && ![0, 6].includes(new Date(`${diaElegido}T12:00:00Z`).getUTCDay()) && (
+                  <button type="button" onClick={() => abrirPanel("ausente")} className={`${botonSecundario} mt-1`}>
+                    Cerrar este día
                   </button>
                 )}
               </div>
@@ -737,11 +736,8 @@ export function GestionHorariosPage({ api = "/admin" }) {
           <span className="w-16 h-16 rounded-2xl bg-[#19407B]/[0.08] text-[#19407B] flex items-center justify-center">
             <Icono nombre="calendario" size={28} strokeWidth={2} />
           </span>
-          <p className="m-0 text-lg font-extrabold text-ink-900">Todavía no tienes horarios publicados</p>
-          <p className="m-0 text-ink-500 max-w-[36em]">Publica las horas en que atiendes para que los estudiantes puedan pedir su cita.</p>
-          <button type="button" onClick={() => abrirPanel("semana")} className={`${botonPrimario} mt-2`}>
-            Agregar horario
-          </button>
+          <p className="m-0 text-lg font-extrabold text-ink-900">Todavía no hay horas abiertas</p>
+          <p className="m-0 text-ink-500 max-w-[36em]">De lunes a viernes, de 8:00 a. m. a 12:00 p. m. y de 1:00 p. m. a 6:00 p. m., las citas se abren solas.</p>
         </div>
       )}
 
@@ -775,15 +771,15 @@ export function GestionHorariosPage({ api = "/admin" }) {
         </div>
       )}
 
-      {!panelAbierto && servicios.length > 0 && <BotonFlotante onClick={() => abrirPanel("semana")}>Agregar horario</BotonFlotante>}
+      {!panelAbierto && servicios.length > 0 && <BotonFlotante onClick={() => abrirPanel("ausente")}>Cerrar un horario</BotonFlotante>}
 
       {panelAbierto && (
-        <Ventana titulo="Agregar horario" alCerrar={cerrarPanel}>
-          <div role="tablist" aria-label="Forma de agregar" className="inline-flex flex-wrap bg-white border border-gray-200/90 rounded-2xl p-1 gap-1 mb-5 shadow-xs">
+        <Ventana titulo={modoPanel === "ausente" ? "Cerrar un horario" : "Agregar horario"} alCerrar={cerrarPanel}>
+          <div role="tablist" aria-label="Forma de ajustar el horario" className="inline-flex flex-wrap bg-white border border-gray-200/90 rounded-2xl p-1 gap-1 mb-5 shadow-xs">
             {[
-              ["semana", "Varias horas"],
-              ["una", "Una sola hora"],
               ["ausente", "No estaré disponible"],
+              ["una", "Una sola hora"],
+              ["semana", "Varias horas"],
             ].map(([id, texto]) => (
               <button
                 key={id}
