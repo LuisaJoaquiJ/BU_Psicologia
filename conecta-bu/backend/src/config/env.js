@@ -32,6 +32,11 @@ const config = {
   // planillas). En produccion puede apuntar a un volumen persistente.
   saludUploadsDir: process.env.SALUD_UPLOADS_DIR || require("path").join(__dirname, "..", "..", "uploads"),
   saludMaxEvidenciaMb: Number(process.env.SALUD_MAX_EVIDENCIA_MB || 10),
+  // Supabase Storage (produccion). Si faltan URL o SERVICE_ROLE_KEY, se usa el disco local.
+  supabaseUrl: process.env.SUPABASE_URL || "",
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+  supabaseBucketPublico: process.env.SUPABASE_BUCKET_PUBLICO || "publico",
+  supabaseBucketPrivado: process.env.SUPABASE_BUCKET_PRIVADO || "privado",
 };
 
 module.exports = { config };

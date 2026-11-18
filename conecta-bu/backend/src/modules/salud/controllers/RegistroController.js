@@ -45,7 +45,7 @@ class RegistroController extends BaseController {
   eliminarEvidencia = async (req, res) => this.ok(res, await evidenciaService.eliminar(req.params.id));
   archivoEvidencia = async (req, res) => {
     const evidencia = await evidenciaService.obtenerOFallar(req.params.id);
-    this.enviarArchivo(res, evidenciaService.rutaAbsoluta(evidencia), evidencia.nombreArchivo, { tipo: evidencia.tipoMime, cache: "private, max-age=3600" });
+    await this.enviarArchivo(res, evidenciaService.refDe(evidencia), evidencia.nombreArchivo, { tipo: evidencia.tipoMime, cache: "private, max-age=3600" });
   };
 
   // ---- Atenciones ----

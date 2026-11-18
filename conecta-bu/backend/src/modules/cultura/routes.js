@@ -5,6 +5,7 @@ const cultura = require("./cultura.service");
 const ampliacion = require("./ampliacion");
 const { ipDe } = require("./catalogo");
 const evidencia = require("./evidencia");
+const { almacenamiento } = require("../../common/storage/almacenamiento");
 const asistencia = require("./asistencia");
 const imagen = require("./imagen");
 const logistica = require("./logistica");
@@ -85,9 +86,8 @@ admin.get("/inclusion", area, manejar(async (req, res) => res.json(await ampliac
 admin.get("/historico", taller, manejar(async (req, res) => res.json(await ampliacion.historico(req.query))));
 admin.get("/evidencias", taller, manejar(async (req, res) => res.json(await evidencia.listar(req.query))));
 admin.get("/evidencias/:id/archivo", taller, manejar(async (req, res) => {
-  const { absoluta, evidencia: fila } = await evidencia.archivo(req.params.id);
-  res.type(fila.mime);
-  res.sendFile(absoluta);
+  const { clave, bucket, evidencia: fila } = await evidencia.archivo(req.params.id);
+  return almacenamiento.enviar(res, { clave, bucket, tipo: fila.mime, nombre: fila.nombreOriginal, cache: "private, max-age=3600", mensaje404: "Archivo no disponible." });
 }));
 admin.post("/evidencias", taller, evidencia.recibir, manejar(evidencia.guardar));
 admin.delete("/evidencias/:id", area, manejar(async (req, res) => {

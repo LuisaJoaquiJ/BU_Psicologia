@@ -1,4 +1,3 @@
-const fs = require("fs");
 const { BaseController } = require("./BaseController");
 const { AppError } = require("../../../common/utils/AppError");
 const { catalogoPublico } = require("../utils/sst");
@@ -29,7 +28,7 @@ class SstController extends BaseController {
     try {
       datos = leerDatos(req);
     } catch (err) {
-      for (const f of req.files || []) fs.promises.unlink(f.path).catch(() => {});
+      await sstArchivoService.borrar(req.files || []);
       throw err;
     }
     this.creado(res, { reporte: await sstReporteService.crear(datos, req.files || [], req.usuario) });
@@ -40,7 +39,7 @@ class SstController extends BaseController {
 
   archivoAdjunto = async (req, res) => {
     const adjunto = await sstReporteService.adjunto(req.params.id, req.usuario);
-    this.enviarArchivo(res, sstArchivoService.rutaAbsoluta(adjunto), adjunto.nombreArchivo, { tipo: adjunto.tipoMime, cache: "private, max-age=3600" });
+    await this.enviarArchivo(res, sstArchivoService.refDe(adjunto), adjunto.nombreArchivo, { tipo: adjunto.tipoMime, cache: "private, max-age=3600" });
   };
 
   // ---- Bandeja del personal de Salud ----

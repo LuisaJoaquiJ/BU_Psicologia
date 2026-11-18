@@ -19,8 +19,8 @@ class SalidaController extends BaseController {
   revisar = async (req, res) => this.ok(res, { inscripcion: await salidaService.revisarInscripcion(req.params.id, req.params.inscripcionId, req.body, req.usuario) });
 
   comprobante = async (req, res) => {
-    const { ruta, nombre } = await salidaService.comprobanteDe(req.params.id, req.params.inscripcionId);
-    this.enviarArchivo(res, ruta, nombre);
+    const ref = await salidaService.comprobanteDe(req.params.id, req.params.inscripcionId);
+    await this.enviarArchivo(res, ref, ref.nombre);
   };
 
   listado = async (req, res) => {
@@ -31,8 +31,8 @@ class SalidaController extends BaseController {
   subirFotos = async (req, res) => this.creado(res, { fotos: await fotoSalidaService.agregar(req.params.id, req.files) });
   eliminarFoto = async (req, res) => this.ok(res, await fotoSalidaService.eliminar(req.params.id, req.params.fotoId));
   foto = async (req, res) => {
-    const { ruta, nombre, tipo } = await fotoSalidaService.archivo(req.params.id, req.params.fotoId);
-    this.enviarArchivo(res, ruta, nombre, { tipo });
+    const ref = await fotoSalidaService.archivo(req.params.id, req.params.fotoId);
+    await this.enviarArchivo(res, ref, ref.nombre, { tipo: ref.tipo });
   };
 
   // ---- Estudiante ----

@@ -1,14 +1,11 @@
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
 const multer = require("multer");
-const { config } = require("../../../config/env");
 const { AppError } = require("../../../common/utils/AppError");
+const { almacenamiento } = require("../../../common/storage/almacenamiento");
 const repos = require("../repositories");
 
 // Fotos de Deporte: eventos, disciplinas, implementos y comunicados. Cada una
-// se guarda en uploads/deporte/<tipo> y el registro solo conserva el nombre
-// del archivo (uuid + extension), igual que los eventos de Desarrollo Humano.
+// se guarda en deporte/<tipo> (disco o bucket publico) y el registro solo
+// conserva el nombre del archivo (uuid + extension).
 
 const ENTIDADES = {
   eventos: { repo: repos.eventos, nombre: "El evento" },
@@ -18,6 +15,7 @@ const ENTIDADES = {
 };
 const FORMATOS = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp" };
 const MAX_MB = 5;
+const BUCKET = "publico";
 
 class ImagenService {
   constructor() {
@@ -31,7 +29,7 @@ class ImagenService {
   }
 
   carpeta(tipo) {
-    return path.join(config.saludUploadsDir, "deporte", tipo);
+    return `deporte/${tipo}`;
   }
 
   // Middleware de Express que recibe el campo "imagen" (multipart) del tipo indicado.
@@ -39,10 +37,7 @@ class ImagenService {
     this.entidad(tipo);
     const carpeta = this.carpeta(tipo);
     const subir = multer({
-      storage: multer.diskStorage({
-        destination: (req, file, cb) => fs.mkdir(carpeta, { recursive: true }, (err) => cb(err, carpeta)),
-        filename: (req, file, cb) => cb(null, `${crypto.randomUUID()}${FORMATOS[file.mimetype]}`),
-      }),
+      storage: almacenamiento.motorMulter({ carpeta, extensionDe: (file) => FORMATOS[file.mimetype] }),
       limits: { fileSize: MAX_MB * 1024 * 1024, files: 1 },
       fileFilter: (req, file, cb) => (FORMATOS[file.mimetype] ? cb(null, true) : cb(new AppError(400, "La imagen debe ser JPG, PNG o WEBP."))),
     }).single("imagen");
@@ -54,15 +49,14 @@ class ImagenService {
       });
   }
 
-  // Ruta en disco, solo para nombres generados por el servidor.
-  rutaDe(tipo, nombre) {
+  claveDe(tipo, nombre) {
     if (!ENTIDADES[tipo] || !nombre || !/^[0-9a-f-]{36}\.(jpg|png|webp)$/.test(nombre)) return null;
-    return path.join(this.carpeta(tipo), nombre);
+    return `${this.carpeta(tipo)}/${nombre}`;
   }
 
   borrar(tipo, nombre) {
-    const ruta = this.rutaDe(tipo, nombre);
-    return ruta ? fs.promises.unlink(ruta).catch(() => {}) : Promise.resolve();
+    const clave = this.claveDe(tipo, nombre);
+    return clave ? almacenamiento.borrar(clave, { bucket: BUCKET }) : Promise.resolve();
   }
 
   async obtener(tipo, id) {
@@ -78,10 +72,11 @@ class ImagenService {
     try {
       fila = await this.obtener(tipo, id);
     } catch (err) {
-      await fs.promises.unlink(archivo.path).catch(() => {});
+      await almacenamiento.descartar(archivo, { bucket: BUCKET });
       throw err;
     }
-    const actualizado = await ENTIDADES[tipo].repo.actualizar(id, { imagen: path.basename(archivo.path) });
+    const clave = await almacenamiento.guardar(archivo, { carpeta: this.carpeta(tipo), bucket: BUCKET, extension: FORMATOS[archivo.mimetype] });
+    const actualizado = await ENTIDADES[tipo].repo.actualizar(id, { imagen: almacenamiento.nombreDe(archivo) || clave.split("/").pop() });
     if (fila.imagen) await this.borrar(tipo, fila.imagen);
     return { imagenUrl: this.urlImagen(tipo, actualizado) };
   }
@@ -107,7 +102,8 @@ class ImagenService {
 
   async archivoDe(tipo, id) {
     const fila = await this.entidad(tipo).repo.buscarPorId(id);
-    return this.rutaDe(tipo, fila?.imagen);
+    const clave = this.claveDe(tipo, fila?.imagen);
+    return clave ? { clave, bucket: BUCKET } : null;
   }
 }
 

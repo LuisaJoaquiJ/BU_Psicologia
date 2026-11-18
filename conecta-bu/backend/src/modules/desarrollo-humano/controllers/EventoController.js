@@ -2,6 +2,7 @@ const { BaseController } = require("./BaseController");
 const { eventoService } = require("../services/EventoService");
 const { eventoEstudianteService } = require("../services/EventoEstudianteService");
 const { imagenEventoService } = require("../services/ImagenEventoService");
+const { almacenamiento } = require("../../../common/storage/almacenamiento");
 const automatizaciones = require("../../../integrations/automatizaciones");
 
 // Eventos y talleres: personal (RF-009, RF-011) y estudiante (RF-010).
@@ -46,13 +47,14 @@ class EventoController extends BaseController {
 
   // Foto publica (la usa <img>, que no envia la sesion).
   imagen = async (req, res) => {
-    const ruta = await imagenEventoService.archivoDe(req.params.id);
-    if (!ruta) return res.status(404).json({ message: "El evento no tiene imagen." });
+    const archivo = await imagenEventoService.archivoDe(req.params.id);
+    if (!archivo) return res.status(404).json({ message: "El evento no tiene imagen." });
     // helmet pone "Cross-Origin-Resource-Policy: same-origin"; es una imagen publica.
-    res.set("Cross-Origin-Resource-Policy", "cross-origin");
-    res.set("Cache-Control", "public, max-age=86400");
-    res.sendFile(ruta, (err) => {
-      if (err && !res.headersSent) res.status(404).json({ message: "No se encontró la imagen." });
+    return almacenamiento.enviar(res, {
+      ...archivo,
+      cache: "public, max-age=86400",
+      headers: { "Cross-Origin-Resource-Policy": "cross-origin" },
+      mensaje404: "No se encontró la imagen.",
     });
   };
 

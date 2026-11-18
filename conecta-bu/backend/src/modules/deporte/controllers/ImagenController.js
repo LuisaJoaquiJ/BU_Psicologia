@@ -1,5 +1,6 @@
 const { BaseController } = require("./BaseController");
 const imagenes = require("../services/ImagenService");
+const { almacenamiento } = require("../../../common/storage/almacenamiento");
 
 // Fotos de eventos, disciplinas, implementos y comunicados.
 class ImagenController extends BaseController {
@@ -12,12 +13,13 @@ class ImagenController extends BaseController {
   servir = async (req, res) => {
     const { tipo, id } = req.params;
     if (!imagenes.ENTIDADES[tipo]) return res.status(404).json({ message: "Imagen no encontrada." });
-    const ruta = await imagenes.archivoDe(tipo, id);
-    if (!ruta) return res.status(404).json({ message: "No tiene imagen." });
-    res.set("Cross-Origin-Resource-Policy", "cross-origin");
-    res.set("Cache-Control", "public, max-age=86400");
-    return res.sendFile(ruta, (err) => {
-      if (err && !res.headersSent) res.status(404).json({ message: "No se encontró la imagen." });
+    const archivo = await imagenes.archivoDe(tipo, id);
+    if (!archivo) return res.status(404).json({ message: "No tiene imagen." });
+    return almacenamiento.enviar(res, {
+      ...archivo,
+      cache: "public, max-age=86400",
+      headers: { "Cross-Origin-Resource-Policy": "cross-origin" },
+      mensaje404: "No se encontró la imagen.",
     });
   };
 }

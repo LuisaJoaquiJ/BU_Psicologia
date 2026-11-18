@@ -1,25 +1,21 @@
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
 const multer = require("multer");
 const { config } = require("../../../config/env");
 const { AppError } = require("../../../common/utils/AppError");
+const { almacenamiento } = require("../../../common/storage/almacenamiento");
 const cat = require("../utils/sst");
 
 // Documentos adjuntos de los reportes SST (PDF o fotos), guardados por mes.
 const TIPOS = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "application/pdf": ".pdf" };
+const BUCKET = "privado";
 
 class SstArchivoService {
   constructor() {
     // multipart: "datos" (JSON con el formulario) y un archivo por documento,
     // cuyo nombre de campo es el tipo de adjunto (Licencia, Soat, Poliza...).
     this.subir = multer({
-      storage: multer.diskStorage({
-        destination: (req, file, cb) => {
-          const carpeta = path.join(this.carpeta(), new Date().toISOString().slice(0, 7));
-          fs.mkdir(carpeta, { recursive: true }, (err) => cb(err, carpeta));
-        },
-        filename: (req, file, cb) => cb(null, `${crypto.randomUUID()}${TIPOS[file.mimetype]}`),
+      storage: almacenamiento.motorMulter({
+        carpeta: () => `sst/${new Date().toISOString().slice(0, 7)}`,
+        extensionDe: (file) => TIPOS[file.mimetype],
       }),
       limits: { fileSize: config.saludMaxEvidenciaMb * 1024 * 1024, files: 20 },
       fileFilter(req, file, cb) {
@@ -30,32 +26,43 @@ class SstArchivoService {
     }).any();
   }
 
-  carpeta() {
-    return path.join(config.saludUploadsDir, "sst");
+  carpetaMes() {
+    return `sst/${new Date().toISOString().slice(0, 7)}`;
   }
 
   recibir = (req, res, next) => this.subir(req, res, next);
 
   borrar(archivos = []) {
-    for (const a of archivos) fs.promises.unlink(a.path).catch(() => {});
+    return almacenamiento.descartarVarios(archivos, { bucket: BUCKET });
   }
 
-  rutaAbsoluta(adjunto) {
-    const base = path.resolve(config.saludUploadsDir);
-    const absoluta = path.resolve(base, adjunto.ruta);
-    if (!absoluta.startsWith(base + path.sep)) throw new AppError(404, "Archivo no disponible.");
-    return absoluta;
+  claveDe(adjunto) {
+    const clave = adjunto?.ruta;
+    if (!clave || typeof clave !== "string" || clave.includes("..") || clave.startsWith("/") || !clave.startsWith("sst/")) {
+      throw new AppError(404, "Archivo no disponible.");
+    }
+    if (!almacenamiento.usaSupabase() && !almacenamiento.rutaSegura(clave)) throw new AppError(404, "Archivo no disponible.");
+    return clave;
   }
 
-  datosAdjunto(archivo, usuarioId) {
+  async persistir(archivo) {
+    return almacenamiento.guardar(archivo, { carpeta: this.carpetaMes(), bucket: BUCKET, extension: TIPOS[archivo.mimetype] });
+  }
+
+  async datosAdjunto(archivo, usuarioId) {
+    const clave = await this.persistir(archivo);
     return {
       tipo: archivo.fieldname,
       nombreArchivo: String(archivo.originalname || "documento").slice(0, 255),
-      ruta: path.relative(config.saludUploadsDir, archivo.path).split(path.sep).join("/"),
+      ruta: clave,
       tipoMime: archivo.mimetype,
       tamanoBytes: archivo.size,
       subidoPorId: usuarioId || null,
     };
+  }
+
+  refDe(adjunto) {
+    return { clave: this.claveDe(adjunto), bucket: BUCKET, nombre: adjunto.nombreArchivo, tipo: adjunto.tipoMime };
   }
 }
 

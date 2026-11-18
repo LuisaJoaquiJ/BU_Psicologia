@@ -25,7 +25,9 @@ export function imagenParaEvento(id = "") {
 const BASE_API = import.meta.env.VITE_API_URL || "";
 const ORIGEN_API = /^https?:\/\//.test(BASE_API) ? new URL(BASE_API).origin : "";
 export function urlDelServidor(ruta) {
-  return ruta && ruta.startsWith("/") ? `${ORIGEN_API}${ruta}` : ruta;
+  if (!ruta) return ruta;
+  if (/^https?:\/\//i.test(ruta)) return ruta;
+  return ruta.startsWith("/") ? `${ORIGEN_API}${ruta}` : ruta;
 }
 
 // Foto de un evento: la que subio el personal o, si no tiene, una

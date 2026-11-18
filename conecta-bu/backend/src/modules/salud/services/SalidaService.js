@@ -165,9 +165,8 @@ class SalidaService {
 
   async comprobanteDe(salidaId, inscripcionId) {
     const ins = await this.inscripcionDe(salidaId, inscripcionId);
-    const ruta = this.comprobantes.ruta(ins.comprobante);
-    if (!this.comprobantes.existe(ruta)) throw new AppError(404, "La inscripción no tiene comprobante.");
-    return { ruta, nombre: ins.comprobanteNombre || path.basename(ruta) };
+    if (!(await this.comprobantes.existe(ins.comprobante))) throw new AppError(404, "La inscripción no tiene comprobante.");
+    return this.comprobantes.refDe(ins.comprobante, ins.comprobanteNombre);
   }
 
   // Listado en Excel para la ARL o el seguro (por defecto, solo aprobados).

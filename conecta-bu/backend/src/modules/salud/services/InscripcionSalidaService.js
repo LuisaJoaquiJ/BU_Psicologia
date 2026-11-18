@@ -78,7 +78,7 @@ class InscripcionSalidaService {
         observacion: null,
         revisadoPor: null,
         fechaRevision: null,
-        ...(archivo ? { comprobante: path.basename(archivo.path), comprobanteNombre: texto(archivo.originalname, 200) } : {}),
+        ...(archivo ? { comprobante: await this.comprobantes.persistir(archivo), comprobanteNombre: texto(archivo.originalname, 200) } : {}),
       };
       let guardada;
       if (!existente) {
@@ -91,7 +91,7 @@ class InscripcionSalidaService {
       automatizaciones.salidaInscripcion(usuario, salida); // RF-013 (no bloquea)
       return publicaInscripcion(guardada);
     } catch (err) {
-      if (archivo) await this.comprobantes.borrar(path.basename(archivo.path));
+      if (archivo) await this.comprobantes.descartar(archivo);
       throw err;
     }
   }

@@ -54,7 +54,7 @@ class SstReporteService {
         ...limpio,
         acompanantes: limpio.acompanantes || undefined,
         reportadoPorId: usuario.id,
-        adjuntos: { create: archivos.map((a) => this.archivos.datosAdjunto(a, usuario.id)) },
+        adjuntos: { create: await Promise.all(archivos.map((a) => this.archivos.datosAdjunto(a, usuario.id))) },
       });
       notificaciones.avisarAlPersonal(
         "salud",
@@ -63,7 +63,7 @@ class SstReporteService {
       );
       return this.vista(reporte, usuario);
     } catch (err) {
-      this.archivos.borrar(archivos);
+      await this.archivos.borrar(archivos);
       throw err;
     }
   }
@@ -95,12 +95,12 @@ class SstReporteService {
       }
       if (!archivos.length) throw new AppError(400, "Adjunta al menos un documento.");
       validarTiposPermitidos(reporte.tipo, reporte.medioTransporte, archivos);
-      for (const a of archivos) await this.repos.adjuntosSst.crear({ reporteId: id, ...this.archivos.datosAdjunto(a, usuario.id) });
+      for (const a of archivos) await this.repos.adjuntosSst.crear({ reporteId: id, ...(await this.archivos.datosAdjunto(a, usuario.id)) });
       // Al corregir, vuelve a la bandeja de revision.
       if (!personal && reporte.estado === "RequiereAjustes") await this.repos.reportesSst.actualizar(id, { estado: "Recibido" });
       return this.vista(await this.obtenerOFallar(id), usuario);
     } catch (err) {
-      this.archivos.borrar(archivos);
+      await this.archivos.borrar(archivos);
       throw err;
     }
   }
