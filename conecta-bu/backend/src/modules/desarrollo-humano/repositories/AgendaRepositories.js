@@ -27,6 +27,22 @@ class HorarioRepository extends BaseRepository {
   buscar(where, orden = [{ fecha: "asc" }, { horaInicio: "asc" }]) {
     return this.tabla.findMany({ where, include: CON_SERVICIO, orderBy: orden });
   }
+  // Lista de gestión: la cita más reciente, para distinguir «con cita» de
+  // «cerrado a mano» sin cambiar el listado que ven los estudiantes.
+  paraGestion(where, orden = [{ fecha: "asc" }, { horaInicio: "asc" }]) {
+    return this.tabla.findMany({
+      where,
+      orderBy: orden,
+      include: {
+        servicio: true,
+        citas: {
+          orderBy: { fechaAgendamiento: "desc" },
+          take: 1,
+          select: { id: true, estado: true, fechaAgendamiento: true, usuario: { select: { nombre: true } } },
+        },
+      },
+    });
+  }
   delServicioEnFecha(servicioId, fecha) {
     return this.tabla.findMany({ where: { servicioId, fecha } });
   }
