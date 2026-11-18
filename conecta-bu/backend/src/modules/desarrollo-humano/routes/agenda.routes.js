@@ -4,6 +4,7 @@ const { requireModulo } = require("../../../common/middlewares/roles.middleware"
 const { requireFields } = require("../../../common/validators/validate");
 const { agendaController: c } = require("../controllers/AgendaController");
 const { manejar } = require("./manejar");
+const { listaAsistentesController: la } = require("../controllers/ListaAsistentesController");
 
 // RN-008: agenda de citas y asistencia, solo el personal de Desarrollo Humano.
 const router = Router();
@@ -11,6 +12,7 @@ router.use(authMiddleware, requireModulo("desarrollo-humano"));
 
 router.get("/", manejar(c.listar)); // RF-008 / HU-15
 router.get("/horarios-libres", manejar(c.horariosLibres));
+router.get("/exportar", manejar(la.citas)); // ?desde&hasta&formato=xlsx|pdf
 router.patch("/:id/asistencia", requireFields(["asistio"]), manejar(c.asistencia)); // HU-16
 router.patch("/:id/reprogramar", requireFields(["horarioId"]), manejar(c.reprogramar));
 // Atencion sin cita: el estudiante llega sin cita y se le atiende.

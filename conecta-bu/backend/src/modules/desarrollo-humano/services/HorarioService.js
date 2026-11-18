@@ -104,6 +104,25 @@ class HorarioService {
     }
     return this.repos.horarios.actualizarConServicio(id, { ocupado: false });
   }
+
+  // RF-007 / HU-14: elimina el horario de forma definitiva. Si tiene una cita
+  // agendada exige confirmar, porque tambien la cancela.
+  async eliminar(id, confirmar = false) {
+    return prisma.$transaction(async (tx) => {
+      const r = reposCon(tx);
+      const horario = await r.horarios.buscarPorId(id);
+      if (!horario) throw new AppError(404, "El horario no existe.");
+
+      const citaActiva = await r.citas.agendadaDelHorario(id);
+      if (citaActiva && !confirmar) {
+        throw new AppError(409, "Este horario tiene una cita agendada. Confirma para eliminarlo y cancelar esa cita.");
+      }
+
+      if (citaActiva) await r.citas.actualizar(citaActiva.id, { estado: "Cancelada" });
+      await r.horarios.eliminar(id);
+      return { eliminado: true, citaCancelada: Boolean(citaActiva) };
+    });
+  }
 }
 
 module.exports = { HorarioService, horarioService: new HorarioService() };

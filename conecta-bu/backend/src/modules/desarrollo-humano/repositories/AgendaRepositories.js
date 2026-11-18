@@ -43,6 +43,9 @@ class HorarioRepository extends BaseRepository {
   actualizarConServicio(id, data) {
     return this.tabla.update({ where: { id }, data, include: CON_SERVICIO });
   }
+    eliminar(id) {
+    return this.tabla.delete({ where: { id } });
+  }
 }
 
 class CitaRepository extends BaseRepository {

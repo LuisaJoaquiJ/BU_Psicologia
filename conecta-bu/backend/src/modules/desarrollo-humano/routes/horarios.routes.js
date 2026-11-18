@@ -21,5 +21,6 @@ router.get("/", manejar(c.listar));
 router.patch("/:id", manejar(c.actualizar));
 router.patch("/:id/deshabilitar", manejar(c.deshabilitar));
 router.patch("/:id/habilitar", manejar(c.habilitar));
+router.delete("/:id", manejar(c.eliminar)); // RF-007 / HU-14: eliminar horario (?confirmar=true si tiene cita)
 
 module.exports = router;

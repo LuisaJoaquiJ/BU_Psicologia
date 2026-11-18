@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { useAuth } from "../../../lib/auth/AuthContext";
 import { fechaLarga, formatearHora } from "../comunes/lib/format";
-import { hoyLargo } from "../comunes/componentes/ui";
+import { botonPrimario, hoyLargo } from "../comunes/componentes/ui";
+import { asistenciaVencida, limiteAsistencia } from "../comunes/lib/ventanaAsistencia";
 
 const ESTADO_ESTILOS = {
   Agendada: "bg-primary-light text-primary-soft",
@@ -210,6 +211,7 @@ export function InicioAdmin() {
   const [eventos, setEventos] = useState([]);
   const [horarios, setHorarios] = useState([]);
   const [errorCitas, setErrorCitas] = useState("");
+  const [ahora, setAhora] = useState(() => Date.now());
 
   useEffect(() => {
     http
@@ -248,6 +250,16 @@ export function InicioAdmin() {
 
   const proximosEventos = eventos.filter((e) => dia(e.fecha) >= hoy);
   const sinRegistrar = stats ? stats.eventosDetalle.filter((e) => dia(e.fecha) < hoy && e.sinRegistrar > 0) : [];
+  // "Registrar asistencia" solo hasta fin + 30 min (hora de Bogotá).
+  const registrables = sinRegistrar.filter((e) => !asistenciaVencida(e, ahora));
+  // Re-renderiza justo en el siguiente límite para quitar el botón sin recargar.
+  const proximoLimite = registrables.map(limiteAsistencia).filter((l) => l !== null && l > ahora).sort((a, b) => a - b)[0];
+  useEffect(() => {
+    if (!proximoLimite) return undefined;
+    const espera = Math.min(Math.max(0, proximoLimite - Date.now()) + 50, 2 ** 31 - 1);
+    const t = setTimeout(() => setAhora(Date.now()), espera);
+    return () => clearTimeout(t);
+  }, [proximoLimite]);
   const libresSemana = horarios.filter((h) => dia(h.fecha) >= hoy && dia(h.fecha) <= semana[6].fecha);
   const conCupos = proximosEventos.find((e) => (e._count?.inscripciones ?? 0) < e.cupos);
 
@@ -258,7 +270,7 @@ export function InicioAdmin() {
       .slice(0, 1)
       .map((c) => ({ a: "/admin/citas", titulo: `Atender a ${c.usuario?.nombre?.split(" ")[0] || "tu estudiante"}`, detalle: `${formatearHora(c.horario?.horaInicio)} · ${c.horario?.servicio?.nombre || "Cita"}` })),
     ...(pendientes.length ? [{ a: "/admin/citas", titulo: "Registrar asistencia de citas", detalle: `${plural(pendientes.length, "cita pasada espera", "citas pasadas esperan")} registro` }] : []),
-    ...sinRegistrar.slice(0, 2).map((e) => ({ a: `/admin/eventos/${e.id}/inscritos`, titulo: "Registrar asistencia", detalle: `${e.nombre} · ${plural(e.sinRegistrar, "inscrito", "inscritos")} sin registrar` })),
+    ...registrables.slice(0, 2).map((e) => ({ a: `/admin/eventos/${e.id}/inscritos`, titulo: "Registrar asistencia", detalle: `${e.nombre} · ${plural(e.sinRegistrar, "inscrito", "inscritos")} sin registrar` })),
     ...(libresSemana.length === 0 ? [{ a: "/admin/horarios?agregar=1", titulo: "Publicar horarios de la semana", detalle: "No hay horarios libres para agendar" }] : []),
     ...(conCupos ? [{ a: "/admin/eventos", titulo: `Difundir ${conCupos.nombre}`, detalle: `${plural(conCupos._count?.inscripciones ?? 0, "inscrito", "inscritos")} de ${conCupos.cupos} cupos` }] : []),
   ].slice(0, 4);
@@ -354,7 +366,7 @@ export function InicioAdmin() {
                     <strong className="block truncate">{cita.usuario?.nombre}</strong>
                     <span className="text-ink-500">{cita.horario?.servicio?.nombre}</span>
                   </span>
-                  <span className={`text-xs font-bold rounded-full px-2.5 py-1 ${ESTADO_ESTILOS[cita.estado] || ""}`}>{ESTADO_TEXTO[cita.estado] || cita.estado}</span>
+                  <span className={`text-xs font-bold rounded-md px-2 py-0.5 select-none ${ESTADO_ESTILOS[cita.estado] || ""}`}>{ESTADO_TEXTO[cita.estado] || cita.estado}</span>
                 </li>
               ))}
             </ul>
@@ -375,7 +387,7 @@ export function InicioAdmin() {
               return (
                 <article key={e.id} className="rounded-[18px] overflow-hidden border border-[#E8EBF1]">
                   <PortadaEvento evento={e}>
-                    <span className="bg-white/95 text-primary-dark text-[13px] font-bold rounded-full px-3 py-1">
+                    <span className="inline-flex bg-[#0B2A5B]/70 backdrop-blur-sm text-white ring-1 ring-white/25 text-[13px] font-bold rounded-md px-2.5 py-0.5 select-none">
                       {diaCorto(e.fecha)} · {formatearHora(e.horaInicio)}
                     </span>
                   </PortadaEvento>
@@ -399,7 +411,7 @@ export function InicioAdmin() {
             {sinRegistrar.slice(0, Math.max(0, 2 - Math.min(2, proximosEventos.length))).map((e) => (
               <article key={e.id} className="rounded-[18px] overflow-hidden border border-[#E8EBF1]">
                 <div className="h-[130px] bg-[linear-gradient(135deg,#F8F2E1_0%,#EAD8A2_100%)] flex items-end p-3">
-                  <span className="bg-white/95 text-[#6B5310] text-[13px] font-bold rounded-full px-3 py-1">
+                  <span className="inline-flex bg-[#6B5310]/10 text-[#6B5310] ring-1 ring-[#6B5310]/25 text-[13px] font-bold rounded-md px-2.5 py-0.5 select-none">
                     {diaCorto(e.fecha)} · ya pasó
                   </span>
                 </div>
@@ -408,18 +420,17 @@ export function InicioAdmin() {
                     {e.nombre}
                   </strong>
                   <span className="block text-sm font-semibold text-[#8A5A00]">{plural(e.sinRegistrar, "inscrito", "inscritos")} sin registrar</span>
-                  <Link to={`/admin/eventos/${e.id}/inscritos`} className="mt-2.5 min-h-[40px] inline-flex items-center px-3.5 rounded-full boton-liquido font-bold text-[13px] no-underline">
-                    Registrar asistencia
-                  </Link>
+                  {!asistenciaVencida(e, ahora) && (
+                    <Link to={`/admin/eventos/${e.id}/inscritos`} className={`${botonPrimario} mt-2.5 no-underline`}>
+                      Registrar asistencia
+                    </Link>
+                  )}
                 </div>
               </article>
             ))}
             <article className="rounded-[18px] border-[1.5px] border-dashed border-[#BFD0E6] bg-[linear-gradient(160deg,#F2FBFF_0%,#FFFFFF_70%)] flex flex-col items-center justify-center gap-3 p-6 text-center min-h-[200px]">
               <p className="m-0 text-[15px] text-ink-600 max-w-[16em]">Crea un taller y los estudiantes lo verán en su inicio.</p>
-              <Link
-                to="/admin/eventos?nuevo=1"
-                className="min-h-[44px] inline-flex items-center px-5 rounded-full bg-[linear-gradient(100deg,#1D4E9E,#1E9E9A)] text-white font-bold text-sm no-underline transition hover:-translate-y-px hover:shadow-[0_10px_28px_rgba(30,158,154,0.35)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-              >
+              <Link to="/admin/eventos?nuevo=1" className={`${botonPrimario} no-underline`}>
                 Nuevo evento
               </Link>
             </article>

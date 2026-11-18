@@ -4,6 +4,7 @@ const repos = require("../repositories");
 const { reposCon } = require("../repositories");
 const { imagenEventoService } = require("./ImagenEventoService");
 const { inscritosConfirmados, exigirEstadoValido, normalizarEvento } = require("../utils/eventos");
+const { exigirVentana } = require("../utils/ventanaAsistencia");
 
 // Gestion de eventos y talleres por el personal (RF-009 / RF-011, RN-008).
 class EventoService {
@@ -91,6 +92,8 @@ class EventoService {
     if (typeof asistio !== "boolean") throw new AppError(400, "El campo asistio debe ser true o false.");
     const evento = await this.obtener(eventoId);
     if (["Borrador", "Cancelado"].includes(evento.estado)) throw new AppError(409, "Solo se registra asistencia en eventos publicados o cerrados.");
+    // Solo durante el evento y hasta 30 min despues de su fin.
+    exigirVentana(evento);
     const inscripcion = await this.repos.inscripciones.buscarPorId(inscripcionId);
     if (!inscripcion || inscripcion.eventoId !== eventoId) throw new AppError(404, "El estudiante no aparece inscrito en este evento.");
     if (inscripcion.estado !== "Confirmada") throw new AppError(409, "La inscripcion fue cancelada: no se puede registrar asistencia.");

@@ -63,6 +63,9 @@ function calcularIndicadoresEventos(eventos) {
       id: evento.id,
       nombre: evento.nombre,
       fecha: evento.fecha,
+      // Para ocultar "Registrar asistencia" en el inicio al vencer fin + 30 min.
+      horaInicio: evento.horaInicio,
+      horaFin: evento.horaFin,
       estado: evento.estado,
       cupos: evento.cupos,
       inscritos,

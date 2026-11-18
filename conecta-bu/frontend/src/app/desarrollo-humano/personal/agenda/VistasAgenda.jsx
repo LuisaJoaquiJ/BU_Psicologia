@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Icono } from "../../comunes/componentes/Iconos";
+import { botonSecundario } from "../../comunes/componentes/ui";
 import { iniciales } from "../../comunes/componentes/Navbar";
 import { fechaLarga, formatearHora } from "../../comunes/lib/format";
 import {
@@ -74,7 +75,7 @@ export function Flotante({ ancla, etiqueta, ancho = 340, children }) {
 
 function InsigniaEstado({ clave }) {
   const estilo = ESTILOS[clave] || ESTILOS.agendada;
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${estilo.badge}`}>{estilo.texto}</span>;
+  return <span className={`inline-flex w-fit items-center rounded-md px-2 py-0.5 text-xs font-bold select-none cursor-default ${estilo.badge}`}>{estilo.texto}</span>;
 }
 
 export function BotonesAsistencia({ cita, registrando, onRegistrar, grande = false }) {
@@ -157,7 +158,7 @@ export function DetalleCita({ cita, hoy, ahoraMin, registrando, onRegistrar, onR
           !puedeReprogramar(cita) && <p className="m-0 text-sm text-ink-500">Inicio {hora12(ini)} · fin {hora12(fin)}</p>
         )}
         {puedeReprogramar(cita) && (
-          <button type="button" onClick={() => onReprogramar(cita)} className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full border border-primary bg-white px-3 text-sm font-bold text-primary hover:bg-primary-light">
+          <button type="button" onClick={() => onReprogramar(cita)} className={botonSecundario}>
             <Icono nombre="editar" size={16} strokeWidth={2.2} /> Reprogramar
           </button>
         )}
@@ -396,7 +397,7 @@ export function VistaLista({ grupos, hoy, ahoraMin, bloqueos, registrando, onReg
                       <div className="flex flex-wrap items-center justify-end gap-2">
                         {puedeRegistrar(c, hoy) && <BotonesAsistencia cita={c} registrando={registrando} onRegistrar={onRegistrar} />}
                         {puedeReprogramar(c) && (
-                          <button type="button" onClick={() => onReprogramar(c)} className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full px-2 text-sm font-bold text-primary hover:underline">
+                          <button type="button" onClick={() => onReprogramar(c)} className={`${botonSecundario} !min-h-[40px] !px-3`}>
                             <Icono nombre="editar" size={15} strokeWidth={2.2} /> Reprogramar
                           </button>
                         )}

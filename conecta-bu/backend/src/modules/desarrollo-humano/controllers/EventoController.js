@@ -74,7 +74,7 @@ class EventoController extends BaseController {
     this.ok(res, { inscripcion });
     automatizaciones.inscripcionCancelada(req.usuario, inscripcion); // RF-013
   };
-
+  
   misInscripciones = async (req, res) => this.ok(res, { inscripciones: await eventoEstudianteService.mias(req.usuario.id) });
 }
 

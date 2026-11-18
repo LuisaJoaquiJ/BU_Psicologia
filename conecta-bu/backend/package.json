@@ -24,7 +24,8 @@
     "jszip": "^3.10.2",
     "morgan": "^1.10.0",
     "multer": "^2.4.0",
-    "pdfkit": "^0.15.2"
+    "pdfkit": "^0.15.2",
+    "qrcode.react": "^4.2.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",

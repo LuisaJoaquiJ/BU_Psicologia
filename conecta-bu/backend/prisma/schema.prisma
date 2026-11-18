@@ -260,6 +260,7 @@ model Evento {
 
   inscripciones Inscripcion[]
   historial     HistorialEstado[]
+  control       ControlAsistenciaEvento?
 
   @@map("eventos")
 }
@@ -1460,4 +1461,18 @@ model TareaCultural {
 
   @@index([fechaLimite])
   @@map("cultura_pendientes")
+}
+
+// Control de asistencia por QR de un evento. Una fila por evento.
+model ControlAsistenciaEvento {
+  id            String    @id @default(uuid())
+  eventoId      String    @unique
+  evento        Evento    @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  abierta       Boolean   @default(false)
+  codigo        String?   @db.VarChar(64)
+  codigoExpira  DateTime?
+  fechaApertura DateTime?
+  actualizadoPor String?  @db.VarChar(120)
+
+  @@map("control_asistencia_evento")
 }

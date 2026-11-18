@@ -15,6 +15,12 @@ class HorarioController extends BaseController {
 
   habilitar = async (req, res) => this.ok(res, { horario: await horarioService.habilitar(req.params.id) });
 
+  // Acepta confirmar por query (?confirmar=true) o por body.
+  eliminar = async (req, res) => {
+    const confirmar = req.query.confirmar === "true" || req.body?.confirmar === true;
+    return this.ok(res, await horarioService.eliminar(req.params.id, confirmar));
+  };
+
   bloqueos = async (req, res) => this.ok(res, { motivos: MOTIVOS, bloqueos: await bloqueoService.listar(req.query) });
 
   citasAfectadas = async (req, res) => this.ok(res, { citas: await bloqueoService.citasEnRango(req.body) });

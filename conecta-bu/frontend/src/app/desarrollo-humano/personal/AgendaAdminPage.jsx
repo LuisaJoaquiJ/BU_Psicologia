@@ -5,6 +5,7 @@ import { Icono } from "../comunes/componentes/Iconos";
 import { Aviso, Segmentos, botonSecundario } from "../comunes/componentes/ui";
 import { BotonFlotante, Ventana } from "../comunes/componentes/Ventana";
 import { FormularioSinCita } from "./AtencionSinCita";
+import { BotonesDescarga } from "../comunes/componentes/BotonesDescarga";
 import {
   AvisoRegistrar,
   DetalleCita,
@@ -313,6 +314,17 @@ export function AgendaAdminPage({ api = "/admin" }) {
               className={`${campo} w-[240px] max-w-full rounded-full pl-9`}
             />
           </label>
+          {api === "/admin" && (
+            <BotonesDescarga
+              url={`${api}/citas/exportar`}
+              params={{
+                desde: `${fecha.slice(0, 7)}-01`,
+                hasta: new Date(Date.UTC(+fecha.slice(0, 4), +fecha.slice(5, 7), 0)).toISOString().slice(0, 10),
+              }}
+              nombre={`asistentes-citas-${fecha.slice(0, 7)}`}
+              onError={setError}
+            />
+          )}
           <Link to="/admin/horarios" className={`${botonSecundario} no-underline`}>
             <Icono nombre="reloj" size={16} strokeWidth={2.2} /> Mis horarios
           </Link>

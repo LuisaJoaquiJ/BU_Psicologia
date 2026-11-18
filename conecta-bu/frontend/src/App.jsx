@@ -18,7 +18,7 @@ import { AyudaOrtografia } from "./components/AyudaOrtografia";
 import { inicioDirecto } from "./lib/modulos";
 import { lazy, Suspense } from "react";
 import { AsistenteFlotante } from "./components/AsistenteFlotante";
-
+import { EscanearAsistenciaPage } from "./app/desarrollo-humano/estudiante/EscanearAsistenciaPage";
 // Galeria de graficas con datos de ejemplo: solo existe en desarrollo (no entra al build).
 const GaleriaGraficas = import.meta.env.DEV ? lazy(() => import("./app/desarrollo-humano/comunes/componentes/graficas/Galeria")) : null;
 
@@ -61,6 +61,7 @@ export default function App() {
               </Suspense>
             }
           />
+
         )}
 
         <Route
@@ -71,6 +72,24 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+  path="/asistencia"
+  element={
+    <ProtectedRoute rolesPermitidos={["Estudiante"]}>
+      <EscanearAsistenciaPage />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/asistencia/:codigo"
+  element={
+    <ProtectedRoute rolesPermitidos={["Estudiante"]}>
+      <EscanearAsistenciaPage />
+    </ProtectedRoute>
+  }
+/>
+      
 
         <Route
           path="/admin/*"

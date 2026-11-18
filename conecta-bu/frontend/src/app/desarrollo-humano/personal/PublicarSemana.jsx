@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { http } from "../../../lib/api/http";
-import { Aviso } from "../comunes/componentes/ui";
+import { Aviso, botonPrimario } from "../comunes/componentes/ui";
 import { Icono } from "../comunes/componentes/Iconos";
 
 // Publicar horarios "pintando" la semana: se tocan las horas en que se
@@ -11,7 +11,7 @@ import { Icono } from "../comunes/componentes/Iconos";
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 const HORAS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
 const REPETIR = [
-  { semanas: 1, texto: "Solo esta semana" },
+  { semanas: 1, texto: "Esta semana" },
   { semanas: 4, texto: "4 semanas" },
   { semanas: 8, texto: "8 semanas" },
   { semanas: 16, texto: "16 semanas" },
@@ -50,9 +50,12 @@ function citasDelBloque(hora, duracion) {
   return [[hora, 0, hora + 1, 0]];
 }
 
+// Chips ligeros: tinte suave institucional cuando están activos y gris neutro en reposo.
 const chip = (activo) =>
-  `min-h-[44px] px-3.5 rounded-full border-[1.5px] text-sm font-extrabold transition-colors ${
-    activo ? "border-transparent boton-liquido" : "border-[#D3DBE8] bg-white text-primary hover:border-primary"
+  `w-full min-h-[40px] px-2.5 rounded-xl border-[1.5px] text-xs sm:text-sm font-bold flex items-center justify-center text-center whitespace-nowrap cursor-pointer transition-all duration-150 ${
+    activo
+      ? "border-[#19407B] bg-[#EBF2FA] text-[#19407B]"
+      : "border-transparent bg-[#F4F6F9] text-ink-600 hover:bg-[#EAEFF5] hover:text-ink-900"
   }`;
 
 export function PublicarSemana({ api, servicios, horarios, alPublicar }) {
@@ -130,7 +133,13 @@ export function PublicarSemana({ api, servicios, horarios, alPublicar }) {
         const [d, hora] = clave.split("-").map(Number);
         const fecha = sumarDias(fechas[d], 7 * s);
         for (const [h1, m1, h2, m2] of citasDelBloque(hora, duracion)) {
-          peticiones.push({ servicioId: servicioActual, fecha, horaInicio: `${dosDigitos(h1)}:${dosDigitos(m1)}`, horaFin: `${dosDigitos(h2)}:${dosDigitos(m2)}`, cupo: 1 });
+          peticiones.push({
+            servicioId: servicioActual,
+            fecha,
+            horaInicio: `${dosDigitos(h1)}:${dosDigitos(m1)}`,
+            horaFin: `${dosDigitos(h2)}:${dosDigitos(m2)}`,
+            cupo: 1,
+          });
         }
       }
     }
@@ -162,10 +171,14 @@ export function PublicarSemana({ api, servicios, horarios, alPublicar }) {
   const finRepeticion = sumarDias(fechas[4], 7 * (semanas - 1));
 
   return (
-    <section aria-labelledby="pintar-semana" className="flex gap-6 flex-wrap items-start">
-      <div className="flex-[1_1_300px] min-w-0 bg-white rounded-xl p-6 flex flex-col gap-5">
-        <h2 id="pintar-semana" className="m-0 text-xl font-extrabold">Publicar horarios</h2>
-        <label className="flex flex-col gap-1.5 font-extrabold">
+    <section aria-labelledby="pintar-semana" className="grid gap-5 lg:grid-cols-[310px_minmax(0,1fr)] items-start">
+      {/* Columna izquierda: Configuración */}
+      <div className="min-w-0 bg-white rounded-2xl border border-gray-200/80 shadow-sm p-5 flex flex-col gap-4">
+        <h2 id="pintar-semana" className="m-0 text-lg font-extrabold text-ink-900">
+          Publicar horarios
+        </h2>
+
+        <label className="flex flex-col gap-1.5 text-xs font-bold uppercase tracking-wide text-ink-600">
           Servicio
           <select
             value={servicioActual}
@@ -173,7 +186,7 @@ export function PublicarSemana({ api, servicios, horarios, alPublicar }) {
               setServicioId(e.target.value);
               setNuevos({});
             }}
-            className="min-h-[48px] px-3 border-[1.5px] border-[#D3DBE8] rounded-xl font-semibold text-ink-900 bg-white"
+            className="min-h-[42px] px-3 border border-gray-200 rounded-xl text-sm font-semibold text-ink-900 bg-white focus:border-[#19407B] focus:outline-none"
           >
             {servicios.map((s) => (
               <option key={s.id} value={s.id}>
@@ -182,9 +195,10 @@ export function PublicarSemana({ api, servicios, horarios, alPublicar }) {
             ))}
           </select>
         </label>
+
         <div>
-          <p className="m-0 mb-2 font-extrabold">Duración de cada cita</p>
-          <div role="group" aria-label="Duración" className="flex gap-2">
+          <p className="m-0 mb-1.5 text-xs font-bold uppercase tracking-wide text-ink-600">Duración de cada cita</p>
+          <div role="group" aria-label="Duración" className="grid grid-cols-3 gap-2">
             {[30, 45, 60].map((m) => (
               <button key={m} type="button" aria-pressed={duracion === m} onClick={() => setDuracion(m)} className={chip(duracion === m)}>
                 {m} min
@@ -192,8 +206,9 @@ export function PublicarSemana({ api, servicios, horarios, alPublicar }) {
             ))}
           </div>
         </div>
+
         <div>
-          <p className="m-0 mb-2 font-extrabold">¿Se repite?</p>
+          <p className="m-0 mb-1.5 text-xs font-bold uppercase tracking-wide text-ink-600">¿Se repite?</p>
           <div role="group" aria-label="Repetición" className="grid grid-cols-2 gap-2">
             {REPETIR.map((r) => (
               <button key={r.semanas} type="button" aria-pressed={semanas === r.semanas} onClick={() => setSemanas(r.semanas)} className={chip(semanas === r.semanas)}>
@@ -201,27 +216,39 @@ export function PublicarSemana({ api, servicios, horarios, alPublicar }) {
               </button>
             ))}
           </div>
-          <p className="mt-2 mb-0 text-sm text-ink-500">
-            {semanas === 1 ? "Solo para la semana que ves." : `Cada semana, hasta el viernes ${diaCorto(finRepeticion)}`}
+          <p className="mt-1.5 mb-0 text-xs text-ink-500">
+            {semanas === 1 ? "Solo para la semana que ves." : `Cada semana, hasta el viernes ${diaCorto(finRepeticion)}.`}
           </p>
         </div>
-        <div className="flex flex-col gap-1">
-          <button type="button" onClick={copiarSemanaAnterior} className="min-h-[46px] rounded-full border-[1.5px] border-[#D3DBE8] font-extrabold text-primary hover:border-primary">
-            Copiar las horas de la semana anterior
+
+        <div className="flex flex-col gap-1.5 pt-0.5">
+          <button
+            type="button"
+            onClick={copiarSemanaAnterior}
+            className="w-full min-h-[40px] px-3 rounded-xl border border-gray-200 bg-white text-xs sm:text-sm font-bold text-[#19407B] hover:bg-[#F4F6F9] hover:border-gray-300 transition-colors cursor-pointer"
+          >
+            Copiar semana anterior
           </button>
           {bloques > 0 && (
-            <button type="button" onClick={() => setNuevos({})} className="min-h-[44px] rounded-full font-bold text-ink-500 hover:text-primary">
-              Quitar lo que marqué
+            <button
+              type="button"
+              onClick={() => setNuevos({})}
+              className="w-full min-h-[34px] rounded-xl text-xs font-bold text-ink-500 hover:text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
+            >
+              Quitar selección ({bloques})
             </button>
           )}
         </div>
-        <div className="p-[18px] rounded-xl bg-cream">
-          <p className="m-0 mb-3 tabular-nums" aria-live="polite">
-            <strong>{bloques ? `${bloques} ${bloques === 1 ? "hora marcada" : "horas marcadas"}` : "Aún no marcas horas"}</strong>
+
+        <div className="p-4 rounded-xl bg-[#F8FAFC] border border-gray-200/80">
+          <p className="m-0 mb-3 tabular-nums leading-snug" aria-live="polite">
+            <strong className="text-sm text-ink-900">
+              {bloques ? `${bloques} ${bloques === 1 ? "hora marcada" : "horas marcadas"}` : "Aún no marcas horas"}
+            </strong>
             <br />
-            <span className="text-sm text-ink-500">
+            <span className="text-xs text-ink-500">
               {bloques
-                ? `Se crearán ${total} citas de ${duracion} minutos${semanas > 1 ? ` en ${semanas} semanas` : ""}.`
+                ? `Se crearán ${total} citas de ${duracion} min${semanas > 1 ? ` en ${semanas} semanas` : ""}.`
                 : "Toca las casillas vacías de la semana."}
             </span>
           </p>
@@ -229,14 +256,15 @@ export function PublicarSemana({ api, servicios, horarios, alPublicar }) {
             type="button"
             onClick={publicar}
             disabled={!bloques || publicando}
-            className="w-full min-h-[52px] rounded-full boton-liquido font-extrabold disabled:opacity-60"
+            className={`${botonPrimario} w-full disabled:cursor-not-allowed`}
           >
             {publicando ? "Publicando…" : bloques ? `Publicar ${total} citas` : "Publicar horarios"}
           </button>
         </div>
       </div>
 
-      <div className="flex-[999_1_640px] min-w-0 bg-white rounded-xl p-5 sm:p-6">
+      {/* Columna derecha: Parrilla semanal */}
+      <div className="min-w-0 bg-white rounded-2xl border border-gray-200/80 shadow-sm p-4 sm:p-5">
         {resultado && (
           <div className="mb-4" role="status">
             <Aviso tono={resultado.tono}>{resultado.texto}</Aviso>
@@ -247,47 +275,77 @@ export function PublicarSemana({ api, servicios, horarios, alPublicar }) {
             <Aviso>{error}</Aviso>
           </div>
         )}
+
         <div className="flex justify-between items-center gap-3 flex-wrap mb-4">
           <div className="flex items-center gap-2">
-            <button type="button" aria-label="Semana anterior" onClick={() => cambiarSemana(-1)} className="w-11 h-11 rounded-full bg-cream text-primary flex items-center justify-center hover:bg-primary-light">
-              <Icono nombre="izquierda" size={18} strokeWidth={2.2} />
+            <button
+              type="button"
+              aria-label="Semana anterior"
+              onClick={() => cambiarSemana(-1)}
+              className="w-9 h-9 rounded-xl border border-gray-200 bg-[#F4F6F9] text-[#19407B] flex items-center justify-center hover:bg-[#EBF2FA] transition-colors cursor-pointer shrink-0"
+            >
+              <Icono nombre="izquierda" size={16} strokeWidth={2.4} />
             </button>
-            <h3 className="m-0 text-lg font-extrabold tabular-nums" aria-live="polite">
+            <h3 className="m-0 text-base sm:text-lg font-extrabold text-ink-900 tabular-nums whitespace-nowrap" aria-live="polite">
               Semana del {diaCorto(fechas[0])} al {diaCorto(fechas[4])}
             </h3>
-            <button type="button" aria-label="Semana siguiente" onClick={() => cambiarSemana(1)} className="w-11 h-11 rounded-full bg-cream text-primary flex items-center justify-center hover:bg-primary-light">
-              <Icono nombre="derecha" size={18} strokeWidth={2.2} />
+            <button
+              type="button"
+              aria-label="Semana siguiente"
+              onClick={() => cambiarSemana(1)}
+              className="w-9 h-9 rounded-xl border border-gray-200 bg-[#F4F6F9] text-[#19407B] flex items-center justify-center hover:bg-[#EBF2FA] transition-colors cursor-pointer shrink-0"
+            >
+              <Icono nombre="derecha" size={16} strokeWidth={2.4} />
             </button>
           </div>
-          <ul aria-label="Convenciones" className="list-none m-0 p-0 flex gap-4 flex-wrap text-sm text-ink-600">
-            <li className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-[5px] border-2 border-dashed border-[#0891B2] bg-cyan-light" />Nuevo</li>
-            <li className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-[5px] bg-primary-light" />Publicado</li>
-            <li className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-[5px] bg-primary-dark" />Ocupado</li>
+
+          <ul aria-label="Convenciones" className="list-none m-0 p-0 flex gap-3.5 flex-wrap text-xs sm:text-sm font-semibold text-ink-600">
+            <li className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded-[4px] border-2 border-dashed border-[#0891B2] bg-cyan-light shrink-0" />
+              Nuevo
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded-[4px] bg-primary-light shrink-0" />
+              Publicado
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded-[4px] bg-primary-dark shrink-0" />
+              Ocupado
+            </li>
           </ul>
         </div>
-        <div className="overflow-x-auto">
-          <div className="min-w-[620px] grid grid-cols-[92px_repeat(5,minmax(0,1fr))] gap-1.5 tabular-nums">
+
+        <div className="overflow-x-auto pb-1">
+          <div className="min-w-[500px] grid grid-cols-[76px_repeat(5,minmax(0,1fr))] gap-1.5 tabular-nums">
             <span />
             {fechas.map((f, i) => (
               <span key={f} className={`text-center pb-1.5 ${f < hoy ? "text-ink-500" : ""}`}>
-                <strong className="block">{DIAS[i]}</strong>
-                <span className="text-[13px] text-ink-500">{diaCorto(f)}</span>
+                <strong className="block text-sm text-ink-900">{DIAS[i]}</strong>
+                <span className="text-xs text-ink-500">{diaCorto(f)}</span>
               </span>
             ))}
             {HORAS.map((hora) => [
-              <span key={`h${hora}`} className="flex items-center text-[13px] font-bold text-ink-500 whitespace-nowrap">
+              <span key={`h${hora}`} className="flex items-center text-xs font-bold text-ink-500 whitespace-nowrap">
                 {etiquetaHora(hora)}
               </span>,
               ...fechas.map((f, d) => {
                 const clave = `${d}-${hora}`;
                 const estado = existentes[clave];
                 const etiqueta = `${DIAS[d]} ${diaCorto(f)}, ${etiquetaHora(hora)}`;
-                const base = "min-h-[46px] w-full rounded-[10px] text-[13px] font-extrabold flex items-center justify-center text-center px-1";
+                const base = "min-h-[40px] w-full rounded-xl text-xs font-extrabold flex items-center justify-center text-center px-1";
                 if (estado === "ocupado")
-                  return <span key={clave} aria-label={`${etiqueta}: ocupado`} className={`${base} bg-primary-dark text-white`}>Ocupado</span>;
+                  return (
+                    <span key={clave} aria-label={`${etiqueta}: ocupado`} className={`${base} bg-primary-dark text-white`}>
+                      Ocupado
+                    </span>
+                  );
                 if (estado === "publicado")
-                  return <span key={clave} aria-label={`${etiqueta}: publicado`} className={`${base} bg-primary-light text-primary`}>Publicado</span>;
-                if (f < hoy) return <span key={clave} aria-hidden="true" className={`${base} bg-cream`} />;
+                  return (
+                    <span key={clave} aria-label={`${etiqueta}: publicado`} className={`${base} bg-primary-light text-primary`}>
+                      Publicado
+                    </span>
+                  );
+                if (f < hoy) return <span key={clave} aria-hidden="true" className={`${base} bg-cream/70`} />;
                 const marcado = !!nuevos[clave];
                 return (
                   <button
@@ -296,8 +354,10 @@ export function PublicarSemana({ api, servicios, horarios, alPublicar }) {
                     aria-pressed={marcado}
                     aria-label={`${etiqueta}: ${marcado ? "nuevo, toca para quitar" : "libre, toca para agregar"}`}
                     onClick={() => alternar(clave)}
-                    className={`${base} transition-colors ${
-                      marcado ? "border-2 border-dashed border-[#0891B2] bg-cyan-light text-cyan-dark" : "border-[1.5px] border-gray-200 bg-white text-ink-500 hover:border-primary/50"
+                    className={`${base} cursor-pointer transition-colors ${
+                      marcado
+                        ? "border-2 border-dashed border-[#0891B2] bg-cyan-light text-cyan-dark"
+                        : "border border-gray-200 bg-white text-ink-500 hover:border-[#19407B]/50 hover:bg-[#F8FAFC]"
                     }`}
                   >
                     {marcado ? "Nuevo" : ""}
@@ -307,7 +367,8 @@ export function PublicarSemana({ api, servicios, horarios, alPublicar }) {
             ])}
           </div>
         </div>
-        <p className="mt-3.5 mb-0 text-sm text-ink-500">
+
+        <p className="mt-3 mb-0 text-xs sm:text-sm text-ink-500">
           Cada casilla es la hora en que empiezan las citas. Para cerrar un horario ya publicado, hazlo desde la lista de «Mis horarios de atención».
         </p>
       </div>

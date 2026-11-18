@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { http } from "../../../lib/api/http";
 import { fechaInputUTC, fechaLarga, formatearHora, horaInputUTC } from "../comunes/lib/format";
 import { imagenDeEvento, respaldoDeFoto, imagenParaEvento, urlDelServidor } from "../comunes/lib/imagenes";
-import { Aviso, Estado, Vacio, botonPrimario, botonSecundario, claseCampo } from "../comunes/componentes/ui";
+import { Aviso, botonPrimario, botonSecundario, claseCampo } from "../comunes/componentes/ui";
 import { Icono } from "../comunes/componentes/Iconos";
 import { BotonFlotante, Ventana } from "../comunes/componentes/Ventana";
 
@@ -31,6 +31,66 @@ const ACCION_PRINCIPAL = {
   Publicado: { estado: "Cerrado", label: "Cerrar inscripciones" },
   Cerrado: { estado: "Publicado", label: "Reabrir inscripciones" },
 };
+
+// Color del borde izquierdo de cada fila según el estado.
+const ESTADO_BORDE = {
+  Publicado: "border-l-[#0B6B61]",
+  Cerrado: "border-l-amber-400",
+  Borrador: "border-l-gray-300",
+  Cancelado: "border-l-red-400",
+};
+
+// Base común de las acciones: centrado real del texto y feedback al presionar.
+const BASE_ACCION =
+  "inline-flex items-center justify-center gap-1.5 min-h-[40px] px-3.5 rounded-full text-sm font-bold whitespace-nowrap cursor-pointer transition-all duration-150 active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed";
+
+// Publicar, reabrir y guardar: verde, activan o confirman algo.
+const ACCION_ACTIVAR = `${BASE_ACCION} border-[1.5px] border-[#0B6B61] text-[#0B6B61] bg-[#D5EFEA] hover:bg-[#BFE7E0] hover:shadow-sm`;
+
+// Cerrar inscripciones: ámbar, oculta el evento a los estudiantes.
+const ACCION_CERRAR = `${BASE_ACCION} border-[1.5px] border-amber-400 text-amber-800 bg-amber-50 hover:bg-amber-100 hover:shadow-sm`;
+
+// Crear algo nuevo: azul sólido, igual que "Agregar horario".
+const ACCION_CREAR = `${BASE_ACCION} border-[1.5px] border-primary bg-primary text-white hover:shadow-md`;
+
+// Neutra: ver inscritos, abrir menú, descartar.
+const ACCION_NEUTRA = `${BASE_ACCION} border-[1.5px] border-gray-300 text-ink-700 bg-white hover:bg-gray-50 hover:border-gray-400`;
+
+const ACCION_MENU = "text-left min-h-[44px] px-3 rounded-lg font-bold cursor-pointer transition-colors hover:bg-gray-100";
+
+// Estado del evento: solo lectura, gris neutro.
+const ETIQUETA_INFO =
+  "inline-flex items-center gap-2 text-xs font-bold rounded-full px-3 py-1 bg-gray-100 text-ink-600 border border-gray-200 select-none pointer-events-none";
+
+const PUNTO = "inline-block h-1.5 w-1.5 rounded-full bg-gray-400";
+
+// ---------- Hooks y componentes locales ----------
+
+// Navegación entre pestañas: neutra, no es una acción.
+function PestanasVista({ valor, alCambiar, opciones }) {
+  return (
+    <div role="tablist" className="inline-flex items-center gap-1 rounded-xl bg-gray-100 p-1">
+      {opciones.map(([id, texto, cantidad]) => {
+        const activa = valor === id;
+        return (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={activa}
+            onClick={() => alCambiar(id)}
+            className={`inline-flex min-h-[38px] cursor-pointer items-center gap-2 rounded-lg px-3.5 text-sm font-bold transition-all duration-150 ${
+              activa ? "bg-white text-ink-900 shadow-sm ring-1 ring-gray-200" : "text-ink-500 hover:text-ink-900"
+            }`}
+          >
+            {texto}
+            <span className="rounded-full bg-gray-100 px-2 text-xs tabular-nums text-ink-600">{cantidad}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function restarDia(fecha) {
   const d = new Date(`${fecha}T12:00:00Z`);
@@ -70,10 +130,11 @@ function erroresDe(v) {
 }
 
 const chip = (activo) =>
-  `min-h-[44px] px-4 rounded-full border-[1.5px] font-extrabold transition-colors ${
-    activo ? "border-transparent boton-liquido" : "border-[#D3DBE8] bg-white text-primary hover:border-primary"
+  `inline-flex items-center justify-center min-h-[44px] px-4 rounded-full border-[1.5px] font-bold text-sm cursor-pointer transition-all duration-150 active:translate-y-px ${
+    activo
+      ? "border-[#19407B] bg-[#EBF2FA] text-[#19407B]"
+      : "border-transparent bg-[#F4F6F9] text-ink-600 hover:bg-[#EAEFF5] hover:text-ink-900"
   }`;
-
 function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana = false }) {
   const [v, setV] = useState(inicial);
   const [intentado, setIntentado] = useState(false);
@@ -172,7 +233,7 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
           e.preventDefault();
           guardar(modo === "editar" ? undefined : "Publicado");
         }}
-        className="flex-[999_1_540px] min-w-0 bg-white rounded-xl p-5 sm:p-7 flex flex-col gap-[18px]"
+        className="flex-[999_1_540px] min-w-0 bg-white rounded-2xl p-5 sm:p-7 flex flex-col gap-[18px]"
       >
         {!enVentana && (
           <div className="flex justify-between items-start gap-3 flex-wrap">
@@ -411,17 +472,17 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
         {error && <Aviso>{error}</Aviso>}
         {intentado && Object.keys(errores).length > 0 && <Aviso>Revisa los campos marcados en rojo para continuar.</Aviso>}
 
-        <div className="flex gap-2.5 flex-wrap justify-end pt-1.5 border-t border-[#EEF2F7]">
+        <div className="flex gap-2.5 flex-wrap justify-end pt-1.5 border-t border-gray-100">
           {modo === "editar" ? (
-            <button type="button" onClick={() => guardar()} disabled={!!enviando} className={botonPrimario}>
+            <button type="button" onClick={() => guardar()} disabled={!!enviando} className={ACCION_ACTIVAR}>
               {enviando ? "Guardando…" : "Guardar cambios"}
             </button>
           ) : (
             <>
-              <button type="button" onClick={() => guardar("Borrador")} disabled={!!enviando} className={botonSecundario}>
+              <button type="button" onClick={() => guardar("Borrador")} disabled={!!enviando} className={ACCION_NEUTRA}>
                 {enviando === "Borrador" ? "Guardando…" : "Guardar como borrador"}
               </button>
-              <button type="button" onClick={() => guardar("Publicado")} disabled={!!enviando} className={botonPrimario}>
+              <button type="button" onClick={() => guardar("Publicado")} disabled={!!enviando} className={ACCION_CREAR}>
                 {enviando === "Publicado" ? "Publicando…" : "Publicar ahora"}
               </button>
             </>
@@ -432,7 +493,7 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
       {/* Vista previa en vivo */}
       <aside aria-label="Vista previa" className="flex-[1_1_340px] min-w-0 lg:sticky lg:top-4">
         <p className="m-0 mb-2.5 text-sm font-extrabold text-ink-600">Así lo verán los estudiantes</p>
-        <article className="bg-white rounded-xl overflow-hidden shadow-[0_16px_40px_rgba(11,35,71,0.12)]">
+        <article className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-[0_16px_40px_rgba(11,35,71,0.12)]">
           <img src={foto.vista || imagenParaEvento(inicial.id || "nuevo-evento").src} alt="" className="w-full h-[180px] object-cover" />
           <div className="p-5 flex flex-col gap-2">
             <p className="m-0 text-sm font-extrabold text-primary tabular-nums">
@@ -445,7 +506,12 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
             </p>
             <p className="m-0 text-ink-600 whitespace-pre-line">{v.descripcion.trim() || "Aquí aparecerá la descripción."}</p>
             {limite && <p className="mt-1 mb-0 text-sm text-ink-500">Inscripciones abiertas hasta el {fechaLarga(limite).toLowerCase()}.</p>}
-            <span className="mt-1.5 inline-flex justify-center items-center min-h-[46px] rounded-full boton-liquido font-extrabold">Inscribirme</span>
+            <span
+              aria-hidden="true"
+              className="mt-1.5 inline-flex justify-center items-center min-h-[46px] rounded-full boton-liquido font-extrabold pointer-events-none select-none"
+            >
+              Inscribirme
+            </span>
           </div>
         </article>
       </aside>
@@ -453,74 +519,111 @@ function Formulario({ inicial, modo, eventos, alGuardar, alCancelar, enVentana =
   );
 }
 
-function FilaEvento({ evento, ocupado, onEstado, onEditar, onDuplicar, onEliminar }) {
+// Bloque de fecha tipo calendario: día grande y mes abreviado.
+function BloqueFecha({ fecha, pasado }) {
+  const iso = fechaInputUTC(fecha);
+  const [anio, mes, dia] = iso.split("-").map(Number);
+  const nombreMes = new Date(anio, mes - 1, 1).toLocaleDateString("es", { month: "short" }).replace(".", "");
+  return (
+    <div className={`w-14 shrink-0 rounded-2xl border border-gray-200 bg-white py-1.5 text-center ${pasado ? "opacity-60" : ""}`}>
+      <p className="m-0 text-[22px] font-extrabold leading-none text-ink-900 tabular-nums">{dia}</p>
+      <p className="m-0 mt-1 text-[11px] font-bold uppercase tracking-wide text-ink-500">{nombreMes}</p>
+    </div>
+  );
+}
+
+function FilaEvento({ evento, ocupado, pasado, onEstado, onEditar, onDuplicar, onEliminar }) {
   const inscritos = evento._count?.inscripciones ?? 0;
   const principal = ACCION_PRINCIPAL[evento.estado];
   const porcentaje = Math.min(100, Math.round((inscritos / Math.max(1, evento.cupos)) * 100));
+  const llena = inscritos >= evento.cupos;
+
   return (
-    <li className="px-5 py-4 flex items-center justify-between flex-wrap gap-x-6 gap-y-3">
-      <img
-        src={imagenDeEvento(evento).src}
-        alt=""
-        onError={respaldoDeFoto(evento)}
-        className="hidden sm:block w-[88px] h-[64px] object-cover rounded-xl shrink-0"
-      />
-      <div className="min-w-0 flex-[1_1_320px]">
-        <div className="flex items-center gap-2 flex-wrap">
-          <strong className="text-ink-900">{evento.nombre}</strong>
-          <Estado estado={evento.estado} />
-        </div>
-        <p className="m-0 text-sm text-ink-500 tabular-nums">
-          {fechaLarga(evento.fecha)} · {formatearHora(evento.horaInicio)} a {formatearHora(evento.horaFin)}
-          {evento.modalidad === "Virtual" ? " · Virtual" : evento.lugar ? ` · ${evento.lugar}${evento.modalidad === "Hibrida" ? " y virtual" : ""}` : ""}
-        </p>
-        <div className="mt-2 flex items-center gap-2.5 max-w-[360px]">
-          <div className="flex-1 h-1.5 rounded-full bg-primary-light overflow-hidden">
-            <div className="h-full bg-primary" style={{ width: `${porcentaje}%` }} />
+    <li
+      className={`border-l-4 ${ESTADO_BORDE[evento.estado] || "border-l-gray-300"} px-5 ${pasado ? "py-3" : "py-4"} flex items-center justify-between flex-wrap gap-x-6 gap-y-3 transition-colors ${
+        pasado ? "bg-gray-50/50" : "hover:bg-gray-50/60"
+      }`}
+    >
+      <div className="flex items-center gap-4 min-w-0 flex-[1_1_320px]">
+        <BloqueFecha fecha={evento.fecha} pasado={pasado} />
+
+        {!pasado && (
+          <img
+            src={imagenDeEvento(evento).src}
+            alt=""
+            onError={respaldoDeFoto(evento)}
+            className="hidden md:block w-[72px] h-[56px] object-cover rounded-xl shrink-0"
+          />
+        )}
+
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <strong className={`text-base ${pasado ? "text-ink-500" : "text-ink-900"}`}>{evento.nombre}</strong>
+            <span className={ETIQUETA_INFO}>
+              <span className={PUNTO} />
+              {evento.estado}
+            </span>
           </div>
-          <span className="text-[13px] font-bold text-ink-600 tabular-nums whitespace-nowrap">
-            {inscritos} de {evento.cupos} inscritos
-          </span>
+          <p className="m-0 mt-1 text-sm text-ink-500 tabular-nums">
+            {formatearHora(evento.horaInicio)} a {formatearHora(evento.horaFin)}
+            {evento.modalidad === "Virtual" ? " · Virtual" : evento.lugar ? ` · ${evento.lugar}` : ""}
+          </p>
+          <div className="mt-2 flex items-center gap-2.5 max-w-[360px]">
+            <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden" aria-hidden="true">
+              <div className={`h-full ${llena ? "bg-[#0B6B61]" : "bg-gray-400"}`} style={{ width: `${porcentaje}%` }} />
+            </div>
+            <span className="text-[13px] font-semibold text-ink-500 tabular-nums whitespace-nowrap">
+              {inscritos}/{evento.cupos} · {porcentaje}%
+            </span>
+          </div>
         </div>
       </div>
+
       <div className="flex items-center gap-2 flex-wrap">
-        <Link to={`/admin/eventos/${evento.id}/inscritos`} className={botonSecundario}>
+        <Link to={`/admin/eventos/${evento.id}/inscritos`} className={ACCION_NEUTRA}>
           Inscritos y asistencia
         </Link>
-        {principal && (
-          <button onClick={() => onEstado(evento, principal.estado)} disabled={ocupado} className={botonPrimario}>
+        {!pasado && principal && (
+          <button
+            onClick={() => onEstado(evento, principal.estado)}
+            disabled={ocupado}
+            className={principal.estado === "Cerrado" ? ACCION_CERRAR : ACCION_ACTIVAR}
+          >
             {principal.label}
           </button>
         )}
-        <details className="relative">
-          <summary className="list-none cursor-pointer inline-flex items-center gap-1 min-h-[44px] px-3.5 rounded-full font-bold text-primary hover:bg-primary-light">
-            Más
-            <Icono nombre="derecha" size={16} strokeWidth={2.2} className="rotate-90" />
-          </summary>
-          <div className="absolute right-0 z-10 mt-1 w-56 bg-white rounded-xl shadow-[0_16px_40px_rgba(11,35,71,0.18)] p-1.5 flex flex-col">
-            {evento.estado !== "Cancelado" && (
-              <button onClick={() => onEditar(evento)} className="text-left min-h-[44px] px-3 rounded-lg font-bold hover:bg-cream">
-                Editar
+        {!pasado && (
+          <details className="relative">
+            <summary className={`${ACCION_NEUTRA} list-none`}>
+              Más
+              <Icono nombre="derecha" size={16} strokeWidth={2.2} className="rotate-90" />
+            </summary>
+            <div className="absolute right-0 z-10 mt-2 w-56 bg-white rounded-2xl border border-gray-200 shadow-[0_16px_40px_rgba(11,35,71,0.18)] p-1.5 flex flex-col">
+              {evento.estado !== "Cancelado" && (
+                <button onClick={() => onEditar(evento)} className={ACCION_MENU}>
+                  Editar
+                </button>
+              )}
+              <button onClick={() => onDuplicar(evento)} className={ACCION_MENU}>
+                Duplicar para otra fecha
               </button>
-            )}
-            <button onClick={() => onDuplicar(evento)} className="text-left min-h-[44px] px-3 rounded-lg font-bold hover:bg-cream">
-              Duplicar para otra fecha
-            </button>
-            {evento.estado === "Publicado" && (
-              <button onClick={() => onEstado(evento, "Borrador")} className="text-left min-h-[44px] px-3 rounded-lg font-bold hover:bg-cream">
-                Volver a borrador
+              {evento.estado === "Publicado" && (
+                <button onClick={() => onEstado(evento, "Borrador")} className={ACCION_MENU}>
+                  Volver a borrador
+                </button>
+              )}
+              {evento.estado !== "Cancelado" && (
+                <button onClick={() => onEstado(evento, "Cancelado")} className={ACCION_MENU}>
+                  Cancelar evento
+                </button>
+              )}
+              <div className="my-1 border-t border-gray-100" />
+              <button onClick={() => onEliminar(evento)} className={`${ACCION_MENU} text-red-700 hover:bg-red-50`}>
+                Eliminar
               </button>
-            )}
-            {evento.estado !== "Cancelado" && (
-              <button onClick={() => onEstado(evento, "Cancelado")} className="text-left min-h-[44px] px-3 rounded-lg font-bold hover:bg-cream">
-                Cancelar evento
-              </button>
-            )}
-            <button onClick={() => onEliminar(evento)} className="text-left min-h-[44px] px-3 rounded-lg font-bold text-red-700 hover:bg-red-50">
-              Eliminar
-            </button>
-          </div>
-        </details>
+            </div>
+          </details>
+        )}
       </div>
     </li>
   );
@@ -538,6 +641,8 @@ export function GestionEventosPage() {
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
   const [accionando, setAccionando] = useState(null);
+  const [pestana, setPestana] = useState("proximos");
+  const [buscar, setBuscar] = useState("");
   const arriba = useRef(null);
 
   function cargarEventos() {
@@ -648,16 +753,32 @@ export function GestionEventosPage() {
     }
   }
 
+  const hoy = hoyLocal();
+  const todos = eventos || [];
+  const proximos = useMemo(
+    () => todos.filter((e) => fechaInputUTC(e.fecha) >= hoy).sort((a, b) => String(a.fecha).localeCompare(String(b.fecha))),
+    [todos, hoy],
+  );
+  const anteriores = useMemo(
+    () => todos.filter((e) => fechaInputUTC(e.fecha) < hoy).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha))),
+    [todos, hoy],
+  );
+  const inscritosTotal = todos.reduce((s, e) => s + (e._count?.inscripciones ?? 0), 0);
+  const llenos = todos.filter((e) => (e._count?.inscripciones ?? 0) >= e.cupos).length;
+
+  const termino = buscar.trim().toLowerCase();
+  const lista = (pestana === "proximos" ? proximos : anteriores).filter((e) => !termino || e.nombre.toLowerCase().includes(termino));
+  const pasado = pestana === "anteriores";
+
   return (
     <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8 pb-32" ref={arriba}>
-      <div className="flex justify-between items-end gap-4 flex-wrap mb-6">
-        <div>
-          <h1 className="m-0 text-[30px] sm:text-[38px] leading-tight font-extrabold">Talleres y eventos</h1>
-          <p className="mt-1 mb-0 text-ink-500">
-            Tus talleres y eventos con sus inscripciones. Para crear uno, usa el botón <strong className="text-ink-700">Nuevo evento</strong>.
-          </p>
-        </div>
-      </div>
+      <header className="mb-7">
+        <p className="m-0 mb-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-500">Desarrollo Humano · Eventos</p>
+        <h1 className="m-0 text-[30px] sm:text-[38px] leading-tight font-extrabold text-ink-900">Talleres y eventos</h1>
+        <p className="mt-2 mb-0 text-ink-500 max-w-[46em] leading-relaxed">
+          Tus talleres y eventos con sus inscripciones. Para crear uno, usa el botón <strong className="text-ink-900">Nuevo evento</strong>.
+        </p>
+      </header>
 
       {mensaje && (
         <div className="mb-5" role="status">
@@ -691,45 +812,88 @@ export function GestionEventosPage() {
       {!formulario && <BotonFlotante onClick={() => abrir("crear", { ...VACIO })}>Nuevo evento</BotonFlotante>}
 
       {!eventos && !error && <p className="text-ink-500">Cargando eventos…</p>}
+
       {eventos && eventos.length === 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 px-6 py-12 text-center flex flex-col items-center gap-3">
-          <span className="w-14 h-14 rounded-2xl bg-primary-light text-primary flex items-center justify-center">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-14 text-center flex flex-col items-center gap-3">
+          <span className="w-16 h-16 rounded-2xl bg-primary-light text-primary flex items-center justify-center">
             <Icono nombre="estrella" size={28} strokeWidth={2} />
           </span>
           <p className="m-0 text-lg font-extrabold text-ink-900">Todavía no hay talleres ni eventos</p>
           <p className="m-0 text-ink-500 max-w-[36em]">Crea el primero; puedes guardarlo como borrador y publicarlo cuando esté listo.</p>
-          <button type="button" onClick={() => abrir("crear", { ...VACIO })} className={`${botonPrimario} mt-2`}>
+          <button type="button" onClick={() => abrir("crear", { ...VACIO })} className={`${ACCION_CREAR} mt-2`}>
             Nuevo evento
           </button>
         </div>
       )}
-      {eventos &&
-        eventos.length > 0 &&
-        [
-          ["Próximos", eventos.filter((e) => fechaInputUTC(e.fecha) >= hoyLocal()).sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)))],
-          ["Anteriores", eventos.filter((e) => fechaInputUTC(e.fecha) < hoyLocal()).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)))],
-        ].map(([titulo, lista]) =>
-          lista.length ? (
-            <section key={titulo} aria-label={titulo} className="mb-8">
-              <h2 className="m-0 mb-3 text-xl font-extrabold">
-                {titulo} <span className="text-base font-semibold text-ink-500">({lista.length})</span>
-              </h2>
-              <ul className="list-none m-0 p-0 bg-white rounded-xl border border-gray-200 divide-y divide-[#EEF2F7]">
-                {lista.map((e) => (
-                  <FilaEvento
-                    key={e.id}
-                    evento={e}
-                    ocupado={accionando === e.id}
-                    onEstado={cambiarEstado}
-                    onEditar={editar}
-                    onDuplicar={duplicar}
-                    onEliminar={eliminar}
-                  />
-                ))}
-              </ul>
-            </section>
-          ) : null,
-        )}
+
+      {eventos && eventos.length > 0 && (
+        <>
+          {/* Resumen */}
+          <div className="grid gap-4 sm:grid-cols-3 mb-6">
+            {[
+              ["Próximos", proximos.length, "eventos por venir"],
+              ["Inscritos", inscritosTotal, "en todos los eventos"],
+              ["Llenos", llenos, "sin cupos disponibles"],
+            ].map(([titulo, n, sub]) => (
+              <div key={titulo} className="rounded-2xl bg-white/70 backdrop-blur border border-white/80 shadow-sm px-5 py-4">
+                <p className="m-0 text-xs font-bold uppercase tracking-wide text-ink-500">{titulo}</p>
+                <p className="m-0 mt-1 text-3xl font-extrabold text-ink-900 tabular-nums">{n}</p>
+                <p className="m-0 text-sm text-ink-500">{sub}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Pestañas y buscador */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-5 bg-white/60 backdrop-blur rounded-2xl border border-white/80 shadow-sm px-3 py-2.5">
+            <PestanasVista
+              valor={pestana}
+              alCambiar={setPestana}
+              opciones={[
+                ["proximos", "Próximos", proximos.length],
+                ["anteriores", "Anteriores", anteriores.length],
+              ]}
+            />
+            <input
+              type="search"
+              value={buscar}
+              onChange={(e) => setBuscar(e.target.value)}
+              placeholder="Buscar evento"
+              aria-label="Buscar evento"
+              className={`${claseCampo} w-[240px] max-w-full rounded-full`}
+            />
+          </div>
+
+          {lista.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-10 text-center">
+              <p className="m-0 text-lg font-extrabold text-ink-900">
+                {termino ? "Ningún evento coincide con la búsqueda" : pasado ? "No hay eventos anteriores" : "No hay eventos próximos"}
+              </p>
+              {termino && (
+                <button type="button" onClick={() => setBuscar("")} className={`${ACCION_NEUTRA} mt-3`}>
+                  Limpiar búsqueda
+                </button>
+              )}
+            </div>
+          ) : (
+            <ul
+               className="list-none m-0 p-0 bg-white rounded-2xl border border-gray-200 shadow-sm divide-y divide-gray-100"
+            >
+              {lista.map((e) => (
+                <FilaEvento
+                  key={e.id}
+                  evento={e}
+                  pasado={pasado}
+                  ocupado={accionando === e.id}
+                  onEstado={cambiarEstado}
+                  onEditar={editar}
+                  onDuplicar={duplicar}
+                  onEliminar={eliminar}
+                />
+              ))}
+            </ul>
+          )}
+        </>
+      )}
     </main>
   );
 }
