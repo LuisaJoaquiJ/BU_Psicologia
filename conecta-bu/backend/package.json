@@ -25,12 +25,12 @@
     "morgan": "^1.10.0",
     "multer": "^2.4.0",
     "pdfkit": "^0.15.2",
+    "prisma": "^5.18.0",
     "qrcode.react": "^4.2.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",
     "nodemon": "^3.1.4",
-    "prisma": "^5.18.0",
     "supertest": "^7.0.0"
   }
 }

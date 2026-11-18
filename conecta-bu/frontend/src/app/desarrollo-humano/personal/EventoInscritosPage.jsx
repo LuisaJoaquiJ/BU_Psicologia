@@ -149,7 +149,7 @@ export function EventoInscritosPage() {
   const puedeAbrir = estadoPermite && enVentana;
   const puedeMarcar = estadoPermite;
   const segundos = control?.codigoExpira ? Math.max(0, Math.ceil((new Date(control.codigoExpira) - ahora) / 1000)) : 0;
-  const urlQr = control?.codigo ? `${window.location.origin}/estudiante/asistencia/${control.codigo}` : "";
+  const urlQr = control?.codigo ? `${window.location.origin}/asistencia/${control.codigo}` : "";
 
   return (
     <main className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 py-8 pb-24">
