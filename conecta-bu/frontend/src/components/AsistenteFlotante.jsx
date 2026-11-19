@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AsistenteConversacion } from "./AsistenteConversacion";
 import { useAuth } from "../lib/auth/AuthContext";
@@ -22,6 +22,21 @@ const moduloDe = (pathname) => MODULOS.find((m) => m.prefijos.some((p) => pathna
 
 const aro = { background: "conic-gradient(from 200deg, #E8740E, #C89B14, #E8740E)" };
 
+// El botón se puede arrastrar a cualquier parte de la pantalla; la posición se recuerda.
+const CLAVE_POSICION = "conectabu:asistente-posicion";
+const MARGEN = 8;
+const UMBRAL_ARRASTRE = 5;
+
+function posicionGuardada() {
+  try {
+    const p = JSON.parse(localStorage.getItem(CLAVE_POSICION));
+    if (p && Number.isFinite(p.x) && Number.isFinite(p.y)) return p;
+  } catch {
+    /* sin posición guardada */
+  }
+  return { x: 0, y: 0 };
+}
+
 // Mismo esquema que el asistente de NOVA: botón circular, saludo y panel
 // crema. El contenido sigue siendo el de Bienestar.
 export function AsistenteFlotante() {
@@ -30,6 +45,78 @@ export function AsistenteFlotante() {
   const [abierto, setAbierto] = useState(false);
   const [saludo, setSaludo] = useState(true);
   const modulo = moduloDe(pathname);
+  const [desp, setDesp] = useState(posicionGuardada);
+  const [ajuste, setAjuste] = useState({ x: 0, y: 0 });
+  const caja = useRef(null);
+  const boton = useRef(null);
+  const despActual = useRef(desp);
+  const arrastre = useRef(null);
+  const movido = useRef(false);
+  despActual.current = desp;
+
+  // Mantiene el botón dentro de la pantalla.
+  const limitar = useCallback((p) => {
+    const r = boton.current?.getBoundingClientRect();
+    if (!r) return p;
+    const izq = r.left - despActual.current.x;
+    const arr = r.top - despActual.current.y;
+    const x = Math.min(Math.max(p.x, MARGEN - izq), window.innerWidth - MARGEN - (izq + r.width));
+    const y = Math.min(Math.max(p.y, MARGEN - arr), window.innerHeight - MARGEN - (arr + r.height));
+    return { x, y };
+  }, []);
+
+  useEffect(() => {
+    const alCambiar = () => setDesp((d) => limitar(d));
+    window.addEventListener("resize", alCambiar);
+    return () => window.removeEventListener("resize", alCambiar);
+  }, [limitar]);
+
+  // Con el panel abierto, se corre lo necesario para que el panel quepa completo.
+  useLayoutEffect(() => {
+    if (!abierto) {
+      setAjuste({ x: 0, y: 0 });
+      return;
+    }
+    const r = caja.current?.getBoundingClientRect();
+    if (!r) return;
+    const x = r.left < MARGEN ? MARGEN - r.left : r.right > window.innerWidth - MARGEN ? window.innerWidth - MARGEN - r.right : 0;
+    const y = r.top < MARGEN ? MARGEN - r.top : r.bottom > window.innerHeight - MARGEN ? window.innerHeight - MARGEN - r.bottom : 0;
+    setAjuste({ x, y });
+  }, [abierto]);
+
+  function alPresionar(e) {
+    if (e.button !== 0) return;
+    arrastre.current = { sx: e.clientX, sy: e.clientY, ox: despActual.current.x, oy: despActual.current.y };
+    movido.current = false;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  }
+  function alMover(e) {
+    const a = arrastre.current;
+    if (!a) return;
+    const dx = e.clientX - a.sx;
+    const dy = e.clientY - a.sy;
+    if (!movido.current && Math.hypot(dx, dy) < UMBRAL_ARRASTRE) return;
+    movido.current = true;
+    setDesp(limitar({ x: a.ox + dx, y: a.oy + dy }));
+  }
+  function alSoltar() {
+    if (arrastre.current && movido.current) {
+      try {
+        localStorage.setItem(CLAVE_POSICION, JSON.stringify(despActual.current));
+      } catch {
+        /* no se pudo guardar: se queda solo en esta visita */
+      }
+    }
+    arrastre.current = null;
+  }
+  function alPulsar() {
+    // Si se acaba de arrastrar, no se abre ni se cierra.
+    if (movido.current) {
+      movido.current = false;
+      return;
+    }
+    setAbierto((v) => !v);
+  }
 
   useEffect(() => {
     if (!abierto) return undefined;
@@ -43,12 +130,16 @@ export function AsistenteFlotante() {
   if (!estaAutenticado || usuario?.rol !== "Estudiante" || pathname === "/login" || pathname.startsWith("/estudiante/asistente")) return null;
 
   return (
-    <div className="fixed z-50 left-3 right-3 bottom-4 sm:left-6 sm:right-auto sm:bottom-6 flex flex-col items-start gap-3 sm:w-[400px]">
+    <div
+      ref={caja}
+      className="fixed z-50 left-3 right-3 bottom-4 sm:left-6 sm:right-auto sm:bottom-6 flex flex-col items-start gap-3 sm:w-[400px] pointer-events-none"
+      style={{ transform: `translate(${desp.x + ajuste.x}px, ${desp.y + ajuste.y}px)` }}
+    >
       {abierto && (
         <section
           role="dialog"
           aria-label="Asistente virtual Conecta BU"
-          className="w-full h-[min(640px,calc(100dvh-8rem))] rounded-[28px] overflow-hidden flex flex-col shadow-[0_24px_60px_rgba(11,26,44,0.28)]"
+          className="pointer-events-auto w-full h-[min(640px,calc(100dvh-8rem))] rounded-[28px] overflow-hidden flex flex-col shadow-[0_24px_60px_rgba(11,26,44,0.28)]"
           style={{ background: "#FAF6EE" }}
         >
           <header className="relative shrink-0 px-4 py-3.5 flex items-center gap-3 overflow-hidden" style={{ background: "linear-gradient(135deg, #1E3A5F 0%, #132A46 100%)" }}>
@@ -78,12 +169,18 @@ export function AsistenteFlotante() {
 
       <div className="flex items-end gap-3">
         <button
+          ref={boton}
           type="button"
-          onClick={() => setAbierto((v) => !v)}
+          onClick={alPulsar}
+          onPointerDown={alPresionar}
+          onPointerMove={alMover}
+          onPointerUp={alSoltar}
+          onPointerCancel={alSoltar}
+          title="Arrastra para mover"
           aria-expanded={abierto}
           aria-label={abierto ? "Cerrar asistente" : "Abrir asistente"}
-          className="relative h-14 w-14 rounded-full flex items-center justify-center text-white shadow-[0_10px_30px_rgba(232,116,14,0.45)]"
-          style={aro}
+          className="pointer-events-auto relative h-14 w-14 rounded-full flex items-center justify-center text-white shadow-[0_10px_30px_rgba(232,116,14,0.45)] cursor-grab active:cursor-grabbing select-none"
+          style={{ ...aro, touchAction: "none" }}
         >
           {!abierto && (
             <span aria-hidden="true" className="nova-pulso pointer-events-none absolute inset-0 rounded-full" />
@@ -96,7 +193,7 @@ export function AsistenteFlotante() {
           )}
         </button>
         {!abierto && saludo && (
-          <div className="mb-1 flex items-center gap-2 rounded-2xl bg-white px-3.5 py-2.5 shadow-[0_10px_30px_rgba(11,26,44,0.12)] border border-[#1E3A5F]/10">
+          <div className="pointer-events-auto mb-1 flex items-center gap-2 rounded-2xl bg-white px-3.5 py-2.5 shadow-[0_10px_30px_rgba(11,26,44,0.12)] border border-[#1E3A5F]/10">
             <button type="button" onClick={() => setAbierto(true)} className="text-left text-[13px] font-semibold text-[#1E3A5F]">
               ¡Hola! ¿Te ayudo con Bienestar?
             </button>

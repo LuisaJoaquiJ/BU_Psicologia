@@ -93,9 +93,11 @@ export function NotificacionesPage() {
         <ul className="list-none m-0 p-0 grid gap-2">
           {lista.map((n) => {
             const modulo = MODULO_AVISO[n.modulo] || MODULO_AVISO.general;
+            // Alerta de posible crisis del asistente: roja y con sus saltos de línea.
+            const alerta = n.tipo === "alerta-crisis";
             return (
-              <li key={n.id} className={`flex items-stretch gap-1 rounded-[22px] border border-white/80 shadow-[0_6px_20px_-12px_rgba(11,35,71,0.25)] ${n.leida ? "bg-white/70" : "bg-white"}`}>
-                <button type="button" onClick={() => abrir(n)} className="flex-1 min-w-0 text-left flex gap-3 rounded-[22px] px-4 py-3 min-h-[72px] hover:bg-primary-light/50 focus-visible:bg-primary-light/50 transition-colors">
+              <li key={n.id} className={`flex items-stretch gap-1 rounded-[22px] shadow-[0_6px_20px_-12px_rgba(11,35,71,0.25)] ${alerta ? "border-2 border-red-500 bg-red-50" : `border border-white/80 ${n.leida ? "bg-white/70" : "bg-white"}`}`}>
+                <button type="button" onClick={() => abrir(n)} className={`flex-1 min-w-0 text-left flex gap-3 rounded-[22px] px-4 py-3 min-h-[72px] transition-colors ${alerta ? "hover:bg-red-100 focus-visible:bg-red-100" : "hover:bg-primary-light/50 focus-visible:bg-primary-light/50"}`}>
                   <span aria-hidden="true" className="mt-2 w-2.5 h-2.5 rounded-full shrink-0" style={{ background: n.leida ? "transparent" : modulo.color }} />
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center justify-between gap-2">
@@ -104,8 +106,8 @@ export function NotificacionesPage() {
                       </span>
                       <span className="text-[12px] text-ink-500">{haceCuanto(n.fecha)}</span>
                     </span>
-                    <span className={`block mt-1 text-[15px] leading-snug text-primary-dark ${n.leida ? "font-semibold" : "font-extrabold"}`}>{n.titulo}</span>
-                    <span className="block text-sm leading-snug text-ink-600">{n.mensaje}</span>
+                    <span className={`block mt-1 text-[15px] leading-snug ${alerta ? "text-red-700 font-black" : `text-primary-dark ${n.leida ? "font-semibold" : "font-extrabold"}`}`}>{n.titulo}</span>
+                    <span className={`block text-sm leading-snug ${alerta ? "text-red-900 font-semibold whitespace-pre-line" : "text-ink-600"}`}>{n.mensaje}</span>
                     {!n.leida && <span className="sr-only">Sin leer</span>}
                   </span>
                 </button>

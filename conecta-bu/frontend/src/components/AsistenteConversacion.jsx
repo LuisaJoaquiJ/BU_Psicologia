@@ -3,37 +3,109 @@ import { Link } from "react-router-dom";
 import { Icono } from "./Iconos";
 import { http } from "../lib/api/http";
 import { useAuth } from "../lib/auth/AuthContext";
+import { AsistenteTexto } from "./AsistenteTexto";
+import { AsistenteInicio, NotaPrivacidad, SugerenciasChips } from "./AsistenteInicio";
+
+// El aviso de privacidad lo agrega el backend al final de la primera respuesta.
+const CORREO_PSICOLOGIA = "psicologoinstitucional@uniautonoma.edu.co";
+const LINEA_POR_DEFECTO = "123";
+
+// Saludo del encabezado: cambia segun la hora (Bogota usa la hora del equipo)
+// y tiene varias variantes para que no se sienta estatico.
+const elegir = (lista) => lista[Math.floor(Math.random() * lista.length)];
+function saludoPorHora() {
+  const h = new Date().getHours();
+  return h >= 5 && h < 12 ? "Buenos días" : h < 19 && h >= 12 ? "Buenas tardes" : "Buenas noches";
+}
+function crearSaludo(nombre) {
+  const quien = nombre ? `, ${nombre}` : "";
+  return {
+    titulo: elegir([`${saludoPorHora()}${quien}`, `${saludoPorHora()}${quien}, ¿cómo va tu día?`, `¡Qué bueno verte${quien}!`]),
+    detalle: elegir([
+      "Te ayudo con Orientación, Deporte, Salud y Cultura, y te agendo una cita en un minuto.",
+      "Cuéntame cómo estás o qué necesitas: citas, eventos, horas de deporte y más.",
+      "Resolvamos juntos tus trámites de Bienestar: pregúntame lo que quieras.",
+    ]),
+    mensaje: elegir([
+      `¡${saludoPorHora()}${quien}! Soy el asistente virtual de Bienestar Universitario. Cuéntame cómo te sientes o qué necesitas: puedo agendarte una cita, mostrarte eventos y talleres, o contarte de Salud, Deporte y Arte y Cultura.`,
+      `¡Hola${quien}! Qué bueno tenerte por aquí. ¿Te ayudo a agendar una cita, encontrar un taller o revisar tus horas de deporte? Escríbeme con tus palabras.`,
+      `¡${saludoPorHora()}${quien}! Estoy aquí para hacerte la vida en la U más fácil: citas de Orientación, eventos, Salud, Deporte y Cultura. ¿Por dónde empezamos?`,
+    ]),
+  };
+}
+const telDe = (linea) => `tel:${String(linea || LINEA_POR_DEFECTO).replace(/[^\d+]/g, "")}`;
+
+// Acciones principales del estado inicial (chips). Mandan los mismos mensajes
+// que las tarjetas anteriores; «chip» es el texto corto y «icono» su dibujo.
+const AREAS = {
+  deporte: { titulo: "Deporte", chip: "Deporte", icono: "balon", detalle: "Grupos, horarios y cupos", texto: "¿Qué grupos de deporte hay?" },
+  cultura: { titulo: "Cultura", chip: "Cultura", icono: "musica", detalle: "Talleres y grupos", texto: "¿Qué grupos de cultura hay?" },
+  salud: { titulo: "Salud", chip: "Salud", icono: "estetoscopio", detalle: "Jornadas y campañas", texto: "¿Hay jornadas de salud?" },
+};
+const AGENDAR = { titulo: "Agendar una cita", chip: "Agendar cita", icono: "calendario", detalle: "Te muestro horarios libres", texto: "Quiero agendar una cita" };
 
 const ACCIONES = [
-  { titulo: "Agendar una cita", detalle: "Te muestro horarios libres", texto: "Quiero agendar una cita" },
-  { titulo: "Próximos eventos", detalle: "Talleres y actividades del campus", texto: "¿Qué eventos hay próximamente?" },
-  { titulo: "Servicios de Bienestar", detalle: "Qué puedes hacer en Conecta BU", texto: "¿Qué servicios ofrece Bienestar?" },
+  AGENDAR,
+  { titulo: "Próximos eventos", chip: "Eventos", icono: "estrella", detalle: "Talleres y actividades del campus", texto: "¿Qué eventos hay próximamente?" },
+  { titulo: "Servicios de Bienestar", chip: "Servicios", icono: "corazon", detalle: "Qué puedes hacer en Conecta BU", texto: "¿Qué servicios ofrece Bienestar?" },
+  AREAS.deporte,
+  AREAS.cultura,
+  AREAS.salud,
 ];
 
 const ACCIONES_POR_MODULO = {
   cultura: [
-    { titulo: "Grupos y talleres", detalle: "Qué hay y cómo entrar", texto: "¿Qué grupos de cultura hay?" },
-    { titulo: "Convocatorias", detalle: "Audiciones abiertas", texto: "¿Qué convocatorias hay abiertas?" },
-    { titulo: "Agenda cultural", detalle: "Próximos eventos", texto: "¿Qué eventos culturales hay?" },
+    { titulo: "Grupos y talleres", chip: "Grupos y talleres", icono: "musica", detalle: "Qué hay y cómo entrar", texto: "¿Qué grupos de cultura hay?" },
+    { titulo: "Convocatorias", chip: "Convocatorias", icono: "estrella", detalle: "Audiciones abiertas", texto: "¿Qué convocatorias hay abiertas?" },
+    { titulo: "Agenda cultural", chip: "Agenda cultural", icono: "calendario", detalle: "Próximos eventos", texto: "¿Qué eventos culturales hay?" },
+    { ...AGENDAR, icono: "corazon", chip: "Cita de orientación" },
+    AREAS.deporte,
+    AREAS.salud,
   ],
   deporte: [
-    { titulo: "Grupos de deporte", detalle: "Horarios y cupos", texto: "¿Qué grupos de deporte hay?" },
-    { titulo: "Mis horas", detalle: "Cuántas llevo y cuántas faltan", texto: "¿Cuántas horas de deporte llevo?" },
-    { titulo: "Eventos deportivos", detalle: "Torneos y encuentros", texto: "¿Qué eventos deportivos hay?" },
+    { titulo: "Grupos de deporte", chip: "Grupos", icono: "balon", detalle: "Horarios y cupos", texto: "¿Qué grupos de deporte hay?" },
+    { titulo: "Mis horas", chip: "Mis horas", icono: "reloj", detalle: "Cuántas llevo y cuántas faltan", texto: "¿Cuántas horas de deporte llevo?" },
+    { titulo: "Eventos deportivos", chip: "Torneos y eventos", icono: "trofeo", detalle: "Torneos y encuentros", texto: "¿Qué eventos deportivos hay?" },
+    { ...AGENDAR, icono: "corazon", chip: "Cita de orientación" },
+    AREAS.cultura,
+    AREAS.salud,
   ],
   salud: [
-    { titulo: "Jornadas de salud", detalle: "Campañas y jornadas", texto: "¿Hay jornadas de salud?" },
-    { titulo: "Salidas", detalle: "Publicadas por la Unidad de Salud", texto: "¿Qué salidas hay publicadas?" },
-    { titulo: "Agendar una cita", detalle: "Orientación psicológica", texto: "Quiero agendar una cita" },
+    { titulo: "Jornadas de salud", chip: "Jornadas", icono: "estetoscopio", detalle: "Campañas y jornadas", texto: "¿Hay jornadas de salud?" },
+    { titulo: "Salidas", chip: "Salidas", icono: "bus", detalle: "Publicadas por la Unidad de Salud", texto: "¿Qué salidas hay publicadas?" },
+    { titulo: "Agendar una cita", chip: "Cita de orientación", icono: "calendario", detalle: "Orientación psicológica", texto: "Quiero agendar una cita" },
+    { titulo: "Servicios de Bienestar", chip: "Servicios", icono: "corazon", detalle: "Qué puedes hacer en Conecta BU", texto: "¿Qué servicios ofrece Bienestar?" },
+    AREAS.deporte,
+    AREAS.cultura,
   ],
 };
 
+// Preguntas sugeridas: se muestran de a 3 y «Otras sugerencias» rota la tanda.
 const PREGUNTAS_POR_MODULO = {
-  cultura: ["¿Qué grupos de cultura hay?", "¿Qué convocatorias hay abiertas?", "¿Qué eventos culturales hay?"],
-  deporte: ["¿Qué grupos de deporte hay?", "¿Cuántas horas de deporte llevo?", "¿Qué eventos deportivos hay?"],
-  salud: ["¿Hay jornadas de salud?", "¿Qué salidas hay publicadas?", "¿Cómo me inscribo a una salida?"],
-  orientacion: ["¿Qué grupos de cultura hay?", "¿Cuántas horas de deporte llevo?", "¿Hay jornadas de salud?"],
+  cultura: ["¿Qué grupos de cultura hay?", "¿Qué convocatorias hay abiertas?", "¿Qué eventos culturales hay?", "¿Cómo entro a un grupo representativo?", "¿En qué talleres estoy inscrito?", "¿Cuántas horas de deporte llevo?"],
+  deporte: ["¿Qué grupos de deporte hay?", "¿Cuántas horas de deporte llevo?", "¿Qué eventos deportivos hay?", "¿Cómo me inscribo a un grupo?", "¿Qué grupos de cultura hay?", "¿Hay jornadas de salud?"],
+  salud: ["¿Hay jornadas de salud?", "¿Qué salidas hay publicadas?", "¿Cómo me inscribo a una salida?", "¿Cuándo es mi cita?", "¿Qué grupos de deporte hay?", "¿Qué grupos de cultura hay?"],
+  orientacion: [
+    "¿Qué grupos de cultura hay?",
+    "¿Cuántas horas de deporte llevo?",
+    "¿Hay jornadas de salud?",
+    "¿Cuándo es mi cita?",
+    "¿Cómo cancelo una cita?",
+    "¿Qué convocatorias hay abiertas?",
+    "¿Hay talleres virtuales?",
+    "¿Qué salidas hay publicadas?",
+    "¿Qué eventos deportivos hay?",
+  ],
 };
+
+// Ejemplos que rotan en el placeholder del campo de texto.
+const PLACEHOLDERS = [
+  "Escribe tu pregunta…",
+  "Ej.: quiero una cita el jueves a las 9",
+  "Ej.: ¿qué talleres hay esta semana?",
+  "Ej.: ¿cuántas horas de deporte llevo?",
+  "Cuéntame cómo te sientes…",
+];
 
 // RF-014: conversacion del asistente de orientacion (la usan la pagina
 // completa y el boton flotante). Tambien agenda: el backend ofrece
@@ -64,15 +136,24 @@ export function AsistenteConversacion({ compacto = false, modulo = "orientacion"
   const preguntasSugeridas = PREGUNTAS_POR_MODULO[modulo] || PREGUNTAS_POR_MODULO.orientacion;
   const { usuario } = useAuth();
   const primerNombre = usuario?.nombre?.split(" ")[0];
+  const [saludo] = useState(() => crearSaludo(primerNombre));
   const [mensajes, setMensajes] = useState([
     {
       autor: "asistente",
-      texto: `¡Hola${primerNombre ? `, ${primerNombre}` : ""}! Soy el asistente de Conecta BU. Puedo orientarte sobre los servicios de Bienestar y los próximos eventos, y agendarte una cita: dime qué día y a qué hora te queda bien.`,
+      texto: saludo.mensaje,
     },
   ]);
   const [pregunta, setPregunta] = useState("");
   const [enviando, setEnviando] = useState(false);
   const finRef = useRef(null);
+  const [indicePlaceholder, setIndicePlaceholder] = useState(0);
+
+  // Placeholder rotativo mientras el campo está vacío.
+  useEffect(() => {
+    if (pregunta) return undefined;
+    const id = setInterval(() => setIndicePlaceholder((i) => (i + 1) % PLACEHOLDERS.length), 3500);
+    return () => clearInterval(id);
+  }, [pregunta]);
 
   useEffect(() => {
     finRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -132,7 +213,10 @@ export function AsistenteConversacion({ compacto = false, modulo = "orientacion"
         .filter((m) => !m.error)
         .slice(-12)
         .map((m) => ({ autor: m.autor, texto: m.texto }));
-      const res = await http.post("/asistente/consultas", { pregunta: contenido, historial, modulo });
+      // «primera»: todavia no hay respuestas reales del asistente (el backend
+      // pone el aviso de privacidad solo en la primera).
+      const primera = !historial.some((m) => m.autor === "asistente");
+      const res = await http.post("/asistente/consultas", { pregunta: contenido, historial, modulo, primera });
       setMensajes((m) => [
         ...m,
         {
@@ -141,6 +225,8 @@ export function AsistenteConversacion({ compacto = false, modulo = "orientacion"
           sugerencias: res.data.sugerencias,
           opciones: res.data.opciones,
           seguridad: res.data.origen === "seguridad",
+          crisis: Boolean(res.data.crisis),
+          lineaApoyo: res.data.lineaApoyo || LINEA_POR_DEFECTO,
         },
       ]);
     } catch (err) {
@@ -163,34 +249,16 @@ export function AsistenteConversacion({ compacto = false, modulo = "orientacion"
     <div className="flex-1 min-h-0 flex flex-col">
       <div className={`flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto ${compacto ? "" : "bg-white rounded-2xl border border-gray-200 p-4 sm:p-6"}`}>
         {compacto && inicio && (
-          <div className="flex flex-col items-center text-center pt-2">
-            <span className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-md" style={{ background: "linear-gradient(135deg, var(--liquido-1, #3d6288), var(--liquido-3, #162c49))" }}>
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /><path d="M20 3v4M22 5h-4M4 17v2M5 18H3" /></svg>
-            </span>
-            <p className="mt-3 mb-0 text-lg font-black text-[#1E3A5F]">Hola{primerNombre ? `, ${primerNombre}` : ""}, soy el asistente de Conecta BU</p>
-            <p className="mt-1 mb-0 text-sm max-w-[280px] text-[#6B7A8D]">Te oriento sobre Orientación, Deporte, Salud y Cultura, y te agendo una cita.</p>
-            <div className="mt-5 w-full grid gap-2 text-left">
-              {acciones.map((accion) => (
-                <button key={accion.titulo} type="button" onClick={() => enviar(accion.texto)} className="flex items-center gap-3 rounded-2xl bg-white px-3.5 py-3 text-left border border-[#1E3A5F]/10 hover:shadow-md">
-                  <span className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-primary bg-primary-light">
-                    <Icono nombre="calendario" size={18} strokeWidth={2} />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-[13.5px] font-bold leading-tight text-[#1E3A5F]">{accion.titulo}</span>
-                    <span className="block text-[11.5px] mt-0.5 text-[#6B7A8D]">{accion.detalle}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-            <p className="mt-4 mb-2 text-xs font-semibold text-[#6B7A8D]">O pregúntale a la IA</p>
-          </div>
+          <AsistenteInicio saludo={saludo} acciones={acciones} preguntas={preguntasSugeridas} onElegir={enviar} deshabilitado={enviando} />
         )}
         {(!compacto || !inicio) && mensajes.map((mensaje, i) => (
           <div key={i} className={`flex ${mensaje.autor === "estudiante" ? "justify-end" : "justify-start"}`}>
             <div
-              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-line ${
+              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${
                 mensaje.autor === "estudiante"
-                  ? "boton-liquido rounded-br-md"
+                  ? "boton-liquido rounded-br-md whitespace-pre-line"
+                  : mensaje.crisis
+                    ? "bg-rose-50 text-[#4A1D2B] border border-rose-200 rounded-bl-md shadow-sm"
                   : mensaje.seguridad
                     ? "bg-amber-50 text-ink-900 border border-amber-200 rounded-bl-md"
                     : mensaje.exito
@@ -200,7 +268,30 @@ export function AsistenteConversacion({ compacto = false, modulo = "orientacion"
                       : "bg-white text-[#2C3E50] border border-[#1E3A5F]/10 rounded-bl-md"
               }`}
             >
-              {mensaje.texto}
+              {mensaje.autor === "estudiante" ? (
+                mensaje.texto
+              ) : (
+                <>
+                  {mensaje.crisis && (
+                    <p className="m-0 mb-2 flex items-center gap-2 font-black text-rose-800">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-10-9.4C.6 8.4 2.4 4.5 6.2 4.1c2.1-.2 3.9.9 5.8 3 1.9-2.1 3.7-3.2 5.8-3 3.8.4 5.6 4.3 4.2 7.5C19.5 16.4 12 21 12 21z" /></svg>
+                      Estamos contigo
+                    </p>
+                  )}
+                  <AsistenteTexto texto={mensaje.texto} crisis={mensaje.crisis} linea={mensaje.lineaApoyo} />
+                  {mensaje.crisis && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <a href={telDe(mensaje.lineaApoyo)} className="inline-flex items-center gap-1.5 min-h-[40px] px-4 rounded-full bg-rose-700 text-white text-[13px] font-bold no-underline hover:bg-rose-800">
+                        <Icono nombre="telefono" size={15} strokeWidth={2.2} />
+                        Llamar a la línea {mensaje.lineaApoyo}
+                      </a>
+                      <a href={`mailto:${CORREO_PSICOLOGIA}`} className="inline-flex items-center min-h-[40px] px-4 rounded-full bg-white border border-rose-200 text-rose-800 text-[13px] font-bold no-underline hover:bg-rose-100">
+                        Escribir a Psicología
+                      </a>
+                    </div>
+                  )}
+                </>
+              )}
               {mensaje.opciones?.length > 0 && (
                 <ul className="list-none m-0 mt-3 p-0 flex flex-col gap-2 whitespace-normal" aria-label="Horarios disponibles">
                   {mensaje.opciones.map((o, j) => {
@@ -236,7 +327,7 @@ export function AsistenteConversacion({ compacto = false, modulo = "orientacion"
                   )}
                 </ul>
               )}
-              {mensaje.sugerencias?.length > 0 && (
+              {!mensaje.crisis && mensaje.sugerencias?.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   {mensaje.sugerencias.map((s) => (
                     <Link
@@ -258,22 +349,14 @@ export function AsistenteConversacion({ compacto = false, modulo = "orientacion"
             <div className="bg-white text-[#6B7A8D] border border-[#1E3A5F]/10 rounded-2xl rounded-bl-md px-4 py-3 text-sm">Escribiendo…</div>
           </div>
         )}
-        {inicio && (
-          <div className="grid gap-2">
-            {preguntasSugeridas.map((texto) => (
-              <button
-                key={texto}
-                type="button"
-                onClick={() => enviar(texto)}
-                className="flex items-center gap-3 rounded-2xl bg-white px-3.5 py-2.5 text-left text-[13px] font-medium border border-[#1E3A5F]/10 text-[#2C3E50] hover:shadow-md"
-              >
-                <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-primary bg-primary-light">?</span>
-                {texto}
-              </button>
-            ))}
+        {inicio && !compacto && (
+          <div className="grid gap-3">
+            <SugerenciasChips preguntas={preguntasSugeridas} onElegir={enviar} deshabilitado={enviando} />
+            <NotaPrivacidad />
           </div>
         )}
-        <div ref={finRef} />
+        {/* En el estado inicial del panel no hace falta el ancla (ni su espacio). */}
+        {!(compacto && inicio) && <div ref={finRef} />}
       </div>
 
       <form
@@ -288,7 +371,7 @@ export function AsistenteConversacion({ compacto = false, modulo = "orientacion"
             value={pregunta}
             onChange={(e) => setPregunta(e.target.value)}
             maxLength={500}
-            placeholder="Escribe tu pregunta…"
+            placeholder={PLACEHOLDERS[indicePlaceholder]}
             aria-label="Mensaje para el asistente"
             className="flex-1 bg-transparent py-2 text-[14px] text-[#2C3E50] outline-none placeholder:text-[#9aa6b4]"
           />

@@ -172,7 +172,7 @@ function moduloDe(textoNormalizado) {
 }
 
 const sinDatos = (nombre) => ({
-  respuesta: `En este momento no pude consultar ${nombre}. Intenta de nuevo en un rato o entra directamente a esa sección.`,
+  respuesta: `Uy, en este momento no pude consultar ${nombre}. 🙏 Intenta de nuevo en un ratito o entra directamente a esa sección con el botón de abajo.`,
 });
 
 function responderCultura(t, c) {
@@ -207,7 +207,8 @@ function responderCultura(t, c) {
   const partes = [];
   if (talleres.length) partes.push(`Talleres de formación (inscripción libre, hasta ${c.maxTalleres} por periodo; llevas ${c.talleresInscritos}):\n${listar(talleres.map((g) => `${g.nombre}: ${g.horario}, ${g.lugar}${g.inscrito ? " · inscrito/a" : g.cuposDisponibles != null ? ` · ${g.cuposDisponibles} cupos` : ""}`))}`);
   if (representativos.length) partes.push(`Grupos representativos (se entra por audición):\n${listar(representativos.map((g) => `${g.nombre}${g.inscrito ? " · ya eres parte" : g.audicionAbierta ? ` · audición abierta, ${g.audicionAbierta}` : ""}`))}`);
-  return { respuesta: `Grupos de Arte y Cultura ${c.periodo ? `(${c.periodo})` : ""}:\n\n${partes.join("\n\n")}`, sugerencias: [RUTAS.culturaGrupos, RUTAS.culturaConvocatorias] };
+  const comoEntrar = "**¿Cómo entrar?**\n1. Abre «Grupos de cultura».\n2. En un taller de formación, pulsa el botón para inscribirte mientras haya cupos.\n3. Para un grupo representativo, postúlate a su audición en «Convocatorias».";
+  return { respuesta: `¡Qué bueno que te interese el arte! 🎭 Grupos de Arte y Cultura ${c.periodo ? `(${c.periodo})` : ""}:\n\n${partes.join("\n\n")}\n\n${comoEntrar}`, sugerencias: [RUTAS.culturaGrupos, RUTAS.culturaConvocatorias] };
 }
 
 function responderDeporte(t, d) {
@@ -217,9 +218,9 @@ function responderDeporte(t, d) {
     if (!d.horas) return { respuesta: "No pude leer tus horas de deporte ahora mismo.", sugerencias: [RUTAS.deporteHoras] };
     return {
       respuesta: d.horas.cumplido
-        ? `¡Ya cumpliste tus ${d.horas.requeridas} horas de deporte! Llevas ${d.horas.cumplidas}. Puedes descargar la constancia en «Mis horas».`
-        : `Llevas ${d.horas.cumplidas} de ${d.horas.requeridas} horas de deporte; te faltan ${d.horas.faltan}. Las horas se suman con la asistencia a tu grupo.`,
-      sugerencias: [RUTAS.deporteHoras],
+        ? `¡Felicitaciones! 🎉 Ya cumpliste tus ${d.horas.requeridas} horas de deporte (llevas ${d.horas.cumplidas}).\n\n**Para descargar tu constancia:**\n1. Entra a «Mis horas de deporte».\n2. Descarga la constancia desde ahí.`
+        : `Llevas **${d.horas.cumplidas} de ${d.horas.requeridas} horas** de deporte; te faltan **${d.horas.faltan}**. 💪\n\n**¿Cómo sumar más horas?**\n• Asiste a las sesiones de tu grupo: cada asistencia registrada suma.\n• Si aún no estás en un grupo, inscríbete en «Grupos de deporte».\n• Revisa tu avance cuando quieras en «Mis horas de deporte».`,
+      sugerencias: d.horas.cumplido ? [RUTAS.deporteHoras] : [RUTAS.deporteHoras, RUTAS.deporteOferta],
     };
   }
   if (tiene("evento", "torneo", "partido", "competen", "campeonato")) {
@@ -232,8 +233,8 @@ function responderDeporte(t, d) {
   if (!d.grupos.length) return { respuesta: "Este periodo todavía no hay grupos de deporte abiertos.", sugerencias: [RUTAS.deporteOferta] };
   return {
     respuesta: `Grupos de deporte ${d.periodo ? `(${d.periodo})` : ""} — puedes inscribirte hasta en ${d.maxGrupos} (llevas ${d.inscritoEn}):\n${listar(
-      d.grupos.map((g) => `${g.grupo}: ${g.horario}, ${g.lugar}${g.inscrito ? " · inscrito/a" : g.inscripcionAbierta ? ` · ${g.cuposDisponibles} cupos` : " · inscripción cerrada"}`),
-    )}`,
+      d.grupos.map((g) => `**${g.grupo}:** ${g.horario}, ${g.lugar}${g.inscrito ? " · inscrito/a ✅" : g.inscripcionAbierta ? ` · ${g.cuposDisponibles} cupos` : " · inscripción cerrada"}`),
+    )}\n\n**Para inscribirte:**\n1. Abre «Grupos de deporte».\n2. Elige el grupo que mejor se ajuste a tu horario.\n3. Pulsa el botón para inscribirte mientras haya cupos; tus horas se suman con cada asistencia.`,
     sugerencias: [RUTAS.deporteOferta, RUTAS.deporteHoras],
   };
 }
@@ -251,7 +252,7 @@ function responderSalud(t, s) {
   }
   if (!s.jornadas.length) return { respuesta: "Por ahora no hay jornadas o campañas de salud publicadas.", sugerencias: [RUTAS.saludJornadas, RUTAS.saludSalidas] };
   return {
-    respuesta: `Jornadas y campañas de salud:\n${listar(s.jornadas.map((j) => `${j.nombre}: ${j.fecha}${j.hora ? `, ${j.hora}` : ""}, ${j.lugar}${j.inscrito ? " · ya estás inscrito/a" : ""}`))}`,
+    respuesta: `Estas son las jornadas y campañas de salud: 🩺\n${listar(s.jornadas.map((j) => `**${j.nombre}:** ${j.fecha}${j.hora ? `, ${j.hora}` : ""}, ${j.lugar}${j.inscrito ? " · ya estás inscrito/a ✅" : ""}`))}\n\n**Para participar:**\n1. Entra a «Jornadas de salud».\n2. Elige la jornada y revisa fecha, hora y lugar.\n3. Inscríbete si pide inscripción, o acércate ese día al lugar indicado.`,
     sugerencias: [RUTAS.saludJornadas, RUTAS.saludSalidas],
   };
 }

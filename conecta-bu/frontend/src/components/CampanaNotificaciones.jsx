@@ -47,15 +47,19 @@ export function CampanaNotificaciones({ className = "" }) {
       }
     };
     const alPulsar = (e) => !panel.current?.contains(e.target) && !boton.current?.contains(e.target) && cerrar();
+    // El panel se cierra si se desplaza la pagina (quedaria desalineado de la campana), pero no
+    // cuando se desplaza su propia lista: el evento "scroll" se escucha en captura y tambien
+    // llega desde la lista, asi que antes cerraba el panel apenas se intentaba bajar.
+    const alDesplazar = (e) => !panel.current?.contains(e.target) && cerrar();
     document.addEventListener("keydown", alTeclear);
     document.addEventListener("mousedown", alPulsar);
     window.addEventListener("resize", colocar);
-    window.addEventListener("scroll", cerrar, true);
+    window.addEventListener("scroll", alDesplazar, true);
     return () => {
       document.removeEventListener("keydown", alTeclear);
       document.removeEventListener("mousedown", alPulsar);
       window.removeEventListener("resize", colocar);
-      window.removeEventListener("scroll", cerrar, true);
+      window.removeEventListener("scroll", alDesplazar, true);
     };
   }, [abierta]);
 
@@ -108,7 +112,7 @@ export function CampanaNotificaciones({ className = "" }) {
               </button>
             </header>
 
-            <div className="overflow-y-auto overscroll-contain">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y">
               {items.length === 0 && (
                 <p role="status" className="m-0 px-6 py-10 text-center text-sm text-ink-500">
                   {cargando ? "Cargando…" : "No tienes notificaciones todavía. Aquí aparecerán tus citas, inscripciones y respuestas."}
@@ -117,9 +121,11 @@ export function CampanaNotificaciones({ className = "" }) {
               <ul className="list-none m-0 p-1.5">
                 {items.map((n) => {
                   const modulo = MODULO_AVISO[n.modulo] || MODULO_AVISO.general;
+                  // Alerta de posible crisis del asistente: roja y con sus saltos de línea.
+                  const alerta = n.tipo === "alerta-crisis";
                   return (
                     <li key={n.id}>
-                      <button type="button" onClick={() => abrirAviso(n)} className={`w-full text-left flex gap-3 rounded-2xl px-3 py-2.5 min-h-[64px] transition-colors hover:bg-primary-light/70 focus-visible:bg-primary-light/70 ${n.leida ? "" : "bg-primary-light/40"}`}>
+                      <button type="button" onClick={() => abrirAviso(n)} className={`w-full text-left flex gap-3 rounded-2xl px-3 py-2.5 min-h-[64px] transition-colors ${alerta ? `border-2 border-red-500 bg-red-50 hover:bg-red-100 focus-visible:bg-red-100 ${n.leida ? "" : "shadow-[0_0_0_3px_rgba(220,38,38,0.18)]"}` : `hover:bg-primary-light/70 focus-visible:bg-primary-light/70 ${n.leida ? "" : "bg-primary-light/40"}`}`}>
                         <span aria-hidden="true" className="mt-1.5 w-2.5 h-2.5 rounded-full shrink-0" style={{ background: n.leida ? "transparent" : modulo.color }} />
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center justify-between gap-2">
@@ -128,8 +134,8 @@ export function CampanaNotificaciones({ className = "" }) {
                             </span>
                             <span className="text-[12px] text-ink-500 shrink-0">{haceCuanto(n.fecha)}</span>
                           </span>
-                          <span className={`block mt-1 text-[14px] leading-snug text-primary-dark ${n.leida ? "font-semibold" : "font-extrabold"}`}>{n.titulo}</span>
-                          <span className="block text-[13px] leading-snug text-ink-600 line-clamp-3">{n.mensaje}</span>
+                          <span className={`block mt-1 text-[14px] leading-snug ${alerta ? "text-red-700 font-black" : `text-primary-dark ${n.leida ? "font-semibold" : "font-extrabold"}`}`}>{n.titulo}</span>
+                          <span className={`block text-[13px] leading-snug ${alerta ? "text-red-900 font-semibold whitespace-pre-line" : "text-ink-600 line-clamp-3"}`}>{n.mensaje}</span>
                           {!n.leida && <span className="sr-only">Sin leer</span>}
                         </span>
                       </button>

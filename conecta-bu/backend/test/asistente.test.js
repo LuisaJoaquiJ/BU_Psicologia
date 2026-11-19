@@ -12,6 +12,11 @@ const request = require("supertest");
 const { app } = require("../src/app");
 const { prisma } = require("./mocks/prisma.mock");
 const { listarEjecuciones, limpiarEjecuciones } = require("../src/integrations/n8n.client");
+const { TITULO_ALERTA, ACCION_ALERTA, textoObligatorio, detectarCrisis, extraerAlerta, limpiarAlertasCrisis } = require("../src/modules/desarrollo-humano/utils/asistenteCrisis");
+const { detectarAnimo } = require("../src/modules/desarrollo-humano/utils/asistenteAnimo");
+const { normalizar } = require("../src/modules/desarrollo-humano/utils/asistenteSeguridad");
+const { NOTA_CONFIDENCIALIDAD } = require("../src/modules/desarrollo-humano/utils/asistenteRespuestas");
+const { limiteAsistente } = require("../src/common/middlewares/rateLimit.middleware");
 
 function respuestaJson(cuerpo, status = 200) {
   const raw = JSON.stringify(cuerpo);
@@ -28,8 +33,11 @@ const esperar = () => new Promise((resolve) => setImmediate(resolve));
 beforeEach(() => {
   prisma.__reset();
   limpiarEjecuciones();
+  limpiarAlertasCrisis();
+  limiteAsistente.reiniciar(); // los ids de usuario se repiten entre pruebas
   global.fetch = jest.fn();
   jest.spyOn(console, "error").mockImplementation(() => {});
+  jest.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 afterEach(() => {
@@ -68,7 +76,8 @@ describe("RF-014: asistente de orientacion", () => {
 
     expect(res.body.origen).toBe("seguridad");
     expect(res.body.respuesta).toMatch(/123/);
-    expect(global.fetch).not.toHaveBeenCalled();
+    // Nunca va al agente ni a Gemini (solo puede salir el aviso a n8n con datos minimos).
+    expect(global.fetch.mock.calls.map(([url]) => url)).not.toContain("http://n8n.test/webhook/asistente");
   });
 
   test("usa la respuesta del flujo de n8n cuando esta disponible", async () => {
@@ -331,5 +340,272 @@ describe("RF-014: el asistente agenda citas", () => {
     const res = await preguntar(token, "¿Cómo agendo una cita?");
     expect(res.body.origen).toBe("n8n");
     expect(res.body.opciones).toHaveLength(1);
+  });
+});
+
+describe("Protocolo de emergencia y riesgo vital", () => {
+  const preguntar = (token, pregunta, historial) =>
+    request(app).post("/api/v1/asistente/consultas").set(auth(token)).send({ pregunta, historial });
+  const urlsLlamadas = () => global.fetch.mock.calls.map(([url]) => String(url));
+  const avisosDe = async (quien) => (await request(app).get("/api/v1/notificaciones").set(auth(quien.token))).body.items;
+  const OBLIGATORIO = "Por favor, comunícate ahora mismo a nuestra línea de apoyo urgente: 123 o acércate al área de Psicología. Hay profesionales listos para escucharte y acompañarte en este preciso momento. No estás solo/a.";
+  const conversacion = [
+    { autor: "estudiante", texto: "¿Qué eventos hay?" },
+    { autor: "asistente", texto: "Hay un taller el lunes." },
+  ];
+
+  test("el texto obligatorio es literal y la línea sale de LINEA_APOYO_URGENTE (por defecto 123)", () => {
+    expect(textoObligatorio()).toBe(OBLIGATORIO);
+    process.env.LINEA_APOYO_URGENTE = "+57 300 000 0000";
+    try {
+      expect(textoObligatorio()).toContain("línea de apoyo urgente: +57 300 000 0000 o acércate");
+    } finally {
+      delete process.env.LINEA_APOYO_URGENTE;
+    }
+  });
+
+  test.each([
+    "me quiero matar",
+    "Ya no quiero vivir",
+    "quiero hacerme daño",
+    "siento que no puedo más",
+    "ME KIERO MORIR",
+    "quiero desaparecer",
+    "a veces pienso en cortarme",
+    "pienso en suicidarme",
+    "no le veo sentido a la vida",
+    "nadie me extrañaría",
+  ])("detecta «%s» y responde con contención empática y el texto obligatorio", async (frase) => {
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
+    const res = await preguntar(token, frase, conversacion);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ origen: "seguridad", crisis: true, lineaApoyo: "123", sugerencias: [] });
+    expect(res.body.respuesta).toContain(OBLIGATORIO);
+    expect(res.body.respuesta).toContain("psicologoinstitucional@uniautonoma.edu.co");
+    expect(res.body.respuesta).not.toMatch(/ALERTA|Motivo detectado|Acción requerida/);
+    expect(res.body.respuesta).not.toContain("Tus mensajes son confidenciales"); // no es la primera respuesta
+    expect(urlsLlamadas()).not.toContain("http://n8n.test/webhook/asistente");
+  });
+
+  test.each(["me mata de risa", "este parcial me va a matar", "quiero cortarme el pelo", "me muero de risa con ese profe", "no puedo más con este parcial", "quiero agendar una cita"])(
+    "no confunde «%s» con una crisis",
+    (frase) => {
+      expect(detectarCrisis(frase)).toBeNull();
+    },
+  );
+
+  test("la crisis se atiende antes que cualquier otra consulta del mismo mensaje", async () => {
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
+    prisma.__seedHorario({ fecha: diasDesdeHoy(2) });
+    const res = await preguntar(token, "Quiero agendar una cita, ya no quiero vivir");
+    expect(res.body.respuesta).toContain(OBLIGATORIO);
+    expect(res.body.opciones).toBeUndefined();
+  });
+
+  test("si la crisis es la primera respuesta, el aviso de privacidad va al final en cursiva", async () => {
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
+    const res = await preguntar(token, "me quiero morir", []);
+    expect(res.body.respuesta).toContain(OBLIGATORIO);
+    expect(res.body.respuesta.endsWith(`\n\n_${NOTA_CONFIDENCIALIDAD}_`)).toBe(true);
+  });
+
+  test("la notificación al personal de DH trae el bloque de ALERTA ROJA con el motivo, nunca el historial", async () => {
+    const psico = crearUsuario("Administrador", "psico@uniautonoma.edu.co", "Psicóloga");
+    const ana = crearUsuario("Estudiante", "ana@uniautonoma.edu.co", "Ana Pérez");
+    const historial = [
+      { autor: "estudiante", texto: "Perdí cálculo y mi familia no lo sabe" },
+      { autor: "asistente", texto: "Te entiendo." },
+    ];
+    const res = await preguntar(ana.token, "Hola, siento que ya no quiero vivir", historial);
+    expect(res.body.respuesta).toContain(OBLIGATORIO);
+    expect(res.body.respuesta).not.toContain("ALERTA ROJA");
+
+    const avisos = await avisosDe(psico);
+    expect(avisos).toHaveLength(1);
+    expect(avisos[0]).toMatchObject({ modulo: "desarrollo-humano", tipo: "alerta-crisis", titulo: "🚨 ALERTA ROJA: POSIBLE RIESGO VITAL 🚨" });
+    const lineas = avisos[0].mensaje.split("\n");
+    expect(lineas[0]).toBe("Estudiante: Ana Pérez (ana@uniautonoma.edu.co)");
+    expect(lineas[1]).toBe("🛑 Acción requerida: Intervención inmediata de Psicología.");
+    expect(lineas[2]).toMatch(/^📌 Motivo detectado: .*no quiero vivir/);
+    expect(avisos[0].mensaje.length).toBeLessThanOrEqual(500);
+    expect(avisos[0].mensaje).not.toMatch(/c[aá]lculo|familia|Te entiendo/);
+    expect(await avisosDe(ana)).toHaveLength(0);
+
+    const bloque = console.warn.mock.calls.map((c) => String(c[0])).find((t) => t.startsWith(TITULO_ALERTA));
+    expect(bloque).toContain(ACCION_ALERTA);
+    expect(bloque).toContain("📌 Motivo detectado:");
+    expect(bloque).not.toMatch(/c[aá]lculo/);
+  });
+
+  test("cada mensaje de riesgo genera su alerta; solo se agrupa el mismo mensaje repetido en menos de 1 minuto", async () => {
+    const psico = crearUsuario("Administrador", "psico@uniautonoma.edu.co");
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
+    const inicio = Date.now();
+    const reloj = jest.spyOn(Date, "now").mockReturnValue(inicio);
+    const primera = await preguntar(token, "me quiero morir");
+    const segunda = await preguntar(token, "de verdad me quiero morir");
+    const repetida = await preguntar(token, "me quiero morir"); // doble envio: no se duplica
+    for (const r of [primera, segunda, repetida]) expect(r.body.respuesta).toContain(OBLIGATORIO);
+    expect(await avisosDe(psico)).toHaveLength(2);
+    // Pasados 10 minutos (antes era el limite), otra alerta llega siempre, y lo mismo pasado 1 minuto.
+    reloj.mockReturnValue(inicio + 61 * 1000);
+    await preguntar(token, "me quiero morir");
+    reloj.mockReturnValue(inicio + 3 * 60 * 1000);
+    await preguntar(token, "me quiero matar");
+    expect(await avisosDe(psico)).toHaveLength(4);
+  });
+
+  test.each([
+    ["el bloque de ALERTA ROJA", `${TITULO_ALERTA}\n${ACCION_ALERTA}\n📌 Motivo detectado: Dice que todo le sale mal y se siente sin salida`],
+    ["la etiqueta antigua", "[ALERTA_CRISIS_PSICOLOGICA] | Motivo: Dice que todo le sale mal y se siente sin salida"],
+  ])("si Gemini responde con %s, se quita del texto y se dispara la alerta", async (_nombre, bloque) => {
+    process.env.GEMINI_API_KEY = "clave-de-prueba";
+    global.fetch.mockImplementation((url) =>
+      String(url).includes("generativelanguage")
+        ? respuestaJson({ candidates: [{ content: { parts: [{ text: `Lamento mucho lo que sientes.\n\n\n${bloque}` }] } }] })
+        : respuestaJson({ ok: true }),
+    );
+    const psico = crearUsuario("Administrador", "psico@uniautonoma.edu.co");
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co", "Luis Gómez");
+    try {
+      const res = await preguntar(token, "todo me sale mal últimamente");
+      expect(res.body).toMatchObject({ origen: "seguridad", crisis: true, sugerencias: [] });
+      expect(res.body.respuesta).toContain(OBLIGATORIO);
+      expect(res.body.respuesta).not.toMatch(/ALERTA|Motivo/);
+      const avisos = await avisosDe(psico);
+      expect(avisos).toHaveLength(1);
+      expect(avisos[0].mensaje).toContain("📌 Motivo detectado: Dice que todo le sale mal y se siente sin salida");
+    } finally {
+      delete process.env.GEMINI_API_KEY;
+    }
+  });
+
+  test("extraerAlerta quita el bloque y une un motivo de dos líneas", () => {
+    const r = extraerAlerta(`Texto para el estudiante.\n\n${TITULO_ALERTA}\n${ACCION_ALERTA}\n📌 Motivo detectado: Dice que no quiere seguir\ny que nadie lo entiende.`);
+    expect(r.texto).toBe("Texto para el estudiante.");
+    expect(r.motivo).toBe("Dice que no quiere seguir y que nadie lo entiende.");
+  });
+
+  test("el prompt de Gemini trae motivación contextual, aviso de privacidad, protocolo de crisis y flujo con negritas", async () => {
+    process.env.GEMINI_API_KEY = "clave-de-prueba";
+    global.fetch.mockReturnValueOnce(respuestaJson({ candidates: [{ content: { parts: [{ text: "1. Entra a «Agendar cita»." }] } }] }));
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
+    try {
+      await preguntar(token, "¿Cómo agendo una cita?", []);
+      const cuerpo = JSON.parse(global.fetch.mock.calls[0][1].body);
+      const sistema = cuerpo.systemInstruction.parts[0].text;
+      expect(sistema).toMatch(/MOTIVACIÓN CONTEXTUAL/);
+      expect(sistema).toContain(NOTA_CONFIDENCIALIDAD);
+      expect(sistema).toContain(OBLIGATORIO);
+      expect(sistema).toContain(`${TITULO_ALERTA}\n${ACCION_ALERTA}\n📌 Motivo detectado:`);
+      expect(sistema).toMatch(/negritas/);
+      expect(cuerpo.contents.at(-1).parts[0].text).toContain("Primera respuesta: sí");
+    } finally {
+      delete process.env.GEMINI_API_KEY;
+    }
+  });
+});
+
+describe("Saludo, motivación contextual y aviso de privacidad", () => {
+  const preguntar = (token, cuerpo) => request(app).post("/api/v1/asistente/consultas").set(auth(token)).send(cuerpo);
+  const NOTA_CURSIVA = `_${NOTA_CONFIDENCIALIDAD}_`;
+  const yaConverso = [
+    { autor: "estudiante", texto: "Hola" },
+    { autor: "asistente", texto: "¡Hola! ¿En qué te ayudo?" },
+  ];
+
+  test("el aviso de privacidad tiene el texto nuevo", () => {
+    expect(NOTA_CONFIDENCIALIDAD).toBe("Nota: Tus mensajes son confidenciales, salvo que el sistema detecte un riesgo para tu salud o seguridad, en cuyo caso buscaremos ayuda para ti.");
+  });
+
+  test.each(["Hola", "buenos días!", "Buenas tardes, ¿cómo estás?"])("al saludo «%s» da una bienvenida proactiva y, por ser la primera, el aviso en cursiva", async (saludo) => {
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co", "Ana Pérez");
+    prisma.__seedHorario({ fecha: diasDesdeHoy(2) });
+    const res = await preguntar(token, { pregunta: saludo, historial: [] });
+    expect(res.body.origen).toBe("local");
+    expect(res.body.respuesta).toMatch(/^¡(Buenos días|Buenas tardes|Buenas noches|Hola|Qué gusto leerte), Ana!/);
+    expect(res.body.respuesta).toContain("**1 horario libre**");
+    expect(res.body.respuesta.endsWith(`\n\n${NOTA_CURSIVA}`)).toBe(true);
+    expect(res.body.sugerencias.length).toBeGreaterThan(0);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test("la bienvenida no es estática: cambia entre variantes", async () => {
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co", "Ana Pérez");
+    const azar = jest.spyOn(Math, "random").mockReturnValue(0);
+    const a = (await preguntar(token, { pregunta: "hola", historial: [] })).body.respuesta;
+    azar.mockReturnValue(0.99);
+    const b = (await preguntar(token, { pregunta: "hola", historial: [] })).body.respuesta;
+    expect(a).not.toBe(b);
+  });
+
+  test("en las respuestas siguientes no aparece el aviso", async () => {
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
+    const res = await preguntar(token, { pregunta: "hola", historial: yaConverso });
+    expect(res.body.respuesta).not.toContain("Tus mensajes son confidenciales");
+  });
+
+  test("sin historial, usa el indicador «primera» del frontend", async () => {
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
+    const conIndicador = await preguntar(token, { pregunta: "hola", primera: true });
+    expect(conIndicador.body.respuesta.endsWith(NOTA_CURSIVA)).toBe(true);
+    const sinIndicador = await preguntar(token, { pregunta: "hola", primera: false });
+    expect(sinIndicador.body.respuesta).not.toContain("Tus mensajes son confidenciales");
+  });
+
+  test("si la IA escribe el aviso en una respuesta posterior, se quita; en la primera queda una sola vez y exacto", async () => {
+    global.fetch.mockReturnValueOnce(respuestaJson({ respuesta: "Con gusto.\n\n*Nota: tus mensajes son confidenciales y bla bla.*" }));
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
+    const despues = await preguntar(token, { pregunta: "¿Qué servicios hay?", historial: yaConverso });
+    expect(despues.body).toMatchObject({ origen: "n8n", respuesta: "Con gusto." });
+
+    global.fetch.mockReturnValueOnce(respuestaJson({ respuesta: "Con gusto.\n\nNota: Tus mensajes son confidenciales (versión de la IA)." }));
+    const primera = await preguntar(token, { pregunta: "¿Qué servicios hay?", historial: [] });
+    expect(primera.body.respuesta).toBe(`Con gusto.\n\n${NOTA_CURSIVA}`);
+  });
+
+  test.each([
+    ["estoy muy estresada por los parciales", "examenes"],
+    ["tengo mucho trabajo esta semana", "trabajo"],
+    ["estoy cansadísimo, no dormí", "cansancio"],
+    ["me siento un poco triste", "tristeza"],
+    ["¡aprobé cálculo, estoy feliz!", "felicidad"],
+    ["sin ganas de estudiar", "desmotivacion"],
+    ["no estoy cansado", null],
+    ["¿cuándo son los parciales?", null],
+  ])("reconoce el ánimo de «%s»", (frase, caso) => {
+    expect(detectarAnimo(normalizar(frase))).toBe(caso);
+  });
+
+  test("a «estoy muy estresada por los parciales» responde primero con ánimo y luego ofrece ayuda concreta, sin IA", async () => {
+    global.fetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co", "Ana Pérez");
+    const res = await preguntar(token, { pregunta: "estoy muy estresada por los parciales", historial: yaConverso });
+    expect(res.body.origen).toBe("local");
+    const [animo, ...resto] = res.body.respuesta.split("\n\n");
+    expect(animo).toMatch(/parcial|examen/i);
+    expect(resto.join("\n\n")).toMatch(/\*\*Agendar una cita de Orientación\*\*/);
+    expect(res.body.sugerencias).toEqual(expect.arrayContaining([expect.objectContaining({ ruta: "/estudiante/agendar" })]));
+    expect(res.body.respuesta).not.toMatch(/no estoy seguro de haber entendido/);
+  });
+
+  test("con ánimo y consulta: primero la frase de ánimo y luego la respuesta", async () => {
+    global.fetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
+    prisma.__seedEvento({ nombre: "Taller de manejo del estrés", fecha: diasDesdeHoy(5), fechaLimiteInscripcion: diasDesdeHoy(3) });
+    const res = await preguntar(token, { pregunta: "estoy estresada por parciales, ¿qué eventos hay?", historial: yaConverso });
+    const partes = res.body.respuesta.split("\n\n");
+    expect(partes[0]).toMatch(/parcial|examen/i);
+    expect(res.body.respuesta.indexOf("Taller de manejo del estrés")).toBeGreaterThan(partes[0].length);
+  });
+
+  test("sin respuesta exacta, ofrece con amabilidad lo que sí puede hacer", async () => {
+    global.fetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+    const { token } = crearUsuario("Estudiante", "e@uniautonoma.edu.co");
+    const res = await preguntar(token, { pregunta: "¿Cuál es la clave del wifi?", historial: yaConverso });
+    expect(res.body.origen).toBe("local");
+    expect(res.body.respuesta).toMatch(/quiero ayudarte/);
+    expect(res.body.sugerencias.length).toBeGreaterThan(0);
+    expect(res.body.generica).toBeUndefined();
   });
 });
