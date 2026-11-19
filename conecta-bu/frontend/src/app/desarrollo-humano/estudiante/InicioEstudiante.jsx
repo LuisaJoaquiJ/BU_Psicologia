@@ -6,6 +6,7 @@ import { formatearHora, fechaLarga } from "../comunes/lib/format";
 import { imagenDeEvento, respaldoDeFoto } from "../comunes/lib/imagenes";
 import { Icono } from "../comunes/componentes/Iconos";
 import { EstadoVacio, botonSecundario, Esqueleto } from "../comunes/componentes/ui";
+import { useAvisos } from "../../../components/avisos/Avisos";
 
 const MESES = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
@@ -48,7 +49,7 @@ export function InicioEstudiante() {
   const [soloInscritos, setSoloInscritos] = useState(false);
   const [inicio, setInicio] = useState(0);
   const [procesando, setProcesando] = useState(null);
-  const [aviso, setAviso] = useState("");
+  const avisos = useAvisos();
   const POR_VISTA = usePorVista();
 
   function cargarEventos() {
@@ -76,19 +77,18 @@ export function InicioEstudiante() {
   }, []);
 
   async function alternarInscripcion(evento) {
-    setAviso("");
     setProcesando(evento.id);
     const inscrito = evento.miInscripcion?.estado === "Confirmada";
     try {
       if (inscrito) {
         await http.patch(`/eventos/${evento.id}/inscripciones/cancelar`);
-        setAviso(`Cancelaste tu inscripción a "${evento.nombre}".`);
+        avisos.exito(`Cancelaste tu inscripción a "${evento.nombre}".`);
       } else {
         await http.post(`/eventos/${evento.id}/inscripciones`);
-        setAviso(`¡Listo! Quedaste inscrito/a en "${evento.nombre}".`);
+        avisos.exito(`¡Listo! Quedaste inscrito/a en "${evento.nombre}".`);
       }
     } catch (err) {
-      setAviso(err.response?.data?.message || "No fue posible completar la acción.");
+      avisos.error(err.response?.data?.message || "No fue posible completar la acción.");
     } finally {
       await cargarEventos();
       setProcesando(null);
@@ -339,23 +339,6 @@ export function InicioEstudiante() {
             )}
           </div>
         </div>
-
-        {aviso && (
-          <div
-            role="status"
-            className="flex items-center justify-between gap-3 text-sm font-semibold text-primary bg-primary-light border border-primary/15 rounded-2xl px-4 py-3"
-          >
-            <span>{aviso}</span>
-            <button
-              type="button"
-              onClick={() => setAviso("")}
-              aria-label="Cerrar aviso"
-              className="text-primary/70 hover:text-primary font-bold px-1.5"
-            >
-              ×
-            </button>
-          </div>
-        )}
 
         {!eventos && <Esqueleto forma="tarjetas" etiqueta="Cargando eventos…" />}
 
