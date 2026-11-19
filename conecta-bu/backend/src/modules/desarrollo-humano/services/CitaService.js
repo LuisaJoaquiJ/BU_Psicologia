@@ -6,6 +6,7 @@ const repos = require("../repositories");
 const { reposCon } = require("../repositories");
 const { bloqueoService } = require("./BloqueoService");
 const { inicioDeCita } = require("../utils/agenda");
+const { asegurarOfertaCitas } = require("../utils/ofertaCitas");
 
 // Citas del estudiante en Desarrollo Humano (RF-004 a RF-006).
 class CitaService {
@@ -17,6 +18,11 @@ class CitaService {
   // RF-004 / HU-07: horarios libres que aun no empiezan (los de hoy que ya
   // pasaron no se ofrecen), sin los que caen en un tiempo no disponible del personal.
   async disponibles() {
+    try {
+      await asegurarOfertaCitas();
+    } catch (error) {
+      console.error(`[citas] No se pudo completar el horario fijo: ${error.message}`);
+    }
     const ahora = new Date();
     const horarios = await this.repos.horarios.buscar({ ocupado: false, fecha: { gte: hoyBogota() } });
     return this.bloqueos.quitarBloqueados(horarios.filter((h) => !h.sinCita && inicioDeCita(h) > ahora));

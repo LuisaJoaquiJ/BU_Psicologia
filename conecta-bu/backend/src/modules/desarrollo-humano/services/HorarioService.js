@@ -4,6 +4,7 @@ const repos = require("../repositories");
 const { reposCon } = require("../repositories");
 const { bloqueoService } = require("./BloqueoService");
 const { fechaHorario, horaHorario } = require("../utils/agenda");
+const { asegurarOfertaCitas } = require("../utils/ofertaCitas");
 
 // La cita más reciente del horario, solo con el nombre: el personal distingue
 // un cupo reservado de uno cerrado a mano. `citas` no sale en la respuesta.
@@ -62,6 +63,11 @@ class HorarioService {
   // RF-007 / HU-13, HU-14: todos los horarios (tambien ocupados o
   // deshabilitados) para gestionarlos. Las atenciones sin cita no se listan.
   async listar({ fecha, servicioId } = {}) {
+    try {
+      await asegurarOfertaCitas();
+    } catch (error) {
+      console.error(`[horarios] No se pudo completar el horario fijo: ${error.message}`);
+    }
     const where = {};
     if (fecha) where.fecha = fechaHorario(fecha);
     if (servicioId) where.servicioId = servicioId;
